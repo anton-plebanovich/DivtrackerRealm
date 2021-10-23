@@ -1,0 +1,40 @@
+{
+    "properties": {
+        "_i": {
+            "bsonType": "string"
+        },
+        "_id": {
+            "bsonType": "objectId"
+        },
+        "_p": {
+            "bsonType": "string"
+        },
+        "a": {
+            "bsonType": "double"
+        },
+        "c": {
+            "bsonType": "string"
+        },
+        "d": {
+            "bsonType": "date"
+        },
+        "e": {
+            "bsonType": "date"
+        },
+        "f": {
+            "bsonType": "string"
+        },
+        "p": {
+            "bsonType": "date"
+        }
+    },
+    "required": [
+        "_id",
+        "_p",
+        "_i",
+        "a",
+        "e",
+        "f"
+    ],
+    "title": "DividendsRealmModel"
+}

@@ -1,0 +1,25 @@
+{
+    "properties": {
+        "_id": {
+            "bsonType": "string"
+        },
+        "_p": {
+            "bsonType": "string"
+        },
+        "d": {
+            "bsonType": "date"
+        },
+        "l": {
+            "bsonType": "double"
+        },
+        "p": {
+            "bsonType": "double"
+        }
+    },
+    "required": [
+        "_id",
+        "_p",
+        "d"
+    ],
+    "title": "QuoteRealmModel"
+}

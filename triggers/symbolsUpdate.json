@@ -1,0 +1,8 @@
+{
+    "name": "symbolsUpdate",
+    "type": "SCHEDULED",
+    "config": {
+        "schedule": "1 13 * * *"
+    },
+    "disabled": false
+}

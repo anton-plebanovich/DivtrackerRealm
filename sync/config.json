@@ -1,0 +1,23 @@
+{
+    "state": "enabled",
+    "partition": {
+        "key": "_p",
+        "type": "string",
+        "required": true,
+        "permissions": {
+            "read": {
+                "%%partition": {
+                    "%in": [
+                        "%%user.id",
+                        "P"
+                    ]
+                }
+            },
+            "write": {
+                "%%partition": "%%user.id"
+            }
+        }
+    },
+    "development_mode_enabled": false,
+    "service_name": "mongodb-atlas"
+}

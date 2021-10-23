@@ -1,0 +1,950 @@
+
+// utils.js
+
+///////////////////////////////////////////////////////////////////////////////// EXTENSIONS
+
+/**
+ * 
+ * @param {function|undefined|string} arg Check for equality if nothing is passed. 
+ * Using comparison function if passed. 
+ * Using string for key comparison if passed.
+ * @returns {Array} Distinct array of elements
+ */
+ Array.prototype.distinct = function(arg) {
+  if (typeof arg === 'string' || arg instanceof String) {
+    comparer = (a, b) => a[arg] == b[arg];
+  } else if (!arg) {
+    comparer = (a, b) => a == b;
+  } else {
+    comparer = arg;
+  }
+
+  const result = [];
+  for (const item of this) {
+    var hasItem = false;
+    for (const distinctItem of result) {
+      if (comparer(distinctItem, item)) {
+        hasItem = true;
+        break;
+      }
+    }
+
+    if (!hasItem) {
+      result.push(item);
+    }
+  }
+
+  return result;
+};
+
+/**
+ * Removes all occurencies of an object from the array.
+ * @param {*} arg Object to remove.
+ */
+Array.prototype.remove = function(arg) {
+  var i = 0;
+  while (i < this.length) {
+    if (this[i] === arg) {
+      this.splice(i, 1);
+    } else {
+      ++i;
+    }
+  }
+};
+
+/**
+ * Removes all occurencies of objets in the array.
+ * @param {Array} arg Objects to remove.
+ */
+Array.prototype.removeContentsOf = function(arg) {
+  for (const object of arg) {
+    this.remove(object);
+  }
+};
+
+/**
+ * Splits array into array of chunked arrays.
+ * @param {number} size Size of a chunk.
+ * @returns {object[][]} Array of chunked arrays.
+ */
+Array.prototype.chunked = function(size) {
+  var chunks = [];
+  for (i=0,j=this.length; i<j; i+=size) {
+      const chunk = this.slice(i,i+size);
+      chunks.push(chunk);
+  }
+
+  return chunks;
+};
+
+/**
+ * Filters `null` elements.
+ * @param {*} callbackfn Mapping to perform. Null values are filtered.
+ */
+ Array.prototype.filterNull = function() {
+   return this.filter(x => x !== null);
+};
+
+/**
+ * Maps array and filters `null` elements.
+ * @param {*} callbackfn Mapping to perform. Null values are filtered.
+ */
+ Array.prototype.compactMap = function(callbackfn) {
+   return this.map(callbackfn).filterNull();
+};
+
+/**
+ * @returns {Date} Yesterday day start date in UTC.
+ */
+Date.yesterday = function() {
+  const yesterday = new Date();
+  yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+  yesterday.setUTCHours(0);
+  yesterday.setUTCMinutes(0);
+  yesterday.setUTCSeconds(0);
+  yesterday.setUTCMilliseconds(0);
+
+  return yesterday;
+};
+
+/**
+ * @param {Date} otherDate Other date.
+ * @returns {number} absolute amount of days between source date and other date.
+ */
+Date.prototype.daysTo = function(otherDate) {
+  // The number of milliseconds in all UTC days (no DST)
+  const oneDay = 1000 * 60 * 60 * 24;
+
+  // A day in UTC always lasts 24 hours (unlike in other time formats)
+  const first = Date.UTC(otherDate.getUTCFullYear(), otherDate.getUTCMonth(), otherDate.getUTCDate());
+  const second = Date.UTC(this.getUTCFullYear(), this.getUTCMonth(), this.getUTCDate());
+
+  // so it's safe to divide by 24 hours
+  return Math.abs(first - second) / oneDay;
+};
+
+/// `String` "2020-12-31"
+Date.prototype.dayString = function() {
+  return `${zeroPad(this.getUTCFullYear(), 2)}-${zeroPad(this.getUTCMonth() + 1, 2)}-${zeroPad(this.getUTCDate(), 2)}`;
+};
+
+/**
+ * Returns `Date` in a format of API parameter. E.g. '20211002'.
+ * @returns {string} date string.
+ */
+Date.prototype.apiParameter = function() {
+  const year = zeroPad(this.getUTCFullYear(), 2);
+  const month = zeroPad(this.getUTCMonth() + 1, 2);
+  const day = zeroPad(this.getUTCDate(), 2);
+  const dateString = `${year}${month}${day}`;
+  
+  return dateString;
+};
+
+/**
+ * Stringifies object using JSON format.
+ * @returns Stringified object in JSON format.
+ */
+Object.prototype.stringify = function() {
+  return JSON.stringify(this);
+};
+
+/**
+ * Checks simple plain objects equality.
+ * @returns {boolean} Comparison result.
+ */
+Object.prototype.isEqual = function(object) {
+  const thisEntries = Object.entries(this);
+  const objectEntries = Object.entries(object);
+  if (thisEntries.length != objectEntries.length) {
+    return false;
+  }
+
+  for (const [key, value] of thisEntries) {
+    if (value != object[key]) {
+      return false;
+    }
+  }
+
+  return true;
+};
+
+///////////////////////////////////////////////////////////////////////////////// FUNCTIONS
+
+logAndThrow = function logAndThrow(message) {
+  const _message = _throwIfUndefinedOrNull(message, `logAndthrow message`);
+  console.error(_message);
+  throw _message;
+};
+
+/** Checks that we didn't exceed 90s timeout. */
+checkExecutionTimeout = function checkExecutionTimeout() {
+  if (typeof startDate === 'undefined') {
+    startDate = new Date();
+  }
+
+  const endTime = new Date();
+  const seconds = Math.round((endTime - startDate) / 1000);
+
+  // One symbol full fetch takes 17.5s and we have only 90s function execution time so let's put some limit.
+  const limit = 80;
+  if (seconds > limit) {
+    logAndThrow('execution timeout');
+  } else {
+    console.log(`${limit - seconds} execution time left`);
+  }
+};
+
+/**
+ * Throws error with optional `message` is `object` is `undefined` or `null`.
+ * @param {object} object Object to check.
+ * @param {string} message Optional additional error message.
+ * @returns {object} Passed object if it's defined and not `null`.
+ */
+function _throwIfUndefinedOrNull(object, message) {
+  if (object === undefined) {
+    if (message !== undefined && message) {
+      logAndThrow(`Object undefiled: ${message}`);
+    } else {
+      logAndThrow(`Object undefiled`);
+    }
+    
+  } else if (object === null) {
+    if (message !== undefined && message) {
+      logAndThrow(`Object null: ${message}`);
+    } else {
+      logAndThrow(`Object null`);
+    }
+    
+  } else {
+    return object;
+  }
+}
+
+throwIfUndefinedOrNull = _throwIfUndefinedOrNull;
+
+getValueAndQuitIfUndefined = function _getValueAndQuitIfUndefined(object, key) {
+  if (!object) {
+    logAndThrow(`Object undefiled`);
+    
+  } else if (!key) {
+    return object;
+
+  } else if (!object[key]) {
+    logAndThrow(`Object's property undefiled. Key: ${key}. Object: ${object}.`);
+    
+  } else {
+    return object[key];
+  }
+};
+
+/** First parameter: Date in the "yyyy-mm-dd" or timestamp or Date format, e.g. "2020-03-27" or '1633046400000' or Date.
+ * Returns close 'Date' pointing to the U.S. stock market close time.
+ *
+ * Regular trading hours for the U.S. stock market, including 
+ * the New York Stock Exchange (NYSE) and the Nasdaq Stock Market (Nasdaq),
+ * are 9:30 a.m. to 4 p.m.
+ */
+getCloseDate = function getCloseDate(arg1) {
+  const closeDateValue = _throwIfUndefinedOrNull(arg1, `cloiseDateValue`);
+
+  // Check if date is valid
+  const date = new Date(closeDateValue);
+  if (isNaN(date)) {
+    console.error(`Invalid close date: ${closeDateValue}`);
+    return null;
+  }
+
+  // EDT (New York) time zone is 4 hours behind GMT. We also add 1 hour to handle daylight saving.
+  const closeDateStringWithTimeZone = `${date.dayString()}T17:00:00-0400`;
+  const closeDate = new Date(closeDateStringWithTimeZone);
+  if (isNaN(closeDate)) {
+    console.error(`Invalid close date with time zone: ${closeDateStringWithTimeZone}`);
+    return null;
+  } else {
+    return closeDate;
+  }
+};
+
+/** First parameter: Date in the "yyyy-mm-dd" or timestamp or Date format, e.g. "2020-03-27" or '1633046400000' or Date.
+ * Returns open 'Date' pointing to the U.S. stock market open time.
+ *
+ * Regular trading hours for the U.S. stock market, including 
+ * the New York Stock Exchange (NYSE) and the Nasdaq Stock Market (Nasdaq),
+ * are 9:30 a.m. to 4 p.m.
+ */
+getOpenDate = function getOpenDate(arg1) {
+  const openDateValue = _throwIfUndefinedOrNull(arg1, `openDateValue`);
+
+  // Check if date is valid
+  const date = new Date(openDateValue);
+  if (isNaN(date)) {
+    console.error(`Invalid open date: ${openDateValue}`);
+    return null;
+  }
+
+  // EDT (New York) time zone is 4 hours behind GMT. We also substract 1 hour to handle daylight saving.
+  const openDateStringWithTimeZone = `${date.dayString()}T8:30:00-0400`;
+  const openDate = new Date(openDateStringWithTimeZone);
+
+  if (isNaN(openDate)) {
+    console.error(`Invalid open date with time zone: ${openDateStringWithTimeZone}`);
+    return null;
+  } else {
+    return openDate;
+  }
+};
+
+// exports();
+//
+// checkExecutionTimeout()
+// getCloseDate("2020-03-27");
+// getOpenDate("2020-03-27");
+
+/** Computes and sets `distinctSymbols` and `distinctSymbolsDictionary` global variables.
+ * `distinctSymbols` array is sorted.
+*/
+computeDistinctSymbols = async function computeDistinctSymbols() {
+  const db = context.services.get("mongodb-atlas").db("divtracker");
+
+  // We combine transactions and companies distinct IDs. 
+  // Idealy, we should be checking all tables but we assume that only two will be enough.
+  // All symbols have company record so company DB contains all ever fetched symbols.
+  // Meanwhile transactions may contain not yet fetched symbols or have less symbols than we already should be updating (transactions may be deleted).
+  // So by combining we have all current + all future symbols. Idealy.
+  const companiesCollection = db.collection("companies");
+  const companiesDistinctIDs = await companiesCollection.distinct("_id", {});
+  console.log(`Distinct companies IDs (${companiesDistinctIDs.length}): ${companiesDistinctIDs.stringify()}`);
+
+  // We project '_i' field first and then produce unique objects with only '_id' field
+  const transactionsCollection = db.collection("transactions");
+  const transactionsAggregation = [{$project: {
+    _i: { $concat: [ "$s", ":", "$e" ] }
+  }}, {$group: {
+    _id: "$_i"
+  }}];
+
+  const distinctTransactionIDs = await transactionsCollection
+    .aggregate(transactionsAggregation)
+    .toArray()
+    // Extract IDs from [{ _id: "MSFT:NAS" }]
+    .then(x => x.map(x => x._id));
+
+  console.log(`Distinct transaction IDs (${distinctTransactionIDs.length}): ${distinctTransactionIDs.stringify()}`);
+
+  // Compute distinct IDs using both sources
+  var distinctIDs = companiesDistinctIDs
+    .concat(distinctTransactionIDs)
+    .distinct();
+
+  // Filter non-existing
+  const symbolsCollection = db.collection("symbols");
+  const allSymbols = await symbolsCollection.distinct("_id", { _id: { $in: distinctIDs } });
+  distinctIDs = distinctIDs.filter(id => allSymbols.includes(id));
+  
+  distinctSymbols = [];
+  distinctSymbolsDictionary = {};
+  for (const id of distinctIDs) {
+    const symbol = id.split(':')[0];
+    distinctSymbols.push(symbol);
+    distinctSymbolsDictionary[symbol] = id;
+  }
+
+  distinctSymbols.sort();
+
+  console.log(`Distinct symbols (${distinctSymbols.length}): ${distinctSymbols.stringify()}`);
+};
+
+///////////////////////////////////////////////////////////////////////////////// fetch.js
+
+//////////////////////////////////// Tokens
+
+// --- Sandbox (https://sandbox.iexapis.com/stable)
+// Tpk_0a569a8bdc864334b284cb7112f579df - anton.plebanovich - Tsk_1d2c1478e285405984674a64db0f6073
+// Tpk_ca8d3de2a6db4a58a61a93ac027e4725 - nohopenotop - Tsk_5e08d057b7044c8a8fec73f21083df12
+// Tpk_c0f9be120e854f67b4e945d6eddad201 - nohopenotop+1 - Tsk_e1f2250214f64306bdd191d090bca196
+// Tpk_9a73f18ccff14665881b21b54ca7da42 - nohopenotop+2 - Tsk_6c6f4cb4a8b145e782d17f344cdc4c42
+// Tpk_d8f3a048a7a94866ad08c8b62042b16b - nohopenotop+3 - Tsk_c4dcd7a18ca14695a9c1697f54896ceb
+// Tpk_581685f711114d9f9ab06d77506fdd49 - nohopenotop+4 - Tsk_732a341e427a42c99e14bb6bc3cd4eb8
+// Tpk_b284e8658d5f4aa29d25ef84bf4d944e - nohopenotop+5 - Tsk_1104feb7c6de4d6c8236371142ce82b9
+
+// --- Production (https://cloud.iexapis.com/stable)
+// pk_9f1d7a2688f24e26bb24335710eae053 - anton.plebanovich - sk_9ca94a597d284cb7a8c5821dd8333fec
+// pk_5d1af71fbfad462e9372b282c0db55e4 - nohopenotop - sk_1f3deae352b84e3a86584e8ab2a8d3c5
+// pk_185c76a15c994a5c8447b07749203d94 - nohopenotop+1 - sk_60c63571a01b4a8ca155b024e9430e82
+// pk_d6999cc3ea25413f92667cbbcd4aa9d2 - nohopenotop+2 - sk_46ac1f74991648c3a4ee170010b25784
+// pk_069c02e17d9749a0b6a1284991879c77 - nohopenotop+3 - sk_4793d0f53a82435ba64fbb6a5d3ec334
+// pk_462eaf9d7d94460a8751601cbc4c39e8 - nohopenotop+4 - sk_48a4856132604b47a77d96e64c1db39d
+// pk_4e48fb2bb54f433ebbf42cf5bff3404f - nohopenotop+5 - sk_8a83efa05f144153a570966b4b4cea06
+
+//////////////////////////////////// Example calls
+
+// Fetch the last historical price record for the given period for the AAPL symbol
+// https://cloud.iexapis.com/stable/time-series/historical_prices/aapl?token=Tpk_0a569a8bdc864334b284cb7112f579df&from=2021-01-01&to=2021-02-01&last=1
+
+/**
+ * Requests data from IEX cloud/sandbox depending on an environment by a batch.
+ * If symbols count exceed max allowed amount it splits it to several requests and returns composed result.
+ * It switches between available tokens to evenly distribute the load.
+ * @param {string} _api API to call.
+ * @param {[string]} _symbols Symbols to fetch, e.g. ['AAP','AAPL','PBA'].
+ * @param {Object} _queryParameters Query parameters.
+ * @returns Parsed EJSON object. Composed from several responses if max symbols count was exceeded.
+ */
+fetchBatch = async function fetchBatch(_api, _symbols, _queryParameters) {
+  // https://cloud.iexapis.com/stable/stock/STOR/dividends/10y?token=pk_9f1d7a2688f24e26bb24335710eae053&calendar=true
+  const api = _throwIfUndefinedOrNull(_api, `_api`);
+  const fullAPI = `/stock/market${api}/batch`;
+  const symbols = _throwIfUndefinedOrNull(_symbols, `_symbols`);
+  const queryParameters = _queryParameters ?? {};
+  const maxSymbolsAmount = 100;
+  const chunkedSymbolsArray = symbols.chunked(maxSymbolsAmount);
+  var result = [];
+  for (const chunkedSymbols of chunkedSymbolsArray) {
+    const symbolsParameter = chunkedSymbols.join(",");
+    const fullQueryParameters = Object.assign({}, queryParameters);
+    fullQueryParameters.symbols = symbolsParameter;
+
+    console.log(`Fetching batch for symbols (${chunkedSymbols.length}) with query '${queryParameters.stringify()}': ${symbolsParameter}`);
+    const response = await fetch(fullAPI, fullQueryParameters);
+
+    result = result.concat(response);
+  }
+
+  return result;
+};
+
+// exports();
+//
+// fetchBatch('/dividends', ['AAP','AAPL','PBA'], { 'range': '90d' })
+
+/**
+ * Requests data from IEX cloud/sandbox for types and symbols by a batch.
+ * If symbols count exceed max allowed amount it splits it to several requests and returns composed result.
+ * It switches between available tokens to evenly distribute the load.
+ * @param {[string]} _types Types to fetch, e.g. ['dividends'].
+ * @param {[string]} _symbols Symbols to fetch, e.g. ['AAP','AAPL','PBA'].
+ * @param {Object} _queryParameters Additional query parameters, e.g..
+ * @returns {{string: {string: [Object]}}} Parsed EJSON object. Composed from several responses if max symbols count was exceeded. 
+ * The first object keys are symbols. The next inner object keys are types. And the next inner object is an array of type objects.
+ */
+fetchBatchNew = async function fetchBatchNew(_types, _symbols, _queryParameters) {
+  // https://sandbox.iexapis.com/stable/stock/market/batch?token=Tpk_d8f3a048a7a94866ad08c8b62042b16b&calendar=true&symbols=MSFT%2CAAPL&types=dividends&range=1y
+  const types = _throwIfUndefinedOrNull(_types, `_types`);
+  const symbols = _throwIfUndefinedOrNull(_symbols, `_symbols`);
+  const queryParameters = _queryParameters ?? {};
+  const api = `/stock/market/batch`;
+  const typesParameter = types.join(",");
+  const maxSymbolsAmount = 100;
+  const chunkedSymbolsArray = symbols.chunked(maxSymbolsAmount);
+  var result = {};
+  for (const chunkedSymbols of chunkedSymbolsArray) {
+    const symbolsParameter = chunkedSymbols.join(",");
+    const fullQueryParameters = Object.assign({}, queryParameters);
+    fullQueryParameters.types = typesParameter;
+    fullQueryParameters.symbols = symbolsParameter;
+
+    console.log(`Fetching batch for symbols (${chunkedSymbols.length}) with query '${queryParameters.stringify()}': ${typesParameter} - ${symbolsParameter}`);
+    const response = await fetch(api, fullQueryParameters);
+
+    result = Object.assign(result, response);
+  }
+
+  return result;
+};
+
+// exports();
+//
+// fetchBatchNew(['dividends'], ['AAP','AAPL','PBA'], { 'range': '1y', 'calendar': 'true' })
+
+/**
+ * Requests data from IEX cloud/sandbox depending on an environment. 
+ * It switches between available tokens to evenly distribute the load.
+ * @param {string} _api API to call.
+ * @param {Object} queryParameters Query parameters.
+ * @returns Parsed EJSON object.
+ */
+fetch = async function fetch(_api, queryParameters) {
+  const api = _throwIfUndefinedOrNull(_api, `_api`);
+  var query = "";
+  if (queryParameters) {
+    const querystring = require('querystring');
+    query = `&${querystring.stringify(queryParameters)}`;
+  }
+  
+  const token = tokens[counter % tokens.length];
+  counter++;
+
+  const baseURL = context.values.get("base_url");
+  const url = `${baseURL}${api}?token=${token}${query}`;
+  console.log(`Request with URL: ${url}`);
+  var response = await context.http.get({ url: url });
+
+  // Retry 5 times on retryable errors
+  const delay = 100;
+  for (let step = 0; step < 5 && (response.status == '403 Forbidden' || response.status == '502 Bad Gateway' || response.status == '429 Too Many Requests'); step++) {
+    console.log(`Received '${response.status}' error with text '${response.body.text()}'. Trying to retry after a '${delay}' delay.`);
+    await new Promise(r => setTimeout(r, delay));
+    response = await context.http.get({ url: url });
+  }
+  
+  if (response.status != '200 OK') {
+    logAndThrow(`Response status error '${response.status}' : '${response.body.text()}'`);
+  }
+  
+  const ejsonBody = EJSON.parse(response.body.text());
+  if (ejsonBody.length && ejsonBody.length > 1) {
+    console.logVerbose(`Parse end. Objects count: ${ejsonBody.length}`);
+  } else {
+    console.logVerbose(`Parse end. Object: ${response.body.text()}`);
+  }
+
+  // We need some delay to prevent '429 Too Many Requests' error.
+  // It looks like we can't have more than 8 requests per second so just inserting some safety delay.
+  // await new Promise(r => setTimeout(r, 50));
+  
+  return ejsonBody;
+};
+
+// exports();
+//
+// fetch("/ref-data/symbols")
+// fetch("/stock/JAZZ/company")
+// fetch(`/stock/AAP/chart/1d`, { 
+//     chartByDay: true,
+//     chartCloseOnly: true,
+//     exactDate: exactDateAPIString
+//   })
+
+/**
+ * Default range to fetch.
+ */
+const defaultRange = '6y';
+
+/**
+ * Fetches companies in batch for uniqueIDs.
+ * @param {[string]} arg1 Unique IDs to fetch.
+ * @returns {[Company]} Array of requested objects.
+ */
+ fetchCompanies = async function fetchCompanies(arg1) {
+  const uniqueIDs = _throwIfUndefinedOrNull(arg1, `fetchCompanies arg1`);
+  const [symbols, symbolsDictionary] = getSymbols(uniqueIDs);
+
+  return await fetchBatch(`/company`, symbols)
+    .then(companies => 
+      companies.compactMap(company => 
+        fixCompany(company, symbolsDictionary[company.symbol])
+      )
+    );
+};
+
+/**
+ * Fetches dividends in batch for uniqueIDs.
+ * @param {[string]} arg1 Unique IDs to fetch.
+ * @param {boolean} arg2 Flag to fetch future or past dividends.
+ * @param {string} arg3 Range to fetch.
+ * @returns {[Dividend]} Array of requested objects.
+ */
+fetchDividends = async function fetchDividends(arg1, arg2, arg3) {
+  const uniqueIDs = _throwIfUndefinedOrNull(arg1, `fetchDividends arg1`);
+  const isFuture = _throwIfUndefinedOrNull(arg2, `fetchDividends arg2`);
+  const range = (arg3 === undefined) ? defaultRange : arg3;
+  const [symbols, symbolsDictionary] = getSymbols(uniqueIDs);
+
+  const parameters = { range: range };
+  if (isFuture) {
+    parameters.calendar = 'true';
+  }
+
+  // https://sandbox.iexapis.com/stable/stock/market/batch?token=Tpk_581685f711114d9f9ab06d77506fdd49&types=dividends&symbols=AAPL,AAP&range=6y
+  return await fetchBatchNew(['dividends'], symbols, parameters)
+    .then(symbolsTypesDividends =>
+      symbols
+        .map(symbol => {
+          const symbolsTypesDividend = symbolsTypesDividends[symbol];
+          if (symbolsTypesDividend !== undefined && symbolsTypesDividend) {
+            return _fixDividends(symbolsTypesDividend.dividends, symbolsDictionary[symbol]);
+          } else {
+            return [];
+          }
+        })
+        .flat()
+    );
+};
+
+/**
+ * Fetches previous day prices in batch for uniqueIDs.
+ * @param {[string]} arg1 Unique IDs to fetch.
+ * @returns {[PreviousDayPrice]} Array of requested objects.
+ */
+ fetchPreviousDayPrices = async function fetchPreviousDayPrices(arg1) {
+  const uniqueIDs = _throwIfUndefinedOrNull(arg1, `fetchPreviousDayPrices arg1`);
+  const [symbols, symbolsDictionary] = getSymbols(uniqueIDs);
+
+  // https://sandbox.iexapis.com/stable/stock/market/batch?token=Tpk_581685f711114d9f9ab06d77506fdd49&types=previous&symbols=AAPL,AAP
+  return await fetchBatchNew(['previous'], symbols)
+    .then(symbolsTypesPDPs =>
+      symbols
+        .compactMap(symbol => {
+          const symbolsTypesPDP = symbolsTypesPDPs[symbol];
+          if (symbolsTypesPDP !== undefined && symbolsTypesPDP) {
+            return fixPreviousDayPrice(symbolsTypesPDP.previous, symbolsDictionary[symbol]);
+          } else {
+            return null;
+          }
+        })
+    );
+};
+
+/**
+ * Fetches historical prices in batch for uniqueIDs.
+ * @param {[string]} arg1 Unique IDs to fetch.
+ * @param {string} arg2 Range to fetch.
+ * @returns {[HistoricalPrice]} Array of requested objects.
+ */
+ fetchHistoricalPrices = async function fetchHistoricalPrices(arg1, arg2) {
+  const uniqueIDs = _throwIfUndefinedOrNull(arg1, `fetchHistoricalPrices arg1`);
+  const range = (arg2 === undefined) ? defaultRange : arg2;
+  const [symbols, symbolsDictionary] = getSymbols(uniqueIDs);
+  const parameters = { 
+    range: range,
+    chartCloseOnly: true, 
+    chartInterval: 21 
+  };
+
+  // https://sandbox.iexapis.com/stable/stock/market/batch?token=Tpk_581685f711114d9f9ab06d77506fdd49&types=chart&symbols=AAPL,AAP&range=6y&chartCloseOnly=true&chartInterval=21
+  return await fetchBatchNew(['chart'], symbols, parameters)
+    .then(symbolsTypesHPs =>
+      symbols
+        .map(symbol => {
+          const symbolsTypesHP = symbolsTypesHPs[symbol];
+          if (symbolsTypesHP !== undefined && symbolsTypesHP) {
+            return fixHistoricalPrices(symbolsTypesHP.chart, symbolsDictionary[symbol]);
+          } else {
+            return [];
+          }
+        })
+        .flat()
+    );
+};
+
+/**
+ * Fetches quotes in batch for uniqueIDs.
+ * @param {[string]} arg1 Unique IDs to fetch.
+ * @returns {[Quote]} Array of requested objects.
+ */
+ fetchQuotes = async function fetchQuotes(arg1) {
+  const uniqueIDs = _throwIfUndefinedOrNull(arg1, `fetchQuotes art1`);
+  const [symbols, symbolsDictionary] = getSymbols(uniqueIDs);
+
+  // https://sandbox.iexapis.com/stable/stock/market/batch?token=Tpk_581685f711114d9f9ab06d77506fdd49&types=quote&symbols=AAPL,AAP
+  return await fetchBatchNew(['quote'], symbols)
+    .then(symbolsTypesQuotes =>
+      symbols
+        .compactMap(symbol => {
+          const symbolsTypesQuote = symbolsTypesQuotes[symbol];
+          if (symbolsTypesQuote !== undefined && symbolsTypesQuote) {
+            return fixQuote(symbolsTypesQuote.quote, symbolsDictionary[symbol]);
+          } else {
+            return null;
+          }
+        })
+    );
+};
+
+/**
+ * Fetches splits in batch for uniqueIDs.
+ * @param {[string]} arg1 Unique IDs to fetch.
+ * @param {string} arg2 Range to fetch.
+ * @returns {[Split]} Array of requested objects.
+ */
+ fetchSplits = async function fetchSplits(arg1, arg2) {
+  const uniqueIDs = _throwIfUndefinedOrNull(arg1, `fetchSplits arg1`);
+  const range = (arg2 === undefined) ? defaultRange : arg2;
+  const [symbols, symbolsDictionary] = getSymbols(uniqueIDs);
+  const parameters = { range: range };
+
+  return await fetchBatch(`/splits`, symbols, parameters)
+   .then(splitsArray => 
+      splitsArray
+        .map((splits, i) => 
+          fixSplits(splits, symbolsDictionary[symbols[i]])
+        )
+        .flat()
+   );
+};
+
+/**
+ * Gets symbols and symbols dictionary from unique IDs.
+ * @param {[string]} arg1 Unique IDs.
+ * @returns {[[Symbols], SymbolsDictionary]} Returns array with symbols as the first element and symbols dictionary as the second element.
+ */
+ function getSymbols(arg1) {
+  const uniqueIDs = _throwIfUndefinedOrNull(arg1, `getSymbols arg1`);
+  const symbols = [];
+  const symbolsDictionary = {};
+  for (const uniqueID of uniqueIDs) {
+    const symbol = uniqueID.split(':')[0];
+    symbols.push(symbol);
+    symbolsDictionary[symbol] = uniqueID;
+  }
+
+  return [
+    symbols,
+    symbolsDictionary
+  ];
+};
+
+///////////////////////////////////////////////////////////////////////////////// DATA FIX
+
+/**
+ * Fixes company object so it can be added to MongoDB.
+ * @param {Object} arg1 Company object.
+ * @param {Object} arg2 Unique ID, e.g. 'AAPL:NAS'.
+ * @returns {Object|null} Returns fixed object or `null` if fix wasn't possible.
+ */
+fixCompany = function fixCompany(arg1, arg2) {
+  try {
+    const _company = _throwIfUndefinedOrNull(arg1, `fixCompany arg1`);
+    const uniqueID = _throwIfUndefinedOrNull(arg2, `fixCompany arg2`);
+  
+    console.logVerbose(`Company data fix start`);
+    const company = {};
+    company._id = uniqueID;
+    company._p = "P";
+    company.n = _company.companyName;
+    company.s = _company.industry;
+    company.t = _company.issueType;
+  
+    return company;
+  } catch(error) {
+    return null;
+  }
+};
+
+/**
+ * Fixes previous day price object so it can be added to MongoDB.
+ * @param {Object} arg1 Previous day price object.
+ * @param {Object} arg2 Unique ID, e.g. 'AAPL:NAS'.
+ * @returns {Object|null} Returns fixed object or `null` if fix wasn't possible.
+ */
+fixPreviousDayPrice = function fixPreviousDayPrice(arg1, arg2) {
+  try {
+    const _previousDayPrice = _throwIfUndefinedOrNull(arg1, `fixPreviousDayPrice arg1`);
+    const uniqueID = _throwIfUndefinedOrNull(arg2, `fixPreviousDayPrice arg2`);
+  
+    console.logVerbose(`Previous day price data fix start`);
+    const previousDayPrice = {};
+    previousDayPrice._id = uniqueID;
+    previousDayPrice._p = "P";
+    previousDayPrice.c = BSON.Double(_previousDayPrice.close);
+  
+    return previousDayPrice;
+
+  } catch(error) {
+    return null;
+  }
+};
+
+/**
+ * Fixes quote object so it can be added to MongoDB.
+ * @param {Object} arg1 Quote object.
+ * @param {Object} arg2 Unique ID, e.g. 'AAPL:NAS'.
+ * @returns {Object|null} Returns fixed object or `null` if fix wasn't possible.
+ */
+fixQuote = function fixQuote(arg1, arg2) {
+  try {
+    const _quote = _throwIfUndefinedOrNull(arg1, `fixQuote arg1`);
+    const uniqueID = _throwIfUndefinedOrNull(arg2, `fixQuote arg2`);
+  
+    console.logVerbose(`Previous day price data fix start`);
+    const quote = {};
+    quote._id = uniqueID;
+    quote._p = "P";
+    quote.l = _quote.latestPrice;
+    quote.p = BSON.Double(_quote.peRatio);
+
+    if (_quote.latestUpdate) {
+      const date = new Date(_quote.latestUpdate);
+      if (date && !isNaN(date)) {
+        quote.d = date;
+      } else {
+        quote.d = new Date();
+      }
+    } else {
+      quote.d = new Date();
+    }
+
+    return quote;
+
+  } catch(error) {
+    return null;
+  }
+};
+
+/**
+ * Fixes dividends object so it can be added to MongoDB.
+ * @param {Object} arg1 Dividends object.
+ * @param {Object} arg2 Unique ID, e.g. 'AAPL:NAS'.
+ * @returns {[Object]} Returns fixed objects or an empty array if fix wasn't possible.
+ */
+function _fixDividends(arg1, arg2) {
+  try {
+    const dividends = _throwIfUndefinedOrNull(arg1, `fixDividends arg1`);
+    const uniqueID = _throwIfUndefinedOrNull(arg2, `fixDividends arg2`);
+    if (!dividends.length) { 
+      console.logVerbose(`Dividends are empty for ${uniqueID}. Nothing to fix.`);
+      return []; 
+    }
+  
+    console.logVerbose(`Fixing dividends for ${uniqueID}`);
+    return dividends
+      .filterNull()
+      .map(_dividend => {
+        const dividend = {};
+        dividend._p = "P";
+        dividend._i = uniqueID;
+        dividend.a = BSON.Double(_dividend.amount);
+        dividend.d = getOpenDate(_dividend.declaredDate);
+        dividend.e = getOpenDate(_dividend.exDate);
+        dividend.f = _dividend.frequency;
+        dividend.p = getOpenDate(_dividend.paymentDate);
+    
+        if (_dividend.currency != "USD") {
+          dividend.c = _dividend.currency;
+        }
+    
+        return dividend;
+      });
+
+  } catch(error) {
+    return [];
+  }
+}
+
+fixDividends = _fixDividends;
+
+/**
+ * Fixes splits object so it can be added to MongoDB.
+ * @param {Object} arg1 Splits object.
+ * @param {Object} arg2 Unique ID, e.g. 'AAPL:NAS'.
+ * @returns {[Object]} Returns fixed objects or an empty array if fix wasn't possible.
+ */
+fixSplits = function fixSplits(arg1, arg2) {
+  try {
+    const splits = _throwIfUndefinedOrNull(arg1, `fixSplits arg1`);
+    const uniqueID = _throwIfUndefinedOrNull(arg2, `fixSplits arg2`);
+    if (!splits.length) { 
+      console.logVerbose(`Splits are empty for ${uniqueID}. Nothing to fix.`);
+      return []; 
+    }
+  
+    console.logVerbose(`Fixing splits for ${uniqueID}`);
+    return splits
+      .filterNull()
+      .map(_split => {
+        const split = {};
+        split._p = "P";
+        split._i = uniqueID;
+        split.e = getOpenDate(_split.exDate);
+        split.r = BSON.Double(_split.ratio);
+
+        return split;
+      });
+
+  } catch (error) {
+    return [];
+  }
+};
+
+/**
+ * Fixes historical prices object so it can be added to MongoDB.
+ * @param {Object} arg1 Historical prices object.
+ * @param {Object} arg2 Unique ID, e.g. 'AAPL:NAS'.
+ * @returns {[Object]} Returns fixed objects or an empty array if fix wasn't possible.
+ */
+fixHistoricalPrices = function fixHistoricalPrices(arg1, arg2) {
+  try {
+    const historicalPrices = _throwIfUndefinedOrNull(arg1, `fixHistoricalPrices arg1`);
+    const uniqueID = _throwIfUndefinedOrNull(arg2, `fixHistoricalPrices arg2`);
+    if (!historicalPrices.length) { 
+      console.logVerbose(`Historical prices are empty for ${uniqueID}. Nothing to fix.`);
+      return []; 
+    }
+  
+    console.logVerbose(`Fixing historical prices for ${uniqueID}`);
+    return historicalPrices
+      .filterNull()
+      .map(_historicalPrice => {
+        const historicalPrice = {};
+        historicalPrice._p = "P";
+        historicalPrice._i = uniqueID;
+        historicalPrice.c = BSON.Double(_historicalPrice.close);
+        historicalPrice.d = getCloseDate(_historicalPrice.date);
+
+        return historicalPrice;
+      });
+
+  } catch (error) {
+    return [];
+  }
+};
+
+///////////////////////////////////////////////////////////////////////////////// INITIALIZATION
+
+const zeroPad = (num, places) => String(num).padStart(places, '0');
+
+getDateLogString = function getDateLogString() {
+  const date = new Date();
+  const month = zeroPad(date.getMonth() + 1, 2);
+  const day = zeroPad(date.getDate(), 2);
+  const hours = zeroPad(date.getHours(), 2);
+  const minutes = zeroPad(date.getMinutes(), 2);
+  const seconds = zeroPad(date.getSeconds(), 2);
+  const milliseconds = zeroPad(date.getMilliseconds(), 3);
+  const dateString = `${month}.${day} ${hours}:${minutes}:${seconds}.${milliseconds} |`;
+  
+  return dateString;
+};
+
+exports = function() {
+  if (typeof db === 'undefined') {
+    db = context.services.get("mongodb-atlas").db("divtracker");
+  }
+
+  /** Tokens that are set deneding on an environment */
+  if (typeof tokens === 'undefined') {
+    tokens = context.values.get("tokens");
+  }
+
+  /** Initial token is chosen randomly and then it increase by 1 to diverse between tokens */
+  if (typeof counter === 'undefined') {
+    counter = Math.floor(Math.random() * tokens.length);
+  }
+
+  // Adjusting console log
+  if (console.logCopy && console.errorCopy) { return; }
+  
+  if (!console.logCopy) {
+    console.logCopy = console.log.bind(console);
+    console.log = function(data) {
+      this.logCopy(getDateLogString(), data);
+    };
+  }
+  
+  if (!console.errorCopy) {
+    console.errorCopy = console.error.bind(console);
+    console.error = function(data) {
+      const errorLogPrefix = `${getDateLogString()} [ ** ERRROR ** ]`;
+      this.logCopy(errorLogPrefix, data);
+    };
+  }
+  
+  if (!console.logVerbose) {
+    console.logVerbose = function(data) {
+      // this.logCopy(getDateLogString(), data);
+    };
+  }
+  
+  console.log("Adjusted console output format");
+};

@@ -1,0 +1,8 @@
+{
+    "name": "dividendsUpdateDaily",
+    "type": "SCHEDULED",
+    "config": {
+        "schedule": "1 9 * * *"
+    },
+    "disabled": false
+}

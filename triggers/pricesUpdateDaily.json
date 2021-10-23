@@ -1,0 +1,8 @@
+{
+    "name": "pricesUpdateDaily",
+    "type": "SCHEDULED",
+    "config": {
+        "schedule": "5 9 * * *"
+    },
+    "disabled": false
+}

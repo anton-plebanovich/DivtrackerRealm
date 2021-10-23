@@ -1,0 +1,5 @@
+{
+    "name": "base_url",
+    "value": "https://sandbox.iexapis.com/stable",
+    "from_secret": false
+}

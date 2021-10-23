@@ -1,0 +1,27 @@
+{
+    "properties": {
+        "_id": {
+            "bsonType": "string"
+        },
+        "_p": {
+            "bsonType": "string"
+        },
+        "e": {
+            "bsonType": "string"
+        },
+        "n": {
+            "bsonType": "string"
+        },
+        "s": {
+            "bsonType": "string"
+        }
+    },
+    "required": [
+        "_id",
+        "_p",
+        "e",
+        "n",
+        "s"
+    ],
+    "title": "SymbolRealmModel"
+}

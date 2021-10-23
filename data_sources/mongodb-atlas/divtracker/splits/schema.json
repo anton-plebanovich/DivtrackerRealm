@@ -1,0 +1,27 @@
+{
+    "properties": {
+        "_i": {
+            "bsonType": "string"
+        },
+        "_id": {
+            "bsonType": "objectId"
+        },
+        "_p": {
+            "bsonType": "string"
+        },
+        "e": {
+            "bsonType": "date"
+        },
+        "r": {
+            "bsonType": "double"
+        }
+    },
+    "required": [
+        "_id",
+        "_i",
+        "_p",
+        "e",
+        "r"
+    ],
+    "title": "SplitRealmModel"
+}

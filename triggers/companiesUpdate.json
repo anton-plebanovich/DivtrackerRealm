@@ -1,0 +1,8 @@
+{
+    "name": "companiesUpdate",
+    "type": "SCHEDULED",
+    "config": {
+        "schedule": "1 5 1 * *"
+    },
+    "disabled": false
+}

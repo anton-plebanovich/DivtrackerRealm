@@ -1,0 +1,18 @@
+{
+    "name": "loadMissingDataOnInsert",
+    "type": "DATABASE",
+    "config": {
+        "operation_types": [
+            "INSERT"
+        ],
+        "database": "divtracker",
+        "collection": "transactions",
+        "service_name": "mongodb-atlas",
+        "match": {},
+        "project": {},
+        "full_document": true,
+        "full_document_before_change": false,
+        "unordered": false
+    },
+    "disabled": false
+}

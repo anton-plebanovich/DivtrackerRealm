@@ -1,0 +1,49 @@
+{
+    "properties": {
+        "_id": {
+            "bsonType": "objectId"
+        },
+        "_p": {
+            "bsonType": "string"
+        },
+        "c": {
+            "bsonType": "double"
+        },
+        "ce": {
+            "bsonType": "bool"
+        },
+        "g": {
+            "bsonType": "int"
+        },
+        "t": {
+            "bsonType": "double"
+        },
+        "te": {
+            "bsonType": "bool"
+        },
+        "ts": {
+            "bsonType": "array",
+            "items": {
+                "bsonType": "object",
+                "properties": {
+                    "i": {
+                        "bsonType": "string"
+                    },
+                    "t": {
+                        "bsonType": "double"
+                    }
+                },
+                "required": [
+                    "i",
+                    "t"
+                ],
+                "title": "TaxesRealmModel"
+            }
+        }
+    },
+    "required": [
+        "_id",
+        "_p"
+    ],
+    "title": "SettingsRealmModel"
+}

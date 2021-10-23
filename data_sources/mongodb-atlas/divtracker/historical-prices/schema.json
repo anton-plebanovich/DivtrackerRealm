@@ -1,0 +1,27 @@
+{
+    "properties": {
+        "_i": {
+            "bsonType": "string"
+        },
+        "_id": {
+            "bsonType": "objectId"
+        },
+        "_p": {
+            "bsonType": "string"
+        },
+        "c": {
+            "bsonType": "double"
+        },
+        "d": {
+            "bsonType": "date"
+        }
+    },
+    "required": [
+        "_id",
+        "_p",
+        "_i",
+        "c",
+        "d"
+    ],
+    "title": "HistoricalPriceRealmModel"
+}

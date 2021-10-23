@@ -1,0 +1,15 @@
+{
+    "name": "quotesUpdate",
+    "type": "SCHEDULED",
+    "config": {
+        "schedule": "17 13,17 * * *"
+    },
+    "disabled": false,
+    "event_processors": {
+        "FUNCTION": {
+            "config": {
+                "function_name": "quotesUpdate"
+            }
+        }
+    }
+}

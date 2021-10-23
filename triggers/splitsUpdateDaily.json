@@ -1,0 +1,8 @@
+{
+    "name": "splitsUpdateDaily",
+    "type": "SCHEDULED",
+    "config": {
+        "schedule": "3 9 * * *"
+    },
+    "disabled": false
+}
