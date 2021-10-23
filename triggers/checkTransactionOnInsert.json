@@ -14,5 +14,12 @@
         "full_document_before_change": false,
         "unordered": false
     },
-    "disabled": false
+    "disabled": false,
+    "event_processors": {
+        "FUNCTION": {
+            "config": {
+                "function_name": "checkTransactionForChangeEvent"
+            }
+        }
+    }
 }

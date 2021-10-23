@@ -4,5 +4,12 @@
     "config": {
         "schedule": "1 5 1 * *"
     },
-    "disabled": false
+    "disabled": false,
+    "event_processors": {
+        "FUNCTION": {
+            "config": {
+                "function_name": "companiesUpdate"
+            }
+        }
+    }
 }
