@@ -1,4 +1,5 @@
 {
+    "id": "608e7d2ad364e0535144956f",
     "name": "splitsUpdateDaily",
     "type": "SCHEDULED",
     "config": {

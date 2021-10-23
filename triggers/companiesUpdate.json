@@ -1,4 +1,5 @@
 {
+    "id": "607b1ff061a58bf8b57d8b44",
     "name": "companiesUpdate",
     "type": "SCHEDULED",
     "config": {

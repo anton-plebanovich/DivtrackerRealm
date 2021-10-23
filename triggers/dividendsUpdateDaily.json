@@ -1,4 +1,5 @@
 {
+    "id": "607c71cdae6da122a60b012f",
     "name": "dividendsUpdateDaily",
     "type": "SCHEDULED",
     "config": {
