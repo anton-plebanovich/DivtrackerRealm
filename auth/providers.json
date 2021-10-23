@@ -22,7 +22,7 @@
         "type": "local-userpass",
         "config": {
             "emailConfirmationUrl": "https://divtrackersandbox-zlomz.mongodbstitch.com/email-confirmation.html",
-            "resetPasswordUrl": "https://divtrackersandbox-zlomz.mongodbstitch.com/reset-password.html",
+            "resetPasswordUrl": "https://divtrackersandbox-zlomz.mongodbstitch.com/reset-password.html"
         },
         "disabled": false
     },
