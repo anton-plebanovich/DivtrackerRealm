@@ -1,8 +1,16 @@
 {
+    "id": "607d63f7687c4dca43dc5a13",
     "name": "pricesUpdateDaily",
     "type": "SCHEDULED",
     "config": {
         "schedule": "5 9 * * *"
     },
-    "disabled": false
+    "disabled": false,
+    "event_processors": {
+        "FUNCTION": {
+            "config": {
+                "function_name": "pricesUpdate"
+            }
+        }
+    }
 }

@@ -1,8 +1,16 @@
 {
+    "id": "607b1ff061a58bf8b57d8b44",
     "name": "companiesUpdate",
     "type": "SCHEDULED",
     "config": {
         "schedule": "1 5 1 * *"
     },
-    "disabled": false
+    "disabled": false,
+    "event_processors": {
+        "FUNCTION": {
+            "config": {
+                "function_name": "companiesUpdate"
+            }
+        }
+    }
 }
