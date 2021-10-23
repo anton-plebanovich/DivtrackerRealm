@@ -1,0 +1,16 @@
+{
+    "id": "61749753c9239c740a99583f",
+    "name": "checkTransactionsDaily",
+    "type": "SCHEDULED",
+    "config": {
+        "schedule": "0 9 * * *"
+    },
+    "disabled": false,
+    "event_processors": {
+        "FUNCTION": {
+            "config": {
+                "function_name": "checkTransactions"
+            }
+        }
+    }
+}

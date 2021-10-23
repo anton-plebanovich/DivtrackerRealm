@@ -21,7 +21,7 @@
   const errors = [];
   for (const transaction of transactions) {
     try {
-      checkTransaction(transaction, validExchanges, validSymbols)
+      checkTransaction(transaction, validExchanges, validSymbols);
     } catch(error) {
       errors.push(error);
     }
