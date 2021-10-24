@@ -75,8 +75,7 @@
     },
     {
         "name": "symbolsUpdate",
-        "private": true,
-        "can_evaluate": {}
+        "private": true
     },
     {
         "name": "utils",
