@@ -1,15 +1,15 @@
 {
-    "id": "608d0cf9f77a7d27cdf70800",
-    "name": "splitsUpdateDaily",
+    "id": "608d0cf9f77a7d27cdf70200",
+    "name": "checkTransactionsDaily",
     "type": "SCHEDULED",
     "config": {
-        "schedule": "3 9 * * *"
+        "schedule": "0 9 * * *"
     },
     "disabled": false,
     "event_processors": {
         "FUNCTION": {
             "config": {
-                "function_name": "splitsUpdate"
+                "function_name": "checkTransactions"
             }
         }
     }
