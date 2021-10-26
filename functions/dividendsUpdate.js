@@ -35,13 +35,11 @@ exports = async function() {
   // Future dividends update.
   // We remove symbols that already have future dividends and update only those that don't.
   const upToDateUniqueIDs = await collection.distinct("_i", { "e" : { $gte : new Date() }});
-  const upToDateUniqueSymbols = upToDateUniqueIDs.map(x => x.split(":")[0]);
-  
   const uniqueIDsToUpdate = [...uniqueIDs];
-  uniqueIDsToUpdate.removeContentsOf(upToDateUniqueSymbols);
+  uniqueIDsToUpdate.removeContentsOf(upToDateUniqueIDs);
   console.log(`Updating future dividends (${uniqueIDsToUpdate.length}) for '${uniqueIDsToUpdate.stringify()}' symbols`);
 
-  const futureDividends = fetchDividends(uniqueIDsToUpdate, true);
+  const futureDividends = await fetchDividends(uniqueIDsToUpdate, true);
   if (futureDividends.length) {
     const futureDividendUniqueIDs = futureDividends.map(x => x._i);
     console.log(`Inserting missed future dividends (${futureDividends.length}) for uniqueIDs '${futureDividendUniqueIDs.stringify()}'`);
@@ -90,7 +88,7 @@ exports = async function() {
   const days = 3;
   console.log(`Fetching past dividends for the last ${days} days`);
   const daysParam = `${days}d`;
-  const pastDividends = fetchDividends(uniqueIDs, false, daysParam);
+  const pastDividends = await fetchDividends(uniqueIDs, false, daysParam);
   if (pastDividends.length) {
     const pastDividendUniqueIDs = pastDividends.map(x => x._i);
     console.log(`Inserting missed past dividends (${pastDividends.length}) for uniqueIDs '${pastDividendUniqueIDs.stringify()}'`);
