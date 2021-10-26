@@ -301,7 +301,8 @@ getOpenDate = function getOpenDate(arg1) {
 // getCloseDate("2020-03-27");
 // getOpenDate("2020-03-27");
 
-/** Computes and sets `distinctSymbols` and `distinctSymbolsDictionary` global variables.
+/** 
+ * Computes and sets `distinctSymbols`, `uniqueIDs` and `distinctSymbolsDictionary` global variables.
  * `distinctSymbols` array is sorted.
 */
 computeDistinctSymbols = async function computeDistinctSymbols() {
@@ -333,21 +334,22 @@ computeDistinctSymbols = async function computeDistinctSymbols() {
   console.log(`Distinct transaction IDs (${distinctTransactionIDs.length}): ${distinctTransactionIDs.stringify()}`);
 
   // Compute distinct IDs using both sources
-  var distinctIDs = companiesDistinctIDs
+  var _uniqueIDs = companiesDistinctIDs
     .concat(distinctTransactionIDs)
     .distinct();
 
   // Filter non-existing
   const symbolsCollection = db.collection("symbols");
-  const allSymbols = await symbolsCollection.distinct("_id", { _id: { $in: distinctIDs } });
-  distinctIDs = distinctIDs.filter(id => allSymbols.includes(id));
+  const allSymbols = await symbolsCollection.distinct("_id", { _id: { $in: _uniqueIDs } });
+  _uniqueIDs = _uniqueIDs.filter(id => allSymbols.includes(id));
+  uniqueIDs = _uniqueIDs;
   
   distinctSymbols = [];
   distinctSymbolsDictionary = {};
-  for (const id of distinctIDs) {
-    const symbol = id.split(':')[0];
+  for (const uniqueID of uniqueIDs) {
+    const symbol = uniqueID.split(':')[0];
     distinctSymbols.push(symbol);
-    distinctSymbolsDictionary[symbol] = id;
+    distinctSymbolsDictionary[symbol] = uniqueID;
   }
 
   distinctSymbols.sort();

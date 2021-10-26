@@ -12,12 +12,12 @@ exports = async function() {
   context.functions.execute("utils");
   await computeDistinctSymbols();
 
-  if (distinctSymbols.length <= 0) {
-    console.log(`No symbols. Skipping update.`);
+  if (uniqueIDs.length <= 0) {
+    console.log(`No uniqueIDs. Skipping update.`);
     return;
   }
 
-  const quotes = await fetchQuotes(distinctSymbols);
+  const quotes = await fetchQuotes(uniqueIDs);
   if (quotes.length) {
     console.log(`Updating changed`);
 
@@ -59,6 +59,6 @@ exports = async function() {
     console.log(`SUCCESS`);
 
   } else {
-    console.error(`Quotes are empty for symbols '${distinctSymbols}'`);
+    console.error(`Quotes are empty for symbols '${distinctSymbols.stringify()}'`);
   }
 };
