@@ -202,15 +202,15 @@ checkExecutionTimeout = function checkExecutionTimeout() {
  * @returns {object} Passed object if it's defined and not `null`.
  */
 function _throwIfUndefinedOrNull(object, message) {
-  if (object === undefined) {
-    if (message !== undefined && message) {
+  if (typeof object === 'undefined') {
+    if (typeof message !== 'undefined' && message.length) {
       logAndThrow(`Object undefiled: ${message}`);
     } else {
       logAndThrow(`Object undefiled`);
     }
     
   } else if (object === null) {
-    if (message !== undefined && message) {
+    if (typeof message !== 'undefined' && message.length) {
       logAndThrow(`Object null: ${message}`);
     } else {
       logAndThrow(`Object null`);
@@ -377,6 +377,9 @@ computeDistinctSymbols = async function computeDistinctSymbols() {
 // pk_462eaf9d7d94460a8751601cbc4c39e8 - nohopenotop+4 - sk_48a4856132604b47a77d96e64c1db39d
 // pk_4e48fb2bb54f433ebbf42cf5bff3404f - nohopenotop+5 - sk_8a83efa05f144153a570966b4b4cea06
 
+// --- Premium
+// pk_01ef04dd60b5404b81d9cc47b2388176 - trackerdividend@gmail.com - sk_de6f102262874cfab3d9a83a6980e1db - 3ff51380e7f3a36ff4e0915e9d781878
+
 //////////////////////////////////// Example calls
 
 // Fetch the last historical price record for the given period for the AAPL symbol
@@ -406,7 +409,7 @@ fetchBatch = async function fetchBatch(_api, _symbols, _queryParameters) {
     fullQueryParameters.symbols = symbolsParameter;
 
     console.log(`Fetching batch for symbols (${chunkedSymbols.length}) with query '${queryParameters.stringify()}': ${symbolsParameter}`);
-    const response = await fetch(fullAPI, fullQueryParameters);
+    const response = await _fetch(fullAPI, fullQueryParameters);
 
     result = result.concat(response);
   }
@@ -445,7 +448,7 @@ fetchBatchNew = async function fetchBatchNew(_types, _symbols, _queryParameters)
     fullQueryParameters.symbols = symbolsParameter;
 
     console.log(`Fetching batch for symbols (${chunkedSymbols.length}) with query '${queryParameters.stringify()}': ${typesParameter} - ${symbolsParameter}`);
-    const response = await fetch(api, fullQueryParameters);
+    const response = await _fetch(api, fullQueryParameters);
 
     result = Object.assign(result, response);
   }
@@ -464,7 +467,7 @@ fetchBatchNew = async function fetchBatchNew(_types, _symbols, _queryParameters)
  * @param {Object} queryParameters Query parameters.
  * @returns Parsed EJSON object.
  */
-fetch = async function fetch(_api, queryParameters) {
+async function _fetch(_api, queryParameters) {
   const api = _throwIfUndefinedOrNull(_api, `_api`);
   var query = "";
   if (queryParameters) {
@@ -472,7 +475,8 @@ fetch = async function fetch(_api, queryParameters) {
     query = `&${querystring.stringify(queryParameters)}`;
   }
   
-  const token = tokens[counter % tokens.length];
+  // Use premium token if defined.
+  const token = typeof premiumToken === 'undefined' ? tokens[counter % tokens.length] : premiumToken;
   counter++;
 
   const baseURL = context.values.get("base_url");
@@ -505,6 +509,8 @@ fetch = async function fetch(_api, queryParameters) {
   
   return ejsonBody;
 };
+
+fetch = _fetch;
 
 // exports();
 //
@@ -548,7 +554,7 @@ const defaultRange = '6y';
 fetchDividends = async function fetchDividends(arg1, arg2, arg3) {
   const uniqueIDs = _throwIfUndefinedOrNull(arg1, `fetchDividends arg1`);
   const isFuture = _throwIfUndefinedOrNull(arg2, `fetchDividends arg2`);
-  const range = (arg3 === undefined) ? defaultRange : arg3;
+  const range = (typeof arg3 === 'undefined') ? defaultRange : arg3;
   const [symbols, symbolsDictionary] = getSymbols(uniqueIDs);
 
   const parameters = { range: range };
@@ -562,7 +568,7 @@ fetchDividends = async function fetchDividends(arg1, arg2, arg3) {
       symbols
         .map(symbol => {
           const symbolsTypesDividend = symbolsTypesDividends[symbol];
-          if (symbolsTypesDividend !== undefined && symbolsTypesDividend) {
+          if (typeof symbolsTypesDividend !== 'undefined' && symbolsTypesDividend) {
             return _fixDividends(symbolsTypesDividend.dividends, symbolsDictionary[symbol]);
           } else {
             return [];
@@ -587,7 +593,7 @@ fetchDividends = async function fetchDividends(arg1, arg2, arg3) {
       symbols
         .compactMap(symbol => {
           const symbolsTypesPDP = symbolsTypesPDPs[symbol];
-          if (symbolsTypesPDP !== undefined && symbolsTypesPDP) {
+          if (typeof symbolsTypesPDP !== 'undefined' && symbolsTypesPDP) {
             return fixPreviousDayPrice(symbolsTypesPDP.previous, symbolsDictionary[symbol]);
           } else {
             return null;
@@ -604,7 +610,7 @@ fetchDividends = async function fetchDividends(arg1, arg2, arg3) {
  */
  fetchHistoricalPrices = async function fetchHistoricalPrices(arg1, arg2) {
   const uniqueIDs = _throwIfUndefinedOrNull(arg1, `fetchHistoricalPrices arg1`);
-  const range = (arg2 === undefined) ? defaultRange : arg2;
+  const range = (typeof arg2 === 'undefined') ? defaultRange : arg2;
   const [symbols, symbolsDictionary] = getSymbols(uniqueIDs);
   const parameters = { 
     range: range,
@@ -618,7 +624,7 @@ fetchDividends = async function fetchDividends(arg1, arg2, arg3) {
       symbols
         .map(symbol => {
           const symbolsTypesHP = symbolsTypesHPs[symbol];
-          if (symbolsTypesHP !== undefined && symbolsTypesHP) {
+          if (typeof symbolsTypesHP !== 'undefined' && symbolsTypesHP) {
             return fixHistoricalPrices(symbolsTypesHP.chart, symbolsDictionary[symbol]);
           } else {
             return [];
@@ -643,7 +649,7 @@ fetchDividends = async function fetchDividends(arg1, arg2, arg3) {
       symbols
         .compactMap(symbol => {
           const symbolsTypesQuote = symbolsTypesQuotes[symbol];
-          if (symbolsTypesQuote !== undefined && symbolsTypesQuote) {
+          if (typeof symbolsTypesQuote !== 'undefined' && symbolsTypesQuote) {
             return fixQuote(symbolsTypesQuote.quote, symbolsDictionary[symbol]);
           } else {
             return null;
@@ -660,7 +666,7 @@ fetchDividends = async function fetchDividends(arg1, arg2, arg3) {
  */
  fetchSplits = async function fetchSplits(arg1, arg2) {
   const uniqueIDs = _throwIfUndefinedOrNull(arg1, `fetchSplits arg1`);
-  const range = (arg2 === undefined) ? defaultRange : arg2;
+  const range = (typeof arg2 === 'undefined') ? defaultRange : arg2;
   const [symbols, symbolsDictionary] = getSymbols(uniqueIDs);
   const parameters = { range: range };
 
@@ -910,6 +916,11 @@ getDateLogString = function getDateLogString() {
 exports = function() {
   if (typeof db === 'undefined') {
     db = context.services.get("mongodb-atlas").db("divtracker");
+  }
+
+  /** Premium token. Will be used for all API calls if defined. */
+  if (typeof premiumToken === 'undefined') {
+    premiumToken = context.values.get("premium-token");
   }
 
   /** Tokens that are set deneding on an environment */
