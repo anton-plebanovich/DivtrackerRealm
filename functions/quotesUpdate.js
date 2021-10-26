@@ -37,7 +37,7 @@ exports = async function() {
         if (quote.isEqual(existingQuote)) {
           console.logVerbose(`Skipping up to date quote: ${quote._id}`);
         } else {
-          console.log(`Updating quote: ${quote._id}`);
+          console.logVerbose(`Updating quote: ${quote._id}`);
           bulk.find({ _id: existingQuote._id }).replaceOne(quote);
           hasChanges = true;
         }

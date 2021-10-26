@@ -570,7 +570,7 @@ fetchDividends = async function fetchDividends(arg1, arg2, arg3) {
       symbols
         .map(symbol => {
           const symbolsTypesDividend = symbolsTypesDividends[symbol];
-          if (typeof symbolsTypesDividend !== 'undefined' && symbolsTypesDividend) {
+          if (typeof symbolsTypesDividend != null && symbolsTypesDividend.dividends) {
             return _fixDividends(symbolsTypesDividend.dividends, symbolsDictionary[symbol]);
           } else {
             return [];
@@ -595,9 +595,10 @@ fetchDividends = async function fetchDividends(arg1, arg2, arg3) {
       symbols
         .compactMap(symbol => {
           const symbolsTypesPDP = symbolsTypesPDPs[symbol];
-          if (typeof symbolsTypesPDP !== 'undefined' && symbolsTypesPDP) {
+          if (symbolsTypesPDP != null && symbolsTypesPDP.previous) {
             return fixPreviousDayPrice(symbolsTypesPDP.previous, symbolsDictionary[symbol]);
           } else {
+            // {"AACOU":{"previous":null}}
             return null;
           }
         })
@@ -626,7 +627,7 @@ fetchDividends = async function fetchDividends(arg1, arg2, arg3) {
       symbols
         .map(symbol => {
           const symbolsTypesHP = symbolsTypesHPs[symbol];
-          if (typeof symbolsTypesHP !== 'undefined' && symbolsTypesHP) {
+          if (typeof symbolsTypesHP != null && symbolsTypesHP.chart) {
             return fixHistoricalPrices(symbolsTypesHP.chart, symbolsDictionary[symbol]);
           } else {
             return [];
@@ -651,7 +652,7 @@ fetchDividends = async function fetchDividends(arg1, arg2, arg3) {
       symbols
         .compactMap(symbol => {
           const symbolsTypesQuote = symbolsTypesQuotes[symbol];
-          if (typeof symbolsTypesQuote !== 'undefined' && symbolsTypesQuote) {
+          if (typeof symbolsTypesQuote != null && symbolsTypesQuote.quote) {
             return fixQuote(symbolsTypesQuote.quote, symbolsDictionary[symbol]);
           } else {
             return null;
