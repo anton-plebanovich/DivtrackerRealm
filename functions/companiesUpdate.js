@@ -12,13 +12,13 @@ exports = async function() {
   context.functions.execute("utils");
   await computeDistinctSymbols();
 
-  if (distinctSymbols.length <= 0) {
-    console.log(`No symbols. Skipping update.`);
+  if (uniqueIDs.length <= 0) {
+    console.log(`No uniqueIDs. Skipping update.`);
     return;
   }
 
   const companiesCollection = db.collection("companies");
-  const companies = await fetchCompanies(distinctSymbols);
+  const companies = await fetchCompanies(uniqueIDs);
   if (companies.length) {
     console.log(`Updating changed`);
 

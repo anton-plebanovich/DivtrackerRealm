@@ -17,13 +17,13 @@
   context.functions.execute("utils");
   await computeDistinctSymbols();
 
-  if (distinctSymbols.length <= 0) {
-    console.log(`No symbols. Skipping update.`);
+  if (uniqueIDs.length <= 0) {
+    console.log(`No uniqueIDs. Skipping update.`);
     return;
   }
 
   // Update previous day prices
-  const previousDayPrices = await fetchPreviousDayPrices(distinctSymbols);
+  const previousDayPrices = await fetchPreviousDayPrices(uniqueIDs);
   const previousDayPricesCollection = db.collection("previous-day-prices");
   const previousDayPricesBulk = previousDayPricesCollection.initializeUnorderedBulkOp();
 

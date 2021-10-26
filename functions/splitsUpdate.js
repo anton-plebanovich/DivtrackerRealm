@@ -12,14 +12,14 @@ exports = async function() {
   await computeDistinctSymbols();
   const days = 3;
 
-  if (distinctSymbols.length <= 0) {
-    console.log(`No symbols. Skipping update.`);
+  if (uniqueIDs.length <= 0) {
+    console.log(`No uniqueIDs. Skipping update.`);
     return;
   }
 
   console.log(`Fetching splits for the last ${days} days`);
   const daysParam = `${days}d`;
-  const splits = await fetchSplits(distinctSymbols, daysParam);
+  const splits = await fetchSplits(uniqueIDs, daysParam);
   if (splits.length) {
     console.log(`Inserting missed`);
 
@@ -41,6 +41,6 @@ exports = async function() {
     console.log(`SUCCESS`);
 
   } else {
-    console.log(`Splits are empty for symbols '${distinctSymbols}'`);
+    console.log(`Splits are empty for symbols '${distinctSymbols.stringify()}'`);
   }
 };
