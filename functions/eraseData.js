@@ -33,7 +33,7 @@ exports = function() {
   // db.collection('historical-prices').deleteMany( { _i: { $in: symbols } } );
   // db.collection('previous-day-prices').deleteMany( { _id: { $in: symbols } } );
   // db.collection('splits').deleteMany( { _i: { $in: symbols } } );
-  // db.collection('quotes').deleteMany( { _i: { $in: symbols } } );
+  // db.collection('quotes').deleteMany( { _id: { $in: symbols } } );
   
   /// Delete using date
   // db.collection('historical-prices').deleteMany( { d: { $gt: new Date("2021-10-02") } } );
