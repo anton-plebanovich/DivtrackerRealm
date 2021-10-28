@@ -1,6 +1,8 @@
 
 // addTransactions.js
 
+// https://docs.mongodb.com/manual/reference/method/Bulk.find.upsert/
+
 exports = async function(transactions) {
   context.functions.execute("utils");
   const userID = context.user.id;
@@ -24,12 +26,14 @@ async function loadMissingData(transactions) {
     .map(x => `${x.s}:${x.e}`)
     .distinct();
 
-  await loadMissingCompanies(uniqueIDs);
-  await loadMissingDividends(uniqueIDs);
-  await loadMissingPreviousDayPrices(uniqueIDs);
-  await loadMissingHistoricalPrices(uniqueIDs);
-  await loadMissingQuotes(uniqueIDs);
-  await loadMissingSplits(uniqueIDs);
+  return Promise.all([
+    loadMissingCompanies(uniqueIDs),
+    loadMissingDividends(uniqueIDs),
+    loadMissingHistoricalPrices(uniqueIDs),
+    loadMissingPreviousDayPrices(uniqueIDs),
+    loadMissingQuotes(uniqueIDs),
+    loadMissingSplits(uniqueIDs)
+  ]);
 }
 
 //////////////////////////////////////////////////////////////////// Companies
@@ -47,13 +51,20 @@ async function loadMissingCompanies(uniqueIDs) {
     return;
   }
   
-  const companies = await fetchCompanies(uniqueIDs);
+  const companies = await fetchCompanies(missingIDs);
   if (!companies.length) {
     console.log(`No companies. Skipping insert.`);
     return;
   }
 
-  return collection.insertMany(companies);
+  const bulk = collection.initializeUnorderedBulkOp();
+  for (const company of companies) {
+    const query = { _id: company._id };
+    const update = { $setOnInsert: company };
+    bulk.find(query).upsert().updateOne(update);
+  }
+  
+  return bulk.execute();
 }
 
 //////////////////////////////////////////////////////////////////// Dividends
@@ -79,31 +90,14 @@ async function loadMissingDividends(uniqueIDs) {
     return;
   }
 
-  return collection.insertMany(dividends);
-}
-
-//////////////////////////////////////////////////////////////////// Previous Day Prices
-
-/**
- * @param {[string]} uniqueIDs Unique IDs to check.
- */
-async function loadMissingPreviousDayPrices(uniqueIDs) {
-  const collection = db.collection('previous-day-prices');
-  const missingIDs = await getMissingIDs(collection, '_id', uniqueIDs);
-  if (missingIDs.length) {
-    console.log(`Found missing previous day prices for IDs: ${missingIDs}`);
-  } else {
-    console.log(`No missing previous day prices. Skipping loading.`);
-    return;
+  const bulk = collection.initializeUnorderedBulkOp();
+  for (const dividend of dividends) {
+    const query = { _i: dividend._i, e: dividend.e, a: dividend.a, f: dividend.f };
+    const update = { $setOnInsert: dividend };
+    bulk.find(query).upsert().updateOne(update);
   }
   
-  const previousDayPrices = await fetchPreviousDayPrices(missingIDs);
-  if (!previousDayPrices.length) {
-    console.log(`No previous day prices. Skipping insert.`);
-    return;
-  }
-
-  return collection.insertMany(previousDayPrices);
+  return bulk.execute();
 }
 
 //////////////////////////////////////////////////////////////////// Historical Prices
@@ -127,7 +121,45 @@ async function loadMissingHistoricalPrices(uniqueIDs) {
     return;
   }
 
-  return collection.insertMany(historicalPrices);
+  const bulk = collection.initializeUnorderedBulkOp();
+  for (const historicalPrice of historicalPrices) {
+    const query = { _i: historicalPrice._i, d: historicalPrice.d };
+    const update = { $setOnInsert: historicalPrice };
+    bulk.find(query).upsert().updateOne(update);
+  }
+  
+  return bulk.execute();
+}
+
+//////////////////////////////////////////////////////////////////// Previous Day Prices
+
+/**
+ * @param {[string]} uniqueIDs Unique IDs to check.
+ */
+async function loadMissingPreviousDayPrices(uniqueIDs) {
+  const collection = db.collection('previous-day-prices');
+  const missingIDs = await getMissingIDs(collection, '_id', uniqueIDs);
+  if (missingIDs.length) {
+    console.log(`Found missing previous day prices for IDs: ${missingIDs}`);
+  } else {
+    console.log(`No missing previous day prices. Skipping loading.`);
+    return;
+  }
+  
+  const previousDayPrices = await fetchPreviousDayPrices(missingIDs);
+  if (!previousDayPrices.length) {
+    console.log(`No previous day prices. Skipping insert.`);
+    return;
+  }
+
+  const bulk = collection.initializeUnorderedBulkOp();
+  for (const previousDayPrice of previousDayPrices) {
+    const query = { _id: previousDayPrice._id };
+    const update = { $setOnInsert: previousDayPrice };
+    bulk.find(query).upsert().updateOne(update);
+  }
+  
+  return bulk.execute();
 }
 
 //////////////////////////////////////////////////////////////////// Quote
@@ -151,7 +183,14 @@ async function loadMissingQuotes(uniqueIDs) {
     return;
   }
 
-  return collection.insertMany(quotes);
+  const bulk = collection.initializeUnorderedBulkOp();
+  for (const quote of quotes) {
+    const query = { _id: quote._id };
+    const update = { $setOnInsert: quote };
+    bulk.find(query).upsert().updateOne(update);
+  }
+  
+  return bulk.execute();
 }
 
 //////////////////////////////////////////////////////////////////// Splits
@@ -175,14 +214,20 @@ async function loadMissingSplits(uniqueIDs) {
     return;
   }
 
-  return collection.insertMany(splits);
+  const bulk = collection.initializeUnorderedBulkOp();
+  for (const split of splits) {
+    const query = { _i: split._i, e: split.e };
+    const update = { $setOnInsert: split };
+    bulk.find(query).upsert().updateOne(update);
+  }
+  
+  return bulk.execute();
 }
 
 //////////////////////////////////////////////////////////////////// Helpers
 
 /**
- * Maps array and filters `null` elements.
- * @param {[string]} uniqueIDs Unique IDs to check.
+ * Returns only missing IDs from `uniqueIDs`.
  */
 async function getMissingIDs(collection, fieldName, uniqueIDs) {
   const existingIDs = await collection.distinct(fieldName, { [fieldName]: { $in: uniqueIDs } });

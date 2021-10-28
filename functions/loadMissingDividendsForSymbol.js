@@ -5,6 +5,7 @@
 // https://docs.mongodb.com/manual/reference/method/js-bulk/
 // https://docs.mongodb.com/realm/mongodb/
 // https://docs.mongodb.com/realm/mongodb/bulk-write/
+// https://docs.mongodb.com/realm/mongodb/actions/collection.insertMany/
 // https://docs.mongodb.com/realm/functions/json-and-bson/
 // https://docs.meteor.com/api/ejson.html
 
