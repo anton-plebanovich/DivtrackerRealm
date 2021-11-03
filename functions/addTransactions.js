@@ -7,8 +7,12 @@ exports = async function(transactions) {
   context.functions.execute("utils");
 
   throwIfUndefinedOrNull(transactions, "Transactions parameter is absent");
+  if(Object.prototype.toString.call(transactions) !== '[object Array]') {
+    throw `First argument should be an array of transactions. Instead, received: ${transactions.stringify()}`;
+  }
+
   if (!transactions.length) {
-    throw `Transactions are empty`;
+    throw `Transactions array is empty`;
   }
 
   const userID = context.user.id;
