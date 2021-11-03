@@ -12,7 +12,7 @@
  * - There should be less than 1_000_000 transactions per user.
  * @param {string} arg1 User ID
  * @param {[Transaction]} arg2 The same user transactions.
- * @example exports('614b283c15a0dc11514db030', [{ _id: BSON.ObjectId("607afe635ed931675acfff1c"), _p: "614b283c15a0dc11514db030", s: "AAPL", e: "NAS" }]);
+ * @example exports('614b283c15a0dc11514db030', [{"p":{"$numberDouble":"300"},"d":{"$date":{"$numberLong":"1635895369641"}},"e":"NYS","s":"MA","a":{"$numberDouble":"1"}}]);
  */ 
  exports = async function(arg1, arg2) {
   const userID = getValueAndQuitIfUndefined(arg1);
@@ -23,7 +23,6 @@
   }
 
   const requiredTransactionKeys = [
-    "_id",
     "_p",
     "a",
     "d",
