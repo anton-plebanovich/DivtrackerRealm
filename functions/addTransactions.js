@@ -7,7 +7,7 @@ exports = async function(transactions) {
   context.functions.execute("utils");
 
   throwIfUndefinedOrNull(transactions, "Transactions parameter is absent");
-  if(Object.prototype.toString.call(transactions) !== '[object Array]') {
+  if (Object.prototype.toString.call(transactions) !== '[object Array]') {
     throw `First argument should be an array of transactions. Instead, received: ${transactions.stringify()}`;
   }
 
@@ -20,8 +20,10 @@ exports = async function(transactions) {
 
   // Add `_p` key if missing
   transactions.forEach(transaction => {
-    transaction._p ??= userID;
-  })
+    if (typeof transaction._p === 'undefined') {
+      transaction._p = userID;
+    }
+  });
 
   // Check
   await context.functions.execute("checkUserTransactions", userID, transactions);
