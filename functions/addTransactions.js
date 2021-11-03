@@ -17,7 +17,13 @@ exports = async function(transactions) {
 
   const userID = context.user.id;
   console.log(`Adding transactions (${transactions.length}) for user '${userID}'`);
-  
+
+  // Just in case replacing _p values
+  transactions = transactions.map(transaction => {
+    transaction._p = userID;
+    return transaction;
+  })
+
   // Check
   await context.functions.execute("checkUserTransactions", userID, transactions);
 
