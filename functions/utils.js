@@ -171,11 +171,13 @@ Object.prototype.isEqual = function(object) {
 
 ///////////////////////////////////////////////////////////////////////////////// FUNCTIONS
 
-logAndThrow = function logAndThrow(message) {
-  const _message = _throwIfUndefinedOrNull(message, `logAndthrow message`);
+function _logAndThrow(message) {
+  const _message = _throwIfUndefinedOrNull(message, `logAndThrow message`);
   console.error(_message);
   throw _message;
 };
+
+logAndThrow = _logAndThrow;
 
 /** Checks that we didn't exceed 90s timeout. */
 checkExecutionTimeout = function checkExecutionTimeout() {
@@ -189,7 +191,7 @@ checkExecutionTimeout = function checkExecutionTimeout() {
   // One symbol full fetch takes 17.5s and we have only 90s function execution time so let's put some limit.
   const limit = 80;
   if (seconds > limit) {
-    logAndThrow('execution timeout');
+    _logAndThrow('execution timeout');
   } else {
     console.log(`${limit - seconds} execution time left`);
   }
@@ -204,16 +206,16 @@ checkExecutionTimeout = function checkExecutionTimeout() {
 function _throwIfUndefinedOrNull(object, message) {
   if (typeof object === 'undefined') {
     if (typeof message !== 'undefined' && message.length) {
-      logAndThrow(`Object undefiled: ${message}`);
+      _logAndThrow(`Object undefiled: ${message}`);
     } else {
-      logAndThrow(`Object undefiled`);
+      _logAndThrow(`Object undefiled`);
     }
     
   } else if (object === null) {
     if (typeof message !== 'undefined' && message.length) {
-      logAndThrow(`Object null: ${message}`);
+      _logAndThrow(`Object null: ${message}`);
     } else {
-      logAndThrow(`Object null`);
+      _logAndThrow(`Object null`);
     }
     
   } else {
@@ -225,13 +227,13 @@ throwIfUndefinedOrNull = _throwIfUndefinedOrNull;
 
 getValueAndQuitIfUndefined = function _getValueAndQuitIfUndefined(object, key) {
   if (!object) {
-    logAndThrow(`Object undefiled`);
+    _logAndThrow(`Object undefiled`);
     
   } else if (!key) {
     return object;
 
   } else if (!object[key]) {
-    logAndThrow(`Object's property undefiled. Key: ${key}. Object: ${object}.`);
+    _logAndThrow(`Object's property undefiled. Key: ${key}. Object: ${object}.`);
     
   } else {
     return object[key];
@@ -495,7 +497,7 @@ async function _fetch(_api, queryParameters) {
   }
   
   if (response.status != '200 OK') {
-    logAndThrow(`Response status error '${response.status}' : '${response.body.text()}'`);
+    _logAndThrow(`Response status error '${response.status}' : '${response.body.text()}'`);
   }
   
   const ejsonBody = EJSON.parse(response.body.text());
