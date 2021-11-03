@@ -24,8 +24,6 @@
     return;
   }
 
-  console.log(`Checking user '${userID}' transactions: ${transactions.stringify()}`)
-
   const requiredTransactionKeys = [
     "_p",
     "a",
@@ -36,6 +34,7 @@
   ];
 
   const optionalTransactionKeys = [
+    "_id",
     "c"
   ];
 
@@ -46,7 +45,6 @@
   const transactionsCollection = db.collection("transactions");
   // Check transactions
   for (const transaction of transactions) {
-    console.log(`Checking user '${userID}' transaction: ${transaction.stringify()}`)
 
     // Checking that all required keys are present
     for (const requiredKey of requiredTransactionKeys) {
