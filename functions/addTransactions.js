@@ -18,10 +18,9 @@ exports = async function(transactions) {
   const userID = context.user.id;
   console.log(`Adding transactions (${transactions.length}) for user '${userID}'`);
 
-  // Just in case replacing _p values
-  transactions = transactions.map(transaction => {
-    transaction._p = userID;
-    return transaction;
+  // Add `_p` key if missing
+  transactions.forEach(transaction => {
+    transaction._p ??= userID;
   })
 
   // Check
