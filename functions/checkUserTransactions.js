@@ -15,8 +15,10 @@
  * @example exports('614b283c15a0dc11514db030', [{"_p": "615a78c460cbb65c7196ab25","p":{"$numberDouble":"300"},"d":{"$date":{"$numberLong":"1635895369641"}},"e":"NYS","s":"MA","a":{"$numberDouble":"1"}}]);
  */ 
  exports = async function(arg1, arg2) {
-  const userID = getValueAndQuitIfUndefined(arg1);
-  const transactions = getValueAndQuitIfUndefined(arg2);
+  context.functions.execute("utils");
+
+  const userID = throwIfUndefinedOrNull(arg1);
+  const transactions = throwIfUndefinedOrNull(arg2);
   if (!transactions.length) {
     console.log(`Nothing to verify. Transactions are empty.`);
     return;
