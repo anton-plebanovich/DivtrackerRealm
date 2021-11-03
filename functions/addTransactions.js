@@ -5,6 +5,12 @@
 
 exports = async function(transactions) {
   context.functions.execute("utils");
+
+  throwIfUndefinedOrNull(transactions, "Transactions parameter is absent");
+  if (!transactions.length) {
+    throw `Transactions are empty`;
+  }
+
   const userID = context.user.id;
   console.log(`Adding transactions (${transactions.length}) for user '${userID}'`);
   
@@ -16,7 +22,7 @@ exports = async function(transactions) {
 
   // Insert
   const transactionsCollection = db.collection("transactions");
-  return transactionsCollection.insertMany(transactions);
+  return await transactionsCollection.insertMany(transactions);
 
   // TODO: Remove triggers on insertion
 };
