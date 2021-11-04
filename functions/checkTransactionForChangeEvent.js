@@ -9,12 +9,12 @@ exports = async function(changeEvent) {
   try {
     return await context.functions.execute("checkUserTransactions", userID, [transaction]);
   } catch(error) {
-    deleteTransaction(transaction);
+    await deleteTransaction(transaction);
     throw error;
   }
 };
 
-function deleteTransaction(transaction) {
+async function deleteTransaction(transaction) {
   console.log(`Erasing: ${transaction.stringify()}`);
   const transactionsCollection = db.collection("transactions");
   return transactionsCollection.deleteOne({ _id: transaction._id });
