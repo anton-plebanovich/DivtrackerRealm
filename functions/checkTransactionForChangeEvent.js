@@ -10,7 +10,7 @@ exports = async function(changeEvent) {
     return await context.functions.execute("checkUserTransactions", userID, [transaction]);
   } catch(error) {
     deleteTransaction(transaction);
-    logAndThrow(error);
+    throw error;
   }
 };
 
