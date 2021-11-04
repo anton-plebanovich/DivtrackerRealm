@@ -24,6 +24,7 @@ exports = async function(symbol, uniqueID) {
   }
 
   console.log(`Symbol '${symbol}', unique ID '${uniqueID}'`);
+  const errors = [];
   
   // Company
   try {
@@ -44,8 +45,9 @@ exports = async function(symbol, uniqueID) {
         console.error(`Unable to insert '${company}' company for unique ID '${uniqueID}'`);
       }
     }
-  } catch(err) {
-    console.error(`Unable to fetch company for '${uniqueID}', err: ${err}`);
+  } catch(error) {
+    console.error(`Unable to fetch company for '${uniqueID}', err: ${error}`);
+    errors.push(error);
   }
   
   // Dividends
@@ -86,8 +88,9 @@ exports = async function(symbol, uniqueID) {
         console.logVerbose(`Past dividends are empty for unique ID '${uniqueID}'`);
       }
     }
-  } catch(err) {
-    console.error(`Unable to fetch dividends for '${uniqueID}', err: ${err}`);
+  } catch(error) {
+    console.error(`Unable to fetch dividends for '${uniqueID}', err: ${error}`);
+    errors.push(error);
   }
   
   // Splits
@@ -110,8 +113,9 @@ exports = async function(symbol, uniqueID) {
         console.logVerbose(`Splits are empty for unique ID '${uniqueID}'`);
       }
     }
-  } catch(err) {
-    console.error(`Unable to fetch splits for '${uniqueID}', err: ${err}`);
+  } catch(error) {
+    console.error(`Unable to fetch splits for '${uniqueID}', err: ${error}`);
+    errors.push(error);
   }
     
   // Historical price
@@ -148,8 +152,9 @@ exports = async function(symbol, uniqueID) {
         console.error(`Received empty array of historical prices for unique ID '${uniqueID}'`);
       }
     }
-  } catch(err) {
-    console.error(`Unable to fetch historical price for '${uniqueID}', err: ${err}`);
+  } catch(error) {
+    console.error(`Unable to fetch historical price for '${uniqueID}', err: ${error}`);
+    errors.push(error);
   }
 
   // Previous day price
@@ -188,8 +193,9 @@ exports = async function(symbol, uniqueID) {
       console.logVerbose(`Historical prices for unique ID '${uniqueID}' is up to date`);
     }
 
-  } catch(err) {
-    console.error(`Unable to fetch previous day price for '${uniqueID}', err: ${err}`);
+  } catch(error) {
+    console.error(`Unable to fetch previous day price for '${uniqueID}', err: ${error}`);
+    errors.push(error);
   }
 
   // Quote
@@ -213,11 +219,16 @@ exports = async function(symbol, uniqueID) {
       }
     }
 
-  } catch(err) {
-    console.error(`Unable to fetch quote for '${uniqueID}', err: ${err}`);
+  } catch(error) {
+    console.error(`Unable to fetch quote for '${uniqueID}', err: ${error}`);
+    errors.push(error);
   }
   
-  console.log(`Fetched all missing data for the '${symbol}'`);
+  if (errors.length) {
+    throw errors;
+  } else {
+    console.log(`Fetched all missing data for the '${symbol}'`);
+  }
 };
 
 // exports('AAP');
