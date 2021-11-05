@@ -1,5 +1,30 @@
 [
     {
+        "name": "loadMissingData",
+        "private": false
+    },
+    {
+        "name": "utils",
+        "private": false
+    },
+    {
+        "name": "loadMissingDataForSymbol",
+        "private": false,
+        "run_as_system": true
+    },
+    {
+        "name": "checkTransactions",
+        "private": false
+    },
+    {
+        "name": "migration",
+        "private": false
+    },
+    {
+        "name": "quotesUpdate",
+        "private": false
+    },
+    {
         "name": "addTransactions",
         "private": false,
         "run_as_system": true
@@ -9,11 +34,40 @@
         "private": true
     },
     {
-        "name": "checkTransactions",
+        "name": "eraseData",
         "private": false
     },
     {
+        "name": "splitsUpdate",
+        "private": false
+    },
+    {
+        "name": "loadMissingDataForChangeEvent",
+        "private": false
+    },
+    {
+        "name": "loadMissingDataForUser",
+        "private": false
+    },
+    {
+        "name": "loadMissingDividendsForSymbol",
+        "private": false
+    },
+    {
+        "name": "symbolsUpdate",
+        "private": true,
+        "can_evaluate": {}
+    },
+    {
         "name": "checkUserTransactions",
+        "private": false
+    },
+    {
+        "name": "login",
+        "private": false
+    },
+    {
+        "name": "pricesUpdate",
         "private": false
     },
     {
@@ -25,61 +79,7 @@
         "private": false
     },
     {
-        "name": "eraseData",
-        "private": false
-    },
-    {
-        "name": "loadMissingData",
-        "private": false
-    },
-    {
-        "name": "loadMissingDataForChangeEvent",
-        "private": false
-    },
-    {
-        "name": "loadMissingDataForSymbol",
-        "private": false,
-        "run_as_system": true
-    },
-    {
-        "name": "loadMissingDataForUser",
-        "private": false
-    },
-    {
-        "name": "loadMissingDividendsForSymbol",
-        "private": false
-    },
-    {
-        "name": "login",
-        "private": false
-    },
-    {
-        "name": "migration",
-        "private": false
-    },
-    {
         "name": "playground",
-        "private": false
-    },
-    {
-        "name": "pricesUpdate",
-        "private": false
-    },
-    {
-        "name": "quotesUpdate",
-        "private": false
-    },
-    {
-        "name": "splitsUpdate",
-        "private": false
-    },
-    {
-        "name": "symbolsUpdate",
-        "private": true,
-        "can_evaluate": {}
-    },
-    {
-        "name": "utils",
         "private": false
     }
 ]
