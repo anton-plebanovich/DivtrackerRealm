@@ -65,7 +65,7 @@
       logAndThrow(`Transaction partition is absent: ${transaction.stringify()}`);
     }
 
-    if (transaction._p != userID) {
+    if (userID.length && transaction._p != userID) {
       logAndThrow(`Transaction partition '${transaction._p}' should match user ID '${userID}': ${transaction.stringify()}`);
     }
     
@@ -88,19 +88,21 @@
     // TODO: Check that values are of proper type
   }
 
-  const transactionsCount = await transactionsCollection.count({ _p: userID }) + transactions.length;
-  if (transactionsCount >= 1000000) {
-    logAndThrow(`Maximum number of 1000000 unique transactions for user is reached: ${transactionsCount}`);
-  }
-
-  const existingDistinctSymbols = await transactionsCollection.distinct("s", { _p: userID });
-  const insertingDistinctSymbols = transactions.map(x => x.s);
-  const distinctSymbols = existingDistinctSymbols
-    .concat(insertingDistinctSymbols)
-    .distinct();
-
-  if (distinctSymbols.length >= 1000) {
-    logAndThrow(`Maximum number of 1000 unique companies for user is reached: ${distinctSymbols.length}`);
+  if (userID.length) {
+    const transactionsCount = await transactionsCollection.count({ _p: userID }) + transactions.length;
+    if (transactionsCount >= 1000000) {
+      logAndThrow(`Maximum number of 1000000 unique transactions for user is reached: ${transactionsCount}`);
+    }
+  
+    const existingDistinctSymbols = await transactionsCollection.distinct("s", { _p: userID });
+    const insertingDistinctSymbols = transactions.map(x => x.s);
+    const distinctSymbols = existingDistinctSymbols
+      .concat(insertingDistinctSymbols)
+      .distinct();
+  
+    if (distinctSymbols.length >= 1000) {
+      logAndThrow(`Maximum number of 1000 unique companies for user is reached: ${distinctSymbols.length}`);
+    }
   }
 
   console.log(`Verification success. Transactions (${transactions.length}) are valid.`);
