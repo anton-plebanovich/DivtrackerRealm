@@ -171,23 +171,31 @@ Object.prototype.isEqual = function(object) {
 
 ///////////////////////////////////////////////////////////////////////////////// ERRORS PROCESSING
 
-const errorName = {
+const errorType = {
 	USER: "user",
 	SYSTEM: "system",
 	COMPOSITE: "composite",
 };
 
-UserError = class UserError extends Error {
+UserError = class UserError {
   constructor(message) {
-    super(message);
-    this.name = errorName.USER;
+    this.type = errorType.USER;
+    this.message = message
+  }
+
+  toString() {
+    stringify();
   }
 }
 
-SystemError = class SystemError extends Error {
+SystemError = class SystemError {
   constructor(message) {
-    super(message);
-    this.name = errorName.SYSTEM;
+    this.type = errorType.SYSTEM;
+    this.message = message
+  }
+
+  toString() {
+    stringify();
   }
 }
 
@@ -197,18 +205,18 @@ CompositeError = class CompositeError {
       throw 'CompositeError should be initialized with errors array';
     }
 
-    this.name = errorName.COMPOSITE;
+    this.type = errorType.COMPOSITE;
 
     const system_errors = [];
     const user_errors = [];
     const composite_errors = [];
     const unknown_errors = [];
     errors.forEach(error => {
-      if (error.name === errorName.SYSTEM) {
+      if (error.type === errorType.SYSTEM) {
         system_errors.push(error);
-      } else if (error.name === errorName.USER) {
+      } else if (error.type === errorType.USER) {
         user_errors.push(error);
-      } else if (error.name === errorName.COMPOSITE) {
+      } else if (error.type === errorType.COMPOSITE) {
         composite_errors.push(error);
       } else {
         unknown_errors.push(error);
