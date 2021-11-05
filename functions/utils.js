@@ -10,7 +10,7 @@
  * Using string for key comparison if passed.
  * @returns {Array} Distinct array of elements
  */
- Array.prototype.distinct = function(arg) {
+Array.prototype.distinct = function(arg) {
   if (typeof arg === 'string' || arg instanceof String) {
     comparer = (a, b) => a[arg] == b[arg];
   } else if (!arg) {
@@ -81,7 +81,7 @@ Array.prototype.chunked = function(size) {
  * Filters `null` elements.
  * @param {*} callbackfn Mapping to perform. Null values are filtered.
  */
- Array.prototype.filterNull = function() {
+Array.prototype.filterNull = function() {
    return this.filter(x => x !== null);
 };
 
@@ -89,7 +89,7 @@ Array.prototype.chunked = function(size) {
  * Maps array and filters `null` elements.
  * @param {*} callbackfn Mapping to perform. Null values are filtered.
  */
- Array.prototype.compactMap = function(callbackfn) {
+Array.prototype.compactMap = function(callbackfn) {
    return this.map(callbackfn).filterNull();
 };
 
@@ -213,21 +213,21 @@ class CompositeError {
       } else {
         unknown_errors.push(error);
       }
-    })
+    });
 
     composite_errors.forEach(x => {
       if (typeof x.system_errors !== 'undefined' && x.system_errors.length) {
-        system_errors.concat(x.system_errors)
+        system_errors.concat(x.system_errors);
       }
 
       if (typeof x.user_errors !== 'undefined' && x.user_errors.length) {
-        user_errors.concat(x.user_errors)
+        user_errors.concat(x.user_errors);
       }
       
       if (typeof x.unknown_errors !== 'undefined' && x.unknown_errors.length) {
-        unknown_errors.concat(x.unknown_errors)
+        unknown_errors.concat(x.unknown_errors);
       }
-    })
+    });
 
     if (user_errors.length) {
       this.user_errors = user_errors;
@@ -243,49 +243,56 @@ class CompositeError {
   }
 }
 
-Promise.safe = function(promise) {
-  return promise
-    .then(data => ([data, undefined]))
-    .catch(error => Promise.resolve([undefined, error]));
-};
+var promiseExtended = false;
+function extendPromise() {
+  if (promiseExtended) { return; }
 
-Promise.safeAll = function(promises) {
-  return Promise.all(
-    promises.map(promise => Promise.safe(promise))
-  );
-};
+  Promise.safeAll = function(promises) {
+    return Promise.all(
+      promises.map(promise => Promise.safe(promise))
+    );
+  };
+  
+  Promise.safeAllAndUnwrap = function(promises) {
+    return Promise.safeAll(promises)
+      .then(results => {
+        const datas = [];
+        const errors = [];
+        results.forEach(result => {
+          const [data, error] = result;
+          datas.push(data);
+          if (typeof error !== 'undefined') {
+            errors.push(error);
+          }
+        });
+  
+        if (errors.length) {
+          throw CompositeError(errors);
+        } else {
+          return datas;
+        }
+      });
+  };
+  
+  Promise.prototype.safe = function() {
+    return this
+      .then(data => ([data, undefined]))
+      .catch(error => Promise.resolve([undefined, error]));
+  };
+  
+  Promise.prototype.mapErrorToUser = function() {
+    return this.catch(error => { throw UserError(error); });
+  };
+  
+  Promise.prototype.mapErrorToSystem = function() {
+    return this.catch(error => { throw SystemError(error); });
+  };
+  
+  Promise.prototype.mapErrorToComposite = function() {
+    return this.catch(errors => { throw CompositeError(errors); });
+  };
 
-Promise.safeAllAndUnwrap = function(promises) {
-  return Promise.safeAll(promises)
-  .then(results => {
-    const datas = [];
-    const errors = [];
-    results.forEach(result => {
-      const [data, error] = result;
-      datas.push(data);
-      if (typeof error !== 'undefined') {
-        errors.push(error);
-      }
-    });
-
-    if (errors.length) {
-      throw CompositeError(errors);
-    } else {
-      return datas;
-    }
-  });
-};
-
-Promise.prototype.mapErrorToUser = function() {
-  return promise.catch(error => { throw UserError(error) });
-}
-
-Promise.prototype.mapErrorToSystem = function() {
-  return promise.catch(error => { throw SystemError(error) });
-}
-
-Promise.prototype.mapErrorToComposite = function() {
-  return promise.catch(errors => { throw CompositeError(errors) });
+  promiseExtended = true;
 }
 
 ///////////////////////////////////////////////////////////////////////////////// FUNCTIONS
@@ -294,7 +301,7 @@ function _logAndThrow(message) {
   const _message = _throwIfUndefinedOrNull(message, `logAndThrow message`);
   console.error(_message);
   throw _message;
-};
+}
 
 logAndThrow = _logAndThrow;
 
@@ -522,7 +529,7 @@ fetchBatch = async function fetchBatch(_api, _symbols, _queryParameters) {
   const api = _throwIfUndefinedOrNull(_api, `_api`);
   const fullAPI = `/stock/market${api}/batch`;
   const symbols = _throwIfUndefinedOrNull(_symbols, `_symbols`);
-  const queryParameters = _queryParameters ?? {};
+  const queryParameters = typeof _queryParameters === 'undefined' ? {} : _queryParameters;
   const maxSymbolsAmount = 100;
   const chunkedSymbolsArray = symbols.chunked(maxSymbolsAmount);
   var result = [];
@@ -558,7 +565,7 @@ fetchBatchNew = async function fetchBatchNew(_types, _symbols, _queryParameters)
   // https://sandbox.iexapis.com/stable/stock/market/batch?token=Tpk_d8f3a048a7a94866ad08c8b62042b16b&calendar=true&symbols=MSFT%2CAAPL&types=dividends&range=1y
   const types = _throwIfUndefinedOrNull(_types, `_types`);
   const symbols = _throwIfUndefinedOrNull(_symbols, `_symbols`);
-  const queryParameters = _queryParameters ?? {};
+  const queryParameters = typeof _queryParameters === 'undefined' ? {} : _queryParameters;
   const api = `/stock/market/batch`;
   const typesParameter = types.join(",");
   const maxSymbolsAmount = 100;
@@ -631,7 +638,7 @@ async function _fetch(_api, queryParameters) {
   // await new Promise(r => setTimeout(r, 50));
   
   return ejsonBody;
-};
+}
 
 fetch = _fetch;
 
@@ -823,7 +830,7 @@ fetchDividends = async function fetchDividends(arg1, arg2, arg3) {
     symbols,
     symbolsDictionary
   ];
-};
+}
 
 ///////////////////////////////////////////////////////////////////////////////// DATA FIX
 
@@ -1038,6 +1045,8 @@ getDateLogString = function getDateLogString() {
 };
 
 exports = function() {
+  extendPromise();
+
   if (typeof db === 'undefined') {
     db = context.services.get("mongodb-atlas").db("divtracker");
   }
