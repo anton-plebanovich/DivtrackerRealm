@@ -40,7 +40,7 @@ exports = async function(transactions) {
 
   // Insert and load missing data together so we can speed up transaction display on UI
   const transactionsCollection = db.collection("transactions");
-  const result = await Promise.safeAll([
+  const result = await Promise.safeAllAndUnwrap([
     transactionsCollection.insertMany(transactions).mapErrorToSystem(),
     loadMissingData(transactions)
   ]);
