@@ -2,6 +2,7 @@
 // addTransactions.js
 
 // https://docs.mongodb.com/manual/reference/method/Bulk.find.upsert/
+// https://docs.mongodb.com/realm/mongodb/actions/collection.bulkWrite/
 
 /**
  * @example exports([{"_p":"614b283c15a0dc11514db030","a":1.1,"d":new Date(1636089825657),"e":"NYS","p":320.1,"s":"LMT"}]);
@@ -40,15 +41,17 @@ exports = async function(transactions) {
 
   // Insert and load missing data together so we can speed up transaction display on UI
   const transactionsCollection = db.collection("transactions");
-  const result = await Promise.safeAll([
+  const result = await Promise.safeAllAndUnwrap([
     transactionsCollection.insertMany(transactions).mapErrorToSystem(),
     loadMissingData(transactions)
   ]);
 
-  const resultJSON = result.stringify();
-  console.log(`result: ${resultJSON}`);
+  console.log(`result: ${result.stringify()}`);
 
-  return { result: resultJSON };
+  const returnResult = result[0];
+  console.log(`return result: ${returnResult.stringify()}`);
+
+  return returnResult;
 };
 
 async function loadMissingData(transactions) {
@@ -87,14 +90,17 @@ async function loadMissingCompanies(uniqueIDs) {
     return;
   }
 
-  const bulk = collection.initializeUnorderedBulkOp();
+  // bulkWrite example
+  const operations = [];
   for (const company of companies) {
-    const query = { _id: company._id };
+    const filter = { _id: company._id };
     const update = { $setOnInsert: company };
-    bulk.find(query).upsert().updateOne(update);
+    const updateOne = { filter: filter, update: update, upsert: true };
+    const operation = { updateOne: updateOne };
+    operations.push(operation);
   }
   
-  return bulk.execute();
+  return collection.bulkWrite(operations);
 }
 
 //////////////////////////////////////////////////////////////////// Dividends
