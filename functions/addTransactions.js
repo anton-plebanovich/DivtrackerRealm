@@ -3,6 +3,9 @@
 
 // https://docs.mongodb.com/manual/reference/method/Bulk.find.upsert/
 
+/**
+ * @example exports([{"_p":"614b283c15a0dc11514db030","a":{"$numberDouble":"1"},"d":{"$date":{"$numberLong":"1636089825657"}},"e":"NYS","p":{"$numberDouble":"320"},"s":"LMT"}]);
+ */
 exports = async function(transactions) {
   context.functions.execute("utils");
 
@@ -30,12 +33,12 @@ exports = async function(transactions) {
 
   // Insert and load missing data together so we can speed up transaction display on UI
   const transactionsCollection = db.collection("transactions");
-  return Promise.all([
+  const result = await Promise.all([
     transactionsCollection.insertMany(transactions),
     loadMissingData(transactions)
-  ])
+  ]);
 
-  // TODO: Remove triggers on insertion
+  return { result: result };
 };
 
 async function loadMissingData(transactions) {
