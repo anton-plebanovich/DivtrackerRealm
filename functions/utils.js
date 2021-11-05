@@ -171,23 +171,23 @@ Object.prototype.isEqual = function(object) {
 
 ///////////////////////////////////////////////////////////////////////////////// ERRORS PROCESSING
 
-const errorType = {
+const errorName = {
 	USER: "user",
 	SYSTEM: "system",
 	COMPOSITE: "composite",
 };
 
-class UserError {
+class UserError extends Error {
   constructor(message) {
-    this.error_type = errorType.USER;
-    this.message = message;
+    super(message);
+    this.name = errorName.USER;
   }
 }
 
-class SystemError {
+class SystemError extends Error {
   constructor(message) {
-    this.error_type = errorType.SYSTEM;
-    this.message = message;
+    super(message);
+    this.name = errorName.SYSTEM;
   }
 }
 
@@ -197,18 +197,18 @@ class CompositeError {
       throw 'CompositeError should be initialized with errors array';
     }
 
-    this.error_type = errorType.COMPOSITE;
+    this.name = errorName.COMPOSITE;
 
     const system_errors = [];
     const user_errors = [];
     const composite_errors = [];
     const unknown_errors = [];
     errors.forEach(error => {
-      if (error.error_type === errorType.SYSTEM) {
+      if (error.name === errorName.SYSTEM) {
         system_errors.push(error);
-      } else if (error.error_type === errorType.USER) {
+      } else if (error.name === errorName.USER) {
         user_errors.push(error);
-      } else if (error.error_type === errorType.COMPOSITE) {
+      } else if (error.name === errorName.COMPOSITE) {
         composite_errors.push(error);
       } else {
         unknown_errors.push(error);
@@ -240,6 +240,10 @@ class CompositeError {
     if (unknown_errors.length) {
       this.unknown_errors = unknown_errors;
     }
+  }
+
+  toString() {
+    stringify();
   }
 }
 
