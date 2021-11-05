@@ -169,6 +169,125 @@ Object.prototype.isEqual = function(object) {
   return true;
 };
 
+///////////////////////////////////////////////////////////////////////////////// ERRORS PROCESSING
+
+const errorType = {
+	USER: "user",
+	SYSTEM: "system",
+	COMPOSITE: "composite",
+};
+
+class UserError {
+  constructor(message) {
+    this.error_type = errorType.USER;
+    this.message = message;
+  }
+}
+
+class SystemError {
+  constructor(message) {
+    this.error_type = errorType.SYSTEM;
+    this.message = message;
+  }
+}
+
+class CompositeError {
+  constructor(errors) {
+    if (Object.prototype.toString.call(errors) !== '[object Array]') {
+      throw 'CompositeError should be initialized with errors array';
+    }
+
+    this.error_type = errorType.COMPOSITE;
+
+    const system_errors = [];
+    const user_errors = [];
+    const composite_errors = [];
+    const unknown_errors = [];
+    errors.forEach(error => {
+      if (error.error_type === errorType.SYSTEM) {
+        system_errors.push(error);
+      } else if (error.error_type === errorType.USER) {
+        user_errors.push(error);
+      } else if (error.error_type === errorType.COMPOSITE) {
+        composite_errors.push(error);
+      } else {
+        unknown_errors.push(error);
+      }
+    })
+
+    composite_errors.forEach(x => {
+      if (typeof x.system_errors !== 'undefined' && x.system_errors.length) {
+        system_errors.concat(x.system_errors)
+      }
+
+      if (typeof x.user_errors !== 'undefined' && x.user_errors.length) {
+        user_errors.concat(x.user_errors)
+      }
+      
+      if (typeof x.unknown_errors !== 'undefined' && x.unknown_errors.length) {
+        unknown_errors.concat(x.unknown_errors)
+      }
+    })
+
+    if (user_errors.length) {
+      this.user_errors = user_errors;
+    }
+    
+    if (system_errors.length) {
+      this.system_errors = system_errors;
+    }
+    
+    if (unknown_errors.length) {
+      this.unknown_errors = unknown_errors;
+    }
+  }
+}
+
+Promise.safe = function(promise) {
+  return promise
+    .then(data => ([data, undefined]))
+    .catch(error => Promise.resolve([undefined, error]));
+};
+
+Promise.safeAll = function(promises) {
+  return Promise.all(
+    promises.map(promise => Promise.safe(promise))
+  );
+};
+
+Promise.safeAllAndUnwrap = function(promises) {
+  return Promise.safeAll(promises)
+  .then(results => {
+    const datas = [];
+    const errors = [];
+    results.forEach(result => {
+      const [data, error] = result;
+      datas.push(data);
+      if (typeof error !== 'undefined') {
+        errors.push(error);
+      }
+    });
+
+    if (errors.length) {
+      throw CompositeError(errors);
+    } else {
+      return datas;
+    }
+  });
+};
+
+Promise.prototype.mapErrorToUser = function() {
+  return promise.catch(error => { throw UserError(error) });
+}
+
+Promise.prototype.mapErrorToSystem = function() {
+  return promise.catch(error => { throw SystemError(error) });
+}
+
+Promise.prototype.mapErrorToComposite = function() {
+  return promise.catch(errors => { throw CompositeError(errors) });
+}
+
 ///////////////////////////////////////////////////////////////////////////////// FUNCTIONS
 
 function _logAndThrow(message) {
