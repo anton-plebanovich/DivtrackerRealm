@@ -177,21 +177,21 @@ const errorName = {
 	COMPOSITE: "composite",
 };
 
-class UserError extends Error {
+UserError = class UserError extends Error {
   constructor(message) {
     super(message);
     this.name = errorName.USER;
   }
 }
 
-class SystemError extends Error {
+SystemError = class SystemError extends Error {
   constructor(message) {
     super(message);
     this.name = errorName.SYSTEM;
   }
 }
 
-class CompositeError {
+CompositeError = class CompositeError {
   constructor(errors) {
     if (Object.prototype.toString.call(errors) !== '[object Array]') {
       throw 'CompositeError should be initialized with errors array';
