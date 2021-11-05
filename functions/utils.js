@@ -184,7 +184,7 @@ UserError = class UserError {
   }
 
   toString() {
-    stringify();
+    return this.stringify();
   }
 }
 
@@ -195,7 +195,7 @@ SystemError = class SystemError {
   }
 
   toString() {
-    stringify();
+    return this.stringify();
   }
 }
 
@@ -251,7 +251,7 @@ CompositeError = class CompositeError {
   }
 
   toString() {
-    stringify();
+    return this.stringify();
   }
 }
 
