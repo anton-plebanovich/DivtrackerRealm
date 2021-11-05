@@ -10,17 +10,17 @@ exports = async function(transactions) {
   context.functions.execute("utils");
 
   if (typeof transactions === 'undefined') {
-    throw UserError(`Transaction parameter is undefined`);
+    throw new UserError(`Transaction parameter is undefined`);
   } else if (transactions === null) {
-    throw UserError(`Transaction parameter is null`);
+    throw new UserError(`Transaction parameter is null`);
   }
 
   if (Object.prototype.toString.call(transactions) !== '[object Array]') {
-    throw UserError(`First argument should be an array of transactions. Instead, received: ${transactions.stringify()}`);
+    throw new UserError(`First argument should be an array of transactions. Instead, received: ${transactions.stringify()}`);
   }
 
   if (!transactions.length) {
-    throw UserError(`Transactions array is empty`);
+    throw new UserError(`Transactions array is empty`);
   }
 
   const userID = context.user.id;
@@ -63,7 +63,7 @@ async function loadMissingData(transactions) {
       loadMissingPreviousDayPrices(uniqueIDs).mapErrorToSystem(),
       loadMissingQuotes(uniqueIDs).mapErrorToSystem(),
       loadMissingSplits(uniqueIDs).mapErrorToSystem()
-    ])
+    ]);
 }
 
 //////////////////////////////////////////////////////////////////// Companies

@@ -281,15 +281,15 @@ function extendPromise() {
   };
   
   Promise.prototype.mapErrorToUser = function() {
-    return this.catch(error => { throw UserError(error); });
+    return this.catch(error => { throw new UserError(error); });
   };
   
   Promise.prototype.mapErrorToSystem = function() {
-    return this.catch(error => { throw SystemError(error); });
+    return this.catch(error => { throw new SystemError(error); });
   };
   
   Promise.prototype.mapErrorToComposite = function() {
-    return this.catch(errors => { throw CompositeError(errors); });
+    return this.catch(errors => { throw new CompositeError(errors); });
   };
 
   promiseExtended = true;
