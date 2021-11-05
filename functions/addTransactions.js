@@ -28,12 +28,12 @@ exports = async function(transactions) {
   // Check
   await context.functions.execute("checkUserTransactions", userID, transactions);
 
-  // Load missing data
-  await loadMissingData(transactions);
-
-  // Insert
+  // Insert and load missing data together so we can speed up transaction display on UI
   const transactionsCollection = db.collection("transactions");
-  return await transactionsCollection.insertMany(transactions);
+  return Promise.all([
+    transactionsCollection.insertMany(transactions),
+    loadMissingData(transactions)
+  ])
 
   // TODO: Remove triggers on insertion
 };
