@@ -3,16 +3,24 @@
 
 // https://docs.mongodb.com/manual/reference/method/Bulk.find.upsert/
 
+/**
+ * @example exports([{"_p":"614b283c15a0dc11514db030","a":1.1,"d":new Date(1636089825657),"e":"NYS","p":320.1,"s":"LMT"}]);
+ */
 exports = async function(transactions) {
   context.functions.execute("utils");
 
-  throwIfUndefinedOrNull(transactions, "Transactions parameter is absent");
+  if (typeof transactions === 'undefined') {
+    throw new UserError(`Transaction parameter is undefined`);
+  } else if (transactions === null) {
+    throw new UserError(`Transaction parameter is null`);
+  }
+
   if (Object.prototype.toString.call(transactions) !== '[object Array]') {
-    throw `First argument should be an array of transactions. Instead, received: ${transactions.stringify()}`;
+    throw new UserError(`First argument should be an array of transactions. Instead, received: ${transactions.stringify()}`);
   }
 
   if (!transactions.length) {
-    throw `Transactions array is empty`;
+    throw new UserError(`Transactions array is empty`);
   }
 
   const userID = context.user.id;
@@ -26,16 +34,21 @@ exports = async function(transactions) {
   });
 
   // Check
-  await context.functions.execute("checkUserTransactions", userID, transactions);
+  await context.functions
+    .execute("checkUserTransactions", userID, transactions)
+    .mapErrorToUser();
 
-  // Load missing data
-  await loadMissingData(transactions);
-
-  // Insert
+  // Insert and load missing data together so we can speed up transaction display on UI
   const transactionsCollection = db.collection("transactions");
-  return await transactionsCollection.insertMany(transactions);
+  const result = await Promise.safeAll([
+    transactionsCollection.insertMany(transactions).mapErrorToSystem(),
+    loadMissingData(transactions)
+  ]);
 
-  // TODO: Remove triggers on insertion
+  const resultJSON = result.stringify();
+  console.log(`result: ${resultJSON}`);
+
+  return { result: resultJSON };
 };
 
 async function loadMissingData(transactions) {
@@ -43,14 +56,14 @@ async function loadMissingData(transactions) {
     .map(x => `${x.s}:${x.e}`)
     .distinct();
 
-  return Promise.all([
-    loadMissingCompanies(uniqueIDs),
-    loadMissingDividends(uniqueIDs),
-    loadMissingHistoricalPrices(uniqueIDs),
-    loadMissingPreviousDayPrices(uniqueIDs),
-    loadMissingQuotes(uniqueIDs),
-    loadMissingSplits(uniqueIDs)
-  ]);
+    return Promise.safeAllAndUnwrap([
+      loadMissingCompanies(uniqueIDs).mapErrorToSystem(),
+      loadMissingDividends(uniqueIDs).mapErrorToSystem(),
+      loadMissingHistoricalPrices(uniqueIDs).mapErrorToSystem(),
+      loadMissingPreviousDayPrices(uniqueIDs).mapErrorToSystem(),
+      loadMissingQuotes(uniqueIDs).mapErrorToSystem(),
+      loadMissingSplits(uniqueIDs).mapErrorToSystem()
+    ]);
 }
 
 //////////////////////////////////////////////////////////////////// Companies
