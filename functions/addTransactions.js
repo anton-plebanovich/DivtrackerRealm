@@ -38,8 +38,6 @@ exports = async function(transactions) {
     .execute("checkUserTransactions", userID, transactions)
     .mapErrorToUser();
 
-  const result = {};
-
   // Insert and load missing data together so we can speed up transaction display on UI
   const transactionsCollection = db.collection("transactions");
   const result = await Promise.safeAll([
