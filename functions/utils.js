@@ -261,7 +261,7 @@ function extendPromise() {
 
   Promise.safeAll = function(promises) {
     return Promise.all(
-      promises.map(promise => Promise.safe(promise))
+      promises.map(promise => promise.safe(promise))
     );
   };
   
