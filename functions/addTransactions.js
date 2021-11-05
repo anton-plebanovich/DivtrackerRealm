@@ -51,7 +51,7 @@ exports = async function(transactions) {
   const returnResult = result[0];
   console.log(`return result: ${returnResult.stringify()}`);
 
-  return { result: returnResult };
+  return returnResult;
 };
 
 async function loadMissingData(transactions) {
