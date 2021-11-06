@@ -457,21 +457,7 @@ computeDistinctSymbols = async function computeDistinctSymbols() {
   const companiesDistinctIDs = await companiesCollection.distinct("_id", {});
   console.log(`Distinct companies IDs (${companiesDistinctIDs.length}): ${companiesDistinctIDs.stringify()}`);
 
-  // We project '_i' field first and then produce unique objects with only '_id' field
-  const transactionsCollection = db.collection("transactions");
-  const transactionsAggregation = [{$project: {
-    _i: { $concat: [ "$s", ":", "$e" ] }
-  }}, {$group: {
-    _id: "$_i"
-  }}];
-
-  const distinctTransactionIDs = await transactionsCollection
-    .aggregate(transactionsAggregation)
-    .toArray()
-    // Extract IDs from [{ _id: "MSFT:NAS" }]
-    .then(x => x.map(x => x._id));
-
-  console.log(`Distinct transaction IDs (${distinctTransactionIDs.length}): ${distinctTransactionIDs.stringify()}`);
+  const distinctTransactionIDs = await _getUniqueTransactionIDs();
 
   // Compute distinct IDs using both sources
   var _uniqueIDs = companiesDistinctIDs
@@ -496,6 +482,35 @@ computeDistinctSymbols = async function computeDistinctSymbols() {
 
   console.log(`Distinct symbols (${distinctSymbols.length}): ${distinctSymbols.stringify()}`);
 };
+
+/** 
+ * @returns {Promise<[string]>} Array of unique transaction IDs, e.g. ["AAPL:NYS"]
+*/
+async function _getUniqueTransactionIDs() {
+  const db = context.services.get("mongodb-atlas").db("divtracker");
+
+  // We project '_i' field first and then produce unique objects with only '_id' field
+  const transactionsCollection = db.collection("transactions");
+  const transactionsAggregation = [{$project: {
+    _i: { $concat: [ "$s", ":", "$e" ] }
+  }}, {$group: {
+    _id: "$_i"
+  }}];
+
+  const uniqueTransactionIDs = await transactionsCollection
+    .aggregate(transactionsAggregation)
+    .toArray()
+    // Extract IDs from [{ _id: "MSFT:NAS" }]
+    .then(x => x.map(x => x._id));
+
+  uniqueTransactionIDs.sort();
+
+  console.log(`Unique transaction IDs (${uniqueTransactionIDs.length}): ${uniqueTransactionIDs}`);
+
+  return uniqueTransactionIDs;
+}
+
+getUniqueTransactionIDs = _getUniqueTransactionIDs;
 
 ///////////////////////////////////////////////////////////////////////////////// fetch.js
 
