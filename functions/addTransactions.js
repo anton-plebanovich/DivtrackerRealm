@@ -18,8 +18,9 @@ exports = async function(transactions) {
     throw new UserError(`Transaction parameter is null`);
   }
 
-  if (Object.prototype.toString.call(transactions) !== '[object Array]') {
-    throw new UserError(`First argument should be an array of transactions. Instead, received: ${transactions.stringify()}`);
+  const transactionsType = Object.prototype.toString.call(transactions);
+  if (transactionsType !== '[object Array]') {
+    throw new UserError(`First argument should be an array of transactions. Instead, received '${transactionsType}': ${transactions.stringify()}`);
   }
 
   if (!transactions.length) {
