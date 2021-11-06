@@ -5,7 +5,9 @@
 // https://docs.mongodb.com/realm/mongodb/actions/collection.bulkWrite/
 
 /**
- * @example exports([{"_p":"614b283c15a0dc11514db030","a":1.1,"d":new Date(1636089825657),"e":"NYS","p":320.1,"s":"LMT"}]);
+ * @example 
+ * context.user.id = '614b283c15a0dc11514db030';
+ * exports([{"a":1.1,"d":new Date(1636089825657),"e":"NYS","p":320.1,"s":"LMT"}]);
  */
 exports = async function(transactions) {
   context.functions.execute("utils");
@@ -16,8 +18,9 @@ exports = async function(transactions) {
     throw new UserError(`Transaction parameter is null`);
   }
 
-  if (Object.prototype.toString.call(transactions) !== '[object Array]') {
-    throw new UserError(`First argument should be an array of transactions. Instead, received: ${transactions.stringify()}`);
+  const transactionsType = Object.prototype.toString.call(transactions);
+  if (transactionsType !== '[object Array]') {
+    throw new UserError(`First argument should be an array of transactions. Instead, received '${transactionsType}': ${transactions.stringify()}`);
   }
 
   if (!transactions.length) {
