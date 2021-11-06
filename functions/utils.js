@@ -4,7 +4,7 @@
 ///////////////////////////////////////////////////////////////////////////////// EXTENSIONS
 
 /**
- * 
+ * @note Using 'distinct' instead of 'unique' to match MongoDB method and because values itself might not be _unique_.
  * @param {function|undefined|string} arg Check for equality if nothing is passed. 
  * Using comparison function if passed. 
  * Using string for key comparison if passed.
@@ -443,6 +443,7 @@ getOpenDate = function getOpenDate(arg1) {
 
 /** 
  * Computes and returns sorted unique IDs from companies and user transactions.
+ * @note Using 'unique' instead of 'distinct' here because values are actually _unique_.
  * @returns {Promise<["AAPL:NAS"]>} Array of unique IDs.
 */
 getUniqueIDs = async function getUniqueIDs() {

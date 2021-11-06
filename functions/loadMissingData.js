@@ -19,7 +19,7 @@ exports = async function loadMissingData(transactions) {
       .distinct();
 
   } else {
-    uniqueIDs = getUniqueTransactionIDs();
+    uniqueIDs = await getUniqueTransactionIDs();
   }
   
   console.log(`Loading missing data for unique transaction IDs (${uniqueIDs.length}): ${uniqueIDs}`);
