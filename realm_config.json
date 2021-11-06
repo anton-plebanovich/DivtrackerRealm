@@ -1,7 +1,7 @@
 {
-    "app_id": "divtrackersandbox-zlomz",
+    "app_id": "divtrackertests-aeylo",
     "config_version": 20210101,
-    "name": "DivtrackerSandbox",
+    "name": "DivtrackerTests",
     "location": "US-VA",
     "deployment_model": "LOCAL"
 }
