@@ -6,7 +6,7 @@ exports = function() {
   console.log(`Erasing data`);
   
   /// Delete ALL
-  db.collection('symbols').deleteMany( { } );
+  // db.collection('symbols').deleteMany( { } );
   
   db.collection('companies').deleteMany( { } );
   db.collection('dividends').deleteMany( { } );
