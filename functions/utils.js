@@ -4,7 +4,7 @@
 ///////////////////////////////////////////////////////////////////////////////// EXTENSIONS
 
 /**
- * 
+ * @note Using 'distinct' instead of 'unique' to match MongoDB method and because values itself might not be _unique_.
  * @param {function|undefined|string} arg Check for equality if nothing is passed. 
  * Using comparison function if passed. 
  * Using string for key comparison if passed.
@@ -442,10 +442,11 @@ getOpenDate = function getOpenDate(arg1) {
 // getOpenDate("2020-03-27");
 
 /** 
- * Computes and sets `distinctSymbols`, `uniqueIDs` and `distinctSymbolsDictionary` global variables.
- * `distinctSymbols` array is sorted.
+ * Computes and returns sorted unique IDs from companies and user transactions.
+ * @note Using 'unique' instead of 'distinct' here because values are actually _unique_.
+ * @returns {Promise<["AAPL:NAS"]>} Array of unique IDs.
 */
-computeDistinctSymbols = async function computeDistinctSymbols() {
+getUniqueIDs = async function getUniqueIDs() {
   const db = context.services.get("mongodb-atlas").db("divtracker");
 
   // We combine transactions and companies distinct IDs. 
@@ -454,8 +455,33 @@ computeDistinctSymbols = async function computeDistinctSymbols() {
   // Meanwhile transactions may contain not yet fetched symbols or have less symbols than we already should be updating (transactions may be deleted).
   // So by combining we have all current + all future symbols. Idealy.
   const companiesCollection = db.collection("companies");
-  const companiesDistinctIDs = await companiesCollection.distinct("_id", {});
-  console.log(`Distinct companies IDs (${companiesDistinctIDs.length}): ${companiesDistinctIDs.stringify()}`);
+  const symbolsCollection = db.collection("symbols");
+  const [companiesUniqueIDs, uniqueTransactionIDs] = await Promise.all([
+    companiesCollection.distinct("_id", {}),
+    getUniqueTransactionIDs()
+  ]); 
+
+  console.log(`Unique companies IDs (${companiesUniqueIDs.length}): ${companiesUniqueIDs.stringify()}`);
+
+  // Compute unique IDs using both sources
+  let uniqueIDs = companiesUniqueIDs
+    .concat(uniqueTransactionIDs)
+    .distinct();
+
+  // Filter non-existing
+  const allSymbols = await symbolsCollection.distinct("_id", { _id: { $in: uniqueIDs } });
+  uniqueIDs = uniqueIDs.filter(id => allSymbols.includes(id));
+
+  console.log(`Unique IDs (${uniqueIDs.length}): ${uniqueIDs}`);
+
+  return uniqueIDs;
+};
+
+/** 
+ * @returns {Promise<["AAPL:NAS"]>} Array of unique transaction IDs, e.g. ["AAPL:NAS"]
+*/
+async function _getUniqueTransactionIDs() {
+  const db = context.services.get("mongodb-atlas").db("divtracker");
 
   // We project '_i' field first and then produce unique objects with only '_id' field
   const transactionsCollection = db.collection("transactions");
@@ -465,37 +491,20 @@ computeDistinctSymbols = async function computeDistinctSymbols() {
     _id: "$_i"
   }}];
 
-  const distinctTransactionIDs = await transactionsCollection
+  const uniqueTransactionIDs = await transactionsCollection
     .aggregate(transactionsAggregation)
     .toArray()
     // Extract IDs from [{ _id: "MSFT:NAS" }]
     .then(x => x.map(x => x._id));
 
-  console.log(`Distinct transaction IDs (${distinctTransactionIDs.length}): ${distinctTransactionIDs.stringify()}`);
+  uniqueTransactionIDs.sort();
 
-  // Compute distinct IDs using both sources
-  var _uniqueIDs = companiesDistinctIDs
-    .concat(distinctTransactionIDs)
-    .distinct();
+  console.log(`Unique transaction IDs (${uniqueTransactionIDs.length}): ${uniqueTransactionIDs}`);
 
-  // Filter non-existing
-  const symbolsCollection = db.collection("symbols");
-  const allSymbols = await symbolsCollection.distinct("_id", { _id: { $in: _uniqueIDs } });
-  _uniqueIDs = _uniqueIDs.filter(id => allSymbols.includes(id));
-  uniqueIDs = _uniqueIDs;
-  
-  distinctSymbols = [];
-  distinctSymbolsDictionary = {};
-  for (const uniqueID of uniqueIDs) {
-    const symbol = uniqueID.split(':')[0];
-    distinctSymbols.push(symbol);
-    distinctSymbolsDictionary[symbol] = uniqueID;
-  }
+  return uniqueTransactionIDs;
+}
 
-  distinctSymbols.sort();
-
-  console.log(`Distinct symbols (${distinctSymbols.length}): ${distinctSymbols.stringify()}`);
-};
+getUniqueTransactionIDs = _getUniqueTransactionIDs;
 
 ///////////////////////////////////////////////////////////////////////////////// fetch.js
 
@@ -825,8 +834,8 @@ fetchDividends = async function fetchDividends(arg1, arg2, arg3) {
 
 /**
  * Gets symbols and symbols dictionary from unique IDs.
- * @param {[string]} arg1 Unique IDs.
- * @returns {[[Symbols], SymbolsDictionary]} Returns array with symbols as the first element and symbols dictionary as the second element.
+ * @param {["AAPL:NAS"]} arg1 Unique IDs.
+ * @returns {[["AAPL"], {"AAPL":"AAPL:NAS"}]} Returns array with symbols as the first element and symbols dictionary as the second element.
  */
  function getSymbols(arg1) {
   const uniqueIDs = _throwIfUndefinedOrNull(arg1, `getSymbols arg1`);

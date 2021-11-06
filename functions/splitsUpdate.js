@@ -9,7 +9,7 @@
 
 exports = async function() {
   context.functions.execute("utils");
-  await computeDistinctSymbols();
+  const uniqueIDs = await getUniqueIDs();
   const days = 3;
 
   if (uniqueIDs.length <= 0) {
@@ -41,6 +41,6 @@ exports = async function() {
     console.log(`SUCCESS`);
 
   } else {
-    console.log(`Splits are empty for symbols '${distinctSymbols.stringify()}'`);
+    console.log(`Splits are empty for symbols '${uniqueIDs}'`);
   }
 };
