@@ -6,16 +6,16 @@ exports = function() {
   console.log(`Erasing data`);
   
   /// Delete ALL
-  // db.collection('symbols').deleteMany( { } );
-  //
-  // db.collection('companies').deleteMany( { } );
-  // db.collection('dividends').deleteMany( { } );
-  // db.collection('historical-prices').deleteMany( { } );
-  // db.collection('previous-day-prices').deleteMany( { } );
-  // db.collection('splits').deleteMany( { } );
-  // db.collection('quotes').deleteMany( { } );
-  //
-  // db.collection('transactions').deleteMany( { } );
+  db.collection('symbols').deleteMany( { } );
+  
+  db.collection('companies').deleteMany( { } );
+  db.collection('dividends').deleteMany( { } );
+  db.collection('historical-prices').deleteMany( { } );
+  db.collection('previous-day-prices').deleteMany( { } );
+  db.collection('splits').deleteMany( { } );
+  db.collection('quotes').deleteMany( { } );
+  
+  db.collection('transactions').deleteMany( { } );
   
   /// Delete for symbol
   // const symbol = "AAP:NYS";
