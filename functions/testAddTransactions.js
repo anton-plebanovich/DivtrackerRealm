@@ -27,9 +27,9 @@
   const errors = [];
 
   // Check that all data is inserted
-  const { numDocs: transactionsCount } = await db.collection('transactions').count({});
+  const transactionsCount = await db.collection('transactions').count({});
   if (transactionsCount != transactionsJSON.length) {
-    errors.push([`Some transactions weren't inserted`]);
+    errors.push([`Some transactions weren't inserted (${transactionsCount}/${transactionsJSON.length})`]);
   }
 
   const distinctCompaniesCount = transactionsJSON
@@ -37,32 +37,32 @@
     .distinct()
     .length;
 
-  const { numDocs: companiesCount } = await db.collection('companies').count({});
+  const companiesCount = await db.collection('companies').count({});
   if (companiesCount != distinctCompaniesCount) {
     errors.push([`Some companies weren't inserted (${companiesCount}/${distinctCompaniesCount})`]);
   }
 
-  const { numDocs: dividendsCount } = await db.collection('dividends').count({});
+  const dividendsCount = await db.collection('dividends').count({});
   if (dividendsCount <= 0) {
     errors.push([`Dividends weren't inserted`]);
   }
 
-  const { numDocs: historicalPricesCount } = await db.collection('historical-prices').count({});
+  const historicalPricesCount = await db.collection('historical-prices').count({});
   if (historicalPricesCount <= 0) {
     errors.push([`Historical prices weren't inserted`]);
   }
 
-  const { numDocs: previousDayPricesCount } = await db.collection('previous-day-prices').count({});
+  const previousDayPricesCount = await db.collection('previous-day-prices').count({});
   if (previousDayPricesCount != companiesCount) {
     errors.push([`Some previous day prices weren't inserted (${previousDayPricesCount}/${companiesCount})`]);
   }
 
-  const { numDocs: splitsCount } = await db.collection('splits').count({});
+  const splitsCount = await db.collection('splits').count({});
   if (splitsCount <= 0) {
     errors.push([`Splits weren't inserted`]);
   }
 
-  const { numDocs: quotesCount } = await db.collection('companies').count({});
+  const quotesCount = await db.collection('companies').count({});
   if (quotesCount != companiesCount) {
     errors.push([`Some quotes weren't inserted (${quotesCount}/${companiesCount})`]);
   }
