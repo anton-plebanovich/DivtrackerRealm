@@ -10,7 +10,7 @@
 
 exports = async function() {
   context.functions.execute("utils");
-  await computeDistinctSymbols();
+  const uniqueIDs = await getUniqueIDs();
 
   if (uniqueIDs.length <= 0) {
     console.log(`No uniqueIDs. Skipping update.`);
@@ -59,6 +59,6 @@ exports = async function() {
     console.log(`SUCCESS`);
 
   } else {
-    console.error(`Companies are empty for symbols '${distinctSymbols}'`);
+    console.error(`Companies are empty for IDs '${uniqueIDs}'`);
   }
 };

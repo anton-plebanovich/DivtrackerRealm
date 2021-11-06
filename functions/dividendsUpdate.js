@@ -24,7 +24,7 @@ function getUpperExDate(dividend) {
 
 exports = async function() {
   context.functions.execute("utils");
-  await computeDistinctSymbols();
+  const uniqueIDs = await getUniqueIDs();
   const collection = db.collection("dividends");
 
   if (uniqueIDs.length <= 0) {
@@ -37,12 +37,12 @@ exports = async function() {
   const upToDateUniqueIDs = await collection.distinct("_i", { "e" : { $gte : new Date() }});
   const uniqueIDsToUpdate = [...uniqueIDs];
   uniqueIDsToUpdate.removeContentsOf(upToDateUniqueIDs);
-  console.log(`Updating future dividends (${uniqueIDsToUpdate.length}) for '${uniqueIDsToUpdate.stringify()}' symbols`);
+  console.log(`Updating future dividends (${uniqueIDsToUpdate.length}) for '${uniqueIDsToUpdate}' IDs`);
 
   const futureDividends = await fetchDividends(uniqueIDsToUpdate, true);
   if (futureDividends.length) {
     const futureDividendUniqueIDs = futureDividends.map(x => x._i);
-    console.log(`Inserting missed future dividends (${futureDividends.length}) for uniqueIDs '${futureDividendUniqueIDs.stringify()}'`);
+    console.log(`Inserting missed future dividends (${futureDividends.length}) for IDs '${futureDividendUniqueIDs}'`);
     const bulk = collection.initializeUnorderedBulkOp();
 
     const futureDividendsCount = futureDividends.length;
@@ -78,10 +78,10 @@ exports = async function() {
     }
 
     bulk.execute();
-    console.log(`Inserted missed future dividends for uniqueIDs '${futureDividendUniqueIDs.stringify()}'`);
+    console.log(`Inserted missed future dividends for IDs '${futureDividendUniqueIDs}'`);
 
   } else {
-    console.log(`Future dividends are empty for uniqueIDs '${uniqueIDsToUpdate.stringify()}'`);
+    console.log(`Future dividends are empty for IDs '${uniqueIDsToUpdate}'`);
   }
 
   // Past dividends update. Just in case they weren't added for the future or were updated.
@@ -91,7 +91,7 @@ exports = async function() {
   const pastDividends = await fetchDividends(uniqueIDs, false, daysParam);
   if (pastDividends.length) {
     const pastDividendUniqueIDs = pastDividends.map(x => x._i);
-    console.log(`Inserting missed past dividends (${pastDividends.length}) for uniqueIDs '${pastDividendUniqueIDs.stringify()}'`);
+    console.log(`Inserting missed past dividends (${pastDividends.length}) for IDs '${pastDividendUniqueIDs}'`);
 
     const bulk = collection.initializeUnorderedBulkOp();
 
@@ -128,11 +128,11 @@ exports = async function() {
     }
 
     bulk.execute();
-    console.log(`Inserted missed past dividends for uniqueIDs '${pastDividendUniqueIDs.stringify()}'`);
+    console.log(`Inserted missed past dividends for IDs '${pastDividendUniqueIDs}'`);
 
     console.log(`SUCCESS`);
 
   } else {
-    console.log(`Past dividends are empty for symbols '${distinctSymbols.stringify()}'`);
+    console.log(`Past dividends are empty for IDs '${uniqueIDs}'`);
   }
 };

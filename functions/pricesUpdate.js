@@ -15,7 +15,7 @@
  */
  exports = async function() {
   context.functions.execute("utils");
-  await computeDistinctSymbols();
+  const uniqueIDs = await getUniqueIDs();
 
   if (uniqueIDs.length <= 0) {
     console.log(`No uniqueIDs. Skipping update.`);
@@ -57,7 +57,7 @@
     // Extract IDs from [{ _id: "MSFT:NAS" }]
     .then(x => x.map(x => x._id));
 
-  console.log(`Up to date unique IDs (${upToDateUniqueIDs.length}) for '${monthAgoCloseDate}' date: ${upToDateUniqueIDs.stringify()}.`);
+  console.log(`Up to date unique IDs (${upToDateUniqueIDs.length}) for '${monthAgoCloseDate}' date: ${upToDateUniqueIDs}.`);
 
   const historicalPrices = previousDayPrices
     .filter(x => !upToDateUniqueIDs.includes(x._id))
@@ -73,7 +73,7 @@
 
   if (historicalPrices.length) {
     const historicalPriceIDs = historicalPrices.map(x => x._i);
-    console.log(`Inserting historical prices (${historicalPrices.length}) for IDs: ${historicalPriceIDs.stringify()}.`);
+    console.log(`Inserting historical prices (${historicalPrices.length}) for IDs: ${historicalPriceIDs}.`);
     await historicalPricesCollection.insertMany(historicalPrices);
   } else {
     console.log(`Historical prices are up to date.`);
