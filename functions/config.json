@@ -78,6 +78,10 @@
         "private": true
     },
     {
+        "name": "testAddTransactions",
+        "private": false
+    },
+    {
         "name": "utils",
         "private": false
     }
