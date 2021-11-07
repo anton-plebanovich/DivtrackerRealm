@@ -1,15 +1,52 @@
 [
     {
-        "name": "addTransactions",
-        "private": false,
-        "run_as_system": true
+        "name": "checkTransactions",
+        "private": false
+    },
+    {
+        "name": "loadMissingDataForChangeEvent",
+        "private": false
+    },
+    {
+        "name": "symbolsUpdate",
+        "private": true
+    },
+    {
+        "name": "companiesUpdate",
+        "private": false
+    },
+    {
+        "name": "loadMissingData",
+        "private": false
+    },
+    {
+        "name": "utils",
+        "private": false
     },
     {
         "name": "checkTransactionForChangeEvent",
         "private": true
     },
     {
-        "name": "checkTransactions",
+        "name": "loadMissingDataForSymbol",
+        "private": false,
+        "run_as_system": true
+    },
+    {
+        "name": "login",
+        "private": false
+    },
+    {
+        "name": "testAddTransactions",
+        "private": false,
+        "run_as_system": true
+    },
+    {
+        "name": "loadMissingDataForUser",
+        "private": false
+    },
+    {
+        "name": "playground",
         "private": false
     },
     {
@@ -17,8 +54,17 @@
         "private": false
     },
     {
-        "name": "companiesUpdate",
+        "name": "pricesUpdate",
         "private": false
+    },
+    {
+        "name": "migration",
+        "private": false
+    },
+    {
+        "name": "addTransactions",
+        "private": false,
+        "run_as_system": true
     },
     {
         "name": "dividendsUpdate",
@@ -29,40 +75,7 @@
         "private": false
     },
     {
-        "name": "loadMissingData",
-        "private": false
-    },
-    {
-        "name": "loadMissingDataForChangeEvent",
-        "private": false
-    },
-    {
-        "name": "loadMissingDataForSymbol",
-        "private": false,
-        "run_as_system": true
-    },
-    {
-        "name": "loadMissingDataForUser",
-        "private": false
-    },
-    {
         "name": "loadMissingDividendsForSymbol",
-        "private": false
-    },
-    {
-        "name": "login",
-        "private": false
-    },
-    {
-        "name": "migration",
-        "private": false
-    },
-    {
-        "name": "playground",
-        "private": false
-    },
-    {
-        "name": "pricesUpdate",
         "private": false
     },
     {
@@ -71,19 +84,6 @@
     },
     {
         "name": "splitsUpdate",
-        "private": false
-    },
-    {
-        "name": "symbolsUpdate",
-        "private": true
-    },
-    {
-        "name": "testAddTransactions",
-        "private": false,
-        "run_as_system": true
-    },
-    {
-        "name": "utils",
         "private": false
     }
 ]

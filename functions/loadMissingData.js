@@ -12,6 +12,10 @@
 exports = async function loadMissingData(transactions) {
   context.functions.execute("utils");
   
+  console.log(transactions.toString())
+  console.log(transactions.stringify())
+  console.log(transactions)
+  
   let uniqueIDs;
   if (transactions) {
     uniqueIDs = transactions
