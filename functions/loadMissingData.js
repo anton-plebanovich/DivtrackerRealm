@@ -12,10 +12,6 @@
 exports = async function loadMissingData(transactions) {
   context.functions.execute("utils");
   
-  console.log(transactions.toString())
-  console.log(transactions.stringify())
-  console.log(transactions)
-  
   let uniqueIDs;
   const transactionsType = Object.prototype.toString.call(transactions);
   if (transactions && transactionsType === '[object Array]') {

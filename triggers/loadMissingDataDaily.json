@@ -1,9 +1,9 @@
 {
-    "id": "61867c81062345da629e2ac7",
+    "id": "61867be6ce04703595d56d94",
     "name": "loadMissingDataDaily",
     "type": "SCHEDULED",
     "config": {
-        "schedule": "42 4 * * *"
+        "schedule": "1 20 * * *"
     },
     "disabled": false,
     "event_processors": {
