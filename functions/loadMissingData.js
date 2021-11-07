@@ -13,8 +13,7 @@ exports = async function loadMissingData(transactions) {
   context.functions.execute("utils");
   
   let uniqueIDs;
-  const transactionsType = Object.prototype.toString.call(transactions);
-  if (transactions && transactionsType === '[object Array]') {
+  if (transactions && Object.prototype.toString.call(transactions) === '[object Array]') {
     uniqueIDs = transactions
       .map(x => `${x.s}:${x.e}`)
       .distinct();
