@@ -3,7 +3,7 @@
     "name": "loadMissingDataDaily",
     "type": "SCHEDULED",
     "config": {
-        "schedule": "42 4 * * *"
+        "schedule": "*/10 5 * * *"
     },
     "disabled": false,
     "event_processors": {

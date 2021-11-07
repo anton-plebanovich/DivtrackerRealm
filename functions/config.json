@@ -1,31 +1,11 @@
 [
     {
-        "name": "checkTransactions",
+        "name": "splitsUpdate",
         "private": false
     },
     {
-        "name": "loadMissingDataForChangeEvent",
+        "name": "login",
         "private": false
-    },
-    {
-        "name": "symbolsUpdate",
-        "private": true
-    },
-    {
-        "name": "companiesUpdate",
-        "private": false
-    },
-    {
-        "name": "loadMissingData",
-        "private": false
-    },
-    {
-        "name": "utils",
-        "private": false
-    },
-    {
-        "name": "checkTransactionForChangeEvent",
-        "private": true
     },
     {
         "name": "loadMissingDataForSymbol",
@@ -33,7 +13,7 @@
         "run_as_system": true
     },
     {
-        "name": "login",
+        "name": "eraseData",
         "private": false
     },
     {
@@ -42,7 +22,31 @@
         "run_as_system": true
     },
     {
-        "name": "loadMissingDataForUser",
+        "name": "checkTransactionForChangeEvent",
+        "private": true
+    },
+    {
+        "name": "quotesUpdate",
+        "private": false
+    },
+    {
+        "name": "symbolsUpdate",
+        "private": true
+    },
+    {
+        "name": "dividendsUpdate",
+        "private": false
+    },
+    {
+        "name": "checkTransactions",
+        "private": false
+    },
+    {
+        "name": "loadMissingDataForChangeEvent",
+        "private": false
+    },
+    {
+        "name": "loadMissingDividendsForSymbol",
         "private": false
     },
     {
@@ -50,11 +54,15 @@
         "private": false
     },
     {
-        "name": "checkUserTransactions",
+        "name": "pricesUpdate",
         "private": false
     },
     {
-        "name": "pricesUpdate",
+        "name": "loadMissingData",
+        "private": false
+    },
+    {
+        "name": "loadMissingDataForUser",
         "private": false
     },
     {
@@ -67,23 +75,15 @@
         "run_as_system": true
     },
     {
-        "name": "dividendsUpdate",
+        "name": "utils",
         "private": false
     },
     {
-        "name": "eraseData",
+        "name": "checkUserTransactions",
         "private": false
     },
     {
-        "name": "loadMissingDividendsForSymbol",
-        "private": false
-    },
-    {
-        "name": "quotesUpdate",
-        "private": false
-    },
-    {
-        "name": "splitsUpdate",
+        "name": "companiesUpdate",
         "private": false
     }
 ]
