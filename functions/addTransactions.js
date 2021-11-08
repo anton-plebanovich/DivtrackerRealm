@@ -57,8 +57,8 @@ exports = async function(transactions) {
   // console.log(`return result: ${returnResult.stringify()}`);
   //////////////////////////////////////////////
   await context.functions.execute("loadMissingData", transactions);
-  const result = transactionsCollection.insertMany(transactions).mapErrorToSystem();
-  console.log(`result: ${result.stringify()}`);
+  const returnResult = transactionsCollection.insertMany(transactions).mapErrorToSystem();
+  console.log(`return result: ${returnResult.stringify()}`);
   //////////////////////////////////////////////
 
   return returnResult;
