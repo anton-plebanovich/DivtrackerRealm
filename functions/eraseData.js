@@ -24,7 +24,7 @@ exports = function() {
   // db.collection('historical-prices').deleteMany( { _i: symbol } );
   // db.collection('previous-day-prices').deleteMany( { _id: symbol } );
   // db.collection('splits').deleteMany( { _i: symbol } );
-  // db.collection('quotes').deleteMany( { _i: symbol } );
+  // db.collection('quotes').deleteMany( { _id: symbol } );
   
   /// Delete for symbols array
   // const symbols = ["ACRE:NYS","AMD:NAS","GIWWW:NAS","W:NYS","STOR:NYS","OZK:NAS","BABA:NYS","BMO:NYS","Z:NAS","IAA:NYS","CCI:NYS","BDX:NYS","RNWWW:NAS"];
