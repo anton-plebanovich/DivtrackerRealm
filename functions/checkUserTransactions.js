@@ -12,7 +12,7 @@
  * - There should be less than 1_000_000 transactions per user.
  * @param {string} arg1 User ID
  * @param {[Transaction]} arg2 The same user transactions.
- * @example exports('614b283c15a0dc11514db030', [{"_p": "614b283c15a0dc11514db030","p":300.1,"d":{"$date":new Date(1635895369641)},"e":"NYS","s":"MA","a":1.1}]);
+ * @example exports('618600d6cab8724b39b6df4b', [{"_p": "618600d6cab8724b39b6df4b","p":300.1,"d":{"$date":new Date(1635895369641)},"e":"NYS","s":"MA","a":1.1}]);
  */ 
  exports = async function(arg1, arg2) {
   context.functions.execute("utils");
