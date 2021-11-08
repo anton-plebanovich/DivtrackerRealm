@@ -44,15 +44,22 @@ exports = async function(transactions) {
 
   // Insert and load missing data together so we can speed up transaction display on UI
   const transactionsCollection = db.collection("transactions");
-  const result = await Promise.safeAllAndUnwrap([
-    transactionsCollection.insertMany(transactions).mapErrorToSystem(),
-    context.functions.execute("loadMissingData", transactions)
-  ]);
 
+  //////////// ON HOLD UNTIL ANDROID IS UPDATED
+  // const result = await Promise.safeAllAndUnwrap([
+  //   transactionsCollection.insertMany(transactions).mapErrorToSystem(),
+  //   context.functions.execute("loadMissingData", transactions)
+  // ]);
+
+  // console.log(`result: ${result.stringify()}`);
+
+  // const returnResult = result[0];
+  // console.log(`return result: ${returnResult.stringify()}`);
+  //////////////////////////////////////////////
+  await context.functions.execute("loadMissingData", transactions);
+  const result = transactionsCollection.insertMany(transactions).mapErrorToSystem();
   console.log(`result: ${result.stringify()}`);
-
-  const returnResult = result[0];
-  console.log(`return result: ${returnResult.stringify()}`);
+  //////////////////////////////////////////////
 
   return returnResult;
 };
