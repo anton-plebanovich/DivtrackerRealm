@@ -1,4 +1,4 @@
 {
-    "enabled": true,
+    "enabled": false,
     "app_default_domain": "divtrackertests-aeylo.mongodbstitch.com"
 }
