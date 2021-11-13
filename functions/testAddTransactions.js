@@ -70,12 +70,12 @@
   // Check update functions
   // TODO: Make it more complex and move to separate test case
   await Promise.all([
-    context.functions.execute("companiesUpdate"),
-    context.functions.execute("dividendsUpdate"),
-    context.functions.execute("pricesUpdate"),
-    context.functions.execute("quotesUpdate"),
-    context.functions.execute("splitsUpdate"),
-    context.functions.execute("symbolsUpdate"),
+    context.functions.execute("updateCompanies"),
+    context.functions.execute("updateDividends"),
+    context.functions.execute("updatePrices"),
+    context.functions.execute("updateQuotes"),
+    context.functions.execute("updateSplits"),
+    context.functions.execute("updateSymbols"),
   ]);
   
   if (errors.length) {
