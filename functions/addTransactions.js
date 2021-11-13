@@ -42,24 +42,13 @@ exports = async function(transactions) {
     .execute("checkUserTransactions", userID, transactions)
     .mapErrorToUser();
 
-  // Insert and load missing data together so we can speed up transaction display on UI
-  const transactionsCollection = db.collection("transactions");
-
-  //////////// ON HOLD UNTIL ANDROID IS UPDATED
-  // const result = await Promise.safeAllAndUnwrap([
-  //   transactionsCollection.insertMany(transactions).mapErrorToSystem(),
-  //   context.functions.execute("loadMissingData", transactions)
-  // ]);
-
-  // console.log(`result: ${result.stringify()}`);
-
-  // const returnResult = result[0];
-  // console.log(`return result: ${returnResult.stringify()}`);
-  //////////////////////////////////////////////
+  // Load missing data first
   await context.functions.execute("loadMissingData", transactions);
+
+  // Data is loaded we can safely insert our transactions
+  const transactionsCollection = db.collection("transactions");
   const returnResult = await transactionsCollection.insertMany(transactions).mapErrorToSystem();
   console.log(`return result: ${returnResult.stringify()}`);
-  //////////////////////////////////////////////
 
   return returnResult;
 };
