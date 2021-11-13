@@ -1,15 +1,15 @@
 {
-    "id": "608e7d2ad364e0535144956f",
-    "name": "splitsUpdateDaily",
+    "id": "6185ffbd6db886ed8f037b70",
+    "name": "updatePricesDaily",
     "type": "SCHEDULED",
     "config": {
-        "schedule": "3 9 * * *"
+        "schedule": "5 9 * * 2-6"
     },
     "disabled": false,
     "event_processors": {
         "FUNCTION": {
             "config": {
-                "function_name": "splitsUpdate"
+                "function_name": "updatePrices"
             }
         }
     }

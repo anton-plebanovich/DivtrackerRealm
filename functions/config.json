@@ -17,14 +17,6 @@
         "private": false
     },
     {
-        "name": "companiesUpdate",
-        "private": false
-    },
-    {
-        "name": "dividendsUpdate",
-        "private": false
-    },
-    {
         "name": "eraseData",
         "private": false
     },
@@ -62,19 +54,27 @@
         "private": false
     },
     {
-        "name": "pricesUpdate",
+        "name": "updateCompanies",
         "private": false
     },
     {
-        "name": "quotesUpdate",
+        "name": "updateDividends",
         "private": false
     },
     {
-        "name": "splitsUpdate",
+        "name": "updatePrices",
         "private": false
     },
     {
-        "name": "symbolsUpdate",
+        "name": "updateQuotes",
+        "private": false
+    },
+    {
+        "name": "updateSplits",
+        "private": false
+    },
+    {
+        "name": "updateSymbols",
         "private": true
     },
     {

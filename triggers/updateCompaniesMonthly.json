@@ -1,15 +1,15 @@
 {
-    "id": "61707666e50313e05413683c",
-    "name": "quotesUpdate",
+    "id": "6185ffbd6db886ed8f037b50",
+    "name": "updateCompaniesMonthly",
     "type": "SCHEDULED",
     "config": {
-        "schedule": "17 13,17 * * *"
+        "schedule": "1 5 1 * *"
     },
     "disabled": false,
     "event_processors": {
         "FUNCTION": {
             "config": {
-                "function_name": "quotesUpdate"
+                "function_name": "updateCompanies"
             }
         }
     }

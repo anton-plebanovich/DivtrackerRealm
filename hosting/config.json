@@ -1,4 +1,3 @@
 {
-    "enabled": true,
-    "app_default_domain": "divtrackersandbox-zlomz.mongodbstitch.com"
+    "enabled": false
 }

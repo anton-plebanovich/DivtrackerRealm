@@ -1,15 +1,15 @@
 {
-    "id": "607c71cdae6da122a60b012f",
-    "name": "dividendsUpdateDaily",
+    "id": "6185ffbd6db886ed8f037b80",
+    "name": "updateQuotesTwiceDaily",
     "type": "SCHEDULED",
     "config": {
-        "schedule": "1 9 * * *"
+        "schedule": "17 18,21 * * 1-5"
     },
     "disabled": false,
     "event_processors": {
         "FUNCTION": {
             "config": {
-                "function_name": "dividendsUpdate"
+                "function_name": "updateQuotes"
             }
         }
     }

@@ -1,15 +1,15 @@
 {
-    "id": "607b1ff061a58bf8b57d8b44",
-    "name": "companiesUpdate",
+    "id": "6185ffbd6db886ed8f037ba0",
+    "name": "updateSymbolsDaily",
     "type": "SCHEDULED",
     "config": {
-        "schedule": "1 5 1 * *"
+        "schedule": "1 13 * * *"
     },
     "disabled": false,
     "event_processors": {
         "FUNCTION": {
             "config": {
-                "function_name": "companiesUpdate"
+                "function_name": "updateSymbols"
             }
         }
     }

@@ -73,7 +73,7 @@
 
     async function confirmEmail(token, tokenId) {
       document.getElementById("title").textContent="Confirming your email... 👷‍♀️";
-      const app = new Realm.App({ id: "divtrackersandbox-zlomz" });
+      const app = new Realm.App({ id: "divtrackertests-aeylo" });
 
       try {
         await app.emailPasswordAuth.confirmUser(token, tokenId);
