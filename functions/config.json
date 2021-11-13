@@ -17,14 +17,6 @@
         "private": false
     },
     {
-        "name": "companiesUpdate",
-        "private": false
-    },
-    {
-        "name": "dividendsUpdate",
-        "private": false
-    },
-    {
         "name": "eraseData",
         "private": false
     },
@@ -62,25 +54,33 @@
         "private": false
     },
     {
-        "name": "pricesUpdate",
-        "private": false
-    },
-    {
-        "name": "quotesUpdate",
-        "private": false
-    },
-    {
-        "name": "splitsUpdate",
-        "private": false
-    },
-    {
-        "name": "symbolsUpdate",
-        "private": true
-    },
-    {
         "name": "testAddTransactions",
         "private": false,
         "run_as_system": true
+    },
+    {
+        "name": "updateCompanies",
+        "private": false
+    },
+    {
+        "name": "updateDividends",
+        "private": false
+    },
+    {
+        "name": "updatePrices",
+        "private": false
+    },
+    {
+        "name": "updateQuotes",
+        "private": false
+    },
+    {
+        "name": "updateSplits",
+        "private": false
+    },
+    {
+        "name": "updateSymbols",
+        "private": true
     },
     {
         "name": "utils",

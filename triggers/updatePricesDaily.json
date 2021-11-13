@@ -1,15 +1,15 @@
 {
-    "id": "6185ffbd6db886ed8f037b7a",
-    "name": "companiesUpdate",
+    "id": "6185ffbd6db886ed8f037b70",
+    "name": "updatePricesDaily",
     "type": "SCHEDULED",
     "config": {
-        "schedule": "1 5 1 * *"
+        "schedule": "5 9 * * *"
     },
     "disabled": false,
     "event_processors": {
         "FUNCTION": {
             "config": {
-                "function_name": "companiesUpdate"
+                "function_name": "updatePrices"
             }
         }
     }

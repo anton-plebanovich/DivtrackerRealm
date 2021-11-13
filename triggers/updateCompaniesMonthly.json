@@ -1,15 +1,15 @@
 {
-    "id": "6185ffbd6db886ed8f037b77",
-    "name": "splitsUpdateDaily",
+    "id": "6185ffbd6db886ed8f037b50",
+    "name": "updateCompaniesMonthly",
     "type": "SCHEDULED",
     "config": {
-        "schedule": "3 9 * * *"
+        "schedule": "1 5 1 * *"
     },
     "disabled": false,
     "event_processors": {
         "FUNCTION": {
             "config": {
-                "function_name": "splitsUpdate"
+                "function_name": "updateCompanies"
             }
         }
     }

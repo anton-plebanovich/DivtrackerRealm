@@ -1,15 +1,15 @@
 {
-    "id": "6185ffbd6db886ed8f037b7c",
-    "name": "pricesUpdateDaily",
+    "id": "6185ffbd6db886ed8f037b80",
+    "name": "updateQuotesTwiceDaily",
     "type": "SCHEDULED",
     "config": {
-        "schedule": "5 9 * * *"
+        "schedule": "17 13,17 * * *"
     },
     "disabled": false,
     "event_processors": {
         "FUNCTION": {
             "config": {
-                "function_name": "pricesUpdate"
+                "function_name": "updateQuotes"
             }
         }
     }
