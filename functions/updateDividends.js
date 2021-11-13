@@ -22,6 +22,9 @@ function getUpperExDate(dividend) {
   return date;
 }
 
+/**
+ * @note IEX update happens at 9am UTC
+ */
 exports = async function() {
   context.functions.execute("utils");
   const uniqueIDs = await getUniqueIDs();

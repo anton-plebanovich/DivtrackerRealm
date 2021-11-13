@@ -1,15 +1,15 @@
 {
-    "id": "61707cc0139af0cff59ceb5c",
-    "name": "quotesUpdate",
+    "id": "6185ffbd6db886ed8f037b90",
+    "name": "updateSplitsDaily",
     "type": "SCHEDULED",
     "config": {
-        "schedule": "17 13,17 * * *"
+        "schedule": "3 9 * * *"
     },
     "disabled": false,
     "event_processors": {
         "FUNCTION": {
             "config": {
-                "function_name": "quotesUpdate"
+                "function_name": "updateSplits"
             }
         }
     }

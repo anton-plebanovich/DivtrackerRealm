@@ -1,15 +1,15 @@
 {
-    "id": "607efe29687c4dca43160570",
-    "name": "companiesUpdate",
+    "id": "6185ffbd6db886ed8f037b80",
+    "name": "updateQuotesTwiceDaily",
     "type": "SCHEDULED",
     "config": {
-        "schedule": "1 5 1 * *"
+        "schedule": "17 18,21 * * 1-5"
     },
     "disabled": false,
     "event_processors": {
         "FUNCTION": {
             "config": {
-                "function_name": "companiesUpdate"
+                "function_name": "updateQuotes"
             }
         }
     }

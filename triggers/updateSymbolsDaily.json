@@ -1,6 +1,6 @@
 {
-    "id": "607efdd1687c4dca4315bbb2",
-    "name": "symbolsUpdate",
+    "id": "6185ffbd6db886ed8f037ba0",
+    "name": "updateSymbolsDaily",
     "type": "SCHEDULED",
     "config": {
         "schedule": "1 13 * * *"
@@ -9,7 +9,7 @@
     "event_processors": {
         "FUNCTION": {
             "config": {
-                "function_name": "symbolsUpdate"
+                "function_name": "updateSymbols"
             }
         }
     }

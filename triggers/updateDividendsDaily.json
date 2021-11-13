@@ -1,15 +1,15 @@
 {
-    "id": "607efe765463142d7dce2da3",
-    "name": "pricesUpdateDaily",
+    "id": "6185ffbd6db886ed8f037b60",
+    "name": "updateDividendsDaily",
     "type": "SCHEDULED",
     "config": {
-        "schedule": "5 9 * * *"
+        "schedule": "1 9 * * *"
     },
     "disabled": false,
     "event_processors": {
         "FUNCTION": {
             "config": {
-                "function_name": "pricesUpdate"
+                "function_name": "updateDividends"
             }
         }
     }
