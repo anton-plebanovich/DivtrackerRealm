@@ -7,6 +7,9 @@
 // https://docs.mongodb.com/realm/mongodb/
 // https://docs.mongodb.com/realm/mongodb/actions/collection.bulkWrite/#std-label-mongodb-service-collection-bulk-write
 
+/**
+ * @note IEX update happens at 8am, 9am, 12pm, 1pm UTC
+ */
 exports = async function() {
   context.functions.execute("utils");
 

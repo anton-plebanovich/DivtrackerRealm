@@ -8,6 +8,9 @@
 // https://docs.mongodb.com/realm/mongodb/actions/collection.bulkWrite/#std-label-mongodb-service-collection-bulk-write
 // https://docs.mongodb.com/realm/mongodb/actions/collection.find/
 
+/**
+ * @note IEX update happens at 4:30am-8pm ET Mon-Fri
+ */
 exports = async function() {
   context.functions.execute("utils");
   const uniqueIDs = await getUniqueIDs();

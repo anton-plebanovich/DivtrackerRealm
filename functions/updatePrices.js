@@ -9,7 +9,7 @@
 
 /**
  * Updates previous day prices and on 2nd day of each month also inserts historical price.
- * @note IEX update happens 4am ET Tue-Sat
+ * @note IEX update happens at 4am ET Tue-Sat
  * @note Since we lazily fetch historical prices with 21 day period on a day of the first usage
  * there is a difference between series before the first usage and after the first usage and also 
  * there is a period gap.

@@ -378,7 +378,8 @@ getValueAndQuitIfUndefined = function _getValueAndQuitIfUndefined(object, key) {
   }
 };
 
-/** First parameter: Date in the "yyyy-mm-dd" or timestamp or Date format, e.g. "2020-03-27" or '1633046400000' or Date.
+/** 
+ * First parameter: Date in the "yyyy-mm-dd" or timestamp or Date format, e.g. "2020-03-27" or '1633046400000' or Date.
  * Returns close 'Date' pointing to the U.S. stock market close time.
  *
  * Regular trading hours for the U.S. stock market, including 
@@ -395,8 +396,9 @@ getCloseDate = function getCloseDate(arg1) {
     return null;
   }
 
-  // EDT (New York) time zone is 4 hours behind GMT. We also add 1 hour to handle daylight saving.
-  const closeDateStringWithTimeZone = `${date.dayString()}T17:00:00-0400`;
+  // Eastern Standard Time (EST) time zone is 5 hours behind GMT during autumn/winter
+  // https://en.wikipedia.org/wiki/Eastern_Time_Zone
+  const closeDateStringWithTimeZone = `${date.dayString()}T16:00:00-0500`;
   const closeDate = new Date(closeDateStringWithTimeZone);
   if (isNaN(closeDate)) {
     console.error(`Invalid close date with time zone: ${closeDateStringWithTimeZone}`);
@@ -406,7 +408,8 @@ getCloseDate = function getCloseDate(arg1) {
   }
 };
 
-/** First parameter: Date in the "yyyy-mm-dd" or timestamp or Date format, e.g. "2020-03-27" or '1633046400000' or Date.
+/** 
+ * First parameter: Date in the "yyyy-mm-dd" or timestamp or Date format, e.g. "2020-03-27" or '1633046400000' or Date.
  * Returns open 'Date' pointing to the U.S. stock market open time.
  *
  * Regular trading hours for the U.S. stock market, including 
@@ -423,8 +426,9 @@ getOpenDate = function getOpenDate(arg1) {
     return null;
   }
 
-  // EDT (New York) time zone is 4 hours behind GMT. We also substract 1 hour to handle daylight saving.
-  const openDateStringWithTimeZone = `${date.dayString()}T8:30:00-0400`;
+  // Eastern Standard Time (EST) time zone is 5 hours behind GMT during autumn/winter
+  // https://en.wikipedia.org/wiki/Eastern_Time_Zone
+  const openDateStringWithTimeZone = `${date.dayString()}T9:30:00-0500`;
   const openDate = new Date(openDateStringWithTimeZone);
 
   if (isNaN(openDate)) {
