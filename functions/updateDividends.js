@@ -1,5 +1,5 @@
 
-// dividendsUpdate.js
+// updateDividends.js
 
 // https://docs.mongodb.com/manual/reference/method/js-collection/
 // https://docs.mongodb.com/manual/reference/method/js-bulk/
@@ -80,7 +80,7 @@ exports = async function() {
         .updateOne({ $set: futureDividend });
     }
 
-    bulk.execute();
+    await bulk.execute();
     console.log(`Inserted missed future dividends for IDs '${futureDividendUniqueIDs}'`);
 
   } else {
@@ -130,7 +130,7 @@ exports = async function() {
         .updateOne({ $set: pastDividend });
     }
 
-    bulk.execute();
+    await bulk.execute();
     console.log(`Inserted missed past dividends for IDs '${pastDividendUniqueIDs}'`);
 
     console.log(`SUCCESS`);
