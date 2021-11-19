@@ -1,6 +1,6 @@
 {
     "id": "6185ffbd6db886ed8f037b80",
-    "name": "updateQuotesTwiceDaily",
+    "name": "updateQuotesThriceDaily",
     "type": "SCHEDULED",
     "config": {
         "schedule": "17 15,18,21 * * 1-5"
