@@ -9,6 +9,15 @@
 // https://docs.mongodb.com/realm/mongodb/actions/collection.find/
 
 /**
+ * Ideal update times:
+ * X - exchange open, 9:30 ET
+ * Y - exchange close, 16:00 ET
+ * Х + 1 - first update (10:30 ET, 15:30 GMT)
+ * X + (Y - X + 1) / 2 - second update (13:15 ET, 18:15 GMT)
+ * Y - third update (16:00 ET, 21:00 GMT)
+ * 
+ * Real update times: 10:00 ET, 13:00 ET, 16:00 ET (+17 mins)
+ * 
  * @note IEX update happens at 4:30am-8pm ET Mon-Fri
  */
 exports = async function() {
