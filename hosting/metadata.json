@@ -31,6 +31,15 @@
     ]
   },
   {
+    "path": "/va",
+    "attrs": [
+      {
+        "name": "Content-Type",
+        "value": "application/octet-stream"
+      }
+    ]
+  },
+  {
     "path": "/version.json",
     "attrs": [
       {
