@@ -19,7 +19,7 @@ exports = async function(symbol, uniqueID) {
   // Get unique ID if needed
   if (!uniqueID) {
     const symbolsCollection = db.collection("symbols");
-    const symbolObject = await symbolsCollection.findOne({ s: symbol });
+    const symbolObject = await symbolsCollection.findOne({ _id: { "$regex": `^${symbol}:` } });
     uniqueID = symbolObject._id;
   }
 

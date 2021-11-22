@@ -465,7 +465,8 @@ getUniqueIDs = async function getUniqueIDs() {
     getUniqueTransactionIDs()
   ]); 
 
-  console.log(`Unique companies IDs (${companiesUniqueIDs.length}): ${companiesUniqueIDs.stringify()}`);
+  console.log(`Unique companies IDs (${companiesUniqueIDs.length})`);
+  console.logData(`Unique companies IDs (${companiesUniqueIDs.length})`, companiesUniqueIDs);
 
   // Compute unique IDs using both sources
   let uniqueIDs = companiesUniqueIDs
@@ -476,7 +477,8 @@ getUniqueIDs = async function getUniqueIDs() {
   const allSymbols = await symbolsCollection.distinct("_id", { _id: { $in: uniqueIDs } });
   uniqueIDs = uniqueIDs.filter(id => allSymbols.includes(id));
 
-  console.log(`Unique IDs (${uniqueIDs.length}): ${uniqueIDs}`);
+  console.log(`Unique IDs (${uniqueIDs.length})`);
+  console.logData(`Unique IDs (${uniqueIDs.length})`, uniqueIDs);
 
   return uniqueIDs;
 };
@@ -503,12 +505,37 @@ async function _getUniqueTransactionIDs() {
 
   uniqueTransactionIDs.sort();
 
-  console.log(`Unique transaction IDs (${uniqueTransactionIDs.length}): ${uniqueTransactionIDs}`);
+  console.log(`Unique transaction IDs (${uniqueTransactionIDs.length})`);
+  console.logData(`Unique transaction IDs (${uniqueTransactionIDs.length})`, uniqueTransactionIDs);
 
   return uniqueTransactionIDs;
 }
 
 getUniqueTransactionIDs = _getUniqueTransactionIDs;
+
+/** 
+ * @returns {Promise<[["AAPL"], ["NAS"]]>} Array of unique symbols and exchanges IDs, e.g. [["AAPL"], ["NAS"]]
+*/
+getUniqueSymbolsAndExchanges = async function getUniqueSymbolsAndExchanges() {
+  const symbolsCollection = db.collection("symbols");
+  const uniqueIDs = await symbolsCollection.distinct("_id");
+  const uniqueSymbols = [];
+  const uniqueExchanges = [];
+  uniqueIDs.forEach(uniqueID => {
+      const [validSymbol, validExchange] = uniqueID.split(':');
+      uniqueSymbols.push(validSymbol);
+
+      if (!uniqueExchanges.includes(validExchange)) {
+        uniqueExchanges.push(validExchange);
+      }
+    });
+
+  console.log(`Unique symbols (${uniqueSymbols.length})`);
+  console.logData(`Unique symbols (${uniqueSymbols.length})`, uniqueSymbols);
+  console.log(`Unique exchanges (${uniqueExchanges.length}): ${uniqueExchanges}`);
+
+  return [uniqueSymbols, uniqueExchanges]
+}
 
 ///////////////////////////////////////////////////////////////////////////////// fetch.js
 
@@ -874,7 +901,7 @@ fixCompany = function fixCompany(arg1, arg2) {
     const company = {};
     company._id = uniqueID;
     company._p = "P";
-    company.n = _company.companyName;
+    company.n = _company.companyName.trim();
     company.s = _company.industry;
     company.t = _company.issueType;
   
@@ -1092,26 +1119,30 @@ exports = function() {
   }
 
   // Adjusting console log
-  if (console.logCopy && console.errorCopy) { return; }
-  
   if (!console.logCopy) {
     console.logCopy = console.log.bind(console);
-    console.log = function(data) {
-      this.logCopy(getDateLogString(), data);
+    console.log = function(message) {
+      this.logCopy(getDateLogString(), message);
     };
   }
   
   if (!console.errorCopy) {
     console.errorCopy = console.error.bind(console);
-    console.error = function(data) {
+    console.error = function(message) {
       const errorLogPrefix = `${getDateLogString()} [ ** ERRROR ** ]`;
-      this.logCopy(errorLogPrefix, data);
+      this.logCopy(errorLogPrefix, message);
     };
   }
   
   if (!console.logVerbose) {
-    console.logVerbose = function(data) {
-      // this.logCopy(getDateLogString(), data);
+    console.logVerbose = function(message) {
+      // this.logCopy(getDateLogString(), message);
+    };
+  }
+  
+  if (!console.logData) {
+    console.logData = function(message, data) {
+      // this.logCopy(getDateLogString(), `${message}: ${data.stringify()}`);
     };
   }
   

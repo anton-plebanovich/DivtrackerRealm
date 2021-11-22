@@ -13,11 +13,8 @@
     return;
   }
 
-  const symbolsCollection = db.collection("symbols");
-  const validExchanges = await symbolsCollection.distinct("e");
-  const validSymbols = await symbolsCollection.distinct("s");
-
   // Check transactions
+  const [validSymbols, validExchanges] = await getUniqueSymbolsAndExchanges();
   const errors = [];
   for (const transaction of transactions) {
     try {

@@ -43,8 +43,8 @@ exports = async function() {
     console.log(`Delete excessive`);
     bulk.find({ "_id": { $nin: allIDs } }).remove();
     
-    console.log(`Inserting not inserted`);
-    await collection.find({}, { "_id": 1 })
+    console.log(`Inserting not inserted and name update`);
+    await collection.find({}, { "_id": 1, "n": 1 })
       .toArray()
       .then(existingSymbols => {
         if (!existingSymbols.length) { return; }
@@ -53,7 +53,16 @@ exports = async function() {
         const symbolsCount = symbols.length;
         for (let i = 0; i < symbolsCount; i += 1) {
           const symbol = symbols[i];
-          if (!existingSymbolIDs.includes(symbol._id)) {
+          if (existingSymbolIDs.includes(symbol._id)) {
+            const index = existingSymbolIDs.indexOf(symbol._id);
+            if (existingSymbols[index].n != symbol.n) {
+              console.log(`Updating: ${symbol._id}`);
+              bulk.find({ _id: symbol._id })
+                .updateOne({ $set: symbol });
+            }
+
+          } else {
+            console.log(`Inserting: ${symbol._id}`);
             bulk.insert(symbol);
           }
         }
