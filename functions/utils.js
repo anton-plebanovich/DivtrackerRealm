@@ -510,6 +510,26 @@ async function _getUniqueTransactionIDs() {
 
 getUniqueTransactionIDs = _getUniqueTransactionIDs;
 
+/** 
+ * @returns {Promise<[["AAPL"], ["NAS"]]>} Array of unique symbols and exchanges IDs, e.g. [["AAPL"], ["NAS"]]
+*/
+getUniqueSymbolsAndExchanges = async function getUniqueSymbolsAndExchanges() {
+  const symbolsCollection = db.collection("symbols");
+  const uniqueIDs = await symbolsCollection.distinct("_id");
+  const uniqueSymbols = [];
+  const uniqueExchanges = [];
+  uniqueIDs.forEach(uniqueID => {
+      const [validSymbol, validExchange] = uniqueID.split(':');
+      uniqueSymbols.push(validSymbol);
+
+      if (!uniqueExchanges.includes(validExchange)) {
+        uniqueExchanges.push(validExchange);
+      }
+    });
+
+  return [uniqueSymbols, uniqueExchanges]
+}
+
 ///////////////////////////////////////////////////////////////////////////////// fetch.js
 
 //////////////////////////////////// Tokens
@@ -874,7 +894,7 @@ fixCompany = function fixCompany(arg1, arg2) {
     const company = {};
     company._id = uniqueID;
     company._p = "P";
-    company.n = _company.companyName;
+    company.n = _company.companyName.trim();
     company.s = _company.industry;
     company.t = _company.issueType;
   
