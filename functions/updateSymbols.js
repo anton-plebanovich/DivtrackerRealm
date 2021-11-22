@@ -54,7 +54,7 @@ exports = async function() {
         for (let i = 0; i < symbolsCount; i += 1) {
           const symbol = symbols[i];
           if (existingSymbolIDs.includes(symbol._id)) {
-            const index = existingSymbolIDs.indexOf(symbol._id)
+            const index = existingSymbolIDs.indexOf(symbol._id);
             if (existingSymbols[index].n != symbol.n) {
               console.log(`Updating: ${symbol._id}`);
               bulk.find({ _id: symbol._id })

@@ -527,6 +527,9 @@ getUniqueSymbolsAndExchanges = async function getUniqueSymbolsAndExchanges() {
       }
     });
 
+  console.log(`Unique symbols (${uniqueSymbols.length}): ${uniqueSymbols}`);
+  console.log(`Unique exchanges (${uniqueExchanges.length}): ${uniqueExchanges}`);
+
   return [uniqueSymbols, uniqueExchanges]
 }
 
