@@ -38,7 +38,7 @@
     "c"
   ];
 
-  const [validSymbols, validExchanges] = getUniqueSymbolsAndExchanges();
+  const [validSymbols, validExchanges] = await getUniqueSymbolsAndExchanges();
   const transactionsCollection = db.collection("transactions");
   // Check transactions
   for (const transaction of transactions) {

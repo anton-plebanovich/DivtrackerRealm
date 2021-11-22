@@ -13,9 +13,8 @@
     return;
   }
 
-  const [validSymbols, validExchanges] = getUniqueSymbolsAndExchanges();
-
   // Check transactions
+  const [validSymbols, validExchanges] = await getUniqueSymbolsAndExchanges();
   const errors = [];
   for (const transaction of transactions) {
     try {
