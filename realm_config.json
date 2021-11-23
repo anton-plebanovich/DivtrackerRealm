@@ -2,6 +2,6 @@
     "app_id": "divtrackersandboxanton-rggpj",
     "config_version": 20210101,
     "name": "DivtrackerSandboxAnton",
-    "location": "US-VA",
-    "deployment_model": "GLOBAL"
+    "location": "IE",
+    "deployment_model": "LOCAL"
 }
