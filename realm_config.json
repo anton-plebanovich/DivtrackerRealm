@@ -1,7 +1,7 @@
 {
-    "app_id": "divtrackersandboxanton-rggpj",
+    "app_id": "dtsandboxanton-nmfsd",
     "config_version": 20210101,
-    "name": "DivtrackerSandboxAnton",
+    "name": "DTSandboxAnton",
     "location": "IE",
     "deployment_model": "LOCAL"
 }

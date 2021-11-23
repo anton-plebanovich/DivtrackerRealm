@@ -21,8 +21,8 @@
         "name": "local-userpass",
         "type": "local-userpass",
         "config": {
-            "emailConfirmationUrl": "https://divtrackersandboxanton-rggpj.mongodbstitch.com/email-confirmation.html",
-            "resetPasswordUrl": "https://divtrackersandboxanton-rggpj.mongodbstitch.com/reset-password.html"
+            "emailConfirmationUrl": "https://dtsandboxanton-nmfsd.mongodbstitch.com/email-confirmation.html",
+            "resetPasswordUrl": "https://dtsandboxanton-nmfsd.mongodbstitch.com/reset-password.html"
         },
         "disabled": false
     },
