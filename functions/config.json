@@ -10,73 +10,73 @@
     },
     {
         "name": "checkTransactions",
-        "private": false
+        "private": true
     },
     {
         "name": "checkUserTransactions",
-        "private": false
+        "private": true
     },
     {
         "name": "eraseData",
-        "private": false
+        "private": true
     },
     {
         "name": "loadMissingData",
-        "private": false
+        "private": true
     },
     {
         "name": "loadMissingDataForChangeEvent",
-        "private": false
+        "private": true
     },
     {
         "name": "loadMissingDataForSymbol",
-        "private": false,
+        "private": true,
         "run_as_system": true
     },
     {
         "name": "loadMissingDataForUser",
-        "private": false
+        "private": true
     },
     {
         "name": "loadMissingDividendsForSymbol",
-        "private": false
+        "private": true
     },
     {
         "name": "login",
         "private": false
     },
     {
-        "name": "migration",
-        "private": false
+        "name": "migrations",
+        "private": true
     },
     {
         "name": "playground",
-        "private": false
+        "private": true
     },
     {
         "name": "testAddTransactions",
-        "private": false,
+        "private": true,
         "run_as_system": true
     },
     {
         "name": "updateCompanies",
-        "private": false
+        "private": true
     },
     {
         "name": "updateDividends",
-        "private": false
+        "private": true
     },
     {
         "name": "updatePrices",
-        "private": false
+        "private": true
     },
     {
         "name": "updateQuotes",
-        "private": false
+        "private": true
     },
     {
         "name": "updateSplits",
-        "private": false
+        "private": true
     },
     {
         "name": "updateSymbols",
@@ -84,6 +84,6 @@
     },
     {
         "name": "utils",
-        "private": false
+        "private": true
     }
 ]
