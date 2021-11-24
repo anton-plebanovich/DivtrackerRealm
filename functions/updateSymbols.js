@@ -24,9 +24,7 @@ exports = async function() {
       this[index] = {};
       this[index]._id = `${symbol.symbol}:${symbol.exchange}`;
       this[index]._p = "P";
-      this[index].e = symbol.exchange;
       this[index].n = symbol.name;
-      this[index].s = symbol.symbol;
     }, symbols);
   
   const collection = context.services.get("mongodb-atlas").db("divtracker").collection("symbols");
