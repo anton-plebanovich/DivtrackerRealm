@@ -996,8 +996,11 @@ function _fixDividends(arg1, arg2) {
         dividend.a = BSON.Double(_dividend.amount);
         dividend.d = getOpenDate(_dividend.declaredDate);
         dividend.e = getOpenDate(_dividend.exDate);
-        dividend.f = _dividend.frequency;
         dividend.p = getOpenDate(_dividend.paymentDate);
+
+        if (typeof _dividend.frequency !== 'undefined') {
+          dividend.f = _dividend.frequency.charAt(0);
+        }
     
         if (_dividend.currency != "USD") {
           dividend.c = _dividend.currency;
