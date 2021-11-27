@@ -23,6 +23,4 @@ exports = async function() {
   }
   
   return collection.bulkWrite(operations);
-
-  console.log(`SUCCESS`);
 };
