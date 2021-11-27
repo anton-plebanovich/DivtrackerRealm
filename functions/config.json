@@ -67,6 +67,10 @@
         "private": true
     },
     {
+        "name": "updateExchangeRates",
+        "private": true
+    },
+    {
         "name": "updatePrices",
         "private": true
     },
