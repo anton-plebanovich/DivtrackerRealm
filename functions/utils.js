@@ -946,7 +946,7 @@ function getCurrencySymbol(currency) {
     case "ILS": return "₪";
     case "NOK": return "kr";
     case "USD": return "$";
-    default: return "";
+    default: return null;
   }
 }
 
