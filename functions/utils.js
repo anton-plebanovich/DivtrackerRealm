@@ -929,8 +929,12 @@ fetchDividends = async function fetchDividends(arg1, arg2, arg3) {
       _id: currency,
       _p: "P",
       r: BSON.Double(rate),
-      s: getCurrencySymbol(currency),
     };
+
+    const currencySymbol = getCurrencySymbol(currency);
+    if (currencySymbol) {
+      exchangeRate.s = currencySymbol;
+    }
 
     exchangeRates.push(exchangeRate);
   }
