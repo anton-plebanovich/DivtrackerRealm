@@ -931,11 +931,28 @@ fetchDividends = async function fetchDividends(arg1, arg2, arg3) {
       r: BSON.Double(rate),
     };
 
+    const currencySymbol = getCurrencySymbol(currency);
+    if (currencySymbol) {
+      exchangeRate.s = currencySymbol;
+    }
+
     exchangeRates.push(exchangeRate);
   }
 
   return exchangeRates;
 };
+
+function getCurrencySymbol(currency) {
+  // TODO: Add more later
+  switch(currency) {
+    case "CAD": return "$";
+    case "CHF": return "¤";
+    case "ILS": return "₪";
+    case "NOK": return "kr";
+    case "USD": return "$";
+    default: return null;
+  }
+}
 
 ///////////////////////////////////////////////////////////////////////////////// DATA FIX
 
