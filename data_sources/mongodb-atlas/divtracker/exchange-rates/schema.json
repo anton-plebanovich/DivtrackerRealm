@@ -8,6 +8,9 @@
         },
         "r": {
             "bsonType": "double"
+        },
+        "s": {
+            "bsonType": "string"
         }
     },
     "required": [

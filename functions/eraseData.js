@@ -10,6 +10,7 @@ exports = function() {
   //
   // db.collection('companies').deleteMany( { } );
   // db.collection('dividends').deleteMany( { } );
+  // db.collection('exchange-rates').deleteMany( { } );
   // db.collection('historical-prices').deleteMany( { } );
   // db.collection('previous-day-prices').deleteMany( { } );
   // db.collection('splits').deleteMany( { } );
