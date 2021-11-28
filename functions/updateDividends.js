@@ -57,13 +57,14 @@ exports = async function() {
       console.logVerbose(`Checking future dividend '${futureDividend._i}' for '${futureDividend.e}' ex date; lower - ${lowerExDate}; upper - ${upperExDate}`);
 
       const currency = typeof futureDividend.c === 'undefined' ? null : futureDividend.c;
+      let updateOne;
       if (currency === null) {
         // We might have empty string for future dividends and we need to unset it if 
         // the currency was changed to USD and so the field is absent.
-        var updateOne = { $set: futureDividend, $unset: { c: "" } };
+        updateOne = { $set: futureDividend, $unset: { c: "" } };
 
       } else {
-        var updateOne = { $set: futureDividend };
+        updateOne = { $set: futureDividend };
       }
 
       const lowerAmount = futureDividend.a * 0.9;
@@ -115,13 +116,14 @@ exports = async function() {
       console.logVerbose(`Checking past dividend '${pastDividend._i}' for '${pastDividend.e}' ex date; lower - ${lowerExDate}; upper - ${upperExDate}`);
       
       const currency = typeof pastDividend.c === 'undefined' ? null : pastDividend.c;
+      let updateOne;
       if (currency === null) {
         // We might have empty string for future dividends and we need to unset it if 
         // the currency was changed to USD and so the field is absent.
-        var updateOne = { $set: pastDividend, $unset: { c: "" } };
+        updateOne = { $set: pastDividend, $unset: { c: "" } };
 
       } else {
-        var updateOne = { $set: pastDividend };
+        updateOne = { $set: pastDividend };
       }
 
       const lowerAmount = pastDividend.a * 0.9;
