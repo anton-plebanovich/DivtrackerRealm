@@ -884,6 +884,59 @@ fetchDividends = async function fetchDividends(arg1, arg2, arg3) {
   ];
 }
 
+// EUR examples
+// http://api.exchangeratesapi.io/v1/latest?access_key=3e5abac4ea1a6d6a306fee11759de63e
+// http://data.fixer.io/api/latest?access_key=47e966a176f1449a35309057baac8f29
+
+/**
+ * Fetches to USD exchange rates.
+ * @example https://openexchangerates.org/api/latest.json?app_id=b30ffad8d6b0439da92b3805191f7f40&base=USD
+ * @returns {[ExchangeRate]} Array of requested objects.
+ */
+ fetchExchangeRates = async function fetchExchangeRates() {
+  const baseURL = "https://openexchangerates.org/api";
+  const api = "/latest.json";
+  const appID = context.values.get("exchange-rates-app-id");
+  const baseCurrency = "USD";
+  const url = `${baseURL}${api}?app_id=${appID}&base=${baseCurrency}`;
+  console.log(`Exchange rates request with URL: ${url}`);
+  var response = await context.http.get({ url: url });
+
+  // Retry 5 times on retryable errors
+  const delay = 100;
+  for (let step = 0; step < 5 && (response.status == '??????'); step++) {
+    console.log(`Received '${response.status}' error with text '${response.body.text()}'. Trying to retry after a '${delay}' delay.`);
+    await new Promise(r => setTimeout(r, delay));
+    response = await context.http.get({ url: url });
+  }
+  
+  if (response.status != '200 OK') {
+    _logAndThrow(`Response status error '${response.status}' : '${response.body.text()}'`);
+  }
+  
+  const ejsonBody = EJSON.parse(response.body.text());
+  if (ejsonBody.length && ejsonBody.length > 1) {
+    console.logVerbose(`Parse end. Objects count: ${ejsonBody.length}`);
+  } else {
+    console.logVerbose(`Parse end. Object: ${response.body.text()}`);
+  }
+
+  // Fix data
+  const entries = Object.entries(ejsonBody.rates);
+  const exchangeRates = [];
+  for (const [currency, rate] of entries) {
+    const exchangeRate = { 
+      _id: currency,
+      _p: "P",
+      r: BSON.Double(rate),
+    };
+
+    exchangeRates.push(exchangeRate);
+  }
+
+  return exchangeRates;
+};
+
 ///////////////////////////////////////////////////////////////////////////////// DATA FIX
 
 /**
