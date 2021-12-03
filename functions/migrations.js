@@ -46,7 +46,8 @@ async function exchangesFix_id_Field_03122021(collectionName) {
         fixedEntity._id = fixedID;
 
         // Insert and replace new record if needed
-        bulk.upsert()
+        bulk.find({ _id: fixedID })
+          .upsert()
           .replaceOne(fixedEntity);
 
         // Remove old
@@ -78,7 +79,7 @@ async function exchangesFix_i_Field_03122021(collectionName) {
           .map(x => x._i)
           .distinct();
 
-        throw `Found conflict for '_i' entities for '${collectionName}' collection. Migrated entities: ${migratedEntitiesIs}`
+        throw `Found conflict for '_i' entities for '${collectionName}' collection. Migrated entities: ${migratedEntitiesIs.stringify()}`
       }
       
       const bulk = collection.initializeUnorderedBulkOp();
