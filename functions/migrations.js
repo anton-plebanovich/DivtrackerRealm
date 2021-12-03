@@ -68,6 +68,8 @@ async function exchangesFix_i_Field_03122021(collectionName) {
         return isMigrationRequiredForID_03122021(entity._i);
       });
 
+      if (!entitiesToMigrate.length) { return; }
+
       if (entitiesToMigrate.length != entities.length) {
         const migratedEntitiesIs = entities
           .filter(entity => {
@@ -78,8 +80,6 @@ async function exchangesFix_i_Field_03122021(collectionName) {
 
         throw `Found conflict for '_i' entities for '${collectionName}' collection. Migrated entities: ${migratedEntitiesIs}`
       }
-
-      if (!entitiesToMigrate.length) { return; }
       
       const bulk = collection.initializeUnorderedBulkOp();
       for (const entity of entitiesToMigrate) {
