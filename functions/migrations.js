@@ -151,7 +151,10 @@ function fixExchangeName_03122021(exchange) {
     return 'ARCX';
 
   } else {
-    throw 'Unknown exchange';
+    // Just log error and return the same exchange
+    // this way we just skip already converted data instead of failing.
+    console.error(`Unknown exchange: ${exchange}`)
+    return exchange;
   }
 }
 
