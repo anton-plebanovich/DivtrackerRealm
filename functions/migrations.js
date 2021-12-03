@@ -45,8 +45,9 @@ async function exchangesFix_id_Field_03122021(collectionName) {
         const fixedEntity = Object.assign({}, entity);
         fixedEntity._id = fixedID;
 
-        // Add new record
-        bulk.insert(fixedEntity);
+        // Insert and replace new record if needed
+        bulk.upsert()
+          .replaceOne(fixedEntity);
 
         // Remove old
         bulk.find({ _id: entity._id })
@@ -68,6 +69,17 @@ async function exchangesFix_i_Field_03122021(collectionName) {
       });
 
       if (!entitiesToMigrate.length) { return; }
+
+      if (entitiesToMigrate.length != entities.length) {
+        const migratedEntitiesIs = entities
+          .filter(entity => {
+            return !isMigrationRequiredForID_03122021(entity._i);
+          })
+          .map(x => x._i)
+          .distinct();
+
+        throw `Found conflict for '_i' entities for '${collectionName}' collection. Migrated entities: ${migratedEntitiesIs}`
+      }
       
       const bulk = collection.initializeUnorderedBulkOp();
       for (const entity of entitiesToMigrate) {
@@ -173,7 +185,8 @@ function fixExchangeName_03122021(exchange) {
     return 'ARCX';
 
   } else {
-    throw `Unknown exchange: ${exchange}`;
+    console.error(`Already migrated exchange '${exchange}'?`);
+    return exchange;
   }
 }
 
