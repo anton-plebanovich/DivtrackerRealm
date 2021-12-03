@@ -120,7 +120,7 @@ function fixExchangeNameInID_03122021(_id) {
   const id = components[0];
   const exchange = components[1];
   const fixedExchange = fixExchangeName_03122021(exchange);
-  return `${id}:${fixedExchange}`
+  return `${id}:${fixedExchange}`;
 }
 
 /**
@@ -153,7 +153,7 @@ function fixExchangeName_03122021(exchange) {
   } else {
     // Just log error and return the same exchange
     // this way we just skip already converted data instead of failing.
-    console.error(`Unknown exchange: ${exchange}`)
+    console.error(`Unknown exchange: ${exchange}`);
     return exchange;
   }
 }
