@@ -179,7 +179,7 @@ function fixExchangeName_03122021(exchange) {
 
 function isMigrationRequiredForID_03122021(_id) {
   const exchange = _id.split(':')[1];
-  return isMigrationRequiredForExchange_03122021(exchange)
+  return isMigrationRequiredForExchange_03122021(exchange);
 }
 
 function isMigrationRequiredForExchange_03122021(exchange) {
