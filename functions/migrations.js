@@ -33,10 +33,14 @@ async function exchangesFix_id_Field_03122021(collectionName) {
     .find({})
     .toArray()
     .then(async entities => {
-      if (!entities.length) { return; }
+      const entitiesToMigrate = entities.filter(entity => {
+        return isMigrationRequiredForID_03122021(entity._id);
+      });
+
+      if (!entitiesToMigrate.length) { return; }
 
       const bulk = collection.initializeUnorderedBulkOp();
-      for (const entity of entities) {
+      for (const entity of entitiesToMigrate) {
         const fixedID = fixExchangeNameInID_03122021(entity._id);
         const fixedEntity = Object.assign({}, entity);
         fixedEntity._id = fixedID;
@@ -59,10 +63,14 @@ async function exchangesFix_i_Field_03122021(collectionName) {
     .find({}, { _id: 1, _i: 1 })
     .toArray()
     .then(async entities => {
-      if (!entities.length) { return; }
+      const entitiesToMigrate = entities.filter(entity => {
+        return isMigrationRequiredForID_03122021(entity._i);
+      });
+
+      if (!entitiesToMigrate.length) { return; }
       
       const bulk = collection.initializeUnorderedBulkOp();
-      for (const entity of entities) {
+      for (const entity of entitiesToMigrate) {
         const fixedID = fixExchangeNameInID_03122021(entity._i);
         bulk
           .find({ _id: entity._id })
@@ -79,10 +87,20 @@ async function exchangesFixSettings_03122021() {
     .find({})
     .toArray()
     .then(async settings => {
-      if (!settings.length) { return; }
+      const settingsToMigrate = settings.filter(userSettings => {
+        if (typeof userSettings.ts === 'undefined') {
+          return false;
+        } else if (typeof userSettings.ts[0] === 'undefined') {
+          return false;
+        } else {
+          return isMigrationRequiredForID_03122021(userSettings.ts[0].i);
+        }
+      });
+
+      if (!settingsToMigrate.length) { return; }
       
       const bulk = collection.initializeUnorderedBulkOp();
-      for (const userSettings of settings) {
+      for (const userSettings of settingsToMigrate) {
         for (const taxSettings of userSettings.ts) {
           const fixedExchange = fixExchangeNameInID_03122021(taxSettings.i);
           taxSettings.i = fixedExchange;
@@ -102,10 +120,14 @@ async function exchangesFixTransactions_03122021() {
     .find({}, { _id: 1, e: 1 })
     .toArray()
     .then(async transactions => {
-      if (!transactions.length) { return; }
+      const transactionsToMigrate = transactions.filter(transaction => {
+        return isMigrationRequiredForExchange_03122021(transaction.e);
+      });
+
+      if (!transactionsToMigrate.length) { return; }
       
       const bulk = collection.initializeUnorderedBulkOp();
-      for (const transaction of transactions) {
+      for (const transaction of transactionsToMigrate) {
         const fixedExchange = fixExchangeName_03122021(transaction.e);
         bulk
           .find({ _id: transaction._id })
@@ -120,7 +142,7 @@ function fixExchangeNameInID_03122021(_id) {
   const id = components[0];
   const exchange = components[1];
   const fixedExchange = fixExchangeName_03122021(exchange);
-  return `${id}:${fixedExchange}`
+  return `${id}:${fixedExchange}`;
 }
 
 /**
@@ -151,7 +173,36 @@ function fixExchangeName_03122021(exchange) {
     return 'ARCX';
 
   } else {
-    throw 'Unknown exchange';
+    throw `Unknown exchange: ${exchange}`;
+  }
+}
+
+function isMigrationRequiredForID_03122021(_id) {
+  const exchange = _id.split(':')[1];
+  return isMigrationRequiredForExchange_03122021(exchange);
+}
+
+function isMigrationRequiredForExchange_03122021(exchange) {
+  if (exchange == 'NAS') {
+    return true;
+
+  } else if (exchange == 'NYS') {
+    return true;
+
+  } else if (exchange == 'POR') {
+    return true;
+
+  } else if (exchange == 'USAMEX') {
+    return true;
+
+  } else if (exchange == 'USBATS') {
+    return true;
+
+  } else if (exchange == 'USPAC') {
+    return true;
+
+  } else {
+    return false;
   }
 }
 
