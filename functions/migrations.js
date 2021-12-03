@@ -35,7 +35,7 @@ async function exchangesFix_id_Field_03122021(collectionName) {
     .then(async entities => {
       const entitiesToMigrate = entities.filter(entity => {
         return isMigrationRequiredForID_03122021(entity._id);
-      })
+      });
 
       if (!entitiesToMigrate.length) { return; }
 
@@ -65,7 +65,7 @@ async function exchangesFix_i_Field_03122021(collectionName) {
     .then(async entities => {
       const entitiesToMigrate = entities.filter(entity => {
         return isMigrationRequiredForID_03122021(entity._i);
-      })
+      });
 
       if (!entitiesToMigrate.length) { return; }
       
@@ -89,13 +89,13 @@ async function exchangesFixSettings_03122021() {
     .then(async settings => {
       const settingsToMigrate = settings.filter(userSettings => {
         if (typeof userSettings.ts === 'undefined') {
-          return false
+          return false;
         } else if (typeof userSettings.ts[0] === 'undefined') {
-          return false
+          return false;
         } else {
           return isMigrationRequiredForID_03122021(userSettings.ts[0].i);
         }
-      })
+      });
 
       if (!settingsToMigrate.length) { return; }
       
@@ -122,7 +122,7 @@ async function exchangesFixTransactions_03122021() {
     .then(async transactions => {
       const transactionsToMigrate = transactions.filter(transaction => {
         return isMigrationRequiredForExchange_03122021(transaction.e);
-      })
+      });
 
       if (!transactionsToMigrate.length) { return; }
       
