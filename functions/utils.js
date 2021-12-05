@@ -4,6 +4,19 @@
 ///////////////////////////////////////////////////////////////////////////////// EXTENSIONS
 
 /**
+ * Safely executes Bulk operation by catching 'no operations' error.
+ */
+Object.prototype.safeExecute = async function() {
+  try {
+    return await this.execute();
+  } catch(error) {
+    if (error.message !== 'Failed to execute bulk writes: no operations specified') {
+      throw error;
+    }
+  }
+};
+
+/**
  * @note Using 'distinct' instead of 'unique' to match MongoDB method and because values itself might not be _unique_.
  * @param {function|undefined|string} arg Check for equality if nothing is passed. 
  * Using comparison function if passed. 
@@ -94,6 +107,16 @@ Array.prototype.compactMap = function(callbackfn) {
 };
 
 /**
+ * Creates dictionary from objects using provided `key` as source for keys and object as value.
+ * @param {*} callbackfn Mapping to perform. Null values are filtered.
+ */
+Array.prototype.toDictionary = function(key) {
+  return this.reduce((dictionary, value) => 
+    Object.assign(dictionary, {[value[key]]: value}
+  ), {});
+};
+
+/**
  * @returns {Date} Yesterday day start date in UTC.
  */
 Date.yesterday = function() {
@@ -161,8 +184,15 @@ Object.prototype.isEqual = function(object) {
   }
 
   for (const [key, value] of thisEntries) {
-    if (value != object[key]) {
-      return false;
+    if (typeof value === 'object' && typeof object[key] === 'object') {
+      if (value.stringify() !== object[key].stringify()) {
+        return false;
+      }
+ 
+    } else {
+      if (value !== object[key]) {
+        return false;
+      }
     }
   }
 
@@ -265,9 +295,9 @@ CompositeError = class CompositeError {
   }
 }
 
-var promiseExtended = false;
-function extendPromise() {
-  if (promiseExtended) { return; }
+var runtimeExtended = false;
+function extendRuntime() {
+  if (runtimeExtended) { return; }
   
   Promise.safeAllAndUnwrap = function(promises) {
     return Promise.safeAll(promises)
@@ -331,7 +361,7 @@ function extendPromise() {
     );
   };
 
-  promiseExtended = true;
+  runtimeExtended = true;
 }
 
 ///////////////////////////////////////////////////////////////////////////////// FUNCTIONS
@@ -358,7 +388,7 @@ checkExecutionTimeout = function checkExecutionTimeout() {
   if (seconds > limit) {
     _logAndThrow('execution timeout');
   } else {
-    console.log(`${limit - seconds} execution time left`);
+    console.logVerbose(`${limit - seconds} execution time left`);
   }
 };
 
@@ -1199,7 +1229,7 @@ getDateLogString = function getDateLogString() {
 };
 
 exports = function() {
-  extendPromise();
+  extendRuntime();
 
   if (typeof db === 'undefined') {
     db = context.services.get("mongodb-atlas").db("divtracker");
