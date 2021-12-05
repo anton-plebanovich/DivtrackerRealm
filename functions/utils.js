@@ -701,7 +701,9 @@ async function _fetch(_api, queryParameters) {
     response = await context.http.get({ url: url });
   }
   
-  if (response.status != '200 OK') {
+  if (response.status === '200 OK') {
+    console.log(`Response for URL: ${url}`);
+  } else {
     _logAndThrow(`Response status error '${response.status}' : '${response.body.text()}'`);
   }
   

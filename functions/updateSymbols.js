@@ -4,6 +4,7 @@
 // https://docs.mongodb.com/manual/reference/method/js-collection/
 // https://docs.mongodb.com/manual/reference/method/js-bulk/
 // https://docs.mongodb.com/manual/reference/method/db.collection.initializeUnorderedBulkOp/
+// https://docs.mongodb.com/manual/reference/method/Bulk.find.update/
 // https://docs.mongodb.com/realm/mongodb/
 // https://docs.mongodb.com/realm/mongodb/actions/collection.bulkWrite/#std-label-mongodb-service-collection-bulk-write
 
@@ -38,11 +39,14 @@ exports = async function() {
     const bulk = collection.initializeUnorderedBulkOp();
 
     const allIDs = symbols.map(x => x._id);
-    console.log(`Delete excessive`);
-    bulk.find({ "_id": { $nin: allIDs } }).remove();
+
+    // We do not delete old symbols but instead mark them as disabled
+    console.log(`Disable excessive`);
+    bulk.find({ "_id": { $nin: allIDs } })
+      .update({ $set: { d: true } });
     
-    console.log(`Inserting not inserted and name update`);
-    await collection.find({}, { "_id": 1, "n": 1 })
+    console.log(`Inserting not inserted and update changed`);
+    await collection.find({})
       .toArray()
       .then(existingSymbols => {
         if (!existingSymbols.length) { return; }
@@ -53,10 +57,14 @@ exports = async function() {
           const symbol = symbols[i];
           if (existingSymbolIDs.includes(symbol._id)) {
             const index = existingSymbolIDs.indexOf(symbol._id);
-            if (existingSymbols[index].n != symbol.n) {
+            if (!existingSymbols[index].isEqual(symbol)) {
               console.log(`Updating: ${symbol._id}`);
               bulk.find({ _id: symbol._id })
-                .updateOne({ $set: symbol });
+                .updateOne({ 
+                  $set: symbol, 
+                  // If symbol appeared again we might need to remove `disabled` field
+                  $unset: { d: "" } 
+                });
             }
 
           } else {
@@ -66,7 +74,14 @@ exports = async function() {
         }
       });
     
-    bulk.execute();
+    await bulk.execute();
+  }
+
+  const disabledSymbols = await collection
+    .distinct('_id', { "d": true });
+
+  if (disabledSymbols.length) {
+    console.log(`Disabled symbols: ${disabledSymbols}`);
   }
   
   console.log(`SUCCESS`);
