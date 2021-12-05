@@ -268,50 +268,67 @@ CompositeError = class CompositeError {
 var promiseExtended = false;
 function extendPromise() {
   if (promiseExtended) { return; }
+  
+  Promise.safeAllAndUnwrap = function(promises) {
+    return Promise.safeAll(promises)
+      .then(results => new Promise((resolve, reject) => {
+          const datas = [];
+          const errors = [];
+          results.forEach(result => {
+            const [data, error] = result;
+            datas.push(data);
+            if (typeof error !== 'undefined') {
+              errors.push(error);
+            }
+          });
+
+          if (errors.length) {
+            reject(new CompositeError(errors));
+          } else {
+            resolve(datas);
+          }
+        })
+      );
+  };
 
   Promise.safeAll = function(promises) {
     return Promise.all(
       promises.map(promise => promise.safe(promise))
     );
   };
-  
-  Promise.safeAllAndUnwrap = function(promises) {
-    return Promise.safeAll(promises)
-      .then(results => {
-        const datas = [];
-        const errors = [];
-        results.forEach(result => {
-          const [data, error] = result;
-          datas.push(data);
-          if (typeof error !== 'undefined') {
-            errors.push(error);
-          }
-        });
-  
-        if (errors.length) {
-          throw CompositeError(errors);
-        } else {
-          return datas;
-        }
-      });
-  };
-  
+
   Promise.prototype.safe = function() {
-    return this
-      .then(data => ([data, undefined]))
-      .catch(error => Promise.resolve([undefined, error]));
+    return this.then(
+      data => [data, undefined],
+      error => [undefined, error]
+    );
   };
   
   Promise.prototype.mapErrorToUser = function() {
-    return this.catch(error => { throw new UserError(error); });
+    return new Promise((resolve, reject) =>
+      this.then(
+        data => resolve(data),
+        error => reject(new UserError(error))
+      )
+    );
   };
   
   Promise.prototype.mapErrorToSystem = function() {
-    return this.catch(error => { throw new SystemError(error); });
+    return new Promise((resolve, reject) =>
+      this.then(
+        data => resolve(data),
+        error => reject(new SystemError(error))
+      )
+    );
   };
   
   Promise.prototype.mapErrorToComposite = function() {
-    return this.catch(errors => { throw new CompositeError(errors); });
+    return new Promise((resolve, reject) =>
+      this.then(
+        data => resolve(data),
+        errors => reject(new CompositeError(errors))
+      )
+    );
   };
 
   promiseExtended = true;
