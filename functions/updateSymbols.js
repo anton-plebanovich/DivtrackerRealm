@@ -43,6 +43,8 @@ exports = async function() {
 };
 
 async function updateIEXSymbols() {
+  console.log(`Updating IEX symbols`);
+
   // https://sandbox.iexapis.com/stable/ref-data/symbols?token=Tpk_581685f711114d9f9ab06d77506fdd49
   const newSymbols = await fetch("/ref-data/symbols");
 
@@ -52,7 +54,7 @@ async function updateIEXSymbols() {
   const iexCollection = context.services.get("mongodb-atlas").db("iex").collection("symbols");
   const count = await iexCollection.count({});
   if (count == 0) {
-    console.log(`No IEX data. Just inserting all records.`);
+    console.log(`No IEX symbols. Just inserting all records.`);
     await iexCollection.insertMany(newSymbols);
     return;
   }
@@ -61,11 +63,8 @@ async function updateIEXSymbols() {
 
   const oldSymbols = await iexCollection.find({}).toArray();
   const oldSymbolsDictionary = oldSymbols.toDictionary('symbol');
-  const oldSymbolIDs = Object.keys(oldSymbolsDictionary);
 
   const bulk = iexCollection.initializeUnorderedBulkOp();
-  
-  console.log(`Updating existing IEX symbols and inserting missing`);
   for (const newSymbol of newSymbols) {
     // We try to update all symbold using IDs that allow us to track symbol renames.
     if (newSymbol.iexId != null && update('iexId', bulk, oldSymbolsDictionary, oldSymbols, newSymbol)) {
@@ -83,19 +82,23 @@ async function updateIEXSymbols() {
     bulk.insert(newSymbol);
   }
 
+  // We need to execute update first because symbols might be renamed
+  await bulk.safeExecute();
+
   // We do not delete old symbols but instead mark them as disabled to be able to display user transactions.
-  const symbolsIDsToDisable = oldSymbolIDs.filter(oldSymbolID =>
-    !newSymbolIDs.includes(oldSymbolID)
+  const allSymbolIDs = await iexCollection.distinct('symbol');
+  const symbolsIDsToDisable = allSymbolIDs.filter(symbolID =>
+    !newSymbolIDs.includes(symbolID)
   );
 
   if (symbolsIDsToDisable.length) {
     // TODO: throw error later to catch disabled symbols? Not sure if there are any.
     console.log(`Disabling IEX ${symbolsIDsToDisable}`);
-    bulk.find({ "symbol": { $in: symbolsIDsToDisable } })
-      .update({ $set: { isEnabled: false } });
+    await iexCollection.updateMany(
+      { symbol: { $in: symbolsIDsToDisable } },
+      { $set: { isEnabled: false } }
+    );
   }
-  
-  await bulk.safeExecute();
 }
 
 // Checks if update is required for `newSymbol` using provided `fields`.
@@ -107,7 +110,7 @@ function update(field, bulk, oldSymbolsDictionary, oldSymbols, newSymbol) {
   // and so we can increase performance.
   const newSymbolFieldValue = newSymbol[field];
   let oldSymbol = oldSymbolsDictionary[newSymbol.symbol];
-  if (oldSymbol[field] !== newSymbolFieldValue) {
+  if (!oldSymbol || oldSymbol[field] !== newSymbolFieldValue) {
     // Perform search since our assumption failed. This one is slower.
     oldSymbol = oldSymbols.find(oldSymbol => {
       return oldSymbol[field] === newSymbolFieldValue;
@@ -123,7 +126,7 @@ function update(field, bulk, oldSymbolsDictionary, oldSymbols, newSymbol) {
       newSymbol.name !== oldSymbol.name || 
       newSymbol.isEnabled !== oldSymbol.isEnabled) {
 
-      console.log(`Updating ${oldSymbol.symbol} -> ${newSymbol.symbol}`);
+      console.log(`Updating IEX ${oldSymbol.symbol} -> ${newSymbol.symbol}`);
       bulk.find({ [field]: newSymbolFieldValue })
         .updateOne({ $set: newSymbol });
     }
@@ -133,7 +136,7 @@ function update(field, bulk, oldSymbolsDictionary, oldSymbols, newSymbol) {
 }
 
 async function updateDivtrackerSymbols() {
-  console.log(`Updating divtracker data`);
+  console.log(`Updating Divtracker symbols`);
   const iexCollection = context.services.get("mongodb-atlas").db("iex").collection("symbols");
 
   const iexSymbols = await iexCollection.find({}).toArray();
@@ -155,7 +158,7 @@ async function updateDivtrackerSymbols() {
   const divtrackerCollection = context.services.get("mongodb-atlas").db("divtracker").collection("symbols-v2");
   const oldCount = await divtrackerCollection.count({});
   if (oldCount == 0) {
-    console.log(`No Divtracker data. Just inserting all records.`);
+    console.log(`No Divtracker symbols. Just inserting all records.`);
     await divtrackerCollection.insertMany(newSymbols);
     return;
   }
