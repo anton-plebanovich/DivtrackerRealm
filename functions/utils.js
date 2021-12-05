@@ -180,7 +180,12 @@ const errorType = {
 UserError = class UserError {
   constructor(message) {
     this.type = errorType.USER;
-    this.message = message
+    
+    if (typeof message === 'string') {
+      this.message = message
+    } else {
+      this.message = message.message
+    }
   }
 
   toString() {
@@ -191,7 +196,12 @@ UserError = class UserError {
 SystemError = class SystemError {
   constructor(message) {
     this.type = errorType.SYSTEM;
-    this.message = message
+
+    if (typeof message === 'string') {
+      this.message = message
+    } else {
+      this.message = message.message
+    }
   }
 
   toString() {
