@@ -61,7 +61,9 @@ async function updateIEXSymbols() {
 
   const newSymbolIDs = newSymbols.map(x => x.symbol);
 
-  const oldSymbols = await iexCollection.find({}).toArray();
+  // We drop `_id` field so we can compare old and new objects.
+  // All updates are done through other fields anyway.
+  const oldSymbols = await iexCollection.find({}, { "_id": 0 }).toArray();
   const oldSymbolsDictionary = oldSymbols.toDictionary('symbol');
 
   const bulk = iexCollection.initializeUnorderedBulkOp();
@@ -121,11 +123,7 @@ function update(field, bulk, oldSymbolsDictionary, oldSymbols, newSymbol) {
     return false;
 
   } else {
-    if (newSymbol.symbol !== oldSymbol.symbol || 
-      newSymbol.exchange !== oldSymbol.exchange || 
-      newSymbol.name !== oldSymbol.name || 
-      newSymbol.isEnabled !== oldSymbol.isEnabled) {
-
+    if (!newSymbol.isEqual(oldSymbol)) {
       console.log(`Updating IEX ${oldSymbol.symbol} -> ${newSymbol.symbol}`);
       bulk.find({ [field]: newSymbolFieldValue })
         .updateOne({ $set: newSymbol });

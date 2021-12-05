@@ -184,13 +184,14 @@ Object.prototype.isEqual = function(object) {
   }
 
   for (const [key, value] of thisEntries) {
-    if (typeof value === 'object' && typeof object[key] === 'object') {
-      if (value.stringify() !== object[key].stringify()) {
-        return false;
-      }
- 
-    } else {
-      if (value !== object[key]) {
+    const objectValue = object[key];
+    if (value != objectValue) {
+      if (typeof value === 'object' && typeof objectValue === 'object') {
+        if (value.stringify() !== objectValue.stringify()) {
+          return false;
+        }
+   
+      } else {
         return false;
       }
     }
