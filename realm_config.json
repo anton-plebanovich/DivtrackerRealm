@@ -1,7 +1,7 @@
 {
-    "app_id": "divtrackertests-aeylo",
+    "app_id": "divtrackertestsv2-tsyqw",
     "config_version": 20210101,
-    "name": "DivtrackerTests",
+    "name": "DivtrackerTestsV2",
     "location": "US-VA",
     "deployment_model": "LOCAL"
 }

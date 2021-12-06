@@ -2,7 +2,7 @@
     "anon-user": {
         "name": "anon-user",
         "type": "anon-user",
-        "disabled": false
+        "disabled": true
     },
     "api-key": {
         "name": "api-key",
@@ -21,10 +21,10 @@
         "name": "local-userpass",
         "type": "local-userpass",
         "config": {
-            "emailConfirmationUrl": "https://divtrackertests-aeylo.mongodbstitch.com/email-confirmation.html",
-            "resetPasswordUrl": "https://divtrackertests-aeylo.mongodbstitch.com/reset-password.html"
+            "emailConfirmationUrl": "https://divtrackertestsv2-tsyqw.mongodbstitch.com/email-confirmation.html",
+            "resetPasswordUrl": "https://divtrackertestsv2-tsyqw.mongodbstitch.com/reset-password.html"
         },
-        "disabled": false
+        "disabled": true
     },
     "oauth2-google": {
         "name": "oauth2-google",
@@ -33,9 +33,6 @@
             "clientId": "682028341087-j91fjvequeef3nietgcpr1g20tnf0agv.apps.googleusercontent.com",
             "openId": true
         },
-        "secret_config": {
-            "clientSecret": "realm-web-client-ios"
-        },
-        "disabled": false
+        "disabled": true
     }
 }
