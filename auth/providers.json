@@ -33,6 +33,9 @@
             "clientId": "682028341087-j91fjvequeef3nietgcpr1g20tnf0agv.apps.googleusercontent.com",
             "openId": true
         },
+        "secret_config": {
+            "clientSecret": "realm-web-client-ios"
+        },
         "disabled": true
     }
 }
