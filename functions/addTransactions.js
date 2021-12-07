@@ -3,6 +3,7 @@
 
 // https://docs.mongodb.com/manual/reference/method/Bulk.find.upsert/
 // https://docs.mongodb.com/realm/mongodb/actions/collection.bulkWrite/
+// https://docs.mongodb.com/realm/mongodb/actions/collection.insertMany/
 
 /**
  * @example 
@@ -47,7 +48,10 @@ exports = async function(transactions) {
 
   // Data is loaded we can safely insert our transactions
   const transactionsCollection = db.collection("transactions");
-  const returnResult = await transactionsCollection.insertMany(transactions).mapErrorToSystem();
+  const returnResult = await Promise
+    .resolve(transactionsCollection.insertMany(transactions))
+    .mapErrorToSystem();
+    
   console.log(`return result: ${returnResult.stringify()}`);
 
   return returnResult;
