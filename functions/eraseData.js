@@ -6,11 +6,11 @@ exports = function() {
   console.log(`Erasing data`);
   
   /// Delete ALL
+  // db.collection('exchange-rates').deleteMany( { } );
   // db.collection('symbols').deleteMany( { } );
   
   db.collection('companies').deleteMany( { } );
   db.collection('dividends').deleteMany( { } );
-  db.collection('exchange-rates').deleteMany( { } );
   db.collection('historical-prices').deleteMany( { } );
   db.collection('previous-day-prices').deleteMany( { } );
   db.collection('splits').deleteMany( { } );

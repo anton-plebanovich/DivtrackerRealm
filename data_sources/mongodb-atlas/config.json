@@ -5,5 +5,6 @@
         "clusterName": "Cluster0",
         "readPreference": "primary",
         "wireProtocolEnabled": false
-    }
+    },
+    "version": 1
 }
