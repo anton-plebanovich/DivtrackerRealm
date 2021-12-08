@@ -80,12 +80,16 @@ Object.prototype.updateFrom = function(object) {
 
   const set = Object.assign({}, this);
   const unset = {};
-  const objectEntries = Object.entries(object);
-  for (const [key, value] of objectEntries) {
-    if (set[key] == null) {
+  const oldEntries = Object.entries(object);
+  for (const [key, oldValue] of oldEntries) {
+    const newValue = set[key];
+    if (newValue == null) {
       unset[key] = "";
 
-    } else if (set[key].isEqual(value)) {
+    } else if (typeof newValue === 'object' && newValue.isEqual(oldValue)) {
+      delete set[key];
+
+    } else if (newValue == oldValue) {
       delete set[key];
     }
   }
@@ -262,10 +266,6 @@ Object.prototype.stringify = function() {
  * @returns {boolean} Comparison result.
  */
 Object.prototype.isEqual = function(object) {
-  if (typeof value !== 'object') {
-    return value == object
-  }
-
   const thisEntries = Object.entries(this);
   const objectEntries = Object.entries(object);
   if (thisEntries.length != objectEntries.length) {
