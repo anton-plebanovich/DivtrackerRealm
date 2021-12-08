@@ -50,14 +50,14 @@ Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, field) {
   } else if (oldObject == null) {
     throw new SystemError(`Old object should not be null for update`);
 
+  } else if (newObject[_field] == null) {
+    throw new SystemError(`New object '${_field}' field should not be null for update`);
+
   } else {
     const update = newObject.updateFrom(oldObject)
     if (update == null) {
       // Update is not needed
       return;
-
-    } else if (newObject[_field] == null) {
-      throw new SystemError(`New object '${_field}' field should not be null for update`);
 
     } else {
       return this
