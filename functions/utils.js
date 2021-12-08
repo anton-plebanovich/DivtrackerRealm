@@ -80,7 +80,7 @@ Object.prototype.updateFrom = function(object) {
     return null;
   }
 
-  const set = Object.assign({}, this);
+  const set = this;
   const unset = {};
 
   // Delete `null` values from the `set`
