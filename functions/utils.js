@@ -113,7 +113,7 @@ Object.prototype.updateFrom = function(object) {
   }
 
   if (isSandbox) {
-    console.log(`Updating: ${update.stringify()}`);
+    console.logData(`Updating`, update);
   } else {
     console.log(`Updating: ${update.stringify()}`);
   }

@@ -122,11 +122,7 @@ function update(field, bulk, oldSymbolsDictionary, oldSymbols, newSymbol) {
     return false;
 
   } else {
-    // Skip update on sandbox
-    // if (isProduction) {
-      bulk.findAndUpdateIfNeeded(newSymbol, oldSymbol, field);
-    // }
-
+    bulk.findAndUpdateIfNeeded(newSymbol, oldSymbol, field);
     return true;
   }
 }
