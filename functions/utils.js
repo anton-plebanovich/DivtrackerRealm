@@ -85,12 +85,6 @@ Object.prototype.updateFrom = function(object) {
     const newValue = set[key];
     if (newValue == null) {
       unset[key] = "";
-
-    } else if (typeof newValue === 'object' && newValue.isEqual(oldValue)) {
-      delete set[key];
-
-    } else if (newValue == oldValue) {
-      delete set[key];
     }
   }
 
