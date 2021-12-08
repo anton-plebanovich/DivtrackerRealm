@@ -46,12 +46,9 @@ Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, field) {
     // Update is not needed
     return;
 
-  } else if (newSymbol[_field] == null) {
-    throw new SystemError(`New object '${_field}' field should not be null for update`);
-
   } else {
     return this
-      .find({ [_field]: newSymbol[_field] })
+      .find({ [_field]: newObject[_field] })
       .updateOne(update)
   }
 };
