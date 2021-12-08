@@ -20,7 +20,7 @@ Object.prototype.safeExecute = async function() {
  * Executes find by field and update or insert for a new object from an old object.
  * Uses `_id` field by default.
  */
-Object.prototype.findAndUpdateOrInsertIfNeeded = async function(newObject, oldObject, field) {
+Object.prototype.findAndUpdateOrInsertIfNeeded = function(newObject, oldObject, field) {
   if (newObject == null) {
     throw new SystemError(`New object should not be null for insert or update`);
     
@@ -38,7 +38,7 @@ Object.prototype.findAndUpdateOrInsertIfNeeded = async function(newObject, oldOb
  * Executes find by field and update for a new object from an old object if needed.
  * Uses `_id` field by default.
  */
-Object.prototype.findAndUpdateIfNeeded = async function(newObject, oldObject, field) {
+Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, field) {
   let _field = field;
   if (_field == null) {
     _field = '_id';

@@ -123,7 +123,7 @@ function update(field, bulk, oldSymbolsDictionary, oldSymbols, newSymbol) {
     return false;
 
   } else {
-    bulk.findAndUpdateIfNeeded(newSymbol, oldSymbol, field)
+    bulk.findAndUpdateIfNeeded(newSymbol, oldSymbol, field);
     return true;
   }
 }
