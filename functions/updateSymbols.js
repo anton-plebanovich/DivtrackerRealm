@@ -69,10 +69,10 @@ async function updateIEXSymbols() {
   const bulk = iexCollection.initializeUnorderedBulkOp();
   for (const newSymbol of newSymbols) {
     // We try to update all symbold using IDs that allow us to track symbol renames.
-    if (newSymbol.iexId != null && update('iexId', bulk, oldSymbolsDictionary, oldSymbols, newSymbol)) {
+    if (!isSandbox && newSymbol.iexId != null && update('iexId', bulk, oldSymbolsDictionary, oldSymbols, newSymbol)) {
       continue;
     }
-    if (newSymbol.figi != null && update('figi', bulk, oldSymbolsDictionary, oldSymbols, newSymbol)) {
+    if (!isSandbox && newSymbol.figi != null && update('figi', bulk, oldSymbolsDictionary, oldSymbols, newSymbol)) {
       continue;
     }
     if (update('symbol', bulk, oldSymbolsDictionary, oldSymbols, newSymbol)) {
