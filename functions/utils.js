@@ -56,7 +56,7 @@ Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, field) {
       // Update is not needed
       return;
 
-    } else if (newSymbol[_field] == null) {
+    } else if (newObject[_field] == null) {
       throw new SystemError(`New object '${_field}' field should not be null for update`);
 
     } else {
