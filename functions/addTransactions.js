@@ -28,6 +28,10 @@ exports = async function(transactions) {
     throw new UserError(`Transactions array is empty`);
   }
 
+  if (typeof transactions[0].e !== 'undefined') {
+    throw new UserError(`Old transaction format is not supported. Please update the app.`);
+  }
+
   const userID = context.user.id;
   console.log(`Adding transactions (${transactions.length}) for user '${userID}'`);
 
