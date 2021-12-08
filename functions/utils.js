@@ -74,6 +74,10 @@ Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, field) {
  * are added to `$unset`.
  */
 Object.prototype.updateFrom = function(object) {
+  if (this.isEqual(object)) {
+    return null;
+  }
+
   const set = Object.assign({}, this);
   const unset = {};
   const objectEntries = Object.entries(object);
