@@ -123,9 +123,9 @@ function update(field, bulk, oldSymbolsDictionary, oldSymbols, newSymbol) {
 
   } else {
     // Skip update on sandbox
-    if (isProduction) {
+    // if (isProduction) {
       bulk.findAndUpdateIfNeeded(newSymbol, oldSymbol, field);
-    }
+    // }
 
     return true;
   }
