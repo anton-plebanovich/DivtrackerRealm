@@ -98,10 +98,7 @@ Object.prototype.updateFrom = function(object) {
       unset[key] = "";
       hasUnsets = true;
 
-    } else if (typeof newValue === 'object' && newValue.isEqual(oldValue)) {
-      delete set[key];
-      
-    } else if (newValue == oldValue) {
+    } else if (newValue.isEqual(oldValue)) {
       delete set[key];
     }
   }
