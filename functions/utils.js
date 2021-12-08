@@ -21,7 +21,10 @@ Object.prototype.safeExecute = async function() {
  * Uses `_id` field by default.
  */
 Object.prototype.findAndUpdateOrInsertIfNeeded = function(newObject, oldObject, field) {
-  if (oldObject == null) {
+  if (newObject == null) {
+    throw new SystemError(`New object should not be null for insert or update`);
+    
+  } else if (oldObject == null) {
     // No old object means we should insert
     console.log(`Inserting: ${newObject.stringify()}`);
     return this.insert(newObject)
@@ -41,15 +44,26 @@ Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, field) {
     _field = '_id';
   }
 
-  const update = newObject.updateFrom(oldObject)
-  if (update == null) {
-    // Update is not needed
-    return;
+  if (newObject == null) {
+    throw new SystemError(`New object should not be null for update`);
+    
+  } else if (oldObject == null) {
+    throw new SystemError(`Old object should not be null for update`);
 
   } else {
-    return this
-      .find({ [_field]: newObject[_field] })
-      .updateOne(update)
+    const update = newObject.updateFrom(oldObject)
+    if (update == null) {
+      // Update is not needed
+      return;
+
+    } else if (newSymbol[_field] == null) {
+      throw new SystemError(`New object '${_field}' field should not be null for update`);
+
+    } else {
+      return this
+        .find({ [_field]: newObject[_field] })
+        .updateOne(update)
+    }
   }
 };
 
@@ -83,6 +97,12 @@ Object.prototype.updateFrom = function(object) {
     if (newValue == null) {
       unset[key] = "";
       hasUnsets = true;
+
+    } else if (typeof newValue === 'object' && newValue.isEqual(oldValue)) {
+      delete set[key];
+      
+    } else if (newValue == oldValue) {
+      delete set[key];
     }
   }
 
@@ -262,31 +282,31 @@ Object.prototype.stringify = function() {
  * Checks simple plain objects equality.
  * @returns {boolean} Comparison result.
  */
-Object.prototype.isEqual = function(object) {
-  const thisEntries = Object.entries(this);
-  const objectEntries = Object.entries(object);
-  if (thisEntries.length != objectEntries.length) {
+Object.prototype.isEqual = function(rhs) {
+  const lhsEntries = Object.entries(this);
+  const rhsEntries = Object.entries(rhs);
+
+  if (lhsEntries.length != rhsEntries.length) {
     return false;
+
+  } else if (!lhsEntries.length) {
+    return this.toString() === rhs.toString();
   }
 
-  for (const [key, value] of thisEntries) {
-    const objectValue = object[key];
-    if (value != objectValue) {
-      if (typeof value === 'object' && typeof objectValue === 'object') {
-        // We might receive `ObjectId` and various `BSON` objects here
-        // and the `==` comparison returns `false` for them so we 
-        // compare using their string representation
-        if (value.toString() !== objectValue.toString()) {
-          return false;
-        }
-   
-      } else {
-        return false;
-      }
-    }
+  for (const [key, lhsValue] of lhsEntries) {
+    const rhsValue = rhs[key];
+    return lhsValue.isEqual(rhsValue);
   }
 
   return true;
+};
+
+Number.prototype.isEqual = function(number) {
+  return this == number;
+};
+
+String.prototype.isEqual = function(string) {
+  return this == string;
 };
 
 ///////////////////////////////////////////////////////////////////////////////// ERRORS PROCESSING
