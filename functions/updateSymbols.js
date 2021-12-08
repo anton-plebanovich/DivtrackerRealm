@@ -69,10 +69,10 @@ async function updateIEXSymbols() {
   const bulk = iexCollection.initializeUnorderedBulkOp();
   for (const newSymbol of newSymbols) {
     // We try to update all symbold using IDs that allow us to track symbol renames.
-    if (!isSandbox && newSymbol.iexId != null && update('iexId', bulk, oldSymbolsDictionary, oldSymbols, newSymbol)) {
+    if (isProduction && newSymbol.iexId != null && update('iexId', bulk, oldSymbolsDictionary, oldSymbols, newSymbol)) {
       continue;
     }
-    if (!isSandbox && newSymbol.figi != null && update('figi', bulk, oldSymbolsDictionary, oldSymbols, newSymbol)) {
+    if (isProduction && newSymbol.figi != null && update('figi', bulk, oldSymbolsDictionary, oldSymbols, newSymbol)) {
       continue;
     }
     if (update('symbol', bulk, oldSymbolsDictionary, oldSymbols, newSymbol)) {
@@ -94,7 +94,6 @@ async function updateIEXSymbols() {
   );
 
   if (symbolsIDsToDisable.length) {
-    // TODO: throw error later to catch disabled symbols? Not sure if there are any.
     console.log(`Disabling IEX ${symbolsIDsToDisable}`);
     await iexCollection.updateMany(
       { symbol: { $in: symbolsIDsToDisable } },
@@ -123,7 +122,11 @@ function update(field, bulk, oldSymbolsDictionary, oldSymbols, newSymbol) {
     return false;
 
   } else {
-    bulk.findAndUpdateIfNeeded(newSymbol, oldSymbol, field);
+    // Skip update on sandbox
+    if (isProduction) {
+      bulk.findAndUpdateIfNeeded(newSymbol, oldSymbol, field);
+    }
+
     return true;
   }
 }

@@ -1327,6 +1327,10 @@ exports = function() {
     isSandbox = context.values.get("base_url") === 'https://sandbox.iexapis.com/stable';
   }
 
+  if (typeof isProduction === 'undefined') {
+    isProduction = !isSandbox;
+  }
+
   if (typeof atlas === 'undefined') {
     atlas = context.services.get("mongodb-atlas");
   }
