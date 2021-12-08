@@ -44,6 +44,8 @@ Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, field) {
     _field = '_id';
   }
 
+  const value = newObject[_field];
+
   if (newObject == null) {
     throw new SystemError(`New object should not be null for update`);
     
@@ -61,7 +63,7 @@ Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, field) {
 
     } else {
       return this
-        .find({ [_field]: newObject[_field] })
+        .find({ [_field]: value })
         .updateOne(update)
     }
   }
