@@ -22,13 +22,14 @@ Object.prototype.safeExecute = async function() {
  * Only non-equal fields are added to `$set` and missing fields
  * are added to `$unset`.
  */
- Object.prototype.updateOneFrom = function(object) {
+Object.prototype.updateOneFrom = function(object) {
   const set = Object.assign({}, this);
   const unset = {};
   const objectEntries = Object.entries(object);
   for (const [key, value] of objectEntries) {
-    if (typeof set[key] === 'undefined') {
+    if (set[key] == null) {
       unset[key] = "";
+
     } else if (set[key].isEqual(value)) {
       delete set[key];
     }

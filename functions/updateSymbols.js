@@ -119,7 +119,7 @@ function update(field, bulk, oldSymbolsDictionary, oldSymbols, newSymbol) {
     });
   }
 
-  if (typeof oldSymbol === 'undefined') {
+  if (oldSymbol == null) {
     return false;
 
   } else {
@@ -177,7 +177,7 @@ async function updateDivtrackerSymbols() {
   const bulk = divtrackerCollection.initializeUnorderedBulkOp();
   for (const newSymbol of newSymbols) {
     const oldSymbol = oldSymbolsDictionary[newSymbol._id];
-    if (typeof oldSymbol === 'undefined') {
+    if (oldSymbol == null) {
       console.log(`Inserting Divtracker ${newSymbol.s}`);
       bulk.insert(newSymbol);
 
