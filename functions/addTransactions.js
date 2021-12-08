@@ -48,10 +48,7 @@ exports = async function(transactions) {
 
   // Data is loaded we can safely insert our transactions
   const transactionsCollection = db.collection("transactions");
-  const returnResult = await Promise
-    .resolve(transactionsCollection.insertMany(transactions))
-    .mapErrorToSystem();
-    
+  const returnResult = await transactionsCollection.insertMany(transactions).mapErrorToSystem();
   console.log(`return result: ${returnResult.stringify()}`);
 
   return returnResult;
