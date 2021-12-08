@@ -292,7 +292,9 @@ Object.prototype.isEqual = function(rhs) {
 
   for (const [key, lhsValue] of lhsEntries) {
     const rhsValue = rhs[key];
-    return lhsValue.isEqual(rhsValue);
+    if (!lhsValue.isEqual(rhsValue)) {
+      return false;
+    }
   }
 
   return true;
