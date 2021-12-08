@@ -21,10 +21,7 @@ Object.prototype.safeExecute = async function() {
  * Uses `_id` field by default.
  */
 Object.prototype.findAndUpdateOrInsertIfNeeded = function(newObject, oldObject, field) {
-  if (newObject == null) {
-    throw new SystemError(`New object should not be null for insert or update`);
-    
-  } else if (oldObject == null) {
+  if (oldObject == null) {
     // No old object means we should insert
     console.log(`Inserting: ${newObject.stringify()}`);
     return this.insert(newObject)
@@ -44,26 +41,18 @@ Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, field) {
     _field = '_id';
   }
 
-  if (newObject == null) {
-    throw new SystemError(`New object should not be null for update`);
-    
-  } else if (oldObject == null) {
-    throw new SystemError(`Old object should not be null for update`);
+  const update = newObject.updateFrom(oldObject)
+  if (update == null) {
+    // Update is not needed
+    return;
+
+  } else if (newSymbol[_field] == null) {
+    throw new SystemError(`New object '${_field}' field should not be null for update`);
 
   } else {
-    const update = newObject.updateFrom(oldObject)
-    if (update == null) {
-      // Update is not needed
-      return;
-
-    } else if (newSymbol[_field] == null) {
-      throw new SystemError(`New object '${_field}' field should not be null for update`);
-
-    } else {
-      return this
-        .find({ [_field]: newSymbol[_field] })
-        .updateOne(update)
-    }
+    return this
+      .find({ [_field]: newSymbol[_field] })
+      .updateOne(update)
   }
 };
 
@@ -78,25 +67,26 @@ Object.prototype.updateFrom = function(object) {
     return null;
   }
 
-  const set = Object.assign({}, this);
+  const set = this;
   const unset = {};
   const oldEntries = Object.entries(object);
+  let hasUnsets = false;
   for (const [key, oldValue] of oldEntries) {
     const newValue = set[key];
     if (newValue == null) {
       unset[key] = "";
+      hasUnsets = true;
     }
   }
 
-  if (set.length || unset.length) {
-    const update = { $set: set, $unset: unset };
-    console.log(`Updating: ${update.stringify()}`);
-    return update;
-
+  let update;
+  if (hasUnsets) {
+    update = { $set: set, $unset: unset };
   } else {
-    console.logVerbose(`Nothing to update`);
-    return null;
+    update = { $set: set };
   }
+  console.log(`Updating: ${update.stringify()}`);
+  return update;
 };
 
 /**
@@ -270,7 +260,10 @@ Object.prototype.isEqual = function(object) {
     const objectValue = object[key];
     if (value != objectValue) {
       if (typeof value === 'object' && typeof objectValue === 'object') {
-        if (value.stringify() !== objectValue.stringify()) {
+        // We might receive `ObjectId` and various `BSON` objects here
+        // and the `==` comparison returns `false` for them so we 
+        // compare using their string representation
+        if (value.toString() !== objectValue.toString()) {
           return false;
         }
    
