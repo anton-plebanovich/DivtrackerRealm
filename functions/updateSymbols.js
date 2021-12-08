@@ -69,10 +69,10 @@ async function updateIEXSymbols() {
   const bulk = iexCollection.initializeUnorderedBulkOp();
   for (const newSymbol of newSymbols) {
     // We try to update all symbold using IDs that allow us to track symbol renames.
-    if (!isSandbox && newSymbol.iexId != null && update('iexId', bulk, oldSymbolsDictionary, oldSymbols, newSymbol)) {
+    if (newSymbol.iexId != null && update('iexId', bulk, oldSymbolsDictionary, oldSymbols, newSymbol)) {
       continue;
     }
-    if (!isSandbox && newSymbol.figi != null && update('figi', bulk, oldSymbolsDictionary, oldSymbols, newSymbol)) {
+    if (newSymbol.figi != null && update('figi', bulk, oldSymbolsDictionary, oldSymbols, newSymbol)) {
       continue;
     }
     if (update('symbol', bulk, oldSymbolsDictionary, oldSymbols, newSymbol)) {
@@ -112,7 +112,7 @@ function update(field, bulk, oldSymbolsDictionary, oldSymbols, newSymbol) {
   // and so we can increase performance.
   const newSymbolFieldValue = newSymbol[field];
   let oldSymbol = oldSymbolsDictionary[newSymbol.symbol];
-  if (!oldSymbol || oldSymbol[field] !== newSymbolFieldValue) {
+  if (field !== 'symbol' && (!oldSymbol || oldSymbol[field] !== newSymbolFieldValue)) {
     // Perform search since our assumption failed. This one is slower.
     oldSymbol = oldSymbols.find(oldSymbol => {
       return oldSymbol[field] === newSymbolFieldValue;

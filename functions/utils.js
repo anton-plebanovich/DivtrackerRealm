@@ -27,7 +27,7 @@ Object.prototype.findAndUpdateOrInsertIfNeeded = function(newObject, oldObject, 
     return this.insert(newObject)
 
   } else {
-    return findAndUpdateIfNeeded(newObject, oldObject, field)
+    return this.findAndUpdateIfNeeded(newObject, oldObject, field)
   }
 };
 
@@ -66,8 +66,18 @@ Object.prototype.updateFrom = function(object) {
 
   const set = this;
   const unset = {};
-  const oldEntries = Object.entries(object);
+
+  // Delete `null` values from the `set`
+  const newEntries = Object.entries(this);
+  for (const [key, newValue] of newEntries) {
+    if (newValue == null) {
+      delete set[key];
+    }
+  }
+
+  // Collect keys to unset
   let hasUnsets = false;
+  const oldEntries = Object.entries(object);
   for (const [key, oldValue] of oldEntries) {
     const newValue = set[key];
     if (newValue == null) {
@@ -82,7 +92,13 @@ Object.prototype.updateFrom = function(object) {
   } else {
     update = { $set: set };
   }
-  console.log(`Updating: ${update.stringify()}`);
+
+  if (isSandbox) {
+    console.logData(`Updating`, update);
+  } else {
+    console.log(`Updating: ${update.stringify()}`);
+  }
+
   return update;
 };
 
