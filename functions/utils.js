@@ -1307,6 +1307,10 @@ getDateLogString = function getDateLogString() {
 exports = function() {
   extendRuntime();
 
+  if (typeof isSandbox === 'undefined') {
+    isSandbox = context.values.get("base_url") === 'https://sandbox.iexapis.com/stable';
+  }
+
   if (typeof atlas === 'undefined') {
     atlas = context.services.get("mongodb-atlas");
   }
