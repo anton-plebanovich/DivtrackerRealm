@@ -1260,7 +1260,7 @@ exports = function() {
     db = atlas.db("divtracker-v2");
   }
 
-  if (typeof db === 'undefined') {
+  if (typeof iex === 'undefined') {
     iex = atlas.db("iex");
   }
 
