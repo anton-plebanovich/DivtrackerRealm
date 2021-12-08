@@ -80,7 +80,7 @@ Object.prototype.updateFrom = function(object) {
     return null;
   }
 
-  const set = this;
+  const set = Object.assign({}, this);
   const unset = {};
 
   // Delete `null` values from the `set`
@@ -113,7 +113,7 @@ Object.prototype.updateFrom = function(object) {
   }
 
   if (isSandbox) {
-    console.logData(`Updating`, update);
+    console.log(`Updating`, update);
   } else {
     console.log(`Updating: ${update.stringify()}`);
   }
