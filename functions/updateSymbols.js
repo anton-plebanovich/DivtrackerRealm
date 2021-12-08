@@ -123,12 +123,7 @@ function update(field, bulk, oldSymbolsDictionary, oldSymbols, newSymbol) {
     return false;
 
   } else {
-    if (!newSymbol.isEqual(oldSymbol)) {
-      console.log(`Updating IEX ${oldSymbol.symbol} -> ${newSymbol.symbol}`);
-      bulk.find({ [field]: newSymbolFieldValue })
-        .updateOne(newSymbol.updateOneFrom(oldSymbol));
-    }
-
+    bulk.findAndUpdateIfNeeded(newSymbol, oldSymbol, field)
     return true;
   }
 }
@@ -177,15 +172,7 @@ async function updateDivtrackerSymbols() {
   const bulk = divtrackerCollection.initializeUnorderedBulkOp();
   for (const newSymbol of newSymbols) {
     const oldSymbol = oldSymbolsDictionary[newSymbol._id];
-    if (oldSymbol == null) {
-      console.log(`Inserting Divtracker ${newSymbol.s}`);
-      bulk.insert(newSymbol);
-
-    } else if (!newSymbol.isEqual(oldSymbol)) {
-      console.log(`Updating Divtracker ${oldSymbol.s} -> ${newSymbol.s}`);
-      bulk.find({ _id: newSymbol._id })
-        .updateOne(newSymbol.updateOneFrom(oldSymbol));
-    }
+    bulk.findAndUpdateOrInsertIfNeeded(newSymbol, oldSymbol);
   }
 
   await bulk.safeExecute();

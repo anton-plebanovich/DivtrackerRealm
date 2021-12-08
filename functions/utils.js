@@ -11,7 +11,58 @@ Object.prototype.safeExecute = async function() {
     return await this.execute();
   } catch(error) {
     if (error.message !== 'Failed to execute bulk writes: no operations specified') {
-      throw error;
+      throw new SystemError(error);
+    }
+  }
+};
+
+/**
+ * Executes find by field and update or insert for a new object from an old object.
+ * Uses `_id` field by default.
+ */
+Object.prototype.findAndUpdateOrInsertIfNeeded = async function(newObject, oldObject, field) {
+  if (newObject == null) {
+    throw new SystemError(`New object should not be null for insert or update`);
+    
+  } else if (oldObject == null) {
+    // No old object means we should insert
+    console.log(`Inserting: ${newObject.stringify()}`);
+    return this.insert(newObject)
+
+  } else {
+    return findAndUpdateIfNeeded(newObject, oldObject, field)
+  }
+};
+
+/**
+ * Executes find by field and update for a new object from an old object if needed.
+ * Uses `_id` field by default.
+ */
+Object.prototype.findAndUpdateIfNeeded = async function(newObject, oldObject, field) {
+  let _field = field;
+  if (_field == null) {
+    _field = '_id';
+  }
+
+  if (newObject == null) {
+    throw new SystemError(`New object should not be null for update`);
+    
+  } else if (oldObject == null) {
+    throw new SystemError(`Old object should not be null for update`);
+
+  } else {
+    const update = newObject.updateFrom(oldObject)
+    if (update == null) {
+      // Update is not needed
+      return;
+
+    } else if (newSymbol[_field] == null) {
+      throw new SystemError(`New object '${_field}' field should not be null for update`);
+
+    } else {
+      return this
+        .find({ [_field]: newSymbol[_field] })
+        .updateOne(update)
     }
   }
 };
@@ -22,7 +73,7 @@ Object.prototype.safeExecute = async function() {
  * Only non-equal fields are added to `$set` and missing fields
  * are added to `$unset`.
  */
-Object.prototype.updateOneFrom = function(object) {
+Object.prototype.updateFrom = function(object) {
   const set = Object.assign({}, this);
   const unset = {};
   const objectEntries = Object.entries(object);
@@ -35,10 +86,15 @@ Object.prototype.updateOneFrom = function(object) {
     }
   }
 
-  const update = { $set: set, $unset: unset };
-  console.log(`Update operator: ${update.stringify()}`);
+  if (set.length || unset.length) {
+    const update = { $set: set, $unset: unset };
+    console.log(`Updating: ${update.stringify()}`);
+    return update;
 
-  return update;
+  } else {
+    console.logVerbose(`Nothing to update`);
+    return null;
+  }
 };
 
 /**
@@ -233,7 +289,7 @@ const errorType = {
 	COMPOSITE: "composite",
 };
 
-UserError = class UserError {
+class UserError {
   constructor(message) {
     this.type = errorType.USER;
     
@@ -249,7 +305,9 @@ UserError = class UserError {
   }
 }
 
-SystemError = class SystemError {
+UserError = UserError;
+
+class SystemError {
   constructor(message) {
     this.type = errorType.SYSTEM;
 
@@ -265,7 +323,9 @@ SystemError = class SystemError {
   }
 }
 
-CompositeError = class CompositeError {
+SystemError = SystemError;
+
+class CompositeError {
   constructor(errors) {
     if (Object.prototype.toString.call(errors) !== '[object Array]') {
       throw 'CompositeError should be initialized with errors array';
@@ -320,6 +380,8 @@ CompositeError = class CompositeError {
     return this.stringify();
   }
 }
+
+CompositeError = CompositeError;
 
 var runtimeExtended = false;
 function extendRuntime() {
