@@ -17,6 +17,30 @@ Object.prototype.safeExecute = async function() {
 };
 
 /**
+ * Computes update parameter for `updateOne` collection method.
+ * Update direction is from `object` towards `this`.
+ * Only non-equal fields are added to `$set` and missing fields
+ * are added to `$unset`.
+ */
+ Object.prototype.updateOneFrom = function(object) {
+  const set = Object.assign({}, this);
+  const unset = {};
+  const objectEntries = Object.entries(object);
+  for (const [key, value] of objectEntries) {
+    if (typeof set[key] === 'undefined') {
+      unset[key] = "";
+    } else if (set[key].isEqual(value)) {
+      delete set[key];
+    }
+  }
+
+  const update = { $set: set, $unset: unset };
+  console.log(`Update operator: ${update.stringify()}`);
+
+  return update;
+};
+
+/**
  * @note Using 'distinct' instead of 'unique' to match MongoDB method and because values itself might not be _unique_.
  * @param {function|undefined|string} arg Check for equality if nothing is passed. 
  * Using comparison function if passed. 
@@ -509,8 +533,6 @@ getOpenDate = function getOpenDate(arg1) {
  * @returns {Promise<["AAPL:NAS"]>} Array of unique IDs.
 */
 getUniqueIDs = async function getUniqueIDs() {
-  const db = context.services.get("mongodb-atlas").db("divtracker");
-
   // We combine transactions and companies distinct IDs. 
   // Idealy, we should be checking all tables but we assume that only two will be enough.
   // All symbols have company record so company DB contains all ever fetched symbols.
@@ -545,8 +567,6 @@ getUniqueIDs = async function getUniqueIDs() {
  * @returns {Promise<["AAPL:NAS"]>} Array of unique transaction IDs, e.g. ["AAPL:NAS"]
 */
 async function _getUniqueTransactionIDs() {
-  const db = context.services.get("mongodb-atlas").db("divtracker");
-
   // We project '_i' field first and then produce unique objects with only '_id' field
   const transactionsCollection = db.collection("transactions");
   const transactionsAggregation = [{$project: {
@@ -1232,8 +1252,16 @@ getDateLogString = function getDateLogString() {
 exports = function() {
   extendRuntime();
 
+  if (typeof atlas === 'undefined') {
+    atlas = context.services.get("mongodb-atlas");
+  }
+
   if (typeof db === 'undefined') {
-    db = context.services.get("mongodb-atlas").db("divtracker");
+    db = atlas.db("divtracker-v2");
+  }
+
+  if (typeof db === 'undefined') {
+    iex = atlas.db("iex");
   }
 
   /** Premium token. Will be used for all API calls if defined. */

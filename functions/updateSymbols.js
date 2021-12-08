@@ -51,7 +51,7 @@ async function updateIEXSymbols() {
   // We remove date field to prevent excessive updates each day
   newSymbols.forEach(x => delete x.date);
 
-  const iexCollection = context.services.get("mongodb-atlas").db("iex").collection("symbols");
+  const iexCollection = iex.collection("symbols");
   const count = await iexCollection.count({});
   if (count == 0) {
     console.log(`No IEX symbols. Just inserting all records.`);
@@ -126,7 +126,7 @@ function update(field, bulk, oldSymbolsDictionary, oldSymbols, newSymbol) {
     if (!newSymbol.isEqual(oldSymbol)) {
       console.log(`Updating IEX ${oldSymbol.symbol} -> ${newSymbol.symbol}`);
       bulk.find({ [field]: newSymbolFieldValue })
-        .updateOne({ $set: newSymbol });
+        .updateOne(newSymbol.updateOneFrom(oldSymbol));
     }
 
     return true;
@@ -135,13 +135,17 @@ function update(field, bulk, oldSymbolsDictionary, oldSymbols, newSymbol) {
 
 async function updateDivtrackerSymbols() {
   console.log(`Updating Divtracker symbols`);
-  const iexCollection = context.services.get("mongodb-atlas").db("iex").collection("symbols");
+  const iexCollection = iex.collection("symbols");
 
   const iexSymbols = await iexCollection.find({}).toArray();
   const newSymbols = iexSymbols.map(iexSymbol => {
     const symbol = {};
     symbol._id = iexSymbol._id;
-    symbol._p = "P";
+
+    // TODO: Remove '_p' later
+    symbol._p = "2";
+    
+    symbol._ = "2";
     symbol.s = iexSymbol.symbol;
     symbol.n = iexSymbol.name;
 
@@ -153,7 +157,7 @@ async function updateDivtrackerSymbols() {
     return symbol;
   });
 
-  const divtrackerCollection = context.services.get("mongodb-atlas").db("divtracker").collection("symbols-v2");
+  const divtrackerCollection = db.collection("symbols");
   const oldCount = await divtrackerCollection.count({});
   if (oldCount == 0) {
     console.log(`No Divtracker symbols. Just inserting all records.`);
@@ -179,15 +183,8 @@ async function updateDivtrackerSymbols() {
 
     } else if (!newSymbol.isEqual(oldSymbol)) {
       console.log(`Updating Divtracker ${oldSymbol.s} -> ${newSymbol.s}`);
-
-      // Disable flag should be only set if it's `true`
-      if (newSymbol.d) {
-        bulk.find({ _id: newSymbol._id })
-          .updateOne({ $set: newSymbol });
-      } else {
-        bulk.find({ _id: newSymbol._id })
-          .updateOne({ $set: newSymbol, $unset: { d: "" } });
-      }
+      bulk.find({ _id: newSymbol._id })
+        .updateOne(newSymbol.updateOneFrom(oldSymbol));
     }
   }
 
