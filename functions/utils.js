@@ -262,6 +262,10 @@ Object.prototype.stringify = function() {
  * @returns {boolean} Comparison result.
  */
 Object.prototype.isEqual = function(object) {
+  if (typeof value !== 'object') {
+    return value == object
+  }
+
   const thisEntries = Object.entries(this);
   const objectEntries = Object.entries(object);
   if (thisEntries.length != objectEntries.length) {
