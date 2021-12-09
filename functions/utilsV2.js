@@ -951,39 +951,39 @@ fetch = _fetch;
 const defaultRange = '6y';
 
 /**
- * Fetches companies in batch for symbols.
- * @param {[ShortSymbol]} shortSymbol Short symbol models for which to fetch.
+ * Fetches companies in batch for short symbols.
+ * @param {[ShortSymbol]} shortSymbols Short symbol models for which to fetch.
  * @returns {[Company]} Array of requested objects.
  */
- fetchCompanies = async function fetchCompanies(shortSymbol) {
-  _throwIfUndefinedOrNull(shortSymbol, `fetchCompanies shortSymbol`);
-  const [symbolNames, symbolNamesDictionary] = getSymbolNamesAndIDsDictionary(shortSymbol);
+ fetchCompanies = async function fetchCompanies(shortSymbols) {
+  _throwIfUndefinedOrNull(shortSymbols, `fetchCompanies shortSymbols`);
+  const [symbolNames, symbolIDsDictionary] = getSymbolNamesAndIDsDictionary(shortSymbols);
 
   // https://cloud.iexapis.com/stable/stock/VZIO/company?token=pk_9f1d7a2688f24e26bb24335710eae053
   return await fetchBatch(`/company`, symbolNames)
     .then(companies => 
       companies.compactMap(company => 
-        _fixCompany(company, symbolNamesDictionary[company.symbol])
+        _fixCompany(company, symbolIDsDictionary[company.symbol])
       )
     );
 };
 
 /**
- * Fetches dividends in batch for uniqueIDs.
- * @param {[ShortSymbol]} shortSymbol Short symbol models for which to fetch.
+ * Fetches dividends in batch for short symbols.
+ * @param {[ShortSymbol]} shortSymbols Short symbol models for which to fetch.
  * @param {boolean} isFuture Flag to fetch future or past dividends.
  * @param {string} range Range to fetch.
  * @returns {[Dividend]} Array of requested objects.
  */
-fetchDividends = async function fetchDividends(shortSymbol, isFuture, range) {
-  _throwIfUndefinedOrNull(shortSymbol, `fetchDividends shortSymbol`);
+fetchDividends = async function fetchDividends(shortSymbols, isFuture, range) {
+  _throwIfUndefinedOrNull(shortSymbols, `fetchDividends shortSymbols`);
   _throwIfUndefinedOrNull(isFuture, `fetchDividends isFuture`);
 
   if (range == null) {
     range = defaultRange;
   }
 
-  const [symbolNames, symbolNamesDictionary] = getSymbolNamesAndIDsDictionary(shortSymbol);
+  const [symbolNames, symbolIDsDictionary] = getSymbolNamesAndIDsDictionary(shortSymbols);
 
   const parameters = { range: range };
   if (isFuture) {
@@ -997,7 +997,7 @@ fetchDividends = async function fetchDividends(shortSymbol, isFuture, range) {
         .map(symbolName => {
           const symbolsTypesDividend = symbolsTypesDividends[symbolName];
           if (symbolsTypesDividend != null && symbolsTypesDividend.dividends) {
-            return _fixDividends(symbolsTypesDividend.dividends, symbolNamesDictionary[symbolName]);
+            return _fixDividends(symbolsTypesDividend.dividends, symbolIDsDictionary[symbolName]);
           } else {
             return [];
           }
@@ -1007,22 +1007,22 @@ fetchDividends = async function fetchDividends(shortSymbol, isFuture, range) {
 };
 
 /**
- * Fetches previous day prices in batch for uniqueIDs.
- * @param {[string]} uniqueIDs Unique IDs to fetch.
+ * Fetches previous day prices in batch for short symbols.
+ * @param {[ShortSymbol]} shortSymbols Short symbol models for which to fetch.
  * @returns {[PreviousDayPrice]} Array of requested objects.
  */
- fetchPreviousDayPrices = async function fetchPreviousDayPrices(uniqueIDs) {
-  _throwIfUndefinedOrNull(uniqueIDs, `fetchPreviousDayPrices uniqueIDs`);
-  const [symbols, symbolsDictionary] = getSymbolNamesAndIDsDictionary(uniqueIDs);
+ async function _fetchPreviousDayPrices(shortSymbols) {
+  _throwIfUndefinedOrNull(shortSymbols, `fetchPreviousDayPrices shortSymbols`);
+  const [symbolNames, symbolIDsDictionary] = getSymbolNamesAndIDsDictionary(shortSymbols);
 
   // https://sandbox.iexapis.com/stable/stock/market/batch?token=Tpk_581685f711114d9f9ab06d77506fdd49&types=previous&symbols=AAPL,AAP
-  return await fetchBatchNew(['previous'], symbols)
+  return await fetchBatchNew(['previous'], symbolNames)
     .then(symbolsTypesPDPs =>
-      symbols
-        .compactMap(symbol => {
-          const symbolsTypesPDP = symbolsTypesPDPs[symbol];
+      symbolNames
+        .compactMap(symbolName => {
+          const symbolsTypesPDP = symbolsTypesPDPs[symbolName];
           if (symbolsTypesPDP != null && symbolsTypesPDP.previous) {
-            return fixPreviousDayPrice(symbolsTypesPDP.previous, symbolsDictionary[symbol]);
+            return _fixPreviousDayPrice(symbolsTypesPDP.previous, symbolIDsDictionary[symbolName]);
           } else {
             // {"AACOU":{"previous":null}}
             return null;
@@ -1031,20 +1031,22 @@ fetchDividends = async function fetchDividends(shortSymbol, isFuture, range) {
     );
 };
 
+fetchPreviousDayPrices = _fetchPreviousDayPrices;
+
 /**
  * Fetches historical prices in batch for uniqueIDs.
- * @param {[string]} uniqueIDs Unique IDs to fetch.
+ * @param {[ShortSymbol]} shortSymbols Short symbol models for which to fetch.
  * @param {string} range Range to fetch.
  * @returns {[HistoricalPrice]} Array of requested objects.
  */
- fetchHistoricalPrices = async function fetchHistoricalPrices(uniqueIDs, range) {
-   _throwIfUndefinedOrNull(uniqueIDs, `fetchHistoricalPrices uniqueIDs`);
+ fetchHistoricalPrices = async function fetchHistoricalPrices(shortSymbols, range) {
+   _throwIfUndefinedOrNull(shortSymbols, `fetchHistoricalPrices shortSymbols`);
 
   if (range == null) {
     range = defaultRange;
   }
 
-  const [symbols, symbolsDictionary] = getSymbolNamesAndIDsDictionary(uniqueIDs);
+  const [symbolNames, symbolIDsDictionary] = getSymbolNamesAndIDsDictionary(shortSymbols);
   const parameters = { 
     range: range,
     chartCloseOnly: true, 
@@ -1052,13 +1054,13 @@ fetchDividends = async function fetchDividends(shortSymbol, isFuture, range) {
   };
 
   // https://sandbox.iexapis.com/stable/stock/market/batch?token=Tpk_581685f711114d9f9ab06d77506fdd49&types=chart&symbols=AAPL,AAP&range=6y&chartCloseOnly=true&chartInterval=21
-  return await fetchBatchNew(['chart'], symbols, parameters)
+  return await fetchBatchNew(['chart'], symbolNames, parameters)
     .then(symbolsTypesHPs =>
-      symbols
-        .map(symbol => {
-          const symbolsTypesHP = symbolsTypesHPs[symbol];
+      symbolNames
+        .map(symbolName => {
+          const symbolsTypesHP = symbolsTypesHPs[symbolName];
           if (typeof symbolsTypesHP != null && symbolsTypesHP.chart) {
-            return fixHistoricalPrices(symbolsTypesHP.chart, symbolsDictionary[symbol]);
+            return _fixHistoricalPrices(symbolsTypesHP.chart, symbolIDsDictionary[symbolName]);
           } else {
             return [];
           }
@@ -1225,8 +1227,8 @@ function _fixCompany(iexCompany, symbolID) {
     console.logVerbose(`Company data fix start`);
     const company = {};
     company._id = symbolID;
-    company._p = "2";
     company._ = "2";
+    company._p = "2";
     company.n = iexCompany.companyName.trim();
     company.s = iexCompany.industry;
     company.t = iexCompany.issueType;
@@ -1259,12 +1261,13 @@ function _fixDividends(iexDividends, symbolID) {
       .filterNull()
       .map(iexDividend => {
         const dividend = {};
-        dividend._p = "P";
-        dividend._i = symbolID;
+        dividend._ = "2";
+        dividend._p = "2";
         dividend.a = BSON.Double(iexDividend.amount);
         dividend.d = getOpenDate(iexDividend.declaredDate);
         dividend.e = getOpenDate(iexDividend.exDate);
         dividend.p = getOpenDate(iexDividend.paymentDate);
+        dividend.s = symbolID;
 
         // We add only the first letter of a frequency
         if (iexDividend.frequency != null) {
@@ -1288,27 +1291,66 @@ fixDividends = _fixDividends;
 
 /**
  * Fixes previous day price object so it can be added to MongoDB.
- * @param {Object} previousDayPrice Previous day price object.
- * @param {Object} uniqueID Unique ID, e.g. 'AAPL:NAS'.
- * @returns {Object|null} Returns fixed object or `null` if fix wasn't possible.
+ * @param {IEXPreviousDayPrice} iexPreviousDayPrice Previous day price object.
+ * @param {ObjectId} symbolID Symbol object ID.
+ * @returns {PreviousDayPrice|null} Returns fixed object or `null` if fix wasn't possible.
  */
-fixPreviousDayPrice = function fixPreviousDayPrice(previousDayPrice, uniqueID) {
+function _fixPreviousDayPrice(iexPreviousDayPrice, symbolID) {
   try {
-    _throwIfUndefinedOrNull(previousDayPrice, `fixPreviousDayPrice previousDayPrice`);
-    _throwIfUndefinedOrNull(uniqueID, `fixPreviousDayPrice uniqueID`);
+    _throwIfUndefinedOrNull(iexPreviousDayPrice, `fixPreviousDayPrice iexPreviousDayPrice`);
+    _throwIfUndefinedOrNull(symbolID, `fixPreviousDayPrice symbolID`);
   
     console.logVerbose(`Previous day price data fix start`);
-    const fixedPreviousDayPrice = {};
-    fixedPreviousDayPrice._id = uniqueID;
-    fixedPreviousDayPrice._p = "P";
-    fixedPreviousDayPrice.c = BSON.Double(previousDayPrice.close);
+    const previousDayPrice = {};
+    previousDayPrice._id = symbolID;
+    previousDayPrice._ = "2";
+    previousDayPrice._p = "2";
+    previousDayPrice.c = BSON.Double(iexPreviousDayPrice.close);
   
-    return fixedPreviousDayPrice;
+    return previousDayPrice;
 
   } catch(error) {
     return null;
   }
 };
+
+fixPreviousDayPrice = _fixPreviousDayPrice;
+
+/**
+ * Fixes historical prices object so it can be added to MongoDB.
+ * @param {[IEXHistoricalPrices]} iexHistoricalPrices Historical prices object.
+ * @param {ObjectId} symbolID Symbol object ID.
+ * @returns {[HistoricalPrices]} Returns fixed objects or an empty array if fix wasn't possible.
+ */
+function _fixHistoricalPrices(iexHistoricalPrices, symbolID) {
+  try {
+    _throwIfUndefinedOrNull(iexHistoricalPrices, `fixHistoricalPrices iexHistoricalPrices`);
+    _throwIfUndefinedOrNull(symbolID, `fixHistoricalPrices uniqueID`);
+    if (!iexHistoricalPrices.length) { 
+      console.logVerbose(`Historical prices are empty for ${symbolID}. Nothing to fix.`);
+      return []; 
+    }
+  
+    console.logVerbose(`Fixing historical prices for ${symbolID}`);
+    return iexHistoricalPrices
+      .filterNull()
+      .map(historicalPrice => {
+        const historicalPrice = {};
+        historicalPrice._ = "2";
+        historicalPrice._p = "2";
+        historicalPrice.c = BSON.Double(historicalPrice.close);
+        historicalPrice.d = getCloseDate(historicalPrice.date);
+        historicalPrice.s = symbolID;
+
+        return historicalPrice;
+      });
+
+  } catch (error) {
+    return [];
+  }
+};
+
+fixHistoricalPrices = _fixHistoricalPrices;
 
 /**
  * Fixes quote object so it can be added to MongoDB.
@@ -1372,39 +1414,6 @@ fixSplits = function fixSplits(splits, uniqueID) {
         fixedSplit.r = BSON.Double(split.ratio);
 
         return fixedSplit;
-      });
-
-  } catch (error) {
-    return [];
-  }
-};
-
-/**
- * Fixes historical prices object so it can be added to MongoDB.
- * @param {Object} historicalPrices Historical prices object.
- * @param {Object} uniqueID Unique ID, e.g. 'AAPL:NAS'.
- * @returns {[Object]} Returns fixed objects or an empty array if fix wasn't possible.
- */
-fixHistoricalPrices = function fixHistoricalPrices(historicalPrices, uniqueID) {
-  try {
-    _throwIfUndefinedOrNull(historicalPrices, `fixHistoricalPrices historicalPrices`);
-    _throwIfUndefinedOrNull(uniqueID, `fixHistoricalPrices uniqueID`);
-    if (!historicalPrices.length) { 
-      console.logVerbose(`Historical prices are empty for ${uniqueID}. Nothing to fix.`);
-      return []; 
-    }
-  
-    console.logVerbose(`Fixing historical prices for ${uniqueID}`);
-    return historicalPrices
-      .filterNull()
-      .map(historicalPrice => {
-        const fixedHistoricalPrice = {};
-        fixedHistoricalPrice._p = "P";
-        fixedHistoricalPrice._i = uniqueID;
-        fixedHistoricalPrice.c = BSON.Double(historicalPrice.close);
-        fixedHistoricalPrice.d = getCloseDate(historicalPrice.date);
-
-        return fixedHistoricalPrice;
       });
 
   } catch (error) {

@@ -39,7 +39,7 @@ exports = async function() {
   // We remove symbols that already have future dividends and update only those that don't.
   const upToDateSymbolIDs = await collection.distinct("s", { "e" : { $gte : new Date() }});
   const shortSymbolsToUpdate = shortSymbols.filter(x => !upToDateSymbolIDs.includes(x.s));
-  console.log(`Updating future dividends (${shortSymbolsToUpdate.length}) for '${shortSymbolsToUpdate}' IDs`);
+  console.log(`Updating future dividends (${shortSymbolsToUpdate.length}) for '${shortSymbolsToUpdate.stringify()}' IDs`);
 
   const futureDividends = await fetchDividends(shortSymbolsToUpdate, true);
   if (futureDividends.length) {
@@ -87,7 +87,7 @@ exports = async function() {
     console.log(`Inserted missed future dividends`);
 
   } else {
-    console.log(`Future dividends are empty for IDs '${shortSymbolsToUpdate}'`);
+    console.log(`Future dividends are empty for IDs '${shortSymbolsToUpdate.stringify()}'`);
   }
 
   // Past dividends update. Just in case they weren't added for the future or were updated.

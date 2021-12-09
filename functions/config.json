@@ -87,6 +87,10 @@
         "private": true
     },
     {
+        "name": "updatePricesV2",
+        "private": true
+    },
+    {
         "name": "updateQuotes",
         "private": true
     },
