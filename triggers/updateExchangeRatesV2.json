@@ -1,6 +1,6 @@
 {
     "id": "6185ffbd6db886ed8f037b66",
-    "name": "updateExchangeRates",
+    "name": "updateExchangeRatesV2",
     "type": "SCHEDULED",
     "config": {
         "schedule": "5 9 * * *"
