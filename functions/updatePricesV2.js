@@ -52,7 +52,7 @@
     .aggregate(upToDateSymbolIDsAggregation)
     .toArray()
     // Extract IDs from [{ _id: ObjectId }]
-    .then(x => x.map(x => x.s));
+    .then(x => x.map(x => x._id));
 
   console.log(`Up to date unique IDs (${upToDateSymbolIDs.length}) for '${monthAgoCloseDate}' date`);
   console.logData(`Up to date unique IDs (${upToDateSymbolIDs.length}) for '${monthAgoCloseDate}' date`, upToDateSymbolIDs);
