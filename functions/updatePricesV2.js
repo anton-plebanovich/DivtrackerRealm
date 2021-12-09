@@ -58,7 +58,7 @@
   console.logData(`Up to date unique IDs (${upToDateSymbolIDs.length}) for '${monthAgoCloseDate}' date`, upToDateSymbolIDs);
 
   const historicalPrices = previousDayPrices
-    .filter(x => !upToDateSymbolIDs.includes(x.s.toString()))
+    .filter(x => !upToDateSymbolIDs.includes(_id.s.toString()))
     .map(previousDayPrice => {
       const historicalPrice = {};
       historicalPrice._p = previousDayPrice._p;
