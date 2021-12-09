@@ -27,10 +27,10 @@ Object.prototype.findAndUpdateOrInsertIfNeeded = function(newObject, oldObject, 
   } else if (oldObject == null) {
     // No old object means we should insert
     console.log(`Inserting: ${newObject.stringify()}`);
-    return this.insert(newObject)
+    return this.insert(newObject);
 
   } else {
-    return this.findAndUpdateIfNeeded(newObject, oldObject, field)
+    return this.findAndUpdateIfNeeded(newObject, oldObject, field);
   }
 };
 
@@ -56,7 +56,7 @@ Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, field) {
     throw new SystemError(`New object '${_field}' field should not be null for update`);
 
   } else {
-    const update = newObject.updateFrom(oldObject)
+    const update = newObject.updateFrom(oldObject);
     if (update == null) {
       // Update is not needed
       return;
@@ -64,7 +64,7 @@ Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, field) {
     } else {
       return this
         .find({ [_field]: value })
-        .updateOne(update)
+        .updateOne(update);
     }
   }
 };
@@ -323,9 +323,9 @@ class UserError {
     this.type = errorType.USER;
     
     if (typeof message === 'string') {
-      this.message = message
+      this.message = message;
     } else {
-      this.message = message.message
+      this.message = message.message;
     }
   }
 
@@ -333,17 +333,15 @@ class UserError {
     return this.stringify();
   }
 }
-
-UserError = UserError;
 
 class SystemError {
   constructor(message) {
     this.type = errorType.SYSTEM;
 
     if (typeof message === 'string') {
-      this.message = message
+      this.message = message;
     } else {
-      this.message = message.message
+      this.message = message.message;
     }
   }
 
@@ -351,8 +349,6 @@ class SystemError {
     return this.stringify();
   }
 }
-
-SystemError = SystemError;
 
 class CompositeError {
   constructor(errors) {
@@ -409,8 +405,6 @@ class CompositeError {
     return this.stringify();
   }
 }
-
-CompositeError = CompositeError;
 
 var runtimeExtended = false;
 function extendRuntime() {
@@ -704,8 +698,8 @@ getUniqueSymbolsAndExchanges = async function getUniqueSymbolsAndExchanges() {
   console.logData(`Unique symbols (${uniqueSymbols.length})`, uniqueSymbols);
   console.log(`Unique exchanges (${uniqueExchanges.length}): ${uniqueExchanges}`);
 
-  return [uniqueSymbols, uniqueExchanges]
-}
+  return [uniqueSymbols, uniqueExchanges];
+};
 
 ///////////////////////////////////////////////////////////////////////////////// fetch.js
 
