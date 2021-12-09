@@ -1,5 +1,5 @@
 
-// utils.js
+// utilsV2.js
 
 ///////////////////////////////////////////////////////////////////////////////// EXTENSIONS
 
@@ -39,12 +39,11 @@ Object.prototype.findAndUpdateOrInsertIfNeeded = function(newObject, oldObject, 
  * Uses `_id` field by default.
  */
 Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, field) {
-  let _field = field;
-  if (_field == null) {
-    _field = '_id';
+  if (field == null) {
+    field = '_id';
   }
 
-  const value = newObject[_field];
+  const value = newObject[field];
 
   if (newObject == null) {
     throw new SystemError(`New object should not be null for update`);
@@ -52,8 +51,8 @@ Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, field) {
   } else if (oldObject == null) {
     throw new SystemError(`Old object should not be null for update`);
 
-  } else if (newObject[_field] == null) {
-    throw new SystemError(`New object '${_field}' field should not be null for update`);
+  } else if (newObject[field] == null) {
+    throw new SystemError(`New object '${field}' field should not be null for update`);
 
   } else {
     const update = newObject.updateFrom(oldObject);
@@ -63,7 +62,7 @@ Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, field) {
 
     } else {
       return this
-        .find({ [_field]: value })
+        .find({ [field]: value })
         .updateOne(update);
     }
   }
@@ -484,9 +483,9 @@ function extendRuntime() {
 ///////////////////////////////////////////////////////////////////////////////// FUNCTIONS
 
 function _logAndThrow(message) {
-  const _message = _throwIfUndefinedOrNull(message, `logAndThrow message`);
-  console.error(_message);
-  throw _message;
+  _throwIfUndefinedOrNull(message, `logAndThrow message`);
+  console.error(message);
+  throw message;
 }
 
 logAndThrow = _logAndThrow;
@@ -517,7 +516,7 @@ checkExecutionTimeout = function checkExecutionTimeout() {
  */
 function _throwIfUndefinedOrNull(object, message) {
   if (typeof object === 'undefined') {
-    if (typeof message !== 'undefined' && message.length) {
+    if (typeof message === 'undefined' && message.length) {
       _logAndThrow(`Object undefiled: ${message}`);
     } else {
       _logAndThrow(`Object undefiled`);
@@ -560,8 +559,8 @@ getValueAndQuitIfUndefined = function _getValueAndQuitIfUndefined(object, key) {
  * the New York Stock Exchange (NYSE) and the Nasdaq Stock Market (Nasdaq),
  * are 9:30 a.m. to 4 p.m.
  */
-getCloseDate = function getCloseDate(arg1) {
-  const closeDateValue = _throwIfUndefinedOrNull(arg1, `cloiseDateValue`);
+getCloseDate = function getCloseDate(closeDateValue) {
+  _throwIfUndefinedOrNull(closeDateValue, `cloiseDateValue`);
 
   // Check if date is valid
   const date = new Date(closeDateValue);
@@ -590,8 +589,8 @@ getCloseDate = function getCloseDate(arg1) {
  * the New York Stock Exchange (NYSE) and the Nasdaq Stock Market (Nasdaq),
  * are 9:30 a.m. to 4 p.m.
  */
-getOpenDate = function getOpenDate(arg1) {
-  const openDateValue = _throwIfUndefinedOrNull(arg1, `openDateValue`);
+getOpenDate = function getOpenDate(openDateValue) {
+  _throwIfUndefinedOrNull(openDateValue, `openDateValue`);
 
   // Check if date is valid
   const date = new Date(openDateValue);
@@ -741,17 +740,21 @@ getUniqueSymbolsAndExchanges = async function getUniqueSymbolsAndExchanges() {
  * Requests data from IEX cloud/sandbox depending on an environment by a batch.
  * If symbols count exceed max allowed amount it splits it to several requests and returns composed result.
  * It switches between available tokens to evenly distribute the load.
- * @param {string} _api API to call.
- * @param {[string]} _symbols Symbols to fetch, e.g. ['AAP','AAPL','PBA'].
- * @param {Object} _queryParameters Query parameters.
+ * @param {string} api API to call.
+ * @param {[string]} symbols Symbols to fetch, e.g. ['AAP','AAPL','PBA'].
+ * @param {Object} queryParameters Query parameters.
  * @returns Parsed EJSON object. Composed from several responses if max symbols count was exceeded.
  */
-fetchBatch = async function fetchBatch(_api, _symbols, _queryParameters) {
+fetchBatch = async function fetchBatch(api, symbols, queryParameters) {
   // https://cloud.iexapis.com/stable/stock/STOR/dividends/10y?token=pk_9f1d7a2688f24e26bb24335710eae053&calendar=true
-  const api = _throwIfUndefinedOrNull(_api, `_api`);
+  _throwIfUndefinedOrNull(api, `_api`);
   const fullAPI = `/stock/market${api}/batch`;
-  const symbols = _throwIfUndefinedOrNull(_symbols, `_symbols`);
-  const queryParameters = typeof _queryParameters === 'undefined' ? {} : _queryParameters;
+  _throwIfUndefinedOrNull(symbols, `_symbols`);
+
+  if (queryParameters == null) {
+    queryParameters = {};
+  }
+
   const maxSymbolsAmount = 100;
   const chunkedSymbolsArray = symbols.chunked(maxSymbolsAmount);
   var result = [];
@@ -777,17 +780,21 @@ fetchBatch = async function fetchBatch(_api, _symbols, _queryParameters) {
  * Requests data from IEX cloud/sandbox for types and symbols by a batch.
  * If symbols count exceed max allowed amount it splits it to several requests and returns composed result.
  * It switches between available tokens to evenly distribute the load.
- * @param {[string]} _types Types to fetch, e.g. ['dividends'].
- * @param {[string]} _symbols Symbols to fetch, e.g. ['AAP','AAPL','PBA'].
- * @param {Object} _queryParameters Additional query parameters, e.g..
+ * @param {[string]} types Types to fetch, e.g. ['dividends'].
+ * @param {[string]} symbols Symbols to fetch, e.g. ['AAP','AAPL','PBA'].
+ * @param {Object} queryParameters Additional query parameters, e.g..
  * @returns {{string: {string: [Object]}}} Parsed EJSON object. Composed from several responses if max symbols count was exceeded. 
  * The first object keys are symbols. The next inner object keys are types. And the next inner object is an array of type objects.
  */
-fetchBatchNew = async function fetchBatchNew(_types, _symbols, _queryParameters) {
+fetchBatchNew = async function fetchBatchNew(types, symbols, queryParameters) {
   // https://sandbox.iexapis.com/stable/stock/market/batch?token=Tpk_d8f3a048a7a94866ad08c8b62042b16b&calendar=true&symbols=MSFT%2CAAPL&types=dividends&range=1y
-  const types = _throwIfUndefinedOrNull(_types, `_types`);
-  const symbols = _throwIfUndefinedOrNull(_symbols, `_symbols`);
-  const queryParameters = typeof _queryParameters === 'undefined' ? {} : _queryParameters;
+  _throwIfUndefinedOrNull(types, `types`);
+  _throwIfUndefinedOrNull(symbols, `symbols`);
+
+  if (queryParameters == null) {
+    queryParameters = {};
+  }
+
   const api = `/stock/market/batch`;
   const typesParameter = types.join(",");
   const maxSymbolsAmount = 100;
@@ -815,12 +822,12 @@ fetchBatchNew = async function fetchBatchNew(_types, _symbols, _queryParameters)
 /**
  * Requests data from IEX cloud/sandbox depending on an environment. 
  * It switches between available tokens to evenly distribute the load.
- * @param {string} _api API to call.
+ * @param {string} api API to call.
  * @param {Object} queryParameters Query parameters.
  * @returns Parsed EJSON object.
  */
-async function _fetch(_api, queryParameters) {
-  const api = _throwIfUndefinedOrNull(_api, `_api`);
+async function _fetch(api, queryParameters) {
+  _throwIfUndefinedOrNull(api, `api`);
   var query = "";
   if (queryParameters) {
     const querystring = require('querystring');
@@ -883,11 +890,11 @@ const defaultRange = '6y';
 
 /**
  * Fetches companies in batch for uniqueIDs.
- * @param {[string]} arg1 Unique IDs to fetch.
+ * @param {[string]} symbolModels Unique IDs to fetch.
  * @returns {[Company]} Array of requested objects.
  */
- fetchCompanies = async function fetchCompanies(arg1) {
-  const uniqueIDs = _throwIfUndefinedOrNull(arg1, `fetchCompanies arg1`);
+ fetchCompanies = async function fetchCompanies(symbolModels) {
+  const uniqueIDs = _throwIfUndefinedOrNull(symbolModels, `fetchCompanies arg1`);
   const [symbols, symbolsDictionary] = getSymbols(uniqueIDs);
 
   return await fetchBatch(`/company`, symbols)
@@ -900,15 +907,19 @@ const defaultRange = '6y';
 
 /**
  * Fetches dividends in batch for uniqueIDs.
- * @param {[string]} arg1 Unique IDs to fetch.
- * @param {boolean} arg2 Flag to fetch future or past dividends.
- * @param {string} arg3 Range to fetch.
+ * @param {[string]} uniqueIDs Unique IDs to fetch.
+ * @param {boolean} isFuture Flag to fetch future or past dividends.
+ * @param {string} range Range to fetch.
  * @returns {[Dividend]} Array of requested objects.
  */
-fetchDividends = async function fetchDividends(arg1, arg2, arg3) {
-  const uniqueIDs = _throwIfUndefinedOrNull(arg1, `fetchDividends arg1`);
-  const isFuture = _throwIfUndefinedOrNull(arg2, `fetchDividends arg2`);
-  const range = (typeof arg3 === 'undefined') ? defaultRange : arg3;
+fetchDividends = async function fetchDividends(uniqueIDs, isFuture, range) {
+  _throwIfUndefinedOrNull(uniqueIDs, `fetchDividends uniqueIDs`);
+  _throwIfUndefinedOrNull(isFuture, `fetchDividends isFuture`);
+
+  if (range == null) {
+    range = defaultRange;
+  }
+
   const [symbols, symbolsDictionary] = getSymbols(uniqueIDs);
 
   const parameters = { range: range };
@@ -934,11 +945,11 @@ fetchDividends = async function fetchDividends(arg1, arg2, arg3) {
 
 /**
  * Fetches previous day prices in batch for uniqueIDs.
- * @param {[string]} arg1 Unique IDs to fetch.
+ * @param {[string]} uniqueIDs Unique IDs to fetch.
  * @returns {[PreviousDayPrice]} Array of requested objects.
  */
- fetchPreviousDayPrices = async function fetchPreviousDayPrices(arg1) {
-  const uniqueIDs = _throwIfUndefinedOrNull(arg1, `fetchPreviousDayPrices arg1`);
+ fetchPreviousDayPrices = async function fetchPreviousDayPrices(uniqueIDs) {
+  _throwIfUndefinedOrNull(uniqueIDs, `fetchPreviousDayPrices uniqueIDs`);
   const [symbols, symbolsDictionary] = getSymbols(uniqueIDs);
 
   // https://sandbox.iexapis.com/stable/stock/market/batch?token=Tpk_581685f711114d9f9ab06d77506fdd49&types=previous&symbols=AAPL,AAP
@@ -959,13 +970,17 @@ fetchDividends = async function fetchDividends(arg1, arg2, arg3) {
 
 /**
  * Fetches historical prices in batch for uniqueIDs.
- * @param {[string]} arg1 Unique IDs to fetch.
- * @param {string} arg2 Range to fetch.
+ * @param {[string]} uniqueIDs Unique IDs to fetch.
+ * @param {string} range Range to fetch.
  * @returns {[HistoricalPrice]} Array of requested objects.
  */
- fetchHistoricalPrices = async function fetchHistoricalPrices(arg1, arg2) {
-  const uniqueIDs = _throwIfUndefinedOrNull(arg1, `fetchHistoricalPrices arg1`);
-  const range = (typeof arg2 === 'undefined') ? defaultRange : arg2;
+ fetchHistoricalPrices = async function fetchHistoricalPrices(uniqueIDs, range) {
+   _throwIfUndefinedOrNull(uniqueIDs, `fetchHistoricalPrices uniqueIDs`);
+
+  if (range == null) {
+    range = defaultRange;
+  }
+
   const [symbols, symbolsDictionary] = getSymbols(uniqueIDs);
   const parameters = { 
     range: range,
@@ -991,11 +1006,11 @@ fetchDividends = async function fetchDividends(arg1, arg2, arg3) {
 
 /**
  * Fetches quotes in batch for uniqueIDs.
- * @param {[string]} arg1 Unique IDs to fetch.
+ * @param {[string]} uniqueIDs Unique IDs to fetch.
  * @returns {[Quote]} Array of requested objects.
  */
- fetchQuotes = async function fetchQuotes(arg1) {
-  const uniqueIDs = _throwIfUndefinedOrNull(arg1, `fetchQuotes art1`);
+ fetchQuotes = async function fetchQuotes(uniqueIDs) {
+  _throwIfUndefinedOrNull(uniqueIDs, `fetchQuotes uniqueIDs`);
   const [symbols, symbolsDictionary] = getSymbols(uniqueIDs);
 
   // https://sandbox.iexapis.com/stable/stock/market/batch?token=Tpk_581685f711114d9f9ab06d77506fdd49&types=quote&symbols=AAPL,AAP
@@ -1015,13 +1030,17 @@ fetchDividends = async function fetchDividends(arg1, arg2, arg3) {
 
 /**
  * Fetches splits in batch for uniqueIDs.
- * @param {[string]} arg1 Unique IDs to fetch.
- * @param {string} arg2 Range to fetch.
+ * @param {[string]} uniqueIDs Unique IDs to fetch.
+ * @param {string} range Range to fetch.
  * @returns {[Split]} Array of requested objects.
  */
- fetchSplits = async function fetchSplits(arg1, arg2) {
-  const uniqueIDs = _throwIfUndefinedOrNull(arg1, `fetchSplits arg1`);
-  const range = (typeof arg2 === 'undefined') ? defaultRange : arg2;
+ fetchSplits = async function fetchSplits(uniqueIDs, range) {
+  _throwIfUndefinedOrNull(uniqueIDs, `fetchSplits uniqueIDs`);
+
+  if (range == null) {
+    range = defaultRange;
+  }
+  
   const [symbols, symbolsDictionary] = getSymbols(uniqueIDs);
   const parameters = { range: range };
 
@@ -1037,11 +1056,11 @@ fetchDividends = async function fetchDividends(arg1, arg2, arg3) {
 
 /**
  * Gets symbols and symbols dictionary from unique IDs.
- * @param {["AAPL:NAS"]} arg1 Unique IDs.
+ * @param {["AAPL:NAS"]} uniqueIDs Unique IDs.
  * @returns {[["AAPL"], {"AAPL":"AAPL:NAS"}]} Returns array with symbols as the first element and symbols dictionary as the second element.
  */
- function getSymbols(arg1) {
-  const uniqueIDs = _throwIfUndefinedOrNull(arg1, `getSymbols arg1`);
+ function getSymbols(uniqueIDs) {
+  _throwIfUndefinedOrNull(uniqueIDs, `getSymbols uniqueIDs`);
   const symbols = [];
   const symbolsDictionary = {};
   for (const uniqueID of uniqueIDs) {
@@ -1130,24 +1149,25 @@ function getCurrencySymbol(currency) {
 
 /**
  * Fixes company object so it can be added to MongoDB.
- * @param {Object} arg1 Company object.
- * @param {Object} arg2 Unique ID, e.g. 'AAPL:NAS'.
+ * @param {Object} company Company object.
+ * @param {Object} uniqueID Unique ID, e.g. 'AAPL:NAS'.
  * @returns {Object|null} Returns fixed object or `null` if fix wasn't possible.
  */
-fixCompany = function fixCompany(arg1, arg2) {
+fixCompany = function fixCompany(company, arg2) {
   try {
-    const _company = _throwIfUndefinedOrNull(arg1, `fixCompany arg1`);
-    const uniqueID = _throwIfUndefinedOrNull(arg2, `fixCompany arg2`);
+    _throwIfUndefinedOrNull(company, `fixCompany company`);
+    _throwIfUndefinedOrNull(uniqueID, `fixCompany uniqueID`);
   
     console.logVerbose(`Company data fix start`);
-    const company = {};
-    company._id = uniqueID;
-    company._p = "P";
-    company.n = _company.companyName.trim();
-    company.s = _company.industry;
-    company.t = _company.issueType;
+    const fixedCompany = {};
+    fixedCompany._id = uniqueID;
+    fixedCompany._p = "2";
+    fixedCompany._ = "2";
+    fixedCompany.n = company.companyName.trim();
+    fixedCompany.s = company.industry;
+    fixedCompany.t = company.issueType;
   
-    return company;
+    return fixedCompany;
   } catch(error) {
     return null;
   }
@@ -1155,22 +1175,22 @@ fixCompany = function fixCompany(arg1, arg2) {
 
 /**
  * Fixes previous day price object so it can be added to MongoDB.
- * @param {Object} arg1 Previous day price object.
- * @param {Object} arg2 Unique ID, e.g. 'AAPL:NAS'.
+ * @param {Object} previousDayPrice Previous day price object.
+ * @param {Object} uniqueID Unique ID, e.g. 'AAPL:NAS'.
  * @returns {Object|null} Returns fixed object or `null` if fix wasn't possible.
  */
-fixPreviousDayPrice = function fixPreviousDayPrice(arg1, arg2) {
+fixPreviousDayPrice = function fixPreviousDayPrice(previousDayPrice, uniqueID) {
   try {
-    const _previousDayPrice = _throwIfUndefinedOrNull(arg1, `fixPreviousDayPrice arg1`);
-    const uniqueID = _throwIfUndefinedOrNull(arg2, `fixPreviousDayPrice arg2`);
+    _throwIfUndefinedOrNull(previousDayPrice, `fixPreviousDayPrice previousDayPrice`);
+    _throwIfUndefinedOrNull(uniqueID, `fixPreviousDayPrice uniqueID`);
   
     console.logVerbose(`Previous day price data fix start`);
-    const previousDayPrice = {};
-    previousDayPrice._id = uniqueID;
-    previousDayPrice._p = "P";
-    previousDayPrice.c = BSON.Double(_previousDayPrice.close);
+    const fixedPreviousDayPrice = {};
+    fixedPreviousDayPrice._id = uniqueID;
+    fixedPreviousDayPrice._p = "P";
+    fixedPreviousDayPrice.c = BSON.Double(previousDayPrice.close);
   
-    return previousDayPrice;
+    return fixedPreviousDayPrice;
 
   } catch(error) {
     return null;
@@ -1179,34 +1199,34 @@ fixPreviousDayPrice = function fixPreviousDayPrice(arg1, arg2) {
 
 /**
  * Fixes quote object so it can be added to MongoDB.
- * @param {Object} arg1 Quote object.
- * @param {Object} arg2 Unique ID, e.g. 'AAPL:NAS'.
+ * @param {Object} quote Quote object.
+ * @param {Object} uniqueID Unique ID, e.g. 'AAPL:NAS'.
  * @returns {Object|null} Returns fixed object or `null` if fix wasn't possible.
  */
-fixQuote = function fixQuote(arg1, arg2) {
+fixQuote = function fixQuote(quote, uniqueID) {
   try {
-    const _quote = _throwIfUndefinedOrNull(arg1, `fixQuote arg1`);
-    const uniqueID = _throwIfUndefinedOrNull(arg2, `fixQuote arg2`);
+    _throwIfUndefinedOrNull(quote, `quote arg1`);
+    _throwIfUndefinedOrNull(uniqueID, `fixQuote uniqueID`);
   
     console.logVerbose(`Previous day price data fix start`);
-    const quote = {};
-    quote._id = uniqueID;
-    quote._p = "P";
-    quote.l = _quote.latestPrice;
-    quote.p = BSON.Double(_quote.peRatio);
+    const fixedQuote = {};
+    fixedQuote._id = uniqueID;
+    fixedQuote._p = "P";
+    fixedQuote.l = quote.latestPrice;
+    fixedQuote.p = BSON.Double(quote.peRatio);
 
-    if (_quote.latestUpdate) {
-      const date = new Date(_quote.latestUpdate);
+    if (quote.latestUpdate) {
+      const date = new Date(quote.latestUpdate);
       if (date && !isNaN(date)) {
-        quote.d = date;
+        fixedQuote.d = date;
       } else {
-        quote.d = new Date();
+        fixedQuote.d = new Date();
       }
     } else {
-      quote.d = new Date();
+      fixedQuote.d = new Date();
     }
 
-    return quote;
+    return fixedQuote;
 
   } catch(error) {
     return null;
@@ -1215,14 +1235,14 @@ fixQuote = function fixQuote(arg1, arg2) {
 
 /**
  * Fixes dividends object so it can be added to MongoDB.
- * @param {Object} arg1 Dividends object.
- * @param {Object} arg2 Unique ID, e.g. 'AAPL:NAS'.
+ * @param {Object} dividends Dividends object.
+ * @param {Object} uniqueID Unique ID, e.g. 'AAPL:NAS'.
  * @returns {[Object]} Returns fixed objects or an empty array if fix wasn't possible.
  */
-function _fixDividends(arg1, arg2) {
+function _fixDividends(dividends, arg2) {
   try {
-    const dividends = _throwIfUndefinedOrNull(arg1, `fixDividends arg1`);
-    const uniqueID = _throwIfUndefinedOrNull(arg2, `fixDividends arg2`);
+    _throwIfUndefinedOrNull(dividends, `fixDividends dividends`);
+    _throwIfUndefinedOrNull(uniqueID, `fixDividends uniqueID`);
     if (!dividends.length) { 
       console.logVerbose(`Dividends are empty for ${uniqueID}. Nothing to fix.`);
       return []; 
@@ -1231,24 +1251,24 @@ function _fixDividends(arg1, arg2) {
     console.logVerbose(`Fixing dividends for ${uniqueID}`);
     return dividends
       .filterNull()
-      .map(_dividend => {
-        const dividend = {};
-        dividend._p = "P";
-        dividend._i = uniqueID;
-        dividend.a = BSON.Double(_dividend.amount);
-        dividend.d = getOpenDate(_dividend.declaredDate);
-        dividend.e = getOpenDate(_dividend.exDate);
-        dividend.p = getOpenDate(_dividend.paymentDate);
+      .map(dividend => {
+        const fixedDividend = {};
+        fixedDividend._p = "P";
+        fixedDividend._i = uniqueID;
+        fixedDividend.a = BSON.Double(dividend.amount);
+        fixedDividend.d = getOpenDate(dividend.declaredDate);
+        fixedDividend.e = getOpenDate(dividend.exDate);
+        fixedDividend.p = getOpenDate(dividend.paymentDate);
 
-        if (typeof _dividend.frequency !== 'undefined') {
-          dividend.f = _dividend.frequency.charAt(0);
+        if (typeof dividend.frequency !== 'undefined') {
+          fixedDividend.f = dividend.frequency.charAt(0);
         }
     
-        if (_dividend.currency !== "USD") {
-          dividend.c = _dividend.currency;
+        if (dividend.currency !== "USD") {
+          fixedDividend.c = dividend.currency;
         }
     
-        return dividend;
+        return fixedDividend;
       });
 
   } catch(error) {
@@ -1260,14 +1280,14 @@ fixDividends = _fixDividends;
 
 /**
  * Fixes splits object so it can be added to MongoDB.
- * @param {Object} arg1 Splits object.
- * @param {Object} arg2 Unique ID, e.g. 'AAPL:NAS'.
+ * @param {Object} splits Splits object.
+ * @param {Object} uniqueID Unique ID, e.g. 'AAPL:NAS'.
  * @returns {[Object]} Returns fixed objects or an empty array if fix wasn't possible.
  */
-fixSplits = function fixSplits(arg1, arg2) {
+fixSplits = function fixSplits(splits, uniqueID) {
   try {
-    const splits = _throwIfUndefinedOrNull(arg1, `fixSplits arg1`);
-    const uniqueID = _throwIfUndefinedOrNull(arg2, `fixSplits arg2`);
+    _throwIfUndefinedOrNull(arg1, `fixSplits splits`);
+    _throwIfUndefinedOrNull(uniqueID, `fixSplits uniqueID`);
     if (!splits.length) { 
       console.logVerbose(`Splits are empty for ${uniqueID}. Nothing to fix.`);
       return []; 
@@ -1276,14 +1296,14 @@ fixSplits = function fixSplits(arg1, arg2) {
     console.logVerbose(`Fixing splits for ${uniqueID}`);
     return splits
       .filterNull()
-      .map(_split => {
-        const split = {};
-        split._p = "P";
-        split._i = uniqueID;
-        split.e = getOpenDate(_split.exDate);
-        split.r = BSON.Double(_split.ratio);
+      .map(split => {
+        const fixedSplit = {};
+        fixedSplit._p = "P";
+        fixedSplit._i = uniqueID;
+        fixedSplit.e = getOpenDate(split.exDate);
+        fixedSplit.r = BSON.Double(split.ratio);
 
-        return split;
+        return fixedSplit;
       });
 
   } catch (error) {
@@ -1293,14 +1313,14 @@ fixSplits = function fixSplits(arg1, arg2) {
 
 /**
  * Fixes historical prices object so it can be added to MongoDB.
- * @param {Object} arg1 Historical prices object.
- * @param {Object} arg2 Unique ID, e.g. 'AAPL:NAS'.
+ * @param {Object} historicalPrices Historical prices object.
+ * @param {Object} uniqueID Unique ID, e.g. 'AAPL:NAS'.
  * @returns {[Object]} Returns fixed objects or an empty array if fix wasn't possible.
  */
-fixHistoricalPrices = function fixHistoricalPrices(arg1, arg2) {
+fixHistoricalPrices = function fixHistoricalPrices(historicalPrices, uniqueID) {
   try {
-    const historicalPrices = _throwIfUndefinedOrNull(arg1, `fixHistoricalPrices arg1`);
-    const uniqueID = _throwIfUndefinedOrNull(arg2, `fixHistoricalPrices arg2`);
+    _throwIfUndefinedOrNull(historicalPrices, `fixHistoricalPrices historicalPrices`);
+    _throwIfUndefinedOrNull(uniqueID, `fixHistoricalPrices uniqueID`);
     if (!historicalPrices.length) { 
       console.logVerbose(`Historical prices are empty for ${uniqueID}. Nothing to fix.`);
       return []; 
@@ -1309,14 +1329,14 @@ fixHistoricalPrices = function fixHistoricalPrices(arg1, arg2) {
     console.logVerbose(`Fixing historical prices for ${uniqueID}`);
     return historicalPrices
       .filterNull()
-      .map(_historicalPrice => {
-        const historicalPrice = {};
-        historicalPrice._p = "P";
-        historicalPrice._i = uniqueID;
-        historicalPrice.c = BSON.Double(_historicalPrice.close);
-        historicalPrice.d = getCloseDate(_historicalPrice.date);
+      .map(historicalPrice => {
+        const fixedHistoricalPrice = {};
+        fixedHistoricalPrice._p = "P";
+        fixedHistoricalPrice._i = uniqueID;
+        fixedHistoricalPrice.c = BSON.Double(historicalPrice.close);
+        fixedHistoricalPrice.d = getCloseDate(historicalPrice.date);
 
-        return historicalPrice;
+        return fixedHistoricalPrice;
       });
 
   } catch (error) {
