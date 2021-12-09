@@ -30,9 +30,10 @@
   for (const previousDayPrice of previousDayPrices) {
     console.logVerbose(`Updating previous day price for '${previousDayPrice._id}' with '${previousDayPrice.c}'`);
     previousDayPricesBulk.find({ _id: previousDayPrice._id })
+      .upsert()
       .updateOne({ $set: { c: previousDayPrice.c } });
   }
-  previousDayPricesBulk.execute();
+  previousDayPricesBulk.safeExecute();
 
   // Insert historical price record if more than 29 days passed from the previous one till yesterday
   const yesterdayCloseDate = getCloseDate(Date.yesterday());
