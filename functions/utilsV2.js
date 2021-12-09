@@ -963,27 +963,27 @@ const defaultRange = '6y';
   return await fetchBatch(`/company`, symbolNames)
     .then(companies => 
       companies.compactMap(company => 
-        fixCompany(company, symbolNamesDictionary[company.symbol])
+        _fixCompany(company, symbolNamesDictionary[company.symbol])
       )
     );
 };
 
 /**
  * Fetches dividends in batch for uniqueIDs.
- * @param {[string]} uniqueIDs Unique IDs to fetch.
+ * @param {[ShortSymbol]} shortSymbol Short symbol models for which to fetch.
  * @param {boolean} isFuture Flag to fetch future or past dividends.
  * @param {string} range Range to fetch.
  * @returns {[Dividend]} Array of requested objects.
  */
-fetchDividends = async function fetchDividends(uniqueIDs, isFuture, range) {
-  _throwIfUndefinedOrNull(uniqueIDs, `fetchDividends uniqueIDs`);
+fetchDividends = async function fetchDividends(shortSymbol, isFuture, range) {
+  _throwIfUndefinedOrNull(shortSymbol, `fetchDividends shortSymbol`);
   _throwIfUndefinedOrNull(isFuture, `fetchDividends isFuture`);
 
   if (range == null) {
     range = defaultRange;
   }
 
-  const [symbols, symbolsDictionary] = getSymbolNamesAndIDsDictionary(uniqueIDs);
+  const [symbolNames, symbolNamesDictionary] = getSymbolNamesAndIDsDictionary(shortSymbol);
 
   const parameters = { range: range };
   if (isFuture) {
@@ -991,13 +991,13 @@ fetchDividends = async function fetchDividends(uniqueIDs, isFuture, range) {
   }
 
   // https://sandbox.iexapis.com/stable/stock/market/batch?token=Tpk_581685f711114d9f9ab06d77506fdd49&types=dividends&symbols=AAPL,AAP&range=6y
-  return await fetchBatchNew(['dividends'], symbols, parameters)
+  return await fetchBatchNew(['dividends'], symbolNames, parameters)
     .then(symbolsTypesDividends =>
-      symbols
-        .map(symbol => {
-          const symbolsTypesDividend = symbolsTypesDividends[symbol];
-          if (typeof symbolsTypesDividend != null && symbolsTypesDividend.dividends) {
-            return _fixDividends(symbolsTypesDividend.dividends, symbolsDictionary[symbol]);
+      symbolNames
+        .map(symbolName => {
+          const symbolsTypesDividend = symbolsTypesDividends[symbolName];
+          if (symbolsTypesDividend != null && symbolsTypesDividend.dividends) {
+            return _fixDividends(symbolsTypesDividend.dividends, symbolNamesDictionary[symbolName]);
           } else {
             return [];
           }
@@ -1213,29 +1213,78 @@ function getCurrencySymbol(currency) {
 
 /**
  * Fixes company object so it can be added to MongoDB.
- * @param {Object} company Company object.
- * @param {Object} symbolID Symbol object ID.
- * @returns {Object|null} Returns fixed object or `null` if fix wasn't possible.
+ * @param {IEXCompany} iexCompany IEX Company object.
+ * @param {ObjectId} symbolID Symbol object ID.
+ * @returns {Company|null} Returns fixed object or `null` if fix wasn't possible.
  */
-fixCompany = function fixCompany(company, symbolID) {
+function _fixCompany(iexCompany, symbolID) {
   try {
-    _throwIfUndefinedOrNull(company, `fixCompany company`);
+    _throwIfUndefinedOrNull(iexCompany, `fixCompany company`);
     _throwIfUndefinedOrNull(symbolID, `fixCompany symbolID`);
   
     console.logVerbose(`Company data fix start`);
-    const fixedCompany = {};
-    fixedCompany._id = symbolID;
-    fixedCompany._p = "2";
-    fixedCompany._ = "2";
-    fixedCompany.n = company.companyName.trim();
-    fixedCompany.s = company.industry;
-    fixedCompany.t = company.issueType;
+    const company = {};
+    company._id = symbolID;
+    company._p = "2";
+    company._ = "2";
+    company.n = iexCompany.companyName.trim();
+    company.s = iexCompany.industry;
+    company.t = iexCompany.issueType;
   
-    return fixedCompany;
+    return company;
   } catch(error) {
     return null;
   }
 };
+
+fixCompany = _fixCompany;
+
+/**
+ * Fixes dividends object so it can be added to MongoDB.
+ * @param {[IEXDividend]} iexDividends IEX dividends array.
+ * @param {ObjectId} symbolID Symbol object ID.
+ * @returns {[Dividend]} Returns fixed objects or an empty array if fix wasn't possible.
+ */
+function _fixDividends(iexDividends, symbolID) {
+  try {
+    _throwIfUndefinedOrNull(iexDividends, `fixDividends iexDividends`);
+    _throwIfUndefinedOrNull(symbolID, `fixDividends uniqueID`);
+    if (!iexDividends.length) { 
+      console.logVerbose(`IEX dividends are empty for ${symbolID}. Nothing to fix.`);
+      return []; 
+    }
+  
+    console.logVerbose(`Fixing dividends for ${symbolID}`);
+    return iexDividends
+      .filterNull()
+      .map(iexDividend => {
+        const dividend = {};
+        dividend._p = "P";
+        dividend._i = symbolID;
+        dividend.a = BSON.Double(iexDividend.amount);
+        dividend.d = getOpenDate(iexDividend.declaredDate);
+        dividend.e = getOpenDate(iexDividend.exDate);
+        dividend.p = getOpenDate(iexDividend.paymentDate);
+
+        // We add only the first letter of a frequency
+        if (iexDividend.frequency != null) {
+          dividend.f = iexDividend.frequency.charAt(0);
+        }
+    
+        // We do not add `USD` frequencies to the database.
+        if (iexDividend.currency != null && iexDividend.currency !== "USD") {
+          dividend.c = iexDividend.currency;
+        }
+    
+        return dividend;
+      });
+
+  } catch(error) {
+    return [];
+  }
+}
+
+fixDividends = _fixDividends;
 
 /**
  * Fixes previous day price object so it can be added to MongoDB.
@@ -1296,51 +1345,6 @@ fixQuote = function fixQuote(quote, uniqueID) {
     return null;
   }
 };
-
-/**
- * Fixes dividends object so it can be added to MongoDB.
- * @param {Object} dividends Dividends object.
- * @param {Object} uniqueID Unique ID, e.g. 'AAPL:NAS'.
- * @returns {[Object]} Returns fixed objects or an empty array if fix wasn't possible.
- */
-function _fixDividends(dividends, arg2) {
-  try {
-    _throwIfUndefinedOrNull(dividends, `fixDividends dividends`);
-    _throwIfUndefinedOrNull(uniqueID, `fixDividends uniqueID`);
-    if (!dividends.length) { 
-      console.logVerbose(`Dividends are empty for ${uniqueID}. Nothing to fix.`);
-      return []; 
-    }
-  
-    console.logVerbose(`Fixing dividends for ${uniqueID}`);
-    return dividends
-      .filterNull()
-      .map(dividend => {
-        const fixedDividend = {};
-        fixedDividend._p = "P";
-        fixedDividend._i = uniqueID;
-        fixedDividend.a = BSON.Double(dividend.amount);
-        fixedDividend.d = getOpenDate(dividend.declaredDate);
-        fixedDividend.e = getOpenDate(dividend.exDate);
-        fixedDividend.p = getOpenDate(dividend.paymentDate);
-
-        if (typeof dividend.frequency !== 'undefined') {
-          fixedDividend.f = dividend.frequency.charAt(0);
-        }
-    
-        if (dividend.currency !== "USD") {
-          fixedDividend.c = dividend.currency;
-        }
-    
-        return fixedDividend;
-      });
-
-  } catch(error) {
-    return [];
-  }
-}
-
-fixDividends = _fixDividends;
 
 /**
  * Fixes splits object so it can be added to MongoDB.
