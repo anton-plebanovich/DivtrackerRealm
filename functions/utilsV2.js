@@ -724,9 +724,9 @@ async function _getInUseShortSymbols() {
   const symbols = await symbolsCollection
     .find(
       { _id: { $in: uniqueIDs } }, 
-      { _id: 1, s: 1 }
+      { _id: 1, t: 1 }
     )
-    .sort({ s: 1 })
+    .sort({ t: 1 })
     .toArray();
 
   console.log(`Symbols (${symbols.length})`);
