@@ -52,13 +52,13 @@
     .aggregate(upToDateSymbolIDsAggregation)
     .toArray()
     // Extract IDs from [{ _id: ObjectId }]
-    .then(x => x.map(x => x._id));
+    .then(x => x.map(x => x._id.toString()));
 
   console.log(`Up to date unique IDs (${upToDateSymbolIDs.length}) for '${monthAgoCloseDate}' date`);
   console.logData(`Up to date unique IDs (${upToDateSymbolIDs.length}) for '${monthAgoCloseDate}' date`, upToDateSymbolIDs);
 
   const historicalPrices = previousDayPrices
-    .filter(x => !upToDateSymbolIDs.includes(x._id))
+    .filter(x => !upToDateSymbolIDs.includes(x.s.toString()))
     .map(previousDayPrice => {
       const historicalPrice = {};
       historicalPrice._p = previousDayPrice._p;
