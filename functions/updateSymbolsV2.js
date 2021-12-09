@@ -143,9 +143,9 @@ async function updateDivtrackerSymbols() {
     symbol.s = iexSymbol.symbol;
     symbol.n = iexSymbol.name;
 
-    // Disable flag should be only set if it's `true`
-    if (iexSymbol.d) {
-      symbol.d = iexSymbol.d;
+    // Enable flag should be only set if it's `false`
+    if (!iexSymbol.isEnabled) {
+      symbol.e = false;
     }
 
     return symbol;

@@ -63,6 +63,10 @@
         "private": true
     },
     {
+        "name": "updateCompaniesV2",
+        "private": true
+    },
+    {
         "name": "updateDividends",
         "private": true
     },

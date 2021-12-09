@@ -1,0 +1,16 @@
+{
+    "id": "6185ffbd6db886ed8f037b51",
+    "name": "updateCompaniesMonthlyV2",
+    "type": "SCHEDULED",
+    "config": {
+        "schedule": "1 5 1 * *"
+    },
+    "disabled": false,
+    "event_processors": {
+        "FUNCTION": {
+            "config": {
+                "function_name": "updateCompaniesV2"
+            }
+        }
+    }
+}

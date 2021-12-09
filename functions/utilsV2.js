@@ -129,9 +129,9 @@ Object.prototype.updateFrom = function(object) {
  */
 Array.prototype.distinct = function(arg) {
   if (typeof arg === 'string' || arg instanceof String) {
-    comparer = (a, b) => a[arg] === b[arg];
+    comparer = (a, b) => a[arg].isEqual(b[arg]);
   } else if (!arg) {
-    comparer = (a, b) => a === b;
+    comparer = (a, b) => a.isEqual(b);
   } else {
     comparer = arg;
   }
@@ -308,6 +308,20 @@ Number.prototype.isEqual = function(number) {
 String.prototype.isEqual = function(string) {
   return this === string;
 };
+
+///////////////////////////////////////////////////////////////////////////////// CLASSES
+
+class _LazyString {
+  constructor(closure) {
+    this.closure = closure;
+  }
+
+  toString() {
+    return this.closure().toString();
+  }
+}
+
+LazyString = _LazyString;
 
 ///////////////////////////////////////////////////////////////////////////////// ERRORS PROCESSING
 
@@ -509,25 +523,58 @@ checkExecutionTimeout = function checkExecutionTimeout() {
 };
 
 /**
- * Throws error with optional `message` is `object` is `undefined` or `null`.
+ * Throws error with optional `message` if `object` is not an `Array`.
+ * @param {object} object Object to check.
+ * @param {string} message Optional error message to replace default one.
+ * @param {Error} ErrorType Optional error type. `SystemError` by default.
+ * @returns {object} Passed object if it's an `Array`.
+ */
+function _throwIfEmptyArray(object, message, ErrorType) {
+  _throwIfNotArray(object, message, ErrorType)
+
+  if (object.length) { return object; }
+  if (ErrorType == null) { ErrorType = _SystemError; }
+  if (message == null) { message = ""; }
+
+  throw new ErrorType(`Array is empty. ${message}`);
+}
+
+throwIfEmptyArray = _throwIfEmptyArray;
+
+/**
+ * Throws error with optional `message` if `object` is not an `Array`.
+ * @param {object} object Object to check.
+ * @param {string} message Optional error message to replace default one.
+ * @param {Error} ErrorType Optional error type. `SystemError` by default.
+ * @returns {object} Passed object if it's an `Array`.
+ */
+function _throwIfNotArray(object, message, ErrorType) {
+  _throwIfUndefinedOrNull(object, message, ErrorType)
+
+  const type = Object.prototype.toString.call(object);
+  if (type === '[object Array]') { return object; }
+  if (ErrorType == null) { ErrorType = _SystemError; }
+  if (message == null) { message = ""; }
+  
+  throw new ErrorType(`Argument should be of the Array type. Instead, received '${type}'. ${message}`);
+}
+
+throwIfNotArray = _throwIfNotArray;
+
+/**
+ * Throws error with optional `message` if `object` is `undefined` or `null`.
  * @param {object} object Object to check.
  * @param {string} message Optional additional error message.
  * @returns {object} Passed object if it's defined and not `null`.
  */
 function _throwIfUndefinedOrNull(object, message) {
   if (typeof object === 'undefined') {
-    if (typeof message === 'undefined' && message.length) {
-      _logAndThrow(`Object undefiled: ${message}`);
-    } else {
-      _logAndThrow(`Object undefiled`);
-    }
+    if (message == null) { message = ""; }
+    _logAndThrow(`Argument is undefined. ${message}`);
     
   } else if (object === null) {
-    if (typeof message !== 'undefined' && message.length) {
-      _logAndThrow(`Object null: ${message}`);
-    } else {
-      _logAndThrow(`Object null`);
-    }
+    if (message == null) { message = ""; }
+    _logAndThrow(`Argument is null. ${message}`);
     
   } else {
     return object;
@@ -538,13 +585,13 @@ throwIfUndefinedOrNull = _throwIfUndefinedOrNull;
 
 getValueAndQuitIfUndefined = function _getValueAndQuitIfUndefined(object, key) {
   if (!object) {
-    _logAndThrow(`Object undefiled`);
+    _logAndThrow(`Object undefined`);
     
   } else if (!key) {
     return object;
 
   } else if (!object[key]) {
-    _logAndThrow(`Object's property undefiled. Key: ${key}. Object: ${object}.`);
+    _logAndThrow(`Object's property undefined. Key: ${key}. Object: ${object}.`);
     
   } else {
     return object[key];
@@ -619,11 +666,10 @@ getOpenDate = function getOpenDate(openDateValue) {
 // getOpenDate("2020-03-27");
 
 /** 
- * Computes and returns sorted unique IDs from companies and user transactions.
- * @note Using 'unique' instead of 'distinct' here because values are actually _unique_.
- * @returns {Promise<["AAPL:NAS"]>} Array of unique IDs.
+ * Computes and returns sorted in use symbols from companies and user transactions.
+ * @returns {Promise<[Symbol]>} Array of unique IDs.
 */
-getUniqueIDs = async function getUniqueIDs() {
+async function _getInUseSymbols() {
   // We combine transactions and companies distinct IDs. 
   // Idealy, we should be checking all tables but we assume that only two will be enough.
   // All symbols have company record so company DB contains all ever fetched symbols.
@@ -631,22 +677,24 @@ getUniqueIDs = async function getUniqueIDs() {
   // So by combining we have all current + all future symbols. Idealy.
   const companiesCollection = db.collection("companies");
   const symbolsCollection = db.collection("symbols");
-  const [companiesUniqueIDs, uniqueTransactionIDs] = await Promise.all([
+  const [companyIDs, distinctTransactionSymbolIDs] = await Promise.all([
     companiesCollection.distinct("_id", {}),
-    getUniqueTransactionIDs()
-  ]); 
+    _getDistinctTransactionSymbolIDs()
+  ]);
 
-  console.log(`Unique companies IDs (${companiesUniqueIDs.length})`);
-  console.logData(`Unique companies IDs (${companiesUniqueIDs.length})`, companiesUniqueIDs);
+  console.log(`Unique companies IDs (${companyIDs.length})`);
+  console.logData(`Unique companies IDs (${companyIDs.length})`, companyIDs);
 
   // Compute unique IDs using both sources
-  let uniqueIDs = companiesUniqueIDs
-    .concat(uniqueTransactionIDs)
+  let uniqueIDs = companyIDs
+    .concat(distinctTransactionSymbolIDs)
     .distinct();
 
   // Filter non-existing
   const allSymbols = await symbolsCollection.distinct("_id", { _id: { $in: uniqueIDs } });
-  uniqueIDs = uniqueIDs.filter(id => allSymbols.includes(id));
+  uniqueIDs = uniqueIDs
+    .filter(id => allSymbols.includes(id))
+    .sort();
 
   console.log(`Unique IDs (${uniqueIDs.length})`);
   console.logData(`Unique IDs (${uniqueIDs.length})`, uniqueIDs);
@@ -654,57 +702,38 @@ getUniqueIDs = async function getUniqueIDs() {
   return uniqueIDs;
 };
 
+getInUseSymbols = _getInUseSymbols;
+
 /** 
  * @returns {Promise<["AAPL:NAS"]>} Array of unique transaction IDs, e.g. ["AAPL:NAS"]
 */
-async function _getUniqueTransactionIDs() {
+async function _getDistinctTransactionSymbolIDs() {
   // We project '_i' field first and then produce unique objects with only '_id' field
   const transactionsCollection = db.collection("transactions");
-  const transactionsAggregation = [{$project: {
-    _i: { $concat: [ "$s", ":", "$e" ] }
-  }}, {$group: {
-    _id: "$_i"
-  }}];
+  const distinctTransactionSymbolIDs = await transactionsCollection.distinct("s");
+  distinctTransactionSymbolIDs.sort();
 
-  const uniqueTransactionIDs = await transactionsCollection
-    .aggregate(transactionsAggregation)
-    .toArray()
-    // Extract IDs from [{ _id: "MSFT:NAS" }]
-    .then(x => x.map(x => x._id));
+  console.log(`Unique transaction IDs (${distinctTransactionSymbolIDs.length})`);
+  console.logData(`Unique transaction IDs (${distinctTransactionSymbolIDs.length})`, distinctTransactionSymbolIDs);
 
-  uniqueTransactionIDs.sort();
-
-  console.log(`Unique transaction IDs (${uniqueTransactionIDs.length})`);
-  console.logData(`Unique transaction IDs (${uniqueTransactionIDs.length})`, uniqueTransactionIDs);
-
-  return uniqueTransactionIDs;
+  return distinctTransactionSymbolIDs;
 }
 
-getUniqueTransactionIDs = _getUniqueTransactionIDs;
+getDistinctTransactionSymbolIDs = _getDistinctTransactionSymbolIDs;
 
 /** 
- * @returns {Promise<[["AAPL"], ["NAS"]]>} Array of unique symbols and exchanges IDs, e.g. [["AAPL"], ["NAS"]]
+ * @returns {Promise<[ObjectId]>} Array of existing enabled symbol IDs, e.g. [ObjectId("61b102c0048b84e9c13e454d")]
 */
-getUniqueSymbolsAndExchanges = async function getUniqueSymbolsAndExchanges() {
+async function _getSupportedSymbolIDs() {
   const symbolsCollection = db.collection("symbols");
-  const uniqueIDs = await symbolsCollection.distinct("_id");
-  const uniqueSymbols = [];
-  const uniqueExchanges = [];
-  uniqueIDs.forEach(uniqueID => {
-      const [validSymbol, validExchange] = uniqueID.split(':');
-      uniqueSymbols.push(validSymbol);
+  const supportedSymbolIDs = await symbolsCollection.distinct("_id", { isEnabled: true });
+  console.log(`Unique symbols (${supportedSymbolIDs.length})`);
+  console.logData(`Unique symbols (${supportedSymbolIDs.length})`, supportedSymbolIDs);
 
-      if (!uniqueExchanges.includes(validExchange)) {
-        uniqueExchanges.push(validExchange);
-      }
-    });
-
-  console.log(`Unique symbols (${uniqueSymbols.length})`);
-  console.logData(`Unique symbols (${uniqueSymbols.length})`, uniqueSymbols);
-  console.log(`Unique exchanges (${uniqueExchanges.length}): ${uniqueExchanges}`);
-
-  return [uniqueSymbols, uniqueExchanges];
+  return supportedSymbolIDs;
 };
+
+getSupportedSymbolIDs = _getSupportedSymbolIDs;
 
 ///////////////////////////////////////////////////////////////////////////////// fetch.js
 
@@ -889,18 +918,19 @@ fetch = _fetch;
 const defaultRange = '6y';
 
 /**
- * Fetches companies in batch for uniqueIDs.
- * @param {[string]} symbolModels Unique IDs to fetch.
+ * Fetches companies in batch for symbols.
+ * @param {[Symbol]} symbolModels Symbol models for which to fetch.
  * @returns {[Company]} Array of requested objects.
  */
  fetchCompanies = async function fetchCompanies(symbolModels) {
-  const uniqueIDs = _throwIfUndefinedOrNull(symbolModels, `fetchCompanies arg1`);
-  const [symbols, symbolsDictionary] = getSymbols(uniqueIDs);
+  _throwIfUndefinedOrNull(symbolModels, `fetchCompanies symbolModels`);
+  const [symbolNames, symbolNamesDictionary] = getSymbolNamesAndDictionary(symbolModels);
 
-  return await fetchBatch(`/company`, symbols)
+  // https://cloud.iexapis.com/stable/stock/VZIO/company?token=pk_9f1d7a2688f24e26bb24335710eae053
+  return await fetchBatch(`/company`, symbolNames)
     .then(companies => 
       companies.compactMap(company => 
-        fixCompany(company, symbolsDictionary[company.symbol])
+        fixCompany(company, symbolNamesDictionary[company.symbol])
       )
     );
 };
@@ -920,7 +950,7 @@ fetchDividends = async function fetchDividends(uniqueIDs, isFuture, range) {
     range = defaultRange;
   }
 
-  const [symbols, symbolsDictionary] = getSymbols(uniqueIDs);
+  const [symbols, symbolsDictionary] = getSymbolNamesAndDictionary(uniqueIDs);
 
   const parameters = { range: range };
   if (isFuture) {
@@ -950,7 +980,7 @@ fetchDividends = async function fetchDividends(uniqueIDs, isFuture, range) {
  */
  fetchPreviousDayPrices = async function fetchPreviousDayPrices(uniqueIDs) {
   _throwIfUndefinedOrNull(uniqueIDs, `fetchPreviousDayPrices uniqueIDs`);
-  const [symbols, symbolsDictionary] = getSymbols(uniqueIDs);
+  const [symbols, symbolsDictionary] = getSymbolNamesAndDictionary(uniqueIDs);
 
   // https://sandbox.iexapis.com/stable/stock/market/batch?token=Tpk_581685f711114d9f9ab06d77506fdd49&types=previous&symbols=AAPL,AAP
   return await fetchBatchNew(['previous'], symbols)
@@ -981,7 +1011,7 @@ fetchDividends = async function fetchDividends(uniqueIDs, isFuture, range) {
     range = defaultRange;
   }
 
-  const [symbols, symbolsDictionary] = getSymbols(uniqueIDs);
+  const [symbols, symbolsDictionary] = getSymbolNamesAndDictionary(uniqueIDs);
   const parameters = { 
     range: range,
     chartCloseOnly: true, 
@@ -1011,7 +1041,7 @@ fetchDividends = async function fetchDividends(uniqueIDs, isFuture, range) {
  */
  fetchQuotes = async function fetchQuotes(uniqueIDs) {
   _throwIfUndefinedOrNull(uniqueIDs, `fetchQuotes uniqueIDs`);
-  const [symbols, symbolsDictionary] = getSymbols(uniqueIDs);
+  const [symbols, symbolsDictionary] = getSymbolNamesAndDictionary(uniqueIDs);
 
   // https://sandbox.iexapis.com/stable/stock/market/batch?token=Tpk_581685f711114d9f9ab06d77506fdd49&types=quote&symbols=AAPL,AAP
   return await fetchBatchNew(['quote'], symbols)
@@ -1041,7 +1071,7 @@ fetchDividends = async function fetchDividends(uniqueIDs, isFuture, range) {
     range = defaultRange;
   }
   
-  const [symbols, symbolsDictionary] = getSymbols(uniqueIDs);
+  const [symbols, symbolsDictionary] = getSymbolNamesAndDictionary(uniqueIDs);
   const parameters = { range: range };
 
   return await fetchBatch(`/splits`, symbols, parameters)
@@ -1055,23 +1085,23 @@ fetchDividends = async function fetchDividends(uniqueIDs, isFuture, range) {
 };
 
 /**
- * Gets symbols and symbols dictionary from unique IDs.
- * @param {["AAPL:NAS"]} uniqueIDs Unique IDs.
- * @returns {[["AAPL"], {"AAPL":"AAPL:NAS"}]} Returns array with symbols as the first element and symbols dictionary as the second element.
+ * Gets symbol names and symbol ID for name dictionary.
+ * @param {[Symbol]} symbols Unique IDs.
+ * @returns {[["AAPL"], {"AAPL":ObjectId}]} Returns array with symbols as the first element and symbols dictionary as the second element.
  */
- function getSymbols(uniqueIDs) {
-  _throwIfUndefinedOrNull(uniqueIDs, `getSymbols uniqueIDs`);
-  const symbols = [];
-  const symbolsDictionary = {};
-  for (const uniqueID of uniqueIDs) {
-    const symbol = uniqueID.split(':')[0];
-    symbols.push(symbol);
-    symbolsDictionary[symbol] = uniqueID;
+ function getSymbolNamesAndDictionary(symbols) {
+  _throwIfUndefinedOrNull(symbols, `getSymbols symbols`);
+  const symbolNames = [];
+  const symbolNamesDictionary = {};
+  for (const symbol of symbols) {
+    const symbolName = symbol.s;
+    symbolNames.push(symbolName);
+    symbolNamesDictionary[symbolName] = symbol._id;
   }
 
   return [
-    symbols,
-    symbolsDictionary
+    symbolNames,
+    symbolNamesDictionary
   ];
 }
 
@@ -1154,14 +1184,14 @@ function getCurrencySymbol(currency) {
  * @param {Object} uniqueID Unique ID, e.g. 'AAPL:NAS'.
  * @returns {Object|null} Returns fixed object or `null` if fix wasn't possible.
  */
-fixCompany = function fixCompany(company, arg2) {
+fixCompany = function fixCompany(company, symbolID) {
   try {
     _throwIfUndefinedOrNull(company, `fixCompany company`);
-    _throwIfUndefinedOrNull(uniqueID, `fixCompany uniqueID`);
+    _throwIfUndefinedOrNull(symbolID, `fixCompany symbolID`);
   
     console.logVerbose(`Company data fix start`);
     const fixedCompany = {};
-    fixedCompany._id = uniqueID;
+    fixedCompany._id = symbolID;
     fixedCompany._p = "2";
     fixedCompany._ = "2";
     fixedCompany.n = company.companyName.trim();
