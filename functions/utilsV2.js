@@ -49,17 +49,17 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, field) 
  * Executes find by field and update or insert for a new object from an old object.
  * Uses `_id` field by default.
  */
-Object.prototype.findAndUpdateOrInsertIfNeeded = function(newObject, oldObject, field) {
+Object.prototype.findAndUpdateOrInsertIfNeeded = async function(newObject, oldObject, field) {
   if (newObject == null) {
     throw new _SystemError(`New object should not be null for insert or update`);
     
   } else if (oldObject == null) {
     // No old object means we should insert
     console.log(`Inserting: ${newObject.stringify()}`);
-    return this.insert(newObject);
+    return await this.insert(newObject);
 
   } else {
-    return this.findAndUpdateIfNeeded(newObject, oldObject, field);
+    return await this.findAndUpdateIfNeeded(newObject, oldObject, field);
   }
 };
 
@@ -67,7 +67,7 @@ Object.prototype.findAndUpdateOrInsertIfNeeded = function(newObject, oldObject, 
  * Executes find by field and update for a new object from an old object if needed.
  * Uses `_id` field by default.
  */
-Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, field) {
+Object.prototype.findAndUpdateIfNeeded = async function(newObject, oldObject, field) {
   if (field == null) {
     field = '_id';
   }
@@ -90,7 +90,7 @@ Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, field) {
       return;
 
     } else {
-      return this
+      return await this
         .find({ [field]: value })
         .updateOne(update);
     }
@@ -803,29 +803,29 @@ getSupportedSymbolIDs = _getSupportedSymbolIDs;
  * If symbols count exceed max allowed amount it splits it to several requests and returns composed result.
  * It switches between available tokens to evenly distribute the load.
  * @param {string} api API to call.
- * @param {[string]} symbols Symbols to fetch, e.g. ['AAP','AAPL','PBA'].
+ * @param {[string]} tickers Ticker symbols to fetch, e.g. ['AAP','AAPL','PBA'].
  * @param {Object} queryParameters Query parameters.
  * @returns Parsed EJSON object. Composed from several responses if max symbols count was exceeded.
  */
-fetchBatch = async function fetchBatch(api, symbols, queryParameters) {
+async function _fetchBatch(api, tickers, queryParameters) {
   // https://cloud.iexapis.com/stable/stock/STOR/dividends/10y?token=pk_9f1d7a2688f24e26bb24335710eae053&calendar=true
   _throwIfUndefinedOrNull(api, `_api`);
   const fullAPI = `/stock/market${api}/batch`;
-  _throwIfUndefinedOrNull(symbols, `_symbols`);
+  _throwIfUndefinedOrNull(tickers, `tickers`);
 
   if (queryParameters == null) {
     queryParameters = {};
   }
 
   const maxSymbolsAmount = 100;
-  const chunkedSymbolsArray = symbols.chunked(maxSymbolsAmount);
+  const chunkedTickersArray = tickers.chunked(maxSymbolsAmount);
   var result = [];
-  for (const chunkedSymbols of chunkedSymbolsArray) {
-    const symbolsParameter = chunkedSymbols.join(",");
+  for (const chunkedTickers of chunkedTickersArray) {
+    const tickerParameter = chunkedTickers.join(",");
     const fullQueryParameters = Object.assign({}, queryParameters);
-    fullQueryParameters.symbols = symbolsParameter;
+    fullQueryParameters.symbols = tickerParameter;
 
-    console.log(`Fetching batch for symbols (${chunkedSymbols.length}) with query '${queryParameters.stringify()}': ${symbolsParameter}`);
+    console.log(`Fetching batch for symbols (${chunkedTickers.length}) with query '${queryParameters.stringify()}': ${tickerParameter}`);
     const response = await _fetch(fullAPI, fullQueryParameters);
 
     result = result.concat(response);
@@ -834,24 +834,89 @@ fetchBatch = async function fetchBatch(api, symbols, queryParameters) {
   return result;
 };
 
+fetchBatch = _fetchBatch;
+
 // exports();
 //
 // fetchBatch('/dividends', ['AAP','AAPL','PBA'], { 'range': '90d' })
 
 /**
  * Requests data from IEX cloud/sandbox for types and symbols by a batch.
+ * Then, maps arrays data to our format in a flat array.
  * If symbols count exceed max allowed amount it splits it to several requests and returns composed result.
  * It switches between available tokens to evenly distribute the load.
- * @param {[string]} types Types to fetch, e.g. ['dividends'].
- * @param {[string]} symbols Symbols to fetch, e.g. ['AAP','AAPL','PBA'].
+ * @param {string} type Types to fetch, e.g. ['dividends'].
+ * @param {[string]} tickers Ticker Symbols to fetch, e.g. ['AAP','AAPL','PBA'].
+ * @param {[string]} idsDictionary Dictionary of ticker symbol ID by ticker symbol.
+ * @param {function} mapFunction Types to fetch, e.g. ['dividends'].
  * @param {Object} queryParameters Additional query parameters, e.g..
  * @returns {{string: {string: [Object]}}} Parsed EJSON object. Composed from several responses if max symbols count was exceeded. 
  * The first object keys are symbols. The next inner object keys are types. And the next inner object is an array of type objects.
  */
-fetchBatchNew = async function fetchBatchNew(types, symbols, queryParameters) {
+async function _fetchBatchAndMapArray(type, tickers, idsDictionary, mapFunction, queryParameters) {
+  return _fetchBatchNew([type], tickers, queryParameters)
+    .then(tickerDataDictionary => {
+      return tickers
+        .map(ticker => {
+          const tickerData = tickerDataDictionary[ticker];
+          if (tickerData != null && tickerData[type]) {
+            return await mapFunction(tickerData[type], idsDictionary[ticker]);
+          } else {
+            return [];
+          }
+        })
+        .flat()
+      }
+    );
+}
+
+fetchBatchAndMapArray = _fetchBatchAndMapArray;
+
+/**
+ * Requests data from IEX cloud/sandbox for types and symbols by a batch.
+ * Then, maps objects data to our format in a array.
+ * If symbols count exceed max allowed amount it splits it to several requests and returns composed result.
+ * It switches between available tokens to evenly distribute the load.
+ * @param {string} type Types to fetch, e.g. ['dividends'].
+ * @param {[string]} tickers Ticker Symbols to fetch, e.g. ['AAP','AAPL','PBA'].
+ * @param {[string]} idsDictionary Dictionary of ticker symbol ID by ticker symbol.
+ * @param {function} mapFunction Types to fetch, e.g. ['dividends'].
+ * @param {Object} queryParameters Additional query parameters, e.g..
+ * @returns {{string: {string: [Object]}}} Parsed EJSON object. Composed from several responses if max symbols count was exceeded. 
+ * The first object keys are symbols. The next inner object keys are types. And the next inner object is an array of type objects.
+ */
+async function _fetchBatchAndMapObjects(type, tickers, idsDictionary, mapFunction, queryParameters) {
+  return _fetchBatchNew([type], tickers, queryParameters)
+    .then(tickerDataDictionary =>
+      tickers
+        .compactMap(ticker => {
+          const tickerData = tickerDataDictionary[ticker];
+          if (tickerData != null && tickerData[type]) {
+            return await amapFunction(tickerData[type], idsDictionary[ticker]);
+          } else {
+            // {"AACOU":{"previous":null}}
+            return null;
+          }
+        })
+    );
+}
+
+fetchBatchAndMapObjects = _fetchBatchAndMapObjects;
+
+/**
+ * Requests data from IEX cloud/sandbox for types and symbols by a batch.
+ * If symbols count exceed max allowed amount it splits it to several requests and returns composed result.
+ * It switches between available tokens to evenly distribute the load.
+ * @param {[string]} types Types to fetch, e.g. ['dividends'].
+ * @param {[string]} tickers Ticker Symbols to fetch, e.g. ['AAP','AAPL','PBA'].
+ * @param {Object} queryParameters Additional query parameters, e.g..
+ * @returns {Promise<{string: {string: Object|[Object]}}>} Parsed EJSON object. Composed from several responses if max symbols count was exceeded. 
+ * The first object keys are symbols. The next inner object keys are types. And the next inner object is an array of type objects.
+ */
+async function _fetchBatchNew(types, tickers, queryParameters) {
   // https://sandbox.iexapis.com/stable/stock/market/batch?token=Tpk_d8f3a048a7a94866ad08c8b62042b16b&calendar=true&symbols=MSFT%2CAAPL&types=dividends&range=1y
   _throwIfUndefinedOrNull(types, `types`);
-  _throwIfUndefinedOrNull(symbols, `symbols`);
+  _throwIfUndefinedOrNull(tickers, `tickers`);
 
   if (queryParameters == null) {
     queryParameters = {};
@@ -860,7 +925,7 @@ fetchBatchNew = async function fetchBatchNew(types, symbols, queryParameters) {
   const api = `/stock/market/batch`;
   const typesParameter = types.join(",");
   const maxSymbolsAmount = 100;
-  const chunkedSymbolsArray = symbols.chunked(maxSymbolsAmount);
+  const chunkedSymbolsArray = tickers.chunked(maxSymbolsAmount);
   var result = {};
   for (const chunkedSymbols of chunkedSymbolsArray) {
     const symbolsParameter = chunkedSymbols.join(",");
@@ -876,6 +941,8 @@ fetchBatchNew = async function fetchBatchNew(types, symbols, queryParameters) {
 
   return result;
 };
+
+fetchBatchNew = _fetchBatchNew;
 
 // exports();
 //
@@ -957,13 +1024,13 @@ const defaultRange = '6y';
  */
  fetchCompanies = async function fetchCompanies(shortSymbols) {
   _throwIfUndefinedOrNull(shortSymbols, `fetchCompanies shortSymbols`);
-  const [symbolNames, symbolIDsDictionary] = getSymbolNamesAndIDsDictionary(shortSymbols);
+  const [tickers, idsDictionary] = getTickersAndIDsDictionary(shortSymbols);
 
   // https://cloud.iexapis.com/stable/stock/VZIO/company?token=pk_9f1d7a2688f24e26bb24335710eae053
-  return await fetchBatch(`/company`, symbolNames)
+  return await _fetchBatch(`/company`, tickers)
     .then(companies => 
       companies.compactMap(company => 
-        _fixCompany(company, symbolIDsDictionary[company.symbol])
+        _fixCompany(company, idsDictionary[company.symbol])
       )
     );
 };
@@ -983,7 +1050,7 @@ fetchDividends = async function fetchDividends(shortSymbols, isFuture, range) {
     range = defaultRange;
   }
 
-  const [symbolNames, symbolIDsDictionary] = getSymbolNamesAndIDsDictionary(shortSymbols);
+  const [tickers, idsDictionary] = getTickersAndIDsDictionary(shortSymbols);
 
   const parameters = { range: range };
   if (isFuture) {
@@ -991,19 +1058,7 @@ fetchDividends = async function fetchDividends(shortSymbols, isFuture, range) {
   }
 
   // https://sandbox.iexapis.com/stable/stock/market/batch?token=Tpk_581685f711114d9f9ab06d77506fdd49&types=dividends&symbols=AAPL,AAP&range=6y
-  return await fetchBatchNew(['dividends'], symbolNames, parameters)
-    .then(symbolsTypesDividends =>
-      symbolNames
-        .map(symbolName => {
-          const symbolsTypesDividend = symbolsTypesDividends[symbolName];
-          if (symbolsTypesDividend != null && symbolsTypesDividend.dividends) {
-            return _fixDividends(symbolsTypesDividend.dividends, symbolIDsDictionary[symbolName]);
-          } else {
-            return [];
-          }
-        })
-        .flat()
-    );
+  return await _fetchBatchAndMapArray('dividends', tickers, idsDictionary, _fixDividends, parameters);
 };
 
 /**
@@ -1013,22 +1068,10 @@ fetchDividends = async function fetchDividends(shortSymbols, isFuture, range) {
  */
  async function _fetchPreviousDayPrices(shortSymbols) {
   _throwIfUndefinedOrNull(shortSymbols, `fetchPreviousDayPrices shortSymbols`);
-  const [symbolNames, symbolIDsDictionary] = getSymbolNamesAndIDsDictionary(shortSymbols);
+  const [tickers, idsDictionary] = getTickersAndIDsDictionary(shortSymbols);
 
   // https://sandbox.iexapis.com/stable/stock/market/batch?token=Tpk_581685f711114d9f9ab06d77506fdd49&types=previous&symbols=AAPL,AAP
-  return await fetchBatchNew(['previous'], symbolNames)
-    .then(symbolsTypesPDPs =>
-      symbolNames
-        .compactMap(symbolName => {
-          const symbolsTypesPDP = symbolsTypesPDPs[symbolName];
-          if (symbolsTypesPDP != null && symbolsTypesPDP.previous) {
-            return _fixPreviousDayPrice(symbolsTypesPDP.previous, symbolIDsDictionary[symbolName]);
-          } else {
-            // {"AACOU":{"previous":null}}
-            return null;
-          }
-        })
-    );
+  return await _fetchBatchAndMapObjects('previous', tickers, idsDictionary, _fixPreviousDayPrice);
 };
 
 fetchPreviousDayPrices = _fetchPreviousDayPrices;
@@ -1046,7 +1089,7 @@ fetchPreviousDayPrices = _fetchPreviousDayPrices;
     range = defaultRange;
   }
 
-  const [symbolNames, symbolIDsDictionary] = getSymbolNamesAndIDsDictionary(shortSymbols);
+  const [tickers, idsDictionary] = getTickersAndIDsDictionary(shortSymbols);
   const parameters = { 
     range: range,
     chartCloseOnly: true, 
@@ -1054,89 +1097,66 @@ fetchPreviousDayPrices = _fetchPreviousDayPrices;
   };
 
   // https://sandbox.iexapis.com/stable/stock/market/batch?token=Tpk_581685f711114d9f9ab06d77506fdd49&types=chart&symbols=AAPL,AAP&range=6y&chartCloseOnly=true&chartInterval=21
-  return await fetchBatchNew(['chart'], symbolNames, parameters)
-    .then(symbolsTypesHPs =>
-      symbolNames
-        .map(symbolName => {
-          const symbolsTypesHP = symbolsTypesHPs[symbolName];
-          if (typeof symbolsTypesHP != null && symbolsTypesHP.chart) {
-            return _fixHistoricalPrices(symbolsTypesHP.chart, symbolIDsDictionary[symbolName]);
-          } else {
-            return [];
-          }
-        })
-        .flat()
-    );
+  return await _fetchBatchAndMapArray('chart', tickers, idsDictionary, _fixHistoricalPrices, parameters);
 };
 
 /**
  * Fetches quotes in batch for uniqueIDs.
- * @param {[string]} uniqueIDs Unique IDs to fetch.
+ * @param {[ShortSymbol]} shortSymbols Short symbol models for which to fetch.
  * @returns {[Quote]} Array of requested objects.
  */
- fetchQuotes = async function fetchQuotes(uniqueIDs) {
-  _throwIfUndefinedOrNull(uniqueIDs, `fetchQuotes uniqueIDs`);
-  const [symbols, symbolsDictionary] = getSymbolNamesAndIDsDictionary(uniqueIDs);
+ fetchQuotes = async function fetchQuotes(shortSymbols) {
+  _throwIfUndefinedOrNull(shortSymbols, `fetchQuotes shortSymbols`);
+  const [tickers, idsDictionary] = getTickersAndIDsDictionary(shortSymbols);
 
   // https://sandbox.iexapis.com/stable/stock/market/batch?token=Tpk_581685f711114d9f9ab06d77506fdd49&types=quote&symbols=AAPL,AAP
-  return await fetchBatchNew(['quote'], symbols)
-    .then(symbolsTypesQuotes =>
-      symbols
-        .compactMap(symbol => {
-          const symbolsTypesQuote = symbolsTypesQuotes[symbol];
-          if (typeof symbolsTypesQuote != null && symbolsTypesQuote.quote) {
-            return fixQuote(symbolsTypesQuote.quote, symbolsDictionary[symbol]);
-          } else {
-            return null;
-          }
-        })
-    );
+  return await _fetchBatchAndMapObjects('quote', tickers, idsDictionary, _fixQuote);
 };
 
 /**
  * Fetches splits in batch for uniqueIDs.
- * @param {[string]} uniqueIDs Unique IDs to fetch.
+ * @param {[ShortSymbol]} shortSymbols Short symbol models for which to fetch.
  * @param {string} range Range to fetch.
  * @returns {[Split]} Array of requested objects.
  */
- fetchSplits = async function fetchSplits(uniqueIDs, range) {
-  _throwIfUndefinedOrNull(uniqueIDs, `fetchSplits uniqueIDs`);
+ fetchSplits = async function fetchSplits(shortSymbols, range) {
+  _throwIfUndefinedOrNull(shortSymbols, `fetchSplits shortSymbols`);
 
   if (range == null) {
     range = defaultRange;
   }
   
-  const [symbols, symbolsDictionary] = getSymbolNamesAndIDsDictionary(uniqueIDs);
+  const [tickers, idsDictionary] = getTickersAndIDsDictionary(shortSymbols);
   const parameters = { range: range };
 
-  return await fetchBatch(`/splits`, symbols, parameters)
+  return await _fetchBatch(`/splits`, tickers, parameters)
    .then(splitsArray => 
       splitsArray
         .map((splits, i) => 
-          fixSplits(splits, symbolsDictionary[symbols[i]])
+          _fixSplits(splits, idsDictionary[tickers[i]])
         )
         .flat()
    );
 };
 
 /**
- * Returns symbol names and symbol ID for name dictionary.
- * @param {[Symbol]} shortSymbols Short symbol models.
+ * Returns ticker symbols and ticker symbols IDs dictionary.
+ * @param {[ShortSymbol]} shortSymbols Short symbol models.
  * @returns {[["AAPL"], {"AAPL":ObjectId}]} Returns array with symbols as the first element and symbols dictionary as the second element.
  */
- function getSymbolNamesAndIDsDictionary(shortSymbols) {
+ function getTickersAndIDsDictionary(shortSymbols) {
   _throwIfUndefinedOrNull(shortSymbols, `getSymbolNamesAndIDsDictionary shortSymbols`);
-  const symbolNames = [];
-  const symbolNamesDictionary = {};
+  const tickers = [];
+  const idsDictionary = {};
   for (const shortSymbol of shortSymbols) {
-    const symbolName = shortSymbol.s;
-    symbolNames.push(symbolName);
-    symbolNamesDictionary[symbolName] = shortSymbol._id;
+    const ticker = shortSymbol.s;
+    tickers.push(ticker);
+    idsDictionary[ticker] = shortSymbol._id;
   }
 
   return [
-    symbolNames,
-    symbolNamesDictionary
+    tickers,
+    idsDictionary
   ];
 }
 
@@ -1358,9 +1378,9 @@ fixHistoricalPrices = _fixHistoricalPrices;
  * @param {Object} uniqueID Unique ID, e.g. 'AAPL:NAS'.
  * @returns {Object|null} Returns fixed object or `null` if fix wasn't possible.
  */
-fixQuote = function fixQuote(quote, uniqueID) {
+function _fixQuote(quote, uniqueID) {
   try {
-    _throwIfUndefinedOrNull(quote, `quote arg1`);
+    _throwIfUndefinedOrNull(quote, `quote quote`);
     _throwIfUndefinedOrNull(uniqueID, `fixQuote uniqueID`);
   
     console.logVerbose(`Previous day price data fix start`);
@@ -1388,13 +1408,15 @@ fixQuote = function fixQuote(quote, uniqueID) {
   }
 };
 
+fixQuote = _fixQuote;
+
 /**
  * Fixes splits object so it can be added to MongoDB.
  * @param {Object} splits Splits object.
  * @param {Object} uniqueID Unique ID, e.g. 'AAPL:NAS'.
  * @returns {[Object]} Returns fixed objects or an empty array if fix wasn't possible.
  */
-fixSplits = function fixSplits(splits, uniqueID) {
+function _fixSplits(splits, uniqueID) {
   try {
     _throwIfUndefinedOrNull(arg1, `fixSplits splits`);
     _throwIfUndefinedOrNull(uniqueID, `fixSplits uniqueID`);
@@ -1420,6 +1442,8 @@ fixSplits = function fixSplits(splits, uniqueID) {
     return [];
   }
 };
+
+fixSplits = _fixSplits;
 
 ///////////////////////////////////////////////////////////////////////////////// INITIALIZATION
 
