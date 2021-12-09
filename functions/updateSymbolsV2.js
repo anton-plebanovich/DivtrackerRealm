@@ -1,5 +1,5 @@
 
-// updateSymbols.js
+// updateSymbolsV2.js
 
 // https://docs.mongodb.com/manual/reference/method/js-collection/
 // https://docs.mongodb.com/manual/reference/method/js-bulk/
@@ -34,7 +34,7 @@
  * @note IEX update happens at 8am, 9am, 12pm, 1pm UTC
  */
 exports = async function() {
-  context.functions.execute("utils");
+  context.functions.execute("utilsV2");
 
   await updateIEXSymbols();
   await updateDivtrackerSymbols();
