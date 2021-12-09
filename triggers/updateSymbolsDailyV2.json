@@ -1,15 +1,15 @@
 {
-    "id": "6185ffbd6db886ed8f037b90",
-    "name": "updateSplitsDaily",
+    "id": "6185ffbd6db886ed8f037ba1",
+    "name": "updateSymbolsDailyV2",
     "type": "SCHEDULED",
     "config": {
-        "schedule": "3 9 * * *"
+        "schedule": "1 13 * * *"
     },
     "disabled": false,
     "event_processors": {
         "FUNCTION": {
             "config": {
-                "function_name": "updateSplits"
+                "function_name": "updateSymbolsV2"
             }
         }
     }

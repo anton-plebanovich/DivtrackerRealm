@@ -5,7 +5,7 @@
     "config": {
         "schedule": "1 9 * * *"
     },
-    "disabled": true,
+    "disabled": false,
     "event_processors": {
         "FUNCTION": {
             "config": {

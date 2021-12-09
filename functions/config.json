@@ -87,7 +87,15 @@
         "private": true
     },
     {
+        "name": "updateSymbolsV2",
+        "private": true
+    },
+    {
         "name": "utils",
+        "private": true
+    },
+    {
+        "name": "utilsV2",
         "private": true
     }
 ]
