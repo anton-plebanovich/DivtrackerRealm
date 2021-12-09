@@ -53,7 +53,7 @@ async function updateIEXSymbols() {
 
   const iexCollection = iex.collection("symbols");
   const count = await iexCollection.count({});
-  if (count == 0) {
+  if (count === 0) {
     console.log(`No IEX symbols. Just inserting all records.`);
     await iexCollection.insertMany(newSymbols);
     return;
@@ -153,7 +153,7 @@ async function updateDivtrackerSymbols() {
 
   const divtrackerCollection = db.collection("symbols");
   const oldCount = await divtrackerCollection.count({});
-  if (oldCount == 0) {
+  if (oldCount === 0) {
     console.log(`No Divtracker symbols. Just inserting all records.`);
     await divtrackerCollection.insertMany(newSymbols);
     return;

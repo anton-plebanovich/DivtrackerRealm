@@ -28,7 +28,7 @@
 
   // Check that all data is inserted
   const transactionsCount = await db.collection('transactions').count({});
-  if (transactionsCount != transactionsJSON.length) {
+  if (transactionsCount !== transactionsJSON.length) {
     errors.push([`Some transactions weren't inserted (${transactionsCount}/${transactionsJSON.length})`]);
   }
 
@@ -38,7 +38,7 @@
     .length;
 
   const companiesCount = await db.collection('companies').count({});
-  if (companiesCount != distinctCompaniesCount) {
+  if (companiesCount !== distinctCompaniesCount) {
     errors.push([`Some companies weren't inserted (${companiesCount}/${distinctCompaniesCount})`]);
   }
 
@@ -53,7 +53,7 @@
   }
 
   const previousDayPricesCount = await db.collection('previous-day-prices').count({});
-  if (previousDayPricesCount != companiesCount) {
+  if (previousDayPricesCount !== companiesCount) {
     errors.push([`Some previous day prices weren't inserted (${previousDayPricesCount}/${companiesCount})`]);
   }
 
@@ -63,7 +63,7 @@
   }
 
   const quotesCount = await db.collection('companies').count({});
-  if (quotesCount != companiesCount) {
+  if (quotesCount !== companiesCount) {
     errors.push([`Some quotes weren't inserted (${quotesCount}/${companiesCount})`]);
   }
 

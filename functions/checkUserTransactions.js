@@ -62,7 +62,7 @@
       logAndThrow(`Transaction partition is absent: ${transaction.stringify()}`);
     }
 
-    if (transaction._p != userID) {
+    if (transaction._p !== userID) {
       logAndThrow(`Transaction partition '${transaction._p}' should match user ID '${userID}': ${transaction.stringify()}`);
     }
     

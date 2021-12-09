@@ -71,7 +71,7 @@ async function exchangesFix_i_Field_03122021(collectionName) {
 
       if (!entitiesToMigrate.length) { return; }
 
-      if (entitiesToMigrate.length != entities.length) {
+      if (entitiesToMigrate.length !== entities.length) {
         const migratedEntitiesIs = entities
           .filter(entity => {
             return !isMigrationRequiredForID_03122021(entity._i);
@@ -167,22 +167,22 @@ function fixExchangeNameInID_03122021(_id) {
  * USPAC -> ARCX
  */
 function fixExchangeName_03122021(exchange) {
-  if (exchange == 'NAS') {
+  if (exchange === 'NAS') {
     return 'XNAS';
 
-  } else if (exchange == 'NYS') {
+  } else if (exchange === 'NYS') {
     return 'XNYS';
 
-  } else if (exchange == 'POR') {
+  } else if (exchange === 'POR') {
     return 'XPOR';
 
-  } else if (exchange == 'USAMEX') {
+  } else if (exchange === 'USAMEX') {
     return 'XASE';
 
-  } else if (exchange == 'USBATS') {
+  } else if (exchange === 'USBATS') {
     return 'BATS';
 
-  } else if (exchange == 'USPAC') {
+  } else if (exchange === 'USPAC') {
     return 'ARCX';
 
   } else {
@@ -197,22 +197,22 @@ function isMigrationRequiredForID_03122021(_id) {
 }
 
 function isMigrationRequiredForExchange_03122021(exchange) {
-  if (exchange == 'NAS') {
+  if (exchange === 'NAS') {
     return true;
 
-  } else if (exchange == 'NYS') {
+  } else if (exchange === 'NYS') {
     return true;
 
-  } else if (exchange == 'POR') {
+  } else if (exchange === 'POR') {
     return true;
 
-  } else if (exchange == 'USAMEX') {
+  } else if (exchange === 'USAMEX') {
     return true;
 
-  } else if (exchange == 'USBATS') {
+  } else if (exchange === 'USBATS') {
     return true;
 
-  } else if (exchange == 'USPAC') {
+  } else if (exchange === 'USPAC') {
     return true;
 
   } else {

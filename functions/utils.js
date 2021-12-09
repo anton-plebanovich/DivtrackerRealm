@@ -130,9 +130,9 @@ Object.prototype.updateFrom = function(object) {
  */
 Array.prototype.distinct = function(arg) {
   if (typeof arg === 'string' || arg instanceof String) {
-    comparer = (a, b) => a[arg] == b[arg];
+    comparer = (a, b) => a[arg] === b[arg];
   } else if (!arg) {
-    comparer = (a, b) => a == b;
+    comparer = (a, b) => a === b;
   } else {
     comparer = arg;
   }
@@ -285,7 +285,7 @@ Object.prototype.isEqual = function(rhs) {
   const lhsEntries = Object.entries(this);
   const rhsEntries = Object.entries(rhs);
 
-  if (lhsEntries.length != rhsEntries.length) {
+  if (lhsEntries.length !== rhsEntries.length) {
     return false;
 
   } else if (!lhsEntries.length) {
@@ -303,11 +303,11 @@ Object.prototype.isEqual = function(rhs) {
 };
 
 Number.prototype.isEqual = function(number) {
-  return this == number;
+  return this === number;
 };
 
 String.prototype.isEqual = function(string) {
-  return this == string;
+  return this === string;
 };
 
 ///////////////////////////////////////////////////////////////////////////////// ERRORS PROCESSING
@@ -838,7 +838,7 @@ async function _fetch(_api, queryParameters) {
 
   // Retry 5 times on retryable errors
   const delay = 100;
-  for (let step = 0; step < 5 && (response.status == '403 Forbidden' || response.status == '502 Bad Gateway' || response.status == '429 Too Many Requests'); step++) {
+  for (let step = 0; step < 5 && (response.status === '403 Forbidden' || response.status === '502 Bad Gateway' || response.status === '429 Too Many Requests'); step++) {
     console.log(`Received '${response.status}' error with text '${response.body.text()}'. Trying to retry after a '${delay}' delay.`);
     await new Promise(r => setTimeout(r, delay));
     response = await context.http.get({ url: url });
@@ -1076,13 +1076,13 @@ fetchDividends = async function fetchDividends(arg1, arg2, arg3) {
 
   // Retry 5 times on retryable errors
   const delay = 100;
-  for (let step = 0; step < 5 && (response.status == '??????'); step++) {
+  for (let step = 0; step < 5 && (response.status === '??????'); step++) {
     console.log(`Received '${response.status}' error with text '${response.body.text()}'. Trying to retry after a '${delay}' delay.`);
     await new Promise(r => setTimeout(r, delay));
     response = await context.http.get({ url: url });
   }
   
-  if (response.status != '200 OK') {
+  if (response.status !== '200 OK') {
     _logAndThrow(`Response status error '${response.status}' : '${response.body.text()}'`);
   }
   
@@ -1244,7 +1244,7 @@ function _fixDividends(arg1, arg2) {
           dividend.f = _dividend.frequency.charAt(0);
         }
     
-        if (_dividend.currency != "USD") {
+        if (_dividend.currency !== "USD") {
           dividend.c = _dividend.currency;
         }
     
