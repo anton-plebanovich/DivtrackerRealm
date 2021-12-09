@@ -42,24 +42,24 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, field) 
     bulk.findAndUpdateOrInsertIfNeeded(newObject, existingObject, field)
   }
 
-  return bulk.safeExecute();
+  return await bulk.safeExecute();
 };
 
 /**
  * Executes find by field and update or insert for a new object from an old object.
  * Uses `_id` field by default.
  */
-Object.prototype.findAndUpdateOrInsertIfNeeded = async function(newObject, oldObject, field) {
+Object.prototype.findAndUpdateOrInsertIfNeeded = function(newObject, oldObject, field) {
   if (newObject == null) {
     throw new _SystemError(`New object should not be null for insert or update`);
     
   } else if (oldObject == null) {
     // No old object means we should insert
     console.log(`Inserting: ${newObject.stringify()}`);
-    return await this.insert(newObject);
+    return this.insert(newObject);
 
   } else {
-    return await this.findAndUpdateIfNeeded(newObject, oldObject, field);
+    return this.findAndUpdateIfNeeded(newObject, oldObject, field);
   }
 };
 
@@ -67,7 +67,7 @@ Object.prototype.findAndUpdateOrInsertIfNeeded = async function(newObject, oldOb
  * Executes find by field and update for a new object from an old object if needed.
  * Uses `_id` field by default.
  */
-Object.prototype.findAndUpdateIfNeeded = async function(newObject, oldObject, field) {
+Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, field) {
   if (field == null) {
     field = '_id';
   }
@@ -90,7 +90,7 @@ Object.prototype.findAndUpdateIfNeeded = async function(newObject, oldObject, fi
       return;
 
     } else {
-      return await this
+      return this
         .find({ [field]: value })
         .updateOne(update);
     }
