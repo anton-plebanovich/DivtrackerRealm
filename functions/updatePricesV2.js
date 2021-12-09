@@ -42,15 +42,15 @@
   const historicalPricesCollection = db.collection("historical-prices");
   
   const upToDateSymbolIDsAggregation = [
-    { $group: { s: "$s", d: { $max: "$d" } } },
+    { $group: { _id: "$s", d: { $max: "$d" } } },
     { $match: { d: { $gt: monthAgoCloseDate } } },
-    { $project: { s: 1 } }
+    { $project: { _id: 1 } }
   ];
 
   const upToDateSymbolIDs = await historicalPricesCollection
     .aggregate(upToDateSymbolIDsAggregation)
     .toArray()
-    // Extract IDs from [{ s: ObjectId }]
+    // Extract IDs from [{ _id: ObjectId }]
     .then(x => x.map(x => x.s));
 
   console.log(`Up to date unique IDs (${upToDateSymbolIDs.length}) for '${monthAgoCloseDate}' date`);
