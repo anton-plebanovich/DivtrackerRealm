@@ -845,12 +845,12 @@ fetchBatch = _fetchBatch;
  * Then, maps arrays data to our format in a flat array.
  * If symbols count exceed max allowed amount it splits it to several requests and returns composed result.
  * It switches between available tokens to evenly distribute the load.
- * @param {string} type Types to fetch, e.g. ['dividends'].
+ * @param {string} type Type to fetch, e.g. 'dividends'.
  * @param {[string]} tickers Ticker Symbols to fetch, e.g. ['AAP','AAPL','PBA'].
  * @param {[string]} idsDictionary Dictionary of ticker symbol ID by ticker symbol.
- * @param {function} mapFunction Types to fetch, e.g. ['dividends'].
- * @param {Object} queryParameters Additional query parameters, e.g..
- * @returns {{string: {string: [Object]}}} Parsed EJSON object. Composed from several responses if max symbols count was exceeded. 
+ * @param {function} mapFunction Function to map data to our format.
+ * @param {Object} queryParameters Additional query parameters.
+ * @returns {Promise<{string: {string: Object|[Object]}}>} Parsed EJSON object. Composed from several responses if max symbols count was exceeded. 
  * The first object keys are symbols. The next inner object keys are types. And the next inner object is an array of type objects.
  */
 async function _fetchBatchAndMapArray(type, tickers, idsDictionary, mapFunction, queryParameters) {
@@ -860,7 +860,7 @@ async function _fetchBatchAndMapArray(type, tickers, idsDictionary, mapFunction,
         .map(ticker => {
           const tickerData = tickerDataDictionary[ticker];
           if (tickerData != null && tickerData[type]) {
-            return await mapFunction(tickerData[type], idsDictionary[ticker]);
+            return mapFunction(tickerData[type], idsDictionary[ticker]);
           } else {
             return [];
           }
@@ -877,12 +877,12 @@ fetchBatchAndMapArray = _fetchBatchAndMapArray;
  * Then, maps objects data to our format in a array.
  * If symbols count exceed max allowed amount it splits it to several requests and returns composed result.
  * It switches between available tokens to evenly distribute the load.
- * @param {string} type Types to fetch, e.g. ['dividends'].
+ * @param {string} type Type to fetch, e.g. 'dividends'.
  * @param {[string]} tickers Ticker Symbols to fetch, e.g. ['AAP','AAPL','PBA'].
  * @param {[string]} idsDictionary Dictionary of ticker symbol ID by ticker symbol.
- * @param {function} mapFunction Types to fetch, e.g. ['dividends'].
- * @param {Object} queryParameters Additional query parameters, e.g..
- * @returns {{string: {string: [Object]}}} Parsed EJSON object. Composed from several responses if max symbols count was exceeded. 
+ * @param {function} mapFunction Function to map data to our format.
+ * @param {Object} queryParameters Additional query parameters.
+ * @returns {Promise<{string: {string: Object|[Object]}}>} Parsed EJSON object. Composed from several responses if max symbols count was exceeded. 
  * The first object keys are symbols. The next inner object keys are types. And the next inner object is an array of type objects.
  */
 async function _fetchBatchAndMapObjects(type, tickers, idsDictionary, mapFunction, queryParameters) {
@@ -892,7 +892,7 @@ async function _fetchBatchAndMapObjects(type, tickers, idsDictionary, mapFunctio
         .compactMap(ticker => {
           const tickerData = tickerDataDictionary[ticker];
           if (tickerData != null && tickerData[type]) {
-            return await amapFunction(tickerData[type], idsDictionary[ticker]);
+            return mapFunction(tickerData[type], idsDictionary[ticker]);
           } else {
             // {"AACOU":{"previous":null}}
             return null;
@@ -909,7 +909,7 @@ fetchBatchAndMapObjects = _fetchBatchAndMapObjects;
  * It switches between available tokens to evenly distribute the load.
  * @param {[string]} types Types to fetch, e.g. ['dividends'].
  * @param {[string]} tickers Ticker Symbols to fetch, e.g. ['AAP','AAPL','PBA'].
- * @param {Object} queryParameters Additional query parameters, e.g..
+ * @param {Object} queryParameters Additional query parameters.
  * @returns {Promise<{string: {string: Object|[Object]}}>} Parsed EJSON object. Composed from several responses if max symbols count was exceeded. 
  * The first object keys are symbols. The next inner object keys are types. And the next inner object is an array of type objects.
  */
@@ -1169,7 +1169,7 @@ fetchPreviousDayPrices = _fetchPreviousDayPrices;
  * @example https://openexchangerates.org/api/latest.json?app_id=b30ffad8d6b0439da92b3805191f7f40&base=USD
  * @returns {[ExchangeRate]} Array of requested objects.
  */
- fetchExchangeRates = async function fetchExchangeRates() {
+ async function _fetchExchangeRates() {
   const baseURL = "https://openexchangerates.org/api";
   const api = "/latest.json";
   const appID = context.values.get("exchange-rates-app-id");
@@ -1218,6 +1218,8 @@ fetchPreviousDayPrices = _fetchPreviousDayPrices;
 
   return exchangeRates;
 };
+
+fetchExchangeRates = _fetchExchangeRates;
 
 function getCurrencySymbol(currency) {
   // TODO: Add more later
