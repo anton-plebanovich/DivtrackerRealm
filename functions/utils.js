@@ -11,7 +11,7 @@ Object.prototype.safeExecute = async function() {
     return await this.execute();
   } catch(error) {
     if (error.message !== 'Failed to execute bulk writes: no operations specified') {
-      throw new SystemError(error);
+      throw new _SystemError(error);
     }
   }
 };
@@ -22,7 +22,7 @@ Object.prototype.safeExecute = async function() {
  */
 Object.prototype.findAndUpdateOrInsertIfNeeded = function(newObject, oldObject, field) {
   if (newObject == null) {
-    throw new SystemError(`New object should not be null for insert or update`);
+    throw new _SystemError(`New object should not be null for insert or update`);
     
   } else if (oldObject == null) {
     // No old object means we should insert
@@ -318,7 +318,7 @@ const errorType = {
 	COMPOSITE: "composite",
 };
 
-class UserError {
+class _UserError {
   constructor(message) {
     this.type = errorType.USER;
     
@@ -334,7 +334,9 @@ class UserError {
   }
 }
 
-class SystemError {
+UserError = _UserError;
+
+class _SystemError {
   constructor(message) {
     this.type = errorType.SYSTEM;
 
@@ -350,7 +352,9 @@ class SystemError {
   }
 }
 
-class CompositeError {
+SystemError = _SystemError
+
+class _CompositeError {
   constructor(errors) {
     if (Object.prototype.toString.call(errors) !== '[object Array]') {
       throw 'CompositeError should be initialized with errors array';
@@ -406,6 +410,8 @@ class CompositeError {
   }
 }
 
+CompositeError = _CompositeError;
+
 var runtimeExtended = false;
 function extendRuntime() {
   if (runtimeExtended) { return; }
@@ -449,7 +455,7 @@ function extendRuntime() {
     return new Promise((resolve, reject) =>
       this.then(
         data => resolve(data),
-        error => reject(new UserError(error))
+        error => reject(new _UserError(error))
       )
     );
   };
@@ -458,7 +464,7 @@ function extendRuntime() {
     return new Promise((resolve, reject) =>
       this.then(
         data => resolve(data),
-        error => reject(new SystemError(error))
+        error => reject(new _SystemError(error))
       )
     );
   };
@@ -467,7 +473,7 @@ function extendRuntime() {
     return new Promise((resolve, reject) =>
       this.then(
         data => resolve(data),
-        errors => reject(new CompositeError(errors))
+        errors => reject(new _CompositeError(errors))
       )
     );
   };
