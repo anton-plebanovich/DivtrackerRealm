@@ -1149,7 +1149,7 @@ fetchPreviousDayPrices = _fetchPreviousDayPrices;
   const tickers = [];
   const idsDictionary = {};
   for (const shortSymbol of shortSymbols) {
-    const ticker = shortSymbol.s;
+    const ticker = shortSymbol.t;
     tickers.push(ticker);
     idsDictionary[ticker] = shortSymbol._id;
   }
