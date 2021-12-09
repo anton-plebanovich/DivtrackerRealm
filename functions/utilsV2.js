@@ -17,6 +17,35 @@ Object.prototype.safeExecute = async function() {
 };
 
 /**
+ * Safely computes and executes update operation from old to new objects on a collection.
+ */
+Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, field) {
+  throwIfEmptyArray(newObjects, `\nPlease pass non-empty new objects array as the first argument.`)
+
+  if (newObjects.length === 0) {
+    console.error(`New objects are empty. Skipping update.`);
+    return;
+  }
+
+  if (oldObjects == null) {
+    console.log(`No old objects. Just inserting new objects.`);
+    return await this.insertMany(newObjects);
+  }
+
+  if (field == null) {
+    field = "_id";
+  }
+
+  const bulk = this.initializeUnorderedBulkOp();
+  for (const newObject of newObjects) {
+    const existingObject = oldObjects.find(x => x[field] === newObject[field]);
+    bulk.findAndUpdateOrInsertIfNeeded(newObject, existingObject, field)
+  }
+
+  return bulk.safeExecute();
+};
+
+/**
  * Executes find by field and update or insert for a new object from an old object.
  * Uses `_id` field by default.
  */
@@ -667,9 +696,10 @@ getOpenDate = function getOpenDate(openDateValue) {
 
 /** 
  * Computes and returns sorted in use symbols from companies and user transactions.
+ * Returned symbols are shortened to `_id` and `s` fields.
  * @returns {Promise<[Symbol]>} Array of unique IDs.
 */
-async function _getInUseSymbols() {
+async function _getInUseShortSymbols() {
   // We combine transactions and companies distinct IDs. 
   // Idealy, we should be checking all tables but we assume that only two will be enough.
   // All symbols have company record so company DB contains all ever fetched symbols.
@@ -690,19 +720,22 @@ async function _getInUseSymbols() {
     .concat(distinctTransactionSymbolIDs)
     .distinct();
 
-  // Filter non-existing
-  const allSymbols = await symbolsCollection.distinct("_id", { _id: { $in: uniqueIDs } });
-  uniqueIDs = uniqueIDs
-    .filter(id => allSymbols.includes(id))
-    .sort();
+  // Getting symbols for IDs
+  const symbols = await symbolsCollection
+    .find(
+      { _id: { $in: uniqueIDs } }, 
+      { _id: 1, s: 1 }
+    )
+    .sort({ s: 1 })
+    .toArray();
 
-  console.log(`Unique IDs (${uniqueIDs.length})`);
-  console.logData(`Unique IDs (${uniqueIDs.length})`, uniqueIDs);
+  console.log(`Symbols (${symbols.length})`);
+  console.logData(`Symbols (${symbols.length})`, symbols);
 
-  return uniqueIDs;
+  return symbols;
 };
 
-getInUseSymbols = _getInUseSymbols;
+getInUseShortSymbols = _getInUseShortSymbols;
 
 /** 
  * @returns {Promise<["AAPL:NAS"]>} Array of unique transaction IDs, e.g. ["AAPL:NAS"]
@@ -919,12 +952,12 @@ const defaultRange = '6y';
 
 /**
  * Fetches companies in batch for symbols.
- * @param {[Symbol]} symbolModels Symbol models for which to fetch.
+ * @param {[ShortSymbol]} shortSymbol Short symbol models for which to fetch.
  * @returns {[Company]} Array of requested objects.
  */
- fetchCompanies = async function fetchCompanies(symbolModels) {
-  _throwIfUndefinedOrNull(symbolModels, `fetchCompanies symbolModels`);
-  const [symbolNames, symbolNamesDictionary] = getSymbolNamesAndDictionary(symbolModels);
+ fetchCompanies = async function fetchCompanies(shortSymbol) {
+  _throwIfUndefinedOrNull(shortSymbol, `fetchCompanies shortSymbol`);
+  const [symbolNames, symbolNamesDictionary] = getSymbolNamesAndIDsDictionary(shortSymbol);
 
   // https://cloud.iexapis.com/stable/stock/VZIO/company?token=pk_9f1d7a2688f24e26bb24335710eae053
   return await fetchBatch(`/company`, symbolNames)
@@ -950,7 +983,7 @@ fetchDividends = async function fetchDividends(uniqueIDs, isFuture, range) {
     range = defaultRange;
   }
 
-  const [symbols, symbolsDictionary] = getSymbolNamesAndDictionary(uniqueIDs);
+  const [symbols, symbolsDictionary] = getSymbolNamesAndIDsDictionary(uniqueIDs);
 
   const parameters = { range: range };
   if (isFuture) {
@@ -980,7 +1013,7 @@ fetchDividends = async function fetchDividends(uniqueIDs, isFuture, range) {
  */
  fetchPreviousDayPrices = async function fetchPreviousDayPrices(uniqueIDs) {
   _throwIfUndefinedOrNull(uniqueIDs, `fetchPreviousDayPrices uniqueIDs`);
-  const [symbols, symbolsDictionary] = getSymbolNamesAndDictionary(uniqueIDs);
+  const [symbols, symbolsDictionary] = getSymbolNamesAndIDsDictionary(uniqueIDs);
 
   // https://sandbox.iexapis.com/stable/stock/market/batch?token=Tpk_581685f711114d9f9ab06d77506fdd49&types=previous&symbols=AAPL,AAP
   return await fetchBatchNew(['previous'], symbols)
@@ -1011,7 +1044,7 @@ fetchDividends = async function fetchDividends(uniqueIDs, isFuture, range) {
     range = defaultRange;
   }
 
-  const [symbols, symbolsDictionary] = getSymbolNamesAndDictionary(uniqueIDs);
+  const [symbols, symbolsDictionary] = getSymbolNamesAndIDsDictionary(uniqueIDs);
   const parameters = { 
     range: range,
     chartCloseOnly: true, 
@@ -1041,7 +1074,7 @@ fetchDividends = async function fetchDividends(uniqueIDs, isFuture, range) {
  */
  fetchQuotes = async function fetchQuotes(uniqueIDs) {
   _throwIfUndefinedOrNull(uniqueIDs, `fetchQuotes uniqueIDs`);
-  const [symbols, symbolsDictionary] = getSymbolNamesAndDictionary(uniqueIDs);
+  const [symbols, symbolsDictionary] = getSymbolNamesAndIDsDictionary(uniqueIDs);
 
   // https://sandbox.iexapis.com/stable/stock/market/batch?token=Tpk_581685f711114d9f9ab06d77506fdd49&types=quote&symbols=AAPL,AAP
   return await fetchBatchNew(['quote'], symbols)
@@ -1071,7 +1104,7 @@ fetchDividends = async function fetchDividends(uniqueIDs, isFuture, range) {
     range = defaultRange;
   }
   
-  const [symbols, symbolsDictionary] = getSymbolNamesAndDictionary(uniqueIDs);
+  const [symbols, symbolsDictionary] = getSymbolNamesAndIDsDictionary(uniqueIDs);
   const parameters = { range: range };
 
   return await fetchBatch(`/splits`, symbols, parameters)
@@ -1085,18 +1118,18 @@ fetchDividends = async function fetchDividends(uniqueIDs, isFuture, range) {
 };
 
 /**
- * Gets symbol names and symbol ID for name dictionary.
- * @param {[Symbol]} symbols Unique IDs.
+ * Returns symbol names and symbol ID for name dictionary.
+ * @param {[Symbol]} shortSymbols Short symbol models.
  * @returns {[["AAPL"], {"AAPL":ObjectId}]} Returns array with symbols as the first element and symbols dictionary as the second element.
  */
- function getSymbolNamesAndDictionary(symbols) {
-  _throwIfUndefinedOrNull(symbols, `getSymbols symbols`);
+ function getSymbolNamesAndIDsDictionary(shortSymbols) {
+  _throwIfUndefinedOrNull(shortSymbols, `getSymbolNamesAndIDsDictionary shortSymbols`);
   const symbolNames = [];
   const symbolNamesDictionary = {};
-  for (const symbol of symbols) {
-    const symbolName = symbol.s;
+  for (const shortSymbol of shortSymbols) {
+    const symbolName = shortSymbol.s;
     symbolNames.push(symbolName);
-    symbolNamesDictionary[symbolName] = symbol._id;
+    symbolNamesDictionary[symbolName] = shortSymbol._id;
   }
 
   return [
@@ -1181,7 +1214,7 @@ function getCurrencySymbol(currency) {
 /**
  * Fixes company object so it can be added to MongoDB.
  * @param {Object} company Company object.
- * @param {Object} uniqueID Unique ID, e.g. 'AAPL:NAS'.
+ * @param {Object} symbolID Symbol object ID.
  * @returns {Object|null} Returns fixed object or `null` if fix wasn't possible.
  */
 fixCompany = function fixCompany(company, symbolID) {
