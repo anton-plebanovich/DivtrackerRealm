@@ -1118,7 +1118,8 @@ fetchDividends = async function fetchDividends(uniqueIDs, isFuture, range) {
   for (const [currency, rate] of entries) {
     const exchangeRate = { 
       _id: currency,
-      _p: "P",
+      _p: "2",
+      _: "2",
       r: BSON.Double(rate),
     };
 
