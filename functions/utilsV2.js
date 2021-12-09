@@ -1334,12 +1334,12 @@ function _fixHistoricalPrices(iexHistoricalPrices, symbolID) {
     console.logVerbose(`Fixing historical prices for ${symbolID}`);
     return iexHistoricalPrices
       .filterNull()
-      .map(historicalPrice => {
+      .map(iexHistoricalPrice => {
         const historicalPrice = {};
         historicalPrice._ = "2";
         historicalPrice._p = "2";
-        historicalPrice.c = BSON.Double(historicalPrice.close);
-        historicalPrice.d = getCloseDate(historicalPrice.date);
+        historicalPrice.c = BSON.Double(iexHistoricalPrice.close);
+        historicalPrice.d = getCloseDate(iexHistoricalPrice.date);
         historicalPrice.s = symbolID;
 
         return historicalPrice;
