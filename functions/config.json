@@ -54,10 +54,6 @@
         "private": true
     },
     {
-        "name": "test/playground",
-        "private": true
-    },
-    {
         "name": "testAddTransactions",
         "private": true,
         "run_as_system": true
