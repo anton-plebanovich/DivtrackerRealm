@@ -1,6 +1,6 @@
 {
     "id": "6185ffbd6db886ed8f037b10",
-    "name": "checkTransactionOnInsert",
+    "name": "migrateV1TransactionOnInsert",
     "type": "DATABASE",
     "config": {
         "operation_types": [
@@ -19,7 +19,7 @@
     "event_processors": {
         "FUNCTION": {
             "config": {
-                "function_name": "checkTransactionForChangeEvent"
+                "function_name": "migrateV1TransactionOnInsert"
             }
         }
     }

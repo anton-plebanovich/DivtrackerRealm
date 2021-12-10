@@ -10,10 +10,6 @@
         "run_as_system": true
     },
     {
-        "name": "checkTransactionForChangeEvent",
-        "private": true
-    },
-    {
         "name": "checkTransactions",
         "private": true
     },
@@ -44,6 +40,10 @@
     {
         "name": "login",
         "private": false
+    },
+    {
+        "name": "migrateV1TransactionOnInsert",
+        "private": true
     },
     {
         "name": "migrations",
