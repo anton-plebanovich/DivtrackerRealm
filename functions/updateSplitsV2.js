@@ -12,17 +12,17 @@
  */
 exports = async function() {
   context.functions.execute("utilsV2");
-  const uniqueIDs = await getUniqueIDs();
+  const shortSymbols = await getInUseShortSymbols();
   const days = 3;
 
-  if (uniqueIDs.length <= 0) {
-    console.log(`No uniqueIDs. Skipping update.`);
+  if (shortSymbols.length <= 0) {
+    console.log(`No symbols. Skipping update.`);
     return;
   }
 
   console.log(`Fetching splits for the last ${days} days`);
   const daysParam = `${days}d`;
-  const splits = await fetchSplits(uniqueIDs, daysParam);
+  const splits = await fetchSplits(shortSymbols, daysParam);
   if (splits.length) {
     console.log(`Inserting missed`);
 
@@ -39,6 +39,6 @@ exports = async function() {
     console.log(`SUCCESS`);
 
   } else {
-    console.log(`Splits are empty for symbols '${uniqueIDs}'`);
+    console.log(`Splits are empty for symbols '${shortSymbols.stringify()}'`);
   }
 };
