@@ -1,10 +1,12 @@
 {
-    "id": "61b3809ee1595e1daf0a5bb3",
+    "id": "61b38bf24d795c0be7894171",
     "name": "migrateV1TransactionOnInsert",
     "type": "DATABASE",
     "config": {
         "operation_types": [
-            "INSERT"
+            "INSERT",
+            "UPDATE",
+            "DELETE"
         ],
         "database": "divtracker",
         "collection": "transactions",
