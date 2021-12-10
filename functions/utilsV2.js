@@ -1376,34 +1376,35 @@ fixHistoricalPrices = _fixHistoricalPrices;
 
 /**
  * Fixes quote object so it can be added to MongoDB.
- * @param {Object} quote Quote object.
- * @param {Object} uniqueID Unique ID, e.g. 'AAPL:NAS'.
- * @returns {Object|null} Returns fixed object or `null` if fix wasn't possible.
+ * @param {IEXQuote} iexQuote Quote object.
+ * @param {ObjectId} symbolID Symbol object ID.
+ * @returns {Quote|null} Returns fixed object or `null` if fix wasn't possible.
  */
-function _fixQuote(quote, uniqueID) {
+function _fixQuote(iexQuote, symbolID) {
   try {
-    _throwIfUndefinedOrNull(quote, `quote quote`);
-    _throwIfUndefinedOrNull(uniqueID, `fixQuote uniqueID`);
+    _throwIfUndefinedOrNull(iexQuote, `fixQuote quote`);
+    _throwIfUndefinedOrNull(symbolID, `fixQuote symbolID`);
   
     console.logVerbose(`Previous day price data fix start`);
-    const fixedQuote = {};
-    fixedQuote._id = uniqueID;
-    fixedQuote._p = "P";
-    fixedQuote.l = quote.latestPrice;
-    fixedQuote.p = BSON.Double(quote.peRatio);
+    const quote = {};
+    quote._id = symbolID;
+    quote._ = "2";
+    quote._p = "2";
+    quote.l = iexQuote.latestPrice;
+    quote.p = BSON.Double(iexQuote.peRatio);
 
-    if (quote.latestUpdate) {
-      const date = new Date(quote.latestUpdate);
+    if (iexQuote.latestUpdate) {
+      const date = new Date(iexQuote.latestUpdate);
       if (date && !isNaN(date)) {
-        fixedQuote.d = date;
+        quote.d = date;
       } else {
-        fixedQuote.d = new Date();
+        quote.d = new Date();
       }
     } else {
-      fixedQuote.d = new Date();
+      quote.d = new Date();
     }
 
-    return fixedQuote;
+    return quote;
 
   } catch(error) {
     return null;
@@ -1414,30 +1415,31 @@ fixQuote = _fixQuote;
 
 /**
  * Fixes splits object so it can be added to MongoDB.
- * @param {Object} splits Splits object.
- * @param {Object} uniqueID Unique ID, e.g. 'AAPL:NAS'.
+ * @param {Object} iexSplits Splits object.
+ * @param {ObjectId} symbolID Symbol object ID.
  * @returns {[Object]} Returns fixed objects or an empty array if fix wasn't possible.
  */
-function _fixSplits(splits, uniqueID) {
+function _fixSplits(iexSplits, symbolID) {
   try {
-    _throwIfUndefinedOrNull(arg1, `fixSplits splits`);
-    _throwIfUndefinedOrNull(uniqueID, `fixSplits uniqueID`);
-    if (!splits.length) { 
-      console.logVerbose(`Splits are empty for ${uniqueID}. Nothing to fix.`);
+    _throwIfUndefinedOrNull(iexSplits, `fixSplits splits`);
+    _throwIfUndefinedOrNull(symbolID, `fixSplits symbolID`);
+    if (!iexSplits.length) { 
+      console.logVerbose(`Splits are empty for ${symbolID}. Nothing to fix.`);
       return []; 
     }
   
-    console.logVerbose(`Fixing splits for ${uniqueID}`);
-    return splits
+    console.logVerbose(`Fixing splits for ${symbolID}`);
+    return iexSplits
       .filterNull()
-      .map(split => {
-        const fixedSplit = {};
-        fixedSplit._p = "P";
-        fixedSplit._i = uniqueID;
-        fixedSplit.e = getOpenDate(split.exDate);
-        fixedSplit.r = BSON.Double(split.ratio);
+      .map(iexSplit => {
+        const split = {};
+        split._ = "2";
+        split._p = "2";
+        split._i = symbolID;
+        split.e = getOpenDate(iexSplit.exDate);
+        split.r = BSON.Double(iexSplit.ratio);
 
-        return fixedSplit;
+        return split;
       });
 
   } catch (error) {

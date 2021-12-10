@@ -95,6 +95,10 @@
         "private": true
     },
     {
+        "name": "updateQuotesV2",
+        "private": true
+    },
+    {
         "name": "updateSplits",
         "private": true
     },
