@@ -5,9 +5,10 @@
 // https://docs.mongodb.com/realm/mongodb/actions/collection.bulkWrite/
 // https://docs.mongodb.com/realm/mongodb/actions/collection.insertMany/
 
-exports = async function(transaction) {
+exports = async function(changeEvent) {
   context.functions.execute("utilsV2");
 
+  const transaction = changeEvent.fullDocument;
   const symbolsCollection = db.collection("symbols");
   const symbol = await symbolsCollection.findOne({ t: transaction.s });
   const symbolID = symbol._id;
