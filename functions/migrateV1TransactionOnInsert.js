@@ -22,5 +22,11 @@ exports = async function(changeEvent) {
   transactionV2.s = symbolID;
   
   const transactionsCollection = db.collection("transactions");
-  return await transactionsCollection.insertOne(transactionV2);
+  let existingTransactionV2 = await transactionsCollection.findOne({ _id: transactionsCollection._id });
+  let existingTransactionV2s = null;
+  if (existingTransactionV2 != null) {
+    existingTransactionV2s = [existingTransactionV2];
+  }
+
+  return await transactionsCollection.safeUpdateMany([transactionV2], existingTransactionV2s)
 };
