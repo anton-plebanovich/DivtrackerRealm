@@ -15,7 +15,7 @@
         "full_document_before_change": false,
         "unordered": false
     },
-    "disabled": true,
+    "disabled": false,
     "event_processors": {
         "FUNCTION": {
             "config": {
