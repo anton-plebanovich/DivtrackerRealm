@@ -78,7 +78,7 @@ async function loadMissingCompanies(shortSymbols) {
  */
 async function loadMissingDividends(shortSymbols) {
   const collection = db.collection('dividends');
-  const missingShortSymbols = await getMissingShortSymbols(collection, '_i', shortSymbols);
+  const missingShortSymbols = await getMissingShortSymbols(collection, 's', shortSymbols);
   if (missingShortSymbols.length) {
     console.log(`Found missing dividends for tickers: ${missingShortSymbols.map(x => x.t)}`);
   } else {
@@ -111,7 +111,7 @@ async function loadMissingDividends(shortSymbols) {
  */
 async function loadMissingHistoricalPrices(shortSymbols) {
   const collection = db.collection('historical-prices');
-  const missingShortSymbols = await getMissingShortSymbols(collection, '_i', shortSymbols);
+  const missingShortSymbols = await getMissingShortSymbols(collection, 's', shortSymbols);
   if (missingShortSymbols.length) {
     console.log(`Found missing historical prices for tickers: ${missingShortSymbols.map(x => x.t)}`);
   } else {
@@ -204,7 +204,7 @@ async function loadMissingQuotes(shortSymbols) {
  */
 async function loadMissingSplits(shortSymbols) {
   const collection = db.collection('splits');
-  const missingShortSymbols = await getMissingShortSymbols(collection, '_i', shortSymbols);
+  const missingShortSymbols = await getMissingShortSymbols(collection, 's', shortSymbols);
   if (missingShortSymbols.length) {
     console.log(`Found missing splits for tickers: ${missingShortSymbols.map(x => x.t)}`);
   } else {
