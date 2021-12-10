@@ -1409,17 +1409,6 @@ function _fixQuote(iexQuote, symbolID) {
     quote.l = iexQuote.latestPrice;
     quote.p = BSON.Double(iexQuote.peRatio);
 
-    if (iexQuote.latestUpdate) {
-      const date = new Date(iexQuote.latestUpdate);
-      if (date && !isNaN(date)) {
-        quote.d = date;
-      } else {
-        quote.d = new Date();
-      }
-    } else {
-      quote.d = new Date();
-    }
-
     return quote;
 
   } catch(error) {
