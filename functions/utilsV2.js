@@ -1435,9 +1435,9 @@ function _fixSplits(iexSplits, symbolID) {
         const split = {};
         split._ = "2";
         split._p = "2";
-        split._i = symbolID;
         split.e = getOpenDate(iexSplit.exDate);
         split.r = BSON.Double(iexSplit.ratio);
+        split.s = symbolID;
 
         return split;
       });

@@ -103,6 +103,10 @@
         "private": true
     },
     {
+        "name": "updateSplitsV2",
+        "private": true
+    },
+    {
         "name": "updateSymbols",
         "private": true
     },
