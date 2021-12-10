@@ -1,0 +1,16 @@
+{
+    "id": "6185ffbd6db886ed8f037b90",
+    "name": "updateSplitsDailyV2",
+    "type": "SCHEDULED",
+    "config": {
+        "schedule": "3 9 * * *"
+    },
+    "disabled": false,
+    "event_processors": {
+        "FUNCTION": {
+            "config": {
+                "function_name": "updateSplitsV2"
+            }
+        }
+    }
+}

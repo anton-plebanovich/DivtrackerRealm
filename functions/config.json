@@ -18,6 +18,10 @@
         "private": true
     },
     {
+        "name": "checkTransactionsV2",
+        "private": true
+    },
+    {
         "name": "checkUserTransactions",
         "private": true
     },
@@ -35,23 +39,6 @@
     },
     {
         "name": "loadMissingDataV2",
-        "private": true
-    },
-    {
-        "name": "loadMissingDataForChangeEvent",
-        "private": true
-    },
-    {
-        "name": "loadMissingDataForSymbol",
-        "private": true,
-        "run_as_system": true
-    },
-    {
-        "name": "loadMissingDataForUser",
-        "private": true
-    },
-    {
-        "name": "loadMissingDividendsForSymbol",
         "private": true
     },
     {

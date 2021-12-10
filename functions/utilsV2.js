@@ -754,16 +754,15 @@ async function _getShortSymbols(symbolIDs) {
 getShortSymbols = _getShortSymbols;
 
 /** 
- * @returns {Promise<["AAPL:NAS"]>} Array of unique transaction IDs, e.g. ["AAPL:NAS"]
+ * @returns {Promise<[ObjectId]>} Array of unique transaction IDs
 */
 async function _getDistinctTransactionSymbolIDs() {
-  // We project '_i' field first and then produce unique objects with only '_id' field
   const transactionsCollection = db.collection("transactions");
   const distinctTransactionSymbolIDs = await transactionsCollection.distinct("s");
   distinctTransactionSymbolIDs.sort();
 
-  console.log(`Unique transaction IDs (${distinctTransactionSymbolIDs.length})`);
-  console.logData(`Unique transaction IDs (${distinctTransactionSymbolIDs.length})`, distinctTransactionSymbolIDs);
+  console.log(`Distinct symbol IDs for transactions (${distinctTransactionSymbolIDs.length})`);
+  console.logData(`Distinct symbol IDs for transactions (${distinctTransactionSymbolIDs.length})`, distinctTransactionSymbolIDs);
 
   return distinctTransactionSymbolIDs;
 }
