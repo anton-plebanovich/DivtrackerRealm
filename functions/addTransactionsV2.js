@@ -8,16 +8,16 @@
 /**
  * @example 
    context.user.id = '61ae5154d9b3cb9ea55ec5c6';
-   exports([{"a":1.1,"d":new Date(1636089825657),"p":320.1,"s":new ObjectId("61b102c0048b84e9c13e4564")}]);
+   exports([{"a":1.1,"d":new Date(1636089825657),"p":320.1,"s":new BSON.ObjectId("61b102c0048b84e9c13e4564")}]);
  */
 exports = async function(transactions) {
   context.functions.execute("utilsV2");
 
   throwIfEmptyArray(
     transactions, 
-    `\nPlease pass non-empty transactions array as the first argument.`, 
+    `Please pass non-empty transactions array as the first argument.`, 
     UserError
-  )
+  );
 
   const userID = context.user.id;
   console.log(`Adding transactions (${transactions.length}) for user '${userID}'`);

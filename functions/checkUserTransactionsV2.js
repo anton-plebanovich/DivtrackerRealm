@@ -12,15 +12,15 @@
  * - There should be less than 1_000_000 transactions per user.
  * @param {string} userID User ID
  * @param {[Transaction]} arg2 The same user transactions.
- * @example exports('61ae5154d9b3cb9ea55ec5c6', [{"_": "61ae5154d9b3cb9ea55ec5c6","p":300.1,"d":{"$date":new Date(1635895369641)},"s":new ObjectId("61b102c0048b84e9c13e4564"),"a":1.1}]);
+ * @example exports('61ae5154d9b3cb9ea55ec5c6', [{"_": "61ae5154d9b3cb9ea55ec5c6","p":300.1,"d":{"$date":new Date(1635895369641)},"s":new BSON.ObjectId("61b102c0048b84e9c13e4564"),"a":1.1}]);
  */ 
  exports = async function(userID, transactions) {
-  context.functions.execute("utils");
+  context.functions.execute("utilsV2");
 
   throwIfEmptyArray(
     transactions, 
-    new LazyString(`\nPlease pass non-empty transactions array as the second argument.`)
-  )
+    `Please pass non-empty transactions array as the second argument.`
+  );
 
   const requiredTransactionKeys = [
     "_",

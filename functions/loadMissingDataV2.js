@@ -7,10 +7,10 @@
 /**
  * @example
  * exports();
- * exports([{"s":new ObjectId("61b102c0048b84e9c13e4564")}]);
+ * exports([{"s":new BSON.ObjectId("61b102c0048b84e9c13e4564")}]);
  */
 exports = async function loadMissingData(transactions) {
-  context.functions.execute("utils");
+  context.functions.execute("utilsV2");
   
   // TODO:
   let shortSymbols;
@@ -19,7 +19,7 @@ exports = async function loadMissingData(transactions) {
       .map(x => x.s)
       .distinct();
 
-    shortSymbols = await getShortSymbols(symbolIDs)
+    shortSymbols = await getShortSymbols(symbolIDs);
 
   } else {
     shortSymbols = await getInUseShortSymbols();

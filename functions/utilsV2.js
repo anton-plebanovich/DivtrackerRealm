@@ -342,6 +342,11 @@ String.prototype.isEqual = function(string) {
 
 class _LazyString {
   constructor(closure) {
+    const closureType = typeof closure;
+    if (closureType !== 'function') {
+      throw `LazyString accepts only function as an argument. Please use something like this: '() => "My string"'`;
+    }
+
     this.closure = closure;
   }
 
