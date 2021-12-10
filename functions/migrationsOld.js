@@ -6,6 +6,8 @@
 // https://docs.mongodb.com/manual/reference/method/Bulk.find.removeOne/
 // https://docs.mongodb.com/manual/reference/method/Bulk.insert/
 
+exports = function() {};
+
 ////////////////////////////////// 03-12-2021
 
 // IEX exchanges were renamed so we need to fix our data
