@@ -29,6 +29,13 @@ exports = async function(transactions) {
     }
   });
 
+  // Add `_p` key if missing
+  transactions.forEach(transaction => {
+    if (transaction._p == null) {
+      transaction._p = userID;
+    }
+  });
+
   // Check
   await context.functions
     .execute("checkUserTransactionsV2", userID, transactions)
