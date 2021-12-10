@@ -776,8 +776,8 @@ getDistinctTransactionSymbolIDs = _getDistinctTransactionSymbolIDs;
 async function _getSupportedSymbolIDs() {
   const symbolsCollection = db.collection("symbols");
   const supportedSymbolIDs = await symbolsCollection.distinct("_id", { isEnabled: true });
-  console.log(`Unique symbols (${supportedSymbolIDs.length})`);
-  console.logData(`Unique symbols (${supportedSymbolIDs.length})`, supportedSymbolIDs);
+  console.log(`Supported symbols (${supportedSymbolIDs.length})`);
+  console.logData(`Supported symbols (${supportedSymbolIDs.length})`, supportedSymbolIDs);
 
   return supportedSymbolIDs;
 };

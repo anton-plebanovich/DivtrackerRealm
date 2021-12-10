@@ -12,7 +12,7 @@
  * - There should be less than 1_000_000 transactions per user.
  * @param {string} userID User ID
  * @param {[Transaction]} arg2 The same user transactions.
- * @example exports('61ae5154d9b3cb9ea55ec5c6', [{"_": "61ae5154d9b3cb9ea55ec5c6","p":300.1,"d":{"$date":new Date(1635895369641)},"s":new BSON.ObjectId("61b102c0048b84e9c13e4564"),"a":1.1}]);
+ * @example exports('61ae5154d9b3cb9ea55ec5c6', [{"_": "61ae5154d9b3cb9ea55ec5c6", "_p": "61ae5154d9b3cb9ea55ec5c6","p":300.1,"d":{"$date":new Date(1635895369641)},"s":new BSON.ObjectId("61b102c0048b84e9c13e4564"),"a":1.1}]);
  */ 
  exports = async function(userID, transactions) {
   context.functions.execute("utilsV2");
@@ -37,6 +37,7 @@
   ];
 
   const supportedSymbolIDs = await getSupportedSymbolIDs();
+  const supportedSymbolIDStrings = supportedSymbolIDs.map(x => x.toString())
   const transactionsCollection = db.collection("transactions");
   // Check transactions
   for (const transaction of transactions) {
@@ -79,7 +80,7 @@
       logAndThrow(`Transaction symbol ID format is invalid. It should be 24 characters ObjectId: ${transaction.stringify()}`);
     }
   
-    if (!supportedSymbolIDs.includes(transaction.s)) {
+    if (!supportedSymbolIDStrings.includes(transaction.s.toString())) {
       logAndThrow(`Unknown transaction symbol: ${transaction.stringify()}`);
     }
 
