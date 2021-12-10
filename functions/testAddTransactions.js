@@ -3,7 +3,7 @@
 
 /**
  * @example
-   context.user.id = '618600d6cab8724b39b6df4b';
+   context.user.id = '61ae5154d9b3cb9ea55ec5c6';
    exports();
  */
  exports = async function() {

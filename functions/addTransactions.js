@@ -7,7 +7,7 @@
 
 /**
  * @example 
-   context.user.id = '618600d6cab8724b39b6df4b';
+   context.user.id = '61ae5154d9b3cb9ea55ec5c6';
    exports([{"a":1.1,"d":new Date(1636089825657),"e":"NYS","p":320.1,"s":"LMT"}]);
  */
 exports = async function(transactions) {

@@ -62,6 +62,7 @@
     .map(previousDayPrice => {
       const historicalPrice = {};
       historicalPrice._p = previousDayPrice._p;
+      historicalPrice._ = previousDayPrice._;
       historicalPrice.c = previousDayPrice.c;
       historicalPrice.d = yesterdayCloseDate;
       historicalPrice.s = previousDayPrice._id;

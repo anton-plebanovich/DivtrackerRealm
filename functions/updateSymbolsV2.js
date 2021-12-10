@@ -135,10 +135,7 @@ async function updateDivtrackerSymbols() {
   const newSymbols = iexSymbols.map(iexSymbol => {
     const symbol = {};
     symbol._id = iexSymbol._id;
-
-    // TODO: Remove '_p' later
     symbol._p = "2";
-    
     symbol._ = "2";
     symbol.n = iexSymbol.name;
     symbol.t = iexSymbol.symbol;

@@ -30,7 +30,7 @@ exports = async function() {
     const bulk = collection.initializeUnorderedBulkOp();
     for (const split of splits) {
       console.log(`Checking '${split.s}' for '${split.e}' ex date`);
-      bulk.find({ s: split.s, d: split.e })
+      bulk.find({ e: split.e, s: split.s })
         .upsert()
         .updateOne({ $setOnInsert: split });
     }
@@ -39,6 +39,6 @@ exports = async function() {
     console.log(`SUCCESS`);
 
   } else {
-    console.log(`Splits are empty for symbols '${shortSymbols.stringify()}'`);
+    console.log(`Splits are empty for symbols: '${shortSymbols.map(x => x.t)}'`);
   }
 };

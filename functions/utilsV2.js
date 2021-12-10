@@ -697,7 +697,7 @@ getOpenDate = function getOpenDate(openDateValue) {
 /** 
  * Computes and returns sorted in use symbols from companies and user transactions.
  * Returned symbols are shortened to `_id` and `s` fields.
- * @returns {Promise<[Symbol]>} Array of unique IDs.
+ * @returns {Promise<[ShortSymbol]>} Array of short symbols.
 */
 async function _getInUseShortSymbols() {
   // We combine transactions and companies distinct IDs. 
@@ -715,27 +715,38 @@ async function _getInUseShortSymbols() {
   console.log(`Unique companies IDs (${companyIDs.length})`);
   console.logData(`Unique companies IDs (${companyIDs.length})`, companyIDs);
 
-  // Compute unique IDs using both sources
-  let uniqueIDs = companyIDs
+  // Compute symbol IDs using both sources
+  let symbolIDs = companyIDs
     .concat(distinctTransactionSymbolIDs)
     .distinct();
 
-  // Getting symbols for IDs
-  const symbols = await symbolsCollection
+  return await getShortSymbols(symbolIDs);
+};
+
+getInUseShortSymbols = _getInUseShortSymbols;
+
+/** 
+ * Returns sorted short symbols for symbol IDs
+ * @param {[ObjectId]} symbolIDs
+ * @returns {Promise<[ShortSymbol]>}
+*/
+async function _getShortSymbols(symbolIDs) {
+  // Getting short symbols for IDs
+  const shortSymbols = await symbolsCollection
     .find(
-      { _id: { $in: uniqueIDs } }, 
+      { _id: { $in: symbolIDs } }, 
       { _id: 1, t: 1 }
     )
     .sort({ t: 1 })
     .toArray();
 
-  console.log(`Symbols (${symbols.length})`);
-  console.logData(`Symbols (${symbols.length})`, symbols);
+  console.log(`Got short symbols (${shortSymbols.length}) for '${symbolIDs}'`);
+  console.logData(`Got short symbols (${shortSymbols.length}) for '${symbolIDs}'`, shortSymbols);
 
-  return symbols;
+  return shortSymbols;
 };
 
-getInUseShortSymbols = _getInUseShortSymbols;
+getShortSymbols = _getShortSymbols;
 
 /** 
  * @returns {Promise<["AAPL:NAS"]>} Array of unique transaction IDs, e.g. ["AAPL:NAS"]
