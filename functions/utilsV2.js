@@ -38,7 +38,7 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, field) 
 
   const bulk = this.initializeUnorderedBulkOp();
   for (const newObject of newObjects) {
-    const existingObject = oldObjects.find(x => x[field] === newObject[field]);
+    const existingObject = oldObjects.find(x => x[field].isEqual(newObject[field]));
     bulk.findAndUpdateOrInsertIfNeeded(newObject, existingObject, field)
   }
 
