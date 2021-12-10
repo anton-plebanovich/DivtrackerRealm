@@ -711,7 +711,6 @@ async function _getInUseShortSymbols() {
   // Meanwhile transactions may contain not yet fetched symbols or have less symbols than we already should be updating (transactions may be deleted).
   // So by combining we have all current + all future symbols. Idealy.
   const companiesCollection = db.collection("companies");
-  const symbolsCollection = db.collection("symbols");
   const [companyIDs, distinctTransactionSymbolIDs] = await Promise.all([
     companiesCollection.distinct("_id", {}),
     _getDistinctTransactionSymbolIDs()
@@ -737,6 +736,7 @@ getInUseShortSymbols = _getInUseShortSymbols;
 */
 async function _getShortSymbols(symbolIDs) {
   // Getting short symbols for IDs
+  const symbolsCollection = db.collection("symbols");
   const shortSymbols = await symbolsCollection
     .find(
       { _id: { $in: symbolIDs } }, 
