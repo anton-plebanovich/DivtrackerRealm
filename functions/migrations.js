@@ -46,8 +46,9 @@ async function v2DatabaseFillMigration() {
     // fillV2DividendsCollectionMigration(v2Symbols, invalidEntitesFind),
     // fillV2HistoricalPricesCollectionMigration(v2Symbols, invalidEntitesFind),
     // fillV2PreviousDayPricesCollectionMigration(v2Symbols, invalidEntitesFind),
-    fillV2QoutesCollectionMigration(v2Symbols, invalidEntitesFind),
+    // fillV2QoutesCollectionMigration(v2Symbols, invalidEntitesFind),
     fillV2SettingsCollectionMigration(v2Symbols, invalidEntitesFind),
+    fillV2SplitsCollectionMigration(v2Symbols, invalidEntitesFind),
   ]);
 }
 
@@ -558,6 +559,80 @@ async function fillV2SettingsCollectionMigration(v2Symbols, invalidEntitesFind) 
   await v2Collection.deleteMany({});
 
   return await v2Collection.insertMany(v2Settings);
+}
+
+async function fillV2SplitsCollectionMigration(v2Symbols, invalidEntitesFind) {
+  const v1Collection = atlas.db("divtracker").collection('splits');
+
+  // Check that data is valid
+  const invalidEntities = await v1Collection.count({ _i: invalidEntitesFind });
+  if (invalidEntities > 0) {
+    throw `Found ${invalidEntities} invalid entities for V1 splits`;
+  }
+
+  const v1Splits = await v1Collection.find().toArray();
+  /** V1
+  {
+    "_id": {
+      "$oid": "61b4ec72e9bd6c27860a4627"
+    },
+    "_i": "AAPL:XNAS",
+    "e": {
+      "$date": {
+        "$numberLong": "1597761000000"
+      }
+    },
+    "_p": "P",
+    "r": {
+      "$numberDouble": "0.26"
+    }
+  }
+  */
+
+  /** V2
+  {
+    "_id": {
+      "$oid": "61b4ec72e9bd6c27860a4627"
+    },
+    "_p": "2",
+    "e": {
+      "$date": {
+        "$numberLong": "1597761000000"
+      }
+    },
+    "r": {
+      "$numberDouble": "0.26"
+    },
+    "s": {
+      "$oid": "61b102c0048b84e9c13e4564"
+    }
+  }
+  */
+  const v2Splits = v1Splits
+    .map(v1Split => {
+      // AAPL:XNAS -> AAPL
+      const ticker = v1Split._i.split(':')[0];
+      const symbolID = v2Symbols.find(x => x.t === ticker)._id;
+      if (symbolID == null) {
+        throw `Unknown V1 ticker '${ticker}' for split ${v1Split.stringify()}`;
+      }
+
+      const v2Split = {};
+      v2Split._id = v1Split._id;
+      v2Split._p = "2";
+      v2Split.e = v1Split.e;
+      v2Split.r = v1Split.r;
+      v2Split.s = symbolID;
+
+      return v2Split;
+    });
+
+  const v2Collection = db.collection('splits');
+
+  // Delete existing if any to prevent duplication
+  await v2Collection.deleteMany({});
+
+  return await v2Collection.insertMany(v2Splits);
 }
 
 ////////////////////////////////////////////////////// Partition key migration
