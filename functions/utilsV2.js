@@ -27,13 +27,25 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, field) 
     return;
   }
 
-  if (oldObjects == null) {
-    console.log(`No old objects. Just inserting new objects.`);
-    return await this.insertMany(newObjects);
-  }
-
   if (field == null) {
     field = "_id";
+  }
+
+  if (typeof oldObjects === 'undefined') {
+    if (newObjects.length < 1000) {
+      console.log(`Old objects are undefined. Fetching them by '${field}'.`);
+      const fileds = newObjects.map(x => x[field]);
+      newObjects = await this.find({ [field]: { $in: fileds } }).toArray();
+
+    } else {
+      console.log(`Old objects are undefined. Fetching all.`);
+      newObjects = await this.find().toArray();
+    }
+  }
+
+  if (oldObjects === [] || oldObjects === null) {
+    console.log(`No old objects. Just inserting new objects.`);
+    return await this.insertMany(newObjects);
   }
 
   const bulk = this.initializeUnorderedBulkOp();

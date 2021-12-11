@@ -6,9 +6,19 @@
 // https://docs.mongodb.com/realm/mongodb/actions/collection.insertMany/
 
 exports = async function(changeEvent) {
-  const transaction = changeEvent.fullDocument;
   const atlas = context.services.get("Cluster0");
   const db = atlas.db("divtracker-v2");
+  const transactionsCollection = db.collection("transactions")
+
+  // Delete V2 transaction on delete
+  if (changeEvent.operationType === 'delete') {
+    const id = changeEvent.documentKey._id;
+    await transactionsCollection.deleteOne({ _id: new ObjectId(id) });
+    return;
+  }
+  
+  // Update/Insert V2 transaction
+  const transaction = changeEvent.fullDocument;
   const symbolsCollection = db.collection("symbols");
   const symbol = await symbolsCollection.findOne({ t: transaction.s });
   const symbolID = symbol._id;
@@ -21,14 +31,7 @@ exports = async function(changeEvent) {
   transactionV2.p = transaction.p;
   transactionV2.s = symbolID;
   
-  const transactionsCollection = db.collection("transactions");
-  const existingTransactionV2 = await transactionsCollection.findOne({ _id: transactionV2._id });
-  let existingTransactionV2s = null;
-  if (existingTransactionV2 != null) {
-    existingTransactionV2s = [existingTransactionV2];
-  }
-
-  return await transactionsCollection.safeUpdateMany([transactionV2], existingTransactionV2s);
+  return await transactionsCollection.safeUpdateMany([transactionV2]);
 };
 
 /**
@@ -47,27 +50,39 @@ exports = async function(changeEvent) {
 /**
  * Safely computes and executes update operation from old to new objects on a collection.
  */
-Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, field) {
-  _throwIfEmptyArray(newObjects, `\nPlease pass non-empty new objects array as the first argument.`)
+ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, field) {
+  _throwIfEmptyArray(newObjects, `Please pass non-empty new objects array as the first argument.`);
 
   if (newObjects.length === 0) {
     console.error(`New objects are empty. Skipping update.`);
     return;
   }
 
-  if (oldObjects == null) {
-    console.log(`No old objects. Just inserting new objects.`);
-    return await this.insertMany(newObjects);
-  }
-
   if (field == null) {
     field = "_id";
+  }
+
+  if (typeof oldObjects === 'undefined') {
+    if (newObjects.length < 1000) {
+      console.log(`Old objects are undefined. Fetching them by '${field}'.`);
+      const fileds = newObjects.map(x => x[field]);
+      newObjects = await this.find({ [field]: { $in: fileds } }).toArray();
+
+    } else {
+      console.log(`Old objects are undefined. Fetching all.`);
+      newObjects = await this.find().toArray();
+    }
+  }
+
+  if (oldObjects === [] || oldObjects === null) {
+    console.log(`No old objects. Just inserting new objects.`);
+    return await this.insertMany(newObjects);
   }
 
   const bulk = this.initializeUnorderedBulkOp();
   for (const newObject of newObjects) {
     const existingObject = oldObjects.find(x => x[field].isEqual(newObject[field]));
-    bulk.findAndUpdateOrInsertIfNeeded(newObject, existingObject, field)
+    bulk.findAndUpdateOrInsertIfNeeded(newObject, existingObject, field);
   }
 
   return await bulk.safeExecute();

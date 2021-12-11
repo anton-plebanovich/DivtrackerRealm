@@ -4,7 +4,9 @@
     "type": "DATABASE",
     "config": {
         "operation_types": [
-            "INSERT"
+            "INSERT",
+            "UPDATE",
+            "DELETE"
         ],
         "database": "divtracker",
         "collection": "transactions",

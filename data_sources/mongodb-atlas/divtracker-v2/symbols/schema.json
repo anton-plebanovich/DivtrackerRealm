@@ -12,6 +12,7 @@
     },
     "required": [
         "_id",
+        "_p",
         "n"
     ],
     "title": "SymbolV2RealmModel"
