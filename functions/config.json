@@ -42,19 +42,19 @@
         "private": false
     },
     {
-        "name": "migrateV1SettingsOnInsert",
-        "private": true
-    },
-    {
-        "name": "migrateV1TransactionOnInsert",
-        "private": true
-    },
-    {
         "name": "migrations",
         "private": true
     },
     {
         "name": "playground",
+        "private": true
+    },
+    {
+        "name": "syncV1toV2Settings",
+        "private": true
+    },
+    {
+        "name": "syncV1toV2Transaction",
         "private": true
     },
     {

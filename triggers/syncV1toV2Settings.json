@@ -1,15 +1,14 @@
 {
-    "id": "6185ffbd6db886ed8f037b11",
-    "name": "migrateV1TransactionOnInsert",
+    "id": "6185ffbd6db886ed8f037b12",
+    "name": "syncV1toV2Settings",
     "type": "DATABASE",
     "config": {
         "operation_types": [
             "INSERT",
-            "UPDATE",
-            "DELETE"
+            "UPDATE"
         ],
         "database": "divtracker",
-        "collection": "transactions",
+        "collection": "settings",
         "service_name": "mongodb-atlas",
         "match": {},
         "project": {},
@@ -21,7 +20,7 @@
     "event_processors": {
         "FUNCTION": {
             "config": {
-                "function_name": "migrateV1TransactionOnInsert"
+                "function_name": "syncV1toV2Settings"
             }
         }
     }

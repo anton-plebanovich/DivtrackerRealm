@@ -1,5 +1,5 @@
 
-// migrateV1TransactionOnInsert.js
+// syncV1toV2TransactionMongo.js
 
 // https://docs.mongodb.com/manual/reference/method/Bulk.find.upsert/
 // https://docs.mongodb.com/realm/mongodb/actions/collection.bulkWrite/

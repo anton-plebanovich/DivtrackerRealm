@@ -1,5 +1,5 @@
 
-// migrateV1SettingsOnInsert.js
+// syncV1toV2Settings.js
 
 // https://docs.mongodb.com/manual/reference/method/Bulk.find.upsert/
 // https://docs.mongodb.com/realm/mongodb/actions/collection.bulkWrite/
