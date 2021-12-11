@@ -42,13 +42,14 @@ async function v2DatabaseFillMigration() {
   const invalidEntitesFind = { $regex: ":(NAS|NYS|POR|USAMEX|USBATS|USPAC)" };
 
   return await Promise.all([
-    // fillV2CompanyCollectionMigration(v2Symbols, invalidEntitesFind),
-    // fillV2DividendsCollectionMigration(v2Symbols, invalidEntitesFind),
-    // fillV2HistoricalPricesCollectionMigration(v2Symbols, invalidEntitesFind),
-    // fillV2PreviousDayPricesCollectionMigration(v2Symbols, invalidEntitesFind),
-    // fillV2QoutesCollectionMigration(v2Symbols, invalidEntitesFind),
+    fillV2CompanyCollectionMigration(v2Symbols, invalidEntitesFind),
+    fillV2DividendsCollectionMigration(v2Symbols, invalidEntitesFind),
+    fillV2HistoricalPricesCollectionMigration(v2Symbols, invalidEntitesFind),
+    fillV2PreviousDayPricesCollectionMigration(v2Symbols, invalidEntitesFind),
+    fillV2QoutesCollectionMigration(v2Symbols, invalidEntitesFind),
     fillV2SettingsCollectionMigration(v2Symbols, invalidEntitesFind),
     fillV2SplitsCollectionMigration(v2Symbols, invalidEntitesFind),
+    fillV2TransactionsCollectionMigration(v2Symbols, invalidEntitesFind),
   ]);
 }
 
@@ -633,6 +634,98 @@ async function fillV2SplitsCollectionMigration(v2Symbols, invalidEntitesFind) {
   await v2Collection.deleteMany({});
 
   return await v2Collection.insertMany(v2Splits);
+}
+
+async function fillV2TransactionsCollectionMigration(v2Symbols, invalidEntitesFind) {
+  const v1Collection = atlas.db("divtracker").collection('transactions');
+
+  // Fixing regex
+  invalidEntitesFind.$regex = `^${invalidEntitesFind.$regex.substring(1)}$`;
+
+  // Check that data is valid.
+  const invalidEntities = await v1Collection.count({ e: invalidEntitesFind });
+  if (invalidEntities > 0) {
+    throw `Found ${invalidEntities} invalid entities for V1 transactions`;
+  }
+
+  const v1Transactions = await v1Collection.find().toArray();
+  /** V1
+  {
+    "_id": {
+      "$oid": "61b4ec80b3083dd2cac32eb7"
+    },
+    "_p": "61ae5154d9b3cb9ea55ec5c6",
+    "a": {
+      "$numberDouble": "25.1146"
+    },
+    "c": {
+      "$numberDouble": "0.1"
+    },
+    "d": {
+      "$date": {
+        "$numberLong": "1596905100000"
+      }
+    },
+    "e": "XNAS",
+    "p": {
+      "$numberDouble": "95.43"
+    },
+    "s": "AAPL"
+  }
+  */
+
+  /** V2
+  {
+    "_id": {
+      "$oid": "61b4ec80b3083dd2cac32eb7"
+    },
+    "_p": "2",
+    "a": {
+      "$numberDouble": "25.1146"
+    },
+    "c": {
+      "$numberDouble": "0.1"
+    },
+    "d": {
+      "$date": {
+        "$numberLong": "1596905100000"
+      }
+    },
+    "p": {
+      "$numberDouble": "95.43"
+    },
+    "s": {
+      "$oid": "61b102c0048b84e9c13e4564"
+    }
+  }
+  */
+  const v2Transactions = v1Transactions
+    .map(v1Transactions => {
+      // AAPL:XNAS -> AAPL
+      const ticker = v1Transactions.s;
+      const symbolID = v2Symbols.find(x => x.t === ticker)._id;
+      if (symbolID == null) {
+        throw `Unknown V1 ticker '${ticker}' for transaction ${v1Transactions.stringify()}`;
+      }
+
+      const v2Transactions = {};
+      v2Transactions._id = v1Transactions._id;
+      v2Transactions._p = "2";
+      v2Transactions.a = v1Transactions.a;
+      v2Transactions.c = v1Transactions.c;
+      v2Transactions.d = v1Transactions.d;
+      v2Transactions.p = v1Transactions.p;
+      v2Transactions.s = symbolID;
+
+      return v2Transactions;
+    });
+
+  const v2Collection = db.collection('transactions');
+
+  // Delete existing if any to prevent duplication
+  await v2Collection.deleteMany({});
+
+  return await v2Collection.insertMany(v2Transactions);
 }
 
 ////////////////////////////////////////////////////// Partition key migration
