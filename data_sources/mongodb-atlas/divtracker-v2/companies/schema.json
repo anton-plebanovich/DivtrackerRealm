@@ -1,0 +1,25 @@
+{
+    "properties": {
+        "_id": {
+            "bsonType": "objectId"
+        },
+        "_p": {
+            "bsonType": "string"
+        },
+        "n": {
+            "bsonType": "string"
+        },
+        "i": {
+            "bsonType": "string"
+        },
+        "t": {
+            "bsonType": "string"
+        }
+    },
+    "required": [
+        "_id",
+        "_p",
+        "n"
+    ],
+    "title": "CompanyV2RealmModel"
+}

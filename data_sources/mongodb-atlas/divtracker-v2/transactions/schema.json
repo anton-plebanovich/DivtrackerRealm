@@ -1,0 +1,34 @@
+{
+    "properties": {
+        "_id": {
+            "bsonType": "objectId"
+        },
+        "_p": {
+            "bsonType": "string"
+        },
+        "a": {
+            "bsonType": "double"
+        },
+        "c": {
+            "bsonType": "double"
+        },
+        "d": {
+            "bsonType": "date"
+        },
+        "p": {
+            "bsonType": "double"
+        },
+        "s": {
+            "bsonType": "objectId"
+        }
+    },
+    "required": [
+        "_id",
+        "_p",
+        "a",
+        "d",
+        "p",
+        "s"
+    ],
+    "title": "TransactionV2RealmModel"
+}
