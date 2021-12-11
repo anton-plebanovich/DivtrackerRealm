@@ -20,7 +20,7 @@ Object.prototype.safeExecute = async function() {
  * Safely computes and executes update operation from old to new objects on a collection.
  */
 Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, field) {
-  throwIfEmptyArray(newObjects, `\nPlease pass non-empty new objects array as the first argument.`)
+  _throwIfEmptyArray(newObjects, `Please pass non-empty new objects array as the first argument.`);
 
   if (newObjects.length === 0) {
     console.error(`New objects are empty. Skipping update.`);
@@ -39,7 +39,7 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, field) 
   const bulk = this.initializeUnorderedBulkOp();
   for (const newObject of newObjects) {
     const existingObject = oldObjects.find(x => x[field].isEqual(newObject[field]));
-    bulk.findAndUpdateOrInsertIfNeeded(newObject, existingObject, field)
+    bulk.findAndUpdateOrInsertIfNeeded(newObject, existingObject, field);
   }
 
   return await bulk.safeExecute();
@@ -75,13 +75,13 @@ Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, field) {
   const value = newObject[field];
 
   if (newObject == null) {
-    throw new SystemError(`New object should not be null for update`);
+    throw new _SystemError(`New object should not be null for update`);
     
   } else if (oldObject == null) {
-    throw new SystemError(`Old object should not be null for update`);
+    throw new _SystemError(`Old object should not be null for update`);
 
   } else if (newObject[field] == null) {
-    throw new SystemError(`New object '${field}' field should not be null for update`);
+    throw new _SystemError(`New object '${field}' field should not be null for update`);
 
   } else {
     const update = newObject.updateFrom(oldObject);

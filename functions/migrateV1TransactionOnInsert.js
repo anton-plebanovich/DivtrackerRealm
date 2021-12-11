@@ -28,5 +28,5 @@ exports = async function(changeEvent) {
     existingTransactionV2s = [existingTransactionV2];
   }
 
-  return await transactionsCollection.safeUpdateMany([transactionV2], existingTransactionV2s)
+  return await transactionsCollection.safeUpdateMany([transactionV2], existingTransactionV2s);
 };
