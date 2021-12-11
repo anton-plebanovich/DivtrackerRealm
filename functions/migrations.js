@@ -37,9 +37,9 @@ exports = async function() {
   for (const collection of dataCollections) {
     const query = {};
     const update = { $unset: { "_p": "" } };
-    const options = { "upsert": false }
+    const options = { "upsert": false };
     operations.push(
-      itemsCollection.updateMany(query, update, options)
+      collection.updateMany(query, update, options)
     );
   }
 
@@ -49,12 +49,12 @@ exports = async function() {
     db.collection('transactions'),
   ];
 
-  for (const collection of dataCollections) {
+  for (const collection of userCollections) {
     const query = {};
-    const update = { $unset: { _p: "" }, $set: { _: "$_p" } };
-    const options = { "upsert": false }
+    const update = { $rename: { _p: "_" } };
+    const options = { "upsert": false };
     operations.push(
-      itemsCollection.updateMany(query, update, options)
+      collection.updateMany(query, update, options)
     );
   }
 
