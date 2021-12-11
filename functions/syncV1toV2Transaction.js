@@ -41,19 +41,19 @@ exports = async function(changeEvent) {
   }
   
   // Update/Insert V2 transaction
-  const transaction = changeEvent.fullDocument;
+  const v1Transaction = changeEvent.fullDocument;
   const symbolsCollection = db.collection("symbols");
-  const symbol = await symbolsCollection.findOne({ t: transaction.s });
+  const symbol = await symbolsCollection.findOne({ t: v1Transaction.s });
   const symbolID = symbol._id;
 
-  const transactionV2 = {};
-  transactionV2._id = transaction._id;
-  transactionV2._p = "2";
-  transactionV2.a = transaction.a;
-  transactionV2.c = transaction.c;
-  transactionV2.d = transaction.d;
-  transactionV2.p = transaction.p;
-  transactionV2.s = symbolID;
+  const v2Transaction = {};
+  v2Transaction._id = v1Transaction._id;
+  v2Transaction._p = "2";
+  v2Transaction.a = v1Transaction.a;
+  v2Transaction.c = v1Transaction.c;
+  v2Transaction.d = v1Transaction.d;
+  v2Transaction.p = v1Transaction.p;
+  v2Transaction.s = symbolID;
   
-  return await transactionsCollection.safeUpdateMany([transactionV2]);
+  return await transactionsCollection.safeUpdateMany([v2Transaction]);
 };
