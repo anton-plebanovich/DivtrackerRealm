@@ -1276,7 +1276,6 @@ function _fixCompany(iexCompany, symbolID) {
     console.logVerbose(`Company data fix start`);
     const company = {};
     company._id = symbolID;
-    company._ = "2";
     company._p = "2";
     company.n = iexCompany.companyName.trim();
     company.i = iexCompany.industry;
@@ -1310,7 +1309,6 @@ function _fixDividends(iexDividends, symbolID) {
       .filterNull()
       .map(iexDividend => {
         const dividend = {};
-        dividend._ = "2";
         dividend._p = "2";
         dividend.a = BSON.Double(iexDividend.amount);
         dividend.d = getOpenDate(iexDividend.declaredDate);
@@ -1352,7 +1350,6 @@ function _fixPreviousDayPrice(iexPreviousDayPrice, symbolID) {
     console.logVerbose(`Previous day price data fix start`);
     const previousDayPrice = {};
     previousDayPrice._id = symbolID;
-    previousDayPrice._ = "2";
     previousDayPrice._p = "2";
     previousDayPrice.c = BSON.Double(iexPreviousDayPrice.close);
   
@@ -1385,7 +1382,6 @@ function _fixHistoricalPrices(iexHistoricalPrices, symbolID) {
       .filterNull()
       .map(iexHistoricalPrice => {
         const historicalPrice = {};
-        historicalPrice._ = "2";
         historicalPrice._p = "2";
         historicalPrice.c = BSON.Double(iexHistoricalPrice.close);
         historicalPrice.d = getCloseDate(iexHistoricalPrice.date);
@@ -1415,7 +1411,6 @@ function _fixQuote(iexQuote, symbolID) {
     console.logVerbose(`Previous day price data fix start`);
     const quote = {};
     quote._id = symbolID;
-    quote._ = "2";
     quote._p = "2";
     quote.l = iexQuote.latestPrice;
     quote.p = BSON.Double(iexQuote.peRatio);
@@ -1449,7 +1444,6 @@ function _fixSplits(iexSplits, symbolID) {
       .filterNull()
       .map(iexSplit => {
         const split = {};
-        split._ = "2";
         split._p = "2";
         split.e = getOpenDate(iexSplit.exDate);
         split.r = BSON.Double(iexSplit.ratio);

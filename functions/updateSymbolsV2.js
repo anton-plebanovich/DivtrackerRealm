@@ -136,7 +136,6 @@ async function updateDivtrackerSymbols() {
     const symbol = {};
     symbol._id = iexSymbol._id;
     symbol._p = "2";
-    symbol._ = "2";
     symbol.n = iexSymbol.name;
     symbol.t = iexSymbol.symbol;
 

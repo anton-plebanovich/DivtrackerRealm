@@ -5,14 +5,14 @@
  * Safety checks for inserting transactions. 
  * - It should have all required values.
  * - It shouldn't have excessive values.
- * - The _ key should equal userID.
+ * - The _p key should equal userID.
  * - It should have valid and existing symbol.
  * - It should have valid and existing exchange.
  * - There should be less than 1_000 unique symbols per user.
  * - There should be less than 1_000_000 transactions per user.
  * @param {string} userID User ID
  * @param {[Transaction]} arg2 The same user transactions.
- * @example exports('61ae5154d9b3cb9ea55ec5c6', [{"_": "61ae5154d9b3cb9ea55ec5c6", "_p": "61ae5154d9b3cb9ea55ec5c6","p":300.1,"d":"2021-12-08T21:00:00.000+00:00","s":new BSON.ObjectId("61b102c0048b84e9c13e4564"),"a":1.1}]);
+ * @example exports('61ae5154d9b3cb9ea55ec5c6', [{ "_p": "61ae5154d9b3cb9ea55ec5c6","p":300.1,"d":"2021-12-08T21:00:00.000+00:00","s":new BSON.ObjectId("61b102c0048b84e9c13e4564"),"a":1.1}]);
  */ 
  exports = async function(userID, transactions) {
   context.functions.execute("utilsV2");
@@ -23,7 +23,6 @@
   );
 
   const requiredTransactionKeys = [
-    "_",
     "_p",
     "a",
     "d",
@@ -54,14 +53,6 @@
       if (!requiredTransactionKeys.includes(key) && !optionalTransactionKeys.includes(key)) {
         logAndThrow(`Found excessive transaction key '${key}' for transaction: ${transaction.stringify()}`);
       }
-    }
-
-    if (!transaction._.length) {
-      logAndThrow(`Transaction partition is absent: ${transaction.stringify()}`);
-    }
-
-    if (transaction._ !== userID) {
-      logAndThrow(`Transaction partition '${transaction._}' should match user ID '${userID}': ${transaction.stringify()}`);
     }
 
     if (!transaction._p.length) {

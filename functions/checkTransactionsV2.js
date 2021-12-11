@@ -35,7 +35,6 @@
 
 const requiredTransactionKeys = [
   "_id",
-  "_",
   "_p",
   "a",
   "d",
@@ -56,15 +55,10 @@ function checkTransaction(transaction, supportedSymbolIDStrings) {
     }
 
     // Checking that no excessive keys are present
-    const entries = Object.entries(transaction);
-    for (const [key, value] of entries) {
+    for (const [key, value] of Object.entries(transaction)) {
       if (!requiredTransactionKeys.includes(key) && !optionalTransactionKeys.includes(key)) {
         logAndThrow(`Found excessive transaction key '${key}' for transaction: ${transaction.stringify()}`);
       }
-    }
-
-    if (!transaction._.length) {
-      logAndThrow(`Transaction partition is absent: ${transaction.stringify()}`);
     }
 
     if (!transaction._p.length) {
