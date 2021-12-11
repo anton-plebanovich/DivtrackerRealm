@@ -2,6 +2,7 @@
 // migrations.js
 
 // https://docs.mongodb.com/realm/mongodb/actions/collection.count/
+// https://docs.mongodb.com/realm/mongodb/actions/collection.insertMany/
 // https://docs.mongodb.com/realm/mongodb/actions/collection.updateMany/
 // https://docs.mongodb.com/manual/reference/operator/update/unset/
 // https://docs.mongodb.com/manual/reference/method/Bulk.find.removeOne/
@@ -23,7 +24,7 @@
 exports = async function() {
   context.functions.execute("utilsV2");
 
-  return await v2DatabaseFillMigration();
+  await v2DatabaseFillMigration();
 };
 
 async function v2DatabaseFillMigration() {
@@ -40,10 +41,11 @@ async function v2DatabaseFillMigration() {
   const v2Symbols = await v2SymbolsCollection.find().toArray();
   const invalidEntitesFind = { $regex: ":(NAS|NYS|POR|USAMEX|USBATS|USPAC)" };
 
-  return Promise.all([
+  return await Promise.all([
     // fillV2CompanyCollectionMigration(v2Symbols, invalidEntitesFind),
     // fillV2DividendsCollectionMigration(v2Symbols, invalidEntitesFind),
-    fillV2HistoricalPricesCollectionMigration(v2Symbols, invalidEntitesFind),
+    // fillV2HistoricalPricesCollectionMigration(v2Symbols, invalidEntitesFind),
+    fillV2PreviousDayPricesCollectionMigration(v2Symbols, invalidEntitesFind),
   ]);
 }
 
@@ -103,7 +105,7 @@ async function fillV2CompanyCollectionMigration(v2Symbols, invalidEntitesFind) {
   // Delete existing if any to prevent duplication
   await v2Collection.deleteMany({});
 
-  return await v2Collection.safeUpdateMany(v2Companies, []);
+  return await v2Collection.insertMany(v2Companies);
 }
 
 async function fillV2DividendsCollectionMigration(v2Symbols, invalidEntitesFind) {
@@ -203,7 +205,7 @@ async function fillV2DividendsCollectionMigration(v2Symbols, invalidEntitesFind)
   // Delete existing if any to prevent duplication
   await v2Collection.deleteMany({});
 
-  return await v2Collection.safeUpdateMany(v2Dividends, []);
+  return await v2Collection.insertMany(v2Dividends);
 }
 
 async function fillV2HistoricalPricesCollectionMigration(v2Symbols, invalidEntitesFind) {
@@ -277,7 +279,63 @@ async function fillV2HistoricalPricesCollectionMigration(v2Symbols, invalidEntit
   // Delete existing if any to prevent duplication
   await v2Collection.deleteMany({});
 
-  return await v2Collection.safeUpdateMany(v2HistoricalPrices, []);
+  return await v2Collection.insertMany(v2HistoricalPrices);
+}
+
+async function fillV2PreviousDayPricesCollectionMigration(v2Symbols, invalidEntitesFind) {
+  const v1Collection = atlas.db("divtracker").collection('previous-day-prices');
+
+  // Check that data is valid
+  const invalidEntities = await v1Collection.count({ _id: invalidEntitesFind });
+  if (invalidEntities > 0) {
+    throw `Found ${invalidEntities} invalid entities for V1 previous day prices`;
+  }
+
+  const v1PreviousDayPrices = await v1Collection.find().toArray();
+  /** V1
+  {
+    "_id": "AAPL:XNAS",
+    "_p": "P",
+    "c": {
+      "$numberDouble": "182.37"
+    }
+  }
+   */
+
+  /** V2
+  {
+    "_id": {
+      "$oid": "61b102c0048b84e9c13e4734"
+    },
+    "_p": "2",
+    "c": {
+      "$numberDouble": "217.48"
+    }
+  }
+   */
+  const v2PreviousDayPrices = v1PreviousDayPrices
+    .map(v1PreviousDayPrices => {
+      // AAPL:XNAS -> AAPL
+      const ticker = v1PreviousDayPrices._id.split(':')[0];
+      const symbolID = v2Symbols.find(x => x.t === ticker)._id;
+      if (symbolID == null) {
+        throw `Unknown V1 ticker '${ticker}' for previous day price ${v1PreviousDayPrices.stringify()}`;
+      }
+
+      const v2PreviousDayPrices = {};
+      v2PreviousDayPrices._id = symbolID;
+      v2PreviousDayPrices._p = "2";
+      v2PreviousDayPrices.c = v1PreviousDayPrices.c;
+
+      return v2PreviousDayPrices;
+    });
+
+  const v2Collection = db.collection('previous-day-prices');
+
+  // Delete existing if any to prevent duplication
+  await v2Collection.deleteMany({});
+
+  return await v2Collection.insertMany(v2PreviousDayPrices);
 }
 
 ////////////////////////////////////////////////////// Partition key migration
