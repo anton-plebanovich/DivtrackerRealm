@@ -45,8 +45,9 @@ async function v2DatabaseFillMigration() {
     // fillV2CompanyCollectionMigration(v2Symbols, invalidEntitesFind),
     // fillV2DividendsCollectionMigration(v2Symbols, invalidEntitesFind),
     // fillV2HistoricalPricesCollectionMigration(v2Symbols, invalidEntitesFind),
-    fillV2PreviousDayPricesCollectionMigration(v2Symbols, invalidEntitesFind),
+    // fillV2PreviousDayPricesCollectionMigration(v2Symbols, invalidEntitesFind),
     fillV2QoutesCollectionMigration(v2Symbols, invalidEntitesFind),
+    fillV2SettingsCollectionMigration(v2Symbols, invalidEntitesFind),
   ]);
 }
 
@@ -404,6 +405,159 @@ async function fillV2QoutesCollectionMigration(v2Symbols, invalidEntitesFind) {
   await v2Collection.deleteMany({});
 
   return await v2Collection.insertMany(v2Qoutes);
+}
+
+async function fillV2SettingsCollectionMigration(v2Symbols, invalidEntitesFind) {
+  const v1Collection = atlas.db("divtracker").collection('settings');
+
+  // Check that data is valid
+  const invalidEntities = await v1Collection.count({ "ts.i": invalidEntitesFind });
+  if (invalidEntities > 0) {
+    throw `Found ${invalidEntities} invalid entities for V1 settings`;
+  }
+
+  const v1Settings = await v1Collection.find().toArray();
+  /** V1
+  {
+    "_id": {
+      "$oid": "6107f99b395f4a2a8b092a1d"
+    },
+    "_p": "6107f89fc6a9d2fb9106915e",
+    "ce": true,
+    "g": {
+      "$numberLong": "1000"
+    },
+    "t": {
+      "$numberDouble": "0.13"
+    },
+    "te": true,
+    "ts": [
+      {
+        "i": "ACN:XNYS",
+        "t": {
+          "$numberDouble": "0.25"
+        }
+      },
+      {
+        "i": "KNOP:XNYS",
+        "t": {
+          "$numberDouble": "0.3"
+        }
+      },
+      {
+        "i": "PBA:XNYS",
+        "t": {
+          "$numberDouble": "0.15"
+        }
+      },
+      {
+        "i": "ENB:XNYS",
+        "t": {
+          "$numberDouble": "0.15"
+        }
+      },
+      {
+        "i": "SPG:XNYS",
+        "t": {
+          "$numberDouble": "0.13"
+        }
+      }
+    ]
+  }
+  */
+
+  /** V2
+  {
+    "_id": {
+      "$oid": "6107f99b395f4a2a8b092a1d"
+    },
+    "_p": "2",
+    "ce": true,
+    "g": {
+      "$numberLong": "1000"
+    },
+    "t": {
+      "$numberDouble": "0.13"
+    },
+    "te": true,
+    "ts": [
+      {
+        "s": {
+          "$oid": "61b102c0048b84e9c13e45b5"
+        },
+        "t": {
+          "$numberDouble": "0.25"
+        }
+      },
+      {
+        "s": {
+          "$oid": "61b102c0048b84e9c13e5cf1"
+        },
+        "t": {
+          "$numberDouble": "0.3"
+        }
+      },
+      {
+        "s": {
+          "$oid": "61b102c0048b84e9c13e63f6"
+        },
+        "t": {
+          "$numberDouble": "0.15"
+        }
+      },
+      {
+        "s": {
+          "$oid": "61b102c0048b84e9c13e51f7"
+        },
+        "t": {
+          "$numberDouble": "0.15"
+        }
+      },
+      {
+        "s": {
+          "$oid": "61b102c0048b84e9c13e6aca"
+        },
+        "t": {
+          "$numberDouble": "0.13"
+        }
+      }
+    ]
+  }
+  */
+  const v2Settings = v1Settings
+    .map(v1Settings => {
+      const v2Settings = {};
+      v2Settings._id = v1Settings._id;
+      v2Settings._p = "2";
+      v2Settings.ce = v1Settings.ce;
+      v2Settings.g = v1Settings.g;
+      v2Settings.te = v1Settings.te;
+      v2Settings.t = v1Settings.t;
+
+      v2Settings.ts = v1Settings.ts.map(v1Taxes => {
+        // AAPL:XNAS -> AAPL
+        const ticker = v1Taxes.i.split(':')[0];
+        const symbolID = v2Symbols.find(x => x.t === ticker)._id;
+        if (symbolID == null) {
+          throw `Unknown V1 ticker '${ticker}' for settings ${v1Settings.stringify()}`;
+        }
+
+        const v2Taxes = {};
+        v2Taxes.s = symbolID;
+        v2Taxes.t = v1Taxes.t;
+
+        return v2Taxes;
+      });
+
+      return v2Settings;
+    });
+
+  const v2Collection = db.collection('settings');
+
+  // Delete existing if any to prevent duplication
+  await v2Collection.deleteMany({});
+
+  return await v2Collection.insertMany(v2Settings);
 }
 
 ////////////////////////////////////////////////////// Partition key migration
