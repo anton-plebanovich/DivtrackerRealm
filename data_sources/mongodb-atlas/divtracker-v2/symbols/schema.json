@@ -1,0 +1,18 @@
+{
+    "properties": {
+        "_id": {
+            "bsonType": "string"
+        },
+        "_p": {
+            "bsonType": "string"
+        },
+        "n": {
+            "bsonType": "string"
+        }
+    },
+    "required": [
+        "_id",
+        "n"
+    ],
+    "title": "SymbolV2RealmModel"
+}

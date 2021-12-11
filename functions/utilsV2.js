@@ -1267,7 +1267,7 @@ function _fixCompany(iexCompany, symbolID) {
     company._ = "2";
     company._p = "2";
     company.n = iexCompany.companyName.trim();
-    company.s = iexCompany.industry;
+    company.i = iexCompany.industry;
     company.t = iexCompany.issueType;
   
     return company;
