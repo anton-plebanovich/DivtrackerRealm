@@ -42,6 +42,10 @@
         "private": false
     },
     {
+        "name": "migrateV1SettingsOnInsert",
+        "private": true
+    },
+    {
         "name": "migrateV1TransactionOnInsert",
         "private": true
     },
