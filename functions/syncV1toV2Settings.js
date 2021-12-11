@@ -10,12 +10,10 @@ exports = async function(changeEvent) {
 
   const settings = changeEvent.fullDocument;
   const customTaxes = settings.ts;
-  if (customTaxes == null || !customTaxes.length) { return; }
-
   const settingsV2 = Object.assign({}, settings);
-  settingsV2.ts = [];
 
-  if (customTaxes != null) {
+  if (customTaxes != null && customTaxes.length) {
+    settingsV2.ts = [];
     const symbolsCollection = db.collection("symbols");
     for (const customTax in customTaxes) {
       const symbol = await symbolsCollection.findOne({ t: customTax.s });
