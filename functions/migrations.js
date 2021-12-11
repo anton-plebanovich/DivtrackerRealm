@@ -41,8 +41,9 @@ async function v2DatabaseFillMigration() {
   const invalidEntitesFind = { $regex: ":(NAS|NYS|POR|USAMEX|USBATS|USPAC)" };
 
   return Promise.all([
-    fillV2CompanyCollectionMigration(v2Symbols, invalidEntitesFind),
-    fillV2DividendsCollectionMigration(v2Symbols, invalidEntitesFind),
+    // fillV2CompanyCollectionMigration(v2Symbols, invalidEntitesFind),
+    // fillV2DividendsCollectionMigration(v2Symbols, invalidEntitesFind),
+    fillV2HistoricalPricesCollectionMigration(v2Symbols, invalidEntitesFind),
   ]);
 }
 
@@ -109,7 +110,7 @@ async function fillV2DividendsCollectionMigration(v2Symbols, invalidEntitesFind)
   const v1Collection = atlas.db("divtracker").collection('dividends');
 
   // Check that data is valid
-  const invalidEntities = await v1Collection.count({ _id: invalidEntitesFind });
+  const invalidEntities = await v1Collection.count({ _i: invalidEntitesFind });
   if (invalidEntities > 0) {
     throw `Found ${invalidEntities} invalid entities for V1 dividends`;
   }
@@ -203,6 +204,80 @@ async function fillV2DividendsCollectionMigration(v2Symbols, invalidEntitesFind)
   await v2Collection.deleteMany({});
 
   return await v2Collection.safeUpdateMany(v2Dividends, []);
+}
+
+async function fillV2HistoricalPricesCollectionMigration(v2Symbols, invalidEntitesFind) {
+  const v1Collection = atlas.db("divtracker").collection('historical-prices');
+
+  // Check that data is valid
+  const invalidEntities = await v1Collection.count({ _i: invalidEntitesFind });
+  if (invalidEntities > 0) {
+    throw `Found ${invalidEntities} invalid entities for V1 historical prices`;
+  }
+
+  const v1HistoricalPrices = await v1Collection.find().toArray();
+  /** V1
+  {
+    "_i": "AAPL:XNAS",
+    "_id": {
+      "$oid": "61b4ec77e9bd6c27860a4c2b"
+    },
+    "_p": "P",
+    "c": {
+      "$numberDouble": "28.516"
+    },
+    "d": {
+      "$date": {
+        "$numberLong": "1449867600000"
+      }
+    }
+  }
+   */
+
+  /** V2
+  {
+    "_id": {
+      "$oid": "61b4ec77e9bd6c27860a4c2b"
+    },
+    "_p": "2",
+    "c": {
+      "$numberDouble": "28.516"
+    },
+    "d": {
+      "$date": {
+        "$numberLong": "1449867600000"
+      }
+    },
+    "s": {
+      "$oid": "61b102c0048b84e9c13e4564"
+    }
+  }
+   */
+  const v2HistoricalPrices = v1HistoricalPrices
+    .map(v1HistoricalPrice => {
+      // AAPL:XNAS -> AAPL
+      const ticker = v1HistoricalPrice._i.split(':')[0];
+      const symbolID = v2Symbols.find(x => x.t === ticker)._id;
+      if (symbolID == null) {
+        throw `Unknown V1 ticker '${ticker}' for historical price ${v1HistoricalPrice.stringify()}`;
+      }
+
+      const v2HistoricalPrice = {};
+      v2HistoricalPrice._id = v1HistoricalPrice._id;
+      v2HistoricalPrice._p = "2";
+      v2HistoricalPrice.c = v1HistoricalPrice.c;
+      v2HistoricalPrice.d = v1HistoricalPrice.d;
+      v2HistoricalPrice.s = symbolID;
+
+      return v2HistoricalPrice;
+    });
+
+  const v2Collection = db.collection('historical-prices');
+
+  // Delete existing if any to prevent duplication
+  await v2Collection.deleteMany({});
+
+  return await v2Collection.safeUpdateMany(v2HistoricalPrices, []);
 }
 
 ////////////////////////////////////////////////////// Partition key migration
