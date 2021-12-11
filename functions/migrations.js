@@ -12,6 +12,7 @@
 // - Manual: Run V1 -> V2 data migration
 
 // V1 deprecation phase 1
+// - V1 -> V2 settings sync is broken for an array so we might want to check if data is not lost.
 // - V1 functions and triggers should be removed
 // - V1 data should be erased in all collections
 // - Check that V2 data is properly fetched, e.g. enough dividends and historical prices
