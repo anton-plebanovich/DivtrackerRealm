@@ -35,11 +35,11 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, field) 
     if (newObjects.length < 1000) {
       console.log(`Old objects are undefined. Fetching them by '${field}'.`);
       const fileds = newObjects.map(x => x[field]);
-      newObjects = await this.find({ [field]: { $in: fileds } }).toArray();
+      oldObjects = await this.find({ [field]: { $in: fileds } }).toArray();
 
     } else {
-      console.log(`Old objects are undefined. Fetching all.`);
-      newObjects = await this.find().toArray();
+      console.log(`Old objects are undefined. Fetching them by requesting all existing objects.`);
+      oldObjects = await this.find().toArray();
     }
   }
 

@@ -47,6 +47,7 @@ exports = async function(changeEvent) {
 
   const transactionV2 = {};
   transactionV2._id = transaction._id;
+  transactionV2._p = "2";
   transactionV2.a = transaction.a;
   transactionV2.c = transaction.c;
   transactionV2.d = transaction.d;
