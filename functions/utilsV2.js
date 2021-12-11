@@ -171,7 +171,7 @@ Object.prototype.updateFrom = function(object) {
 Array.prototype.distinct = function(arg) {
   if (typeof arg === 'string' || arg instanceof String) {
     comparer = (a, b) => a[arg].isEqual(b[arg]);
-  } else if (!arg) {
+  } else if (arg == null) {
     comparer = (a, b) => a.isEqual(b);
   } else {
     comparer = arg;
@@ -343,10 +343,12 @@ Object.prototype.isEqual = function(rhs) {
 };
 
 Number.prototype.isEqual = function(number) {
+  'use strict'; // https://stackoverflow.com/a/27736962/4124265
   return this === number;
 };
 
 String.prototype.isEqual = function(string) {
+  'use strict'; // https://stackoverflow.com/a/27736962/4124265
   return this === string;
 };
 
