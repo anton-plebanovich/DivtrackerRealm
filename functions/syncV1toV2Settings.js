@@ -17,7 +17,7 @@ exports = async function(changeEvent) {
   if (customTaxes != null && customTaxes.length) {
     v2Settings.ts = [];
     const symbolsCollection = db.collection("symbols");
-    for (const customTax in customTaxes) {
+    for (const customTax of customTaxes) {
       const ticker = customTax.i.split(":")[0];
       const symbol = await symbolsCollection.findOne({ t: ticker });
       const symbolID = symbol._id;
