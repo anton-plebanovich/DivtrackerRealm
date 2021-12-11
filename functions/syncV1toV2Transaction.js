@@ -30,6 +30,7 @@
 exports = async function(changeEvent) {
   context.functions.execute("utilsV2");
 
+  console.log(`Fixing transaction for change event: ${changeEvent.stringify()}`)
   const transactionsCollection = db.collection("transactions")
 
   // Delete V2 transaction on delete

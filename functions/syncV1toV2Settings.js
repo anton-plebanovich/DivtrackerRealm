@@ -8,19 +8,21 @@
 exports = async function(changeEvent) {
   context.functions.execute("utilsV2");
 
-  const settings = changeEvent.fullDocument;
-  const customTaxes = settings.ts;
-  const settingsV2 = Object.assign({}, settings);
+  console.log(`Fixing settings for change event: ${changeEvent.stringify()}`)
+
+  const v1Settings = changeEvent.fullDocument;
+  const customTaxes = v1Settings.ts;
+  const v2Settings = Object.assign({}, v1Settings);
 
   if (customTaxes != null && customTaxes.length) {
-    settingsV2.ts = [];
+    v2Settings.ts = [];
     const symbolsCollection = db.collection("symbols");
     for (const customTax in customTaxes) {
       const symbol = await symbolsCollection.findOne({ t: customTax.s });
       const symbolID = symbol._id;
-      settingsV2.ts.push({ s: symbolID, t: customTax.t });
+      v2Settings.ts.push({ s: symbolID, t: customTax.t });
     }
   }
   
-  return await db.collection("settings").safeUpdateMany([settings]);
+  return await db.collection("settings").safeUpdateMany([v2Settings]);
 };
