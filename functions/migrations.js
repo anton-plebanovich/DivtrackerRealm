@@ -46,6 +46,7 @@ async function v2DatabaseFillMigration() {
     // fillV2DividendsCollectionMigration(v2Symbols, invalidEntitesFind),
     // fillV2HistoricalPricesCollectionMigration(v2Symbols, invalidEntitesFind),
     fillV2PreviousDayPricesCollectionMigration(v2Symbols, invalidEntitesFind),
+    fillV2QoutesCollectionMigration(v2Symbols, invalidEntitesFind),
   ]);
 }
 
@@ -59,7 +60,6 @@ async function fillV2CompanyCollectionMigration(v2Symbols, invalidEntitesFind) {
   }
   
   const v1Companies = await v1Collection.find().toArray();
-
   /** V1
   {
     "_id": "AAPL:NAS",
@@ -68,7 +68,7 @@ async function fillV2CompanyCollectionMigration(v2Symbols, invalidEntitesFind) {
     "s": "ap u MftrtEniiclorCrecmuc oaengtnu",
     "t": "cs"
   }
-   */
+  */
 
   /** V2
   {
@@ -80,7 +80,7 @@ async function fillV2CompanyCollectionMigration(v2Symbols, invalidEntitesFind) {
     "n": "Apple Inc",
     "t": "cs"
   }
-   */
+  */
   const v2Companies = v1Companies
     .map(v1Company => {
       // AAPL:XNAS -> AAPL
@@ -145,8 +145,8 @@ async function fillV2DividendsCollectionMigration(v2Symbols, invalidEntitesFind)
       }
     }
   }
-   */
-
+  */
+  
   /** V2
   {
     "_id": {
@@ -176,7 +176,7 @@ async function fillV2DividendsCollectionMigration(v2Symbols, invalidEntitesFind)
       "$oid": "61b102c0048b84e9c13e456f"
     }
   }
-   */
+  */
   const v2Dividends = v1Dividends
     .map(v1Dividend => {
       // AAPL:XNAS -> AAPL
@@ -234,8 +234,8 @@ async function fillV2HistoricalPricesCollectionMigration(v2Symbols, invalidEntit
       }
     }
   }
-   */
-
+  */
+  
   /** V2
   {
     "_id": {
@@ -254,7 +254,7 @@ async function fillV2HistoricalPricesCollectionMigration(v2Symbols, invalidEntit
       "$oid": "61b102c0048b84e9c13e4564"
     }
   }
-   */
+  */
   const v2HistoricalPrices = v1HistoricalPrices
     .map(v1HistoricalPrice => {
       // AAPL:XNAS -> AAPL
@@ -300,32 +300,32 @@ async function fillV2PreviousDayPricesCollectionMigration(v2Symbols, invalidEnti
       "$numberDouble": "182.37"
     }
   }
-   */
+  */
 
   /** V2
   {
     "_id": {
-      "$oid": "61b102c0048b84e9c13e4734"
+      "$oid": "61b102c0048b84e9c13e4564"
     },
     "_p": "2",
     "c": {
-      "$numberDouble": "217.48"
+      "$numberDouble": "182.37"
     }
   }
-   */
+  */
   const v2PreviousDayPrices = v1PreviousDayPrices
-    .map(v1PreviousDayPrices => {
+    .map(v1PreviousDayPrice => {
       // AAPL:XNAS -> AAPL
-      const ticker = v1PreviousDayPrices._id.split(':')[0];
+      const ticker = v1PreviousDayPrice._id.split(':')[0];
       const symbolID = v2Symbols.find(x => x.t === ticker)._id;
       if (symbolID == null) {
-        throw `Unknown V1 ticker '${ticker}' for previous day price ${v1PreviousDayPrices.stringify()}`;
+        throw `Unknown V1 ticker '${ticker}' for previous day price ${v1PreviousDayPrice.stringify()}`;
       }
 
       const v2PreviousDayPrices = {};
       v2PreviousDayPrices._id = symbolID;
       v2PreviousDayPrices._p = "2";
-      v2PreviousDayPrices.c = v1PreviousDayPrices.c;
+      v2PreviousDayPrices.c = v1PreviousDayPrice.c;
 
       return v2PreviousDayPrices;
     });
@@ -336,6 +336,74 @@ async function fillV2PreviousDayPricesCollectionMigration(v2Symbols, invalidEnti
   await v2Collection.deleteMany({});
 
   return await v2Collection.insertMany(v2PreviousDayPrices);
+}
+
+async function fillV2QoutesCollectionMigration(v2Symbols, invalidEntitesFind) {
+  const v1Collection = atlas.db("divtracker").collection('quotes');
+
+  // Check that data is valid
+  const invalidEntities = await v1Collection.count({ _id: invalidEntitesFind });
+  if (invalidEntities > 0) {
+    throw `Found ${invalidEntities} invalid entities for V1 quotes`;
+  }
+
+  const v1Qoutes = await v1Collection.find().toArray();
+  /** V1
+  {
+    "_id": "AAPL:XNAS",
+    "_p": "P",
+    "d": {
+      "$date": {
+        "$numberLong": "1653148017600"
+      }
+    },
+    "l": {
+      "$numberDouble": "179.87"
+    },
+    "p": {
+      "$numberDouble": "16.17"
+    }
+  }
+  */
+
+  /** V2
+  {
+    "_id": {
+      "$oid": "61b102c0048b84e9c13e4564"
+    },
+    "_p": "2",
+    "l": {
+      "$numberDouble": "179.87"
+    },
+    "p": {
+      "$numberDouble": "16.17"
+    }
+  }
+  */
+  const v2Qoutes = v1Qoutes
+    .map(v1Qoute => {
+      // AAPL:XNAS -> AAPL
+      const ticker = v1Qoute._id.split(':')[0];
+      const symbolID = v2Symbols.find(x => x.t === ticker)._id;
+      if (symbolID == null) {
+        throw `Unknown V1 ticker '${ticker}' for quote ${v1Qoute.stringify()}`;
+      }
+
+      const v2Qoute = {};
+      v2Qoute._id = symbolID;
+      v2Qoute._p = "2";
+      v2Qoute.l = v1Qoute.l;
+      v2Qoute.p = v1Qoute.p;
+
+      return v2Qoute;
+    });
+
+  const v2Collection = db.collection('quotes');
+
+  // Delete existing if any to prevent duplication
+  await v2Collection.deleteMany({});
+
+  return await v2Collection.insertMany(v2Qoutes);
 }
 
 ////////////////////////////////////////////////////// Partition key migration
