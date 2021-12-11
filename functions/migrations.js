@@ -38,26 +38,50 @@ async function v2DatabaseFillMigration() {
   }
 
   const v2Symbols = await v2SymbolsCollection.find().toArray();
+  const invalidEntitesFind = { $regex: ":(NAS|NYS|POR|USAMEX|USBATS|USPAC)" };
+
   return Promise.all([
-    fillV2CompanyCollectionMigration(v2Symbols),
+    fillV2CompanyCollectionMigration(v2Symbols, invalidEntitesFind),
+    fillV2DividendsCollectionMigration(v2Symbols, invalidEntitesFind),
   ]);
 }
 
-async function fillV2CompanyCollectionMigration(v2Symbols) {
+async function fillV2CompanyCollectionMigration(v2Symbols, invalidEntitesFind) {
   const v1Collection = atlas.db("divtracker").collection('companies');
+
+  // Check that data is valid
+  const invalidEntities = await v1Collection.count({ _id: invalidEntitesFind });
+  if (invalidEntities > 0) {
+    throw `Found ${invalidEntities} invalid entities for V1 companies`;
+  }
+  
   const v1Companies = await v1Collection.find().toArray();
-  // V1: {"_id":"AAPL:NAS","_p":"P","n":"Apple Inc","s":"ap u MftrtEniiclorCrecmuc oaengtnu","t":"cs"}
-  // V2: {"_id":{"$oid":"61b102c0048b84e9c13e4564"},"_p":"2","i":"uric nrro uaetnMotuial etnCcgcmfpE","n":"Apple Inc","t":"cs"}
+
+  /** V1
+  {
+    "_id": "AAPL:NAS",
+    "_p": "P",
+    "n": "Apple Inc",
+    "s": "ap u MftrtEniiclorCrecmuc oaengtnu",
+    "t": "cs"
+  }
+   */
+
+  /** V2
+  {
+    "_id": {
+      "$oid": "61b102c0048b84e9c13e4564"
+    },
+    "_p": "2",
+    "i": "uric nrro uaetnMotuial etnCcgcmfpE",
+    "n": "Apple Inc",
+    "t": "cs"
+  }
+   */
   const v2Companies = v1Companies
-    // AAPL:XNAS -> AAPL
-    .map(v1Company => { 
-      v1Company._id = v1Company._id.split(':')[0];
-      return v1Company;
-    })
-    // Filter duplicates if any
-    .distinct('_id')
     .map(v1Company => {
-      const ticker = v1Company._id;
+      // AAPL:XNAS -> AAPL
+      const ticker = v1Company._id.split(':')[0];
       const symbolID = v2Symbols.find(x => x.t === ticker)._id;
       if (symbolID == null) {
         throw `Unknown V1 ticker '${ticker}' for company ${v1Company.stringify()}`;
@@ -66,8 +90,8 @@ async function fillV2CompanyCollectionMigration(v2Symbols) {
       const v2Company = {};
       v2Company._id = symbolID;
       v2Company._p = "2";
-      v2Company.n = v1Company.n;
       v2Company.i = v1Company.s;
+      v2Company.n = v1Company.n;
       v2Company.t = v1Company.t;
 
       return v2Company;
@@ -78,8 +102,110 @@ async function fillV2CompanyCollectionMigration(v2Symbols) {
   // Delete existing if any to prevent duplication
   await v2Collection.deleteMany({});
 
-  return await v2Collection.insertMany(v2Companies);
+  return await v2Collection.safeUpdateMany(v2Companies, []);
 }
+
+async function fillV2DividendsCollectionMigration(v2Symbols, invalidEntitesFind) {
+  const v1Collection = atlas.db("divtracker").collection('dividends');
+
+  // Check that data is valid
+  const invalidEntities = await v1Collection.count({ _id: invalidEntitesFind });
+  if (invalidEntities > 0) {
+    throw `Found ${invalidEntities} invalid entities for V1 dividends`;
+  }
+
+  const v1Dividends = await v1Collection.find().toArray();
+  /** V1
+  {
+    "_i": "ABBV:XNYS",
+    "_id": {
+      "$oid": "61b4ec78e9bd6c27860a5b47"
+    },
+    "_p": "P",
+    "a": {
+      "$numberDouble": "1.42"
+    },
+    "d": {
+      "$date": {
+        "$numberLong": "1635085800000"
+      }
+    },
+    "e": {
+      "$date": {
+        "$numberLong": "1641825000000"
+      }
+    },
+    "f": "q",
+    "p": {
+      "$date": {
+        "$numberLong": "1644589800000"
+      }
+    }
+  }
+   */
+
+  /** V2
+  {
+    "_id": {
+      "$oid": "61b4ec78e9bd6c27860a5b47"
+    },
+    "_p": "2",
+    "a": {
+      "$numberDouble": "1.42"
+    },
+    "d": {
+      "$date": {
+        "$numberLong": "1635085800000"
+      }
+    },
+    "e": {
+      "$date": {
+        "$numberLong": "1641825000000"
+      }
+    },
+    "f": "q",
+    "p": {
+      "$date": {
+        "$numberLong": "1644589800000"
+      }
+    },
+    "s": {
+      "$oid": "61b102c0048b84e9c13e456f"
+    }
+  }
+   */
+  const v2Dividends = v1Dividends
+    .map(v1Dividend => {
+      // AAPL:XNAS -> AAPL
+      const ticker = v1Dividend._i.split(':')[0];
+      const symbolID = v2Symbols.find(x => x.t === ticker)._id;
+      if (symbolID == null) {
+        throw `Unknown V1 ticker '${ticker}' for dividend ${v1Dividend.stringify()}`;
+      }
+
+      const v2Dividend = {};
+      v2Dividend._id = v1Dividend._id;
+      v2Dividend._p = "2";
+      v2Dividend.a = v1Dividend.a;
+      v2Dividend.c = v1Dividend.c;
+      v2Dividend.d = v1Dividend.d;
+      v2Dividend.e = v1Dividend.e;
+      v2Dividend.f = v1Dividend.f;
+      v2Dividend.p = v1Dividend.p;
+      v2Dividend.s = symbolID;
+
+      return v2Dividend;
+    });
+
+  const v2Collection = db.collection('dividends');
+
+  // Delete existing if any to prevent duplication
+  await v2Collection.deleteMany({});
+
+  return await v2Collection.safeUpdateMany(v2Dividends, []);
+}
+
+////////////////////////////////////////////////////// Partition key migration
 
 async function partitionKeyMigration() {
   const operations = [];
