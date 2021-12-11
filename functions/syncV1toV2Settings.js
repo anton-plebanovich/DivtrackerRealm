@@ -15,11 +15,13 @@ exports = async function(changeEvent) {
   const settingsV2 = Object.assign({}, settings);
   settingsV2.ts = [];
 
-  const symbolsCollection = db.collection("symbols");
-  for (const customTax in customTaxes) {
-    const symbol = await symbolsCollection.findOne({ t: customTax.s });
-    const symbolID = symbol._id;
-    settingsV2.ts.push({ s: symbolID, t: customTax.t });
+  if (customTaxes != null) {
+    const symbolsCollection = db.collection("symbols");
+    for (const customTax in customTaxes) {
+      const symbol = await symbolsCollection.findOne({ t: customTax.s });
+      const symbolID = symbol._id;
+      settingsV2.ts.push({ s: symbolID, t: customTax.t });
+    }
   }
   
   return await db.collection("settings").safeUpdateMany([settings]);

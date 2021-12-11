@@ -35,7 +35,6 @@ exports = async function(changeEvent) {
   // Delete V2 transaction on delete
   if (changeEvent.operationType === 'delete') {
     const id = changeEvent.documentKey._id;
-    console.log(`id - ${id}, type - ${typeof id}`);
     await transactionsCollection.deleteOne({ _id: id });
     return;
   }
