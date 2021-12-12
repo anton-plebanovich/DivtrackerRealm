@@ -6,13 +6,20 @@
         "_p": {
             "bsonType": "string"
         },
+        "e": {
+            "bsonType": "bool"
+        },
         "n": {
+            "bsonType": "string"
+        },
+        "t": {
             "bsonType": "string"
         }
     },
     "required": [
         "_id",
-        "_p"
+        "_p",
+        "t"
     ],
     "title": "SymbolV2RealmModel"
 }
