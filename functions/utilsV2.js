@@ -1233,7 +1233,6 @@ fetchPreviousDayPrices = _fetchPreviousDayPrices;
     const exchangeRate = { 
       _id: currency,
       _p: "2",
-      _: "2",
       r: BSON.Double(rate),
     };
 

@@ -16,6 +16,7 @@ exports = function() {
   // db.collection('splits').deleteMany( { } );
   // db.collection('quotes').deleteMany( { } );
   
+  // db.collection('settings').deleteMany( { } );
   // db.collection('transactions').deleteMany( { } );
   
   /// Delete using date

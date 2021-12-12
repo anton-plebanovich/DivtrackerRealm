@@ -81,12 +81,12 @@
     // TODO: Check that values are of proper type
   }
 
-  const transactionsCount = await transactionsCollection.count({ _: userID }) + transactions.length;
+  const transactionsCount = await transactionsCollection.count({ p: userID }) + transactions.length;
   if (transactionsCount >= 1000000) {
     logAndThrow(`Maximum number of 1000000 unique transactions for user is reached: ${transactionsCount}`);
   }
 
-  const existingDistinctSymbols = await transactionsCollection.distinct("s", { _: userID });
+  const existingDistinctSymbols = await transactionsCollection.distinct("s", { p: userID });
   const insertingDistinctSymbols = transactions.map(x => x.s);
   const distinctSymbols = existingDistinctSymbols
     .concat(insertingDistinctSymbols)
