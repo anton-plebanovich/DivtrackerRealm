@@ -6,9 +6,6 @@
         "_p": {
             "bsonType": "string"
         },
-        "c": {
-            "bsonType": "double"
-        },
         "ce": {
             "bsonType": "bool"
         },
