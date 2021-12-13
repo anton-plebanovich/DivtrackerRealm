@@ -199,6 +199,19 @@ SystemError = class SystemError {
   }
 }
 
+class _NetworkError {
+  constructor(statusCode, message) {
+    this.statusCode = statusCode
+    this.message = message
+  }
+
+  toString() {
+    return this.stringify();
+  }
+}
+
+NetworkError = _NetworkError;
+
 CompositeError = class CompositeError {
   constructor(errors) {
     if (Object.prototype.toString.call(errors) !== '[object Array]') {
@@ -630,7 +643,17 @@ fetchBatchNew = async function fetchBatchNew(_types, _symbols, _queryParameters)
     fullQueryParameters.symbols = symbolsParameter;
 
     console.log(`Fetching batch for symbols (${chunkedSymbols.length}) with query '${queryParameters.stringify()}': ${typesParameter} - ${symbolsParameter}`);
-    const response = await _fetch(api, fullQueryParameters);
+
+    let response
+    try {
+      response = await _fetch(api, fullQueryParameters);
+    } catch(error) {
+      if (error.statusCode == 404) {
+        response = {};
+      } else {
+        throw error;
+      }
+    }
 
     result = Object.assign(result, response);
   }
@@ -675,7 +698,11 @@ async function _fetch(_api, queryParameters) {
   }
   
   if (response.status != '200 OK') {
-    _logAndThrow(`Response status error '${response.status}' : '${response.body.text()}'`);
+    const statusCodeString = response.status.split(" ")[0];
+    const statusCode = parseInt(statusCodeString, 10);
+    const text = response.body.text();
+    console.error(`Response status error '${response.status}' : '${text}'`);
+    throw new _NetworkError(statusCode, text)
   }
   
   const ejsonBody = EJSON.parse(response.body.text());
