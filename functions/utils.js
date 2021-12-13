@@ -894,7 +894,7 @@ fetchDividends = async function fetchDividends(arg1, arg2, arg3) {
         .map(symbol => {
           const dataByType = typesBySymbol[symbol];
           if (dataByType != null && dataByType.splits) {
-            return _fixSplits(dataByType.splits, symbolsDictionary[symbol]);
+            return fixSplits(dataByType.splits, symbolsDictionary[symbol]);
           } else {
             // PCI - null
             return [];
