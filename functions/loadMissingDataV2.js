@@ -12,7 +12,6 @@
 exports = async function loadMissingData(transactions) {
   context.functions.execute("utilsV2");
   
-  // TODO:
   let shortSymbols;
   if (Object.prototype.toString.call(transactions) === '[object Array]') {
     const symbolIDs = transactions

@@ -54,6 +54,8 @@ exports = async function(changeEvent) {
   v2Transaction.d = v1Transaction.d;
   v2Transaction.p = v1Transaction.p;
   v2Transaction.s = symbolID;
+
+  console.log(`New V2 transaction: ${v2Transaction.stringify()}`);
   
   return await transactionsCollection.safeUpdateMany([v2Transaction]);
 };

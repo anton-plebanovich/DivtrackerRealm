@@ -43,7 +43,7 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, field) 
     }
   }
 
-  if (oldObjects === [] || oldObjects === null) {
+  if (oldObjects == null || oldObjects === []) {
     console.log(`No old objects. Just inserting new objects.`);
     return await this.insertMany(newObjects);
   }
@@ -334,8 +334,15 @@ Object.prototype.isEqual = function(rhs) {
 
   for (const [key, lhsValue] of lhsEntries) {
     const rhsValue = rhs[key];
-    if (!lhsValue.isEqual(rhsValue)) {
-      return false;
+    if (lhsValue != null) { 
+      if (!lhsValue.isEqual(rhsValue)) {
+        return false;
+      }
+
+    } else if (rhsValue != null) { 
+      if (!rhsValue.isEqual(lhsValue)) {
+        return false;
+      }
     }
   }
 
