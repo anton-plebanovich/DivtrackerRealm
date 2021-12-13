@@ -352,6 +352,24 @@ String.prototype.isEqual = function(string) {
   return this === string;
 };
 
+String.prototype.removeSensitiveData = function() {
+  if (isSandbox) { return this; }
+
+  let safeString = this;
+  
+  if (premiumToken != null) {
+    safeString = safeString.replaceAll(premiumToken, 'sk_***')
+  }
+
+  if (tokens != null) {
+    for (const token of tokens) {
+      safeString = safeString.replaceAll(token, 'pk_***')
+    }
+  }
+
+  return safeString;
+};
+
 ///////////////////////////////////////////////////////////////////////////////// CLASSES
 
 class _LazyString {
@@ -372,6 +390,19 @@ class _LazyString {
 LazyString = _LazyString;
 
 ///////////////////////////////////////////////////////////////////////////////// ERRORS PROCESSING
+
+class _NetworkError {
+  constructor(statusCode, message) {
+    this.statusCode = statusCode
+    this.message = message.removeSensitiveData()
+  }
+
+  toString() {
+    return this.stringify();
+  }
+}
+
+NetworkError = _NetworkError;
 
 const errorType = {
 	USER: "user",
@@ -963,7 +994,17 @@ async function _fetchBatchNew(types, tickers, queryParameters) {
     fullQueryParameters.symbols = symbolsParameter;
 
     console.log(`Fetching batch for symbols (${chunkedSymbols.length}) with query '${queryParameters.stringify()}': ${typesParameter} - ${symbolsParameter}`);
-    const response = await _fetch(api, fullQueryParameters);
+    
+    let response
+    try {
+      response = await _fetch(api, fullQueryParameters);
+    } catch(error) {
+      if (error.statusCode == 404) {
+        response = {};
+      } else {
+        throw error;
+      }
+    }
 
     result = Object.assign(result, response);
   }
@@ -1012,7 +1053,11 @@ async function _fetch(api, queryParameters) {
   if (response.status === '200 OK') {
     console.log(`Response for URL: ${url}`);
   } else {
-    _logAndThrow(`Response status error '${response.status}' : '${response.body.text()}'`);
+    const statusCodeString = response.status.split(" ")[0];
+    const statusCode = parseInt(statusCodeString, 10);
+    const text = response.body.text();
+    console.error(`Response status error '${response.status}' : '${text}'`);
+    throw new _NetworkError(statusCode, text)
   }
   
   const ejsonBody = EJSON.parse(response.body.text());
@@ -1055,13 +1100,8 @@ const defaultRange = '6y';
   _throwIfUndefinedOrNull(shortSymbols, `fetchCompanies shortSymbols`);
   const [tickers, idByTickerDictionary] = getTickersAndIDByTickerDictionary(shortSymbols);
 
-  // https://cloud.iexapis.com/stable/stock/VZIO/company?token=pk_9f1d7a2688f24e26bb24335710eae053
-  return await _fetchBatch(`/company`, tickers)
-    .then(companies => 
-      companies.compactMap(company => 
-        _fixCompany(company, idByTickerDictionary[company.symbol])
-      )
-    );
+  // https://sandbox.iexapis.com/stable/stock/market/batch?token=Tpk_581685f711114d9f9ab06d77506fdd49&types=company&symbols=AAPL,AAP
+  return await _fetchBatchAndMapObjects('company', tickers, idByTickerDictionary, _fixCompany);
 };
 
 /**
@@ -1158,14 +1198,8 @@ fetchPreviousDayPrices = _fetchPreviousDayPrices;
   const [tickers, idByTickerDictionary] = getTickersAndIDByTickerDictionary(shortSymbols);
   const parameters = { range: range };
 
-  return await _fetchBatch(`/splits`, tickers, parameters)
-   .then(splitsArray => 
-      splitsArray
-        .map((splits, i) => 
-          _fixSplits(splits, idByTickerDictionary[tickers[i]])
-        )
-        .flat()
-   );
+  // https://cloud.iexapis.com/stable/stock/market/batch?types=splits&token=sk_de6f102262874cfab3d9a83a6980e1db&range=6y&symbols=AAPL,AAP
+  return await _fetchBatchAndMapArray('splits', tickers, idByTickerDictionary, _fixDividends, parameters);
 };
 
 /**
