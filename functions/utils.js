@@ -718,11 +718,18 @@ const defaultRange = '6y';
   const uniqueIDs = _throwIfUndefinedOrNull(arg1, `fetchCompanies arg1`);
   const [symbols, symbolsDictionary] = getSymbols(uniqueIDs);
 
-  return await fetchBatch(`/company`, symbols)
-    .then(companies => 
-      companies.compactMap(company => 
-        fixCompany(company, symbolsDictionary[company.symbol])
-      )
+  // https://sandbox.iexapis.com/stable/stock/market/batch?token=Tpk_581685f711114d9f9ab06d77506fdd49&types=company&symbols=AAPL,AAP
+  return await fetchBatchNew(['company'], symbols)
+    .then(typesBySymbol =>
+      symbols
+        .compactMap(symbol => {
+          const dataByType = typesBySymbol[symbol];
+          if (dataByType != null && dataByType.quote) {
+            return fixCompany(dataByType.quote, symbolsDictionary[symbol]);
+          } else {
+            return null;
+          }
+        })
     );
 };
 
@@ -750,7 +757,7 @@ fetchDividends = async function fetchDividends(arg1, arg2, arg3) {
       symbols
         .map(symbol => {
           const symbolsTypesDividend = symbolsTypesDividends[symbol];
-          if (typeof symbolsTypesDividend != null && symbolsTypesDividend.dividends) {
+          if (symbolsTypesDividend != null && symbolsTypesDividend.dividends) {
             return _fixDividends(symbolsTypesDividend.dividends, symbolsDictionary[symbol]);
           } else {
             return [];
@@ -807,7 +814,7 @@ fetchDividends = async function fetchDividends(arg1, arg2, arg3) {
       symbols
         .map(symbol => {
           const symbolsTypesHP = symbolsTypesHPs[symbol];
-          if (typeof symbolsTypesHP != null && symbolsTypesHP.chart) {
+          if (symbolsTypesHP != null && symbolsTypesHP.chart) {
             return fixHistoricalPrices(symbolsTypesHP.chart, symbolsDictionary[symbol]);
           } else {
             return [];
@@ -832,7 +839,7 @@ fetchDividends = async function fetchDividends(arg1, arg2, arg3) {
       symbols
         .compactMap(symbol => {
           const symbolsTypesQuote = symbolsTypesQuotes[symbol];
-          if (typeof symbolsTypesQuote != null && symbolsTypesQuote.quote) {
+          if (symbolsTypesQuote != null && symbolsTypesQuote.quote) {
             return fixQuote(symbolsTypesQuote.quote, symbolsDictionary[symbol]);
           } else {
             return null;
@@ -859,7 +866,7 @@ fetchDividends = async function fetchDividends(arg1, arg2, arg3) {
       symbols
         .map(symbol => {
           const dataByType = typesBySymbol[symbol];
-          if (typeof dataByType != null && dataByType.splits) {
+          if (dataByType != null && dataByType.splits) {
             return _fixSplits(dataByType.splits, symbolsDictionary[symbol]);
           } else {
             // PCI - null
