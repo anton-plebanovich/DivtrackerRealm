@@ -852,15 +852,22 @@ fetchDividends = async function fetchDividends(arg1, arg2, arg3) {
   const range = (typeof arg2 === 'undefined') ? defaultRange : arg2;
   const [symbols, symbolsDictionary] = getSymbols(uniqueIDs);
   const parameters = { range: range };
-
-  return await fetchBatch(`/splits`, symbols, parameters)
-   .then(splitsArray => 
-      splitsArray
-        .map((splits, i) => 
-          fixSplits(splits, symbolsDictionary[symbols[i]])
-        )
+  
+  // https://cloud.iexapis.com/stable/stock/market/batch?types=splits&token=sk_de6f102262874cfab3d9a83a6980e1db&range=6y&symbols=AAPL,AAP
+  return await fetchBatchNew(['splits'], symbols, parameters)
+    .then(typesBySymbol =>
+      symbols
+        .map(symbol => {
+          const dataByType = typesBySymbol[symbol];
+          if (typeof dataByType != null && dataByType.splits) {
+            return _fixSplits(dataByType.splits, symbolsDictionary[symbol]);
+          } else {
+            // PCI - null
+            return [];
+          }
+        })
         .flat()
-   );
+    );
 };
 
 /**
