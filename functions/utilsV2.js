@@ -752,7 +752,7 @@ getOpenDate = function getOpenDate(openDateValue) {
 // getOpenDate("2020-03-27");
 
 /** 
- * Computes and returns sorted in use symbols from companies and user transactions.
+ * Computes and returns enabled in use symbols from companies and user transactions.
  * Returned symbols are shortened to `_id` and `s` fields.
  * @returns {Promise<[ShortSymbol]>} Array of short symbols.
 */
@@ -775,6 +775,12 @@ async function _getInUseShortSymbols() {
   let symbolIDs = companyIDs
     .concat(distinctTransactionSymbolIDs)
     .distinct();
+
+  const symbolsCollection = db.collection("symbols");
+  const disabledSymbolIDs = await symbolsCollection.distinct("_id", { e: false });
+
+  // Remove disabled symbols
+  symbolIDs = symbolIDs.filter(x => !disabledSymbolIDs.includes(x));
 
   return await getShortSymbols(symbolIDs);
 };
