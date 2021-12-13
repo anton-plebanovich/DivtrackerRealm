@@ -724,8 +724,8 @@ const defaultRange = '6y';
       symbols
         .compactMap(symbol => {
           const dataByType = typesBySymbol[symbol];
-          if (dataByType != null && dataByType.quote) {
-            return fixCompany(dataByType.quote, symbolsDictionary[symbol]);
+          if (dataByType != null && dataByType.company) {
+            return fixCompany(dataByType.company, symbolsDictionary[symbol]);
           } else {
             return null;
           }
