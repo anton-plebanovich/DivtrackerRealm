@@ -539,20 +539,22 @@ async function fillV2SettingsCollectionMigration(v2Symbols, invalidEntitesFind) 
       v2Settings.te = v1Settings.te;
       v2Settings.t = v1Settings.t;
 
-      v2Settings.ts = v1Settings.ts.map(v1Taxes => {
-        // AAPL:XNAS -> AAPL
-        const ticker = v1Taxes.i.split(':')[0];
-        const symbolID = v2Symbols.find(x => x.t === ticker)._id;
-        if (symbolID == null) {
-          throw `Unknown V1 ticker '${ticker}' for settings ${v1Settings.stringify()}`;
-        }
-
-        const v2Taxes = {};
-        v2Taxes.s = symbolID;
-        v2Taxes.t = v1Taxes.t;
-
-        return v2Taxes;
-      });
+      if (v1Settings.ts != null) {
+        v2Settings.ts = v1Settings.ts.map(v1Taxes => {
+          // AAPL:XNAS -> AAPL
+          const ticker = v1Taxes.i.split(':')[0];
+          const symbolID = v2Symbols.find(x => x.t === ticker)._id;
+          if (symbolID == null) {
+            throw `Unknown V1 ticker '${ticker}' for settings ${v1Settings.stringify()}`;
+          }
+  
+          const v2Taxes = {};
+          v2Taxes.s = symbolID;
+          v2Taxes.t = v1Taxes.t;
+  
+          return v2Taxes;
+        });
+      }
 
       return v2Settings;
     });
