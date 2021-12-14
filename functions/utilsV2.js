@@ -928,20 +928,20 @@ fetchBatch = _fetchBatch;
  * It switches between available tokens to evenly distribute the load.
  * @param {string} type Type to fetch, e.g. 'dividends'.
  * @param {[string]} tickers Ticker Symbols to fetch, e.g. ['AAP','AAPL','PBA'].
- * @param {[string]} idByTickerDictionary Dictionary of ticker symbol ID by ticker symbol.
+ * @param {[string]} idByTicker Dictionary of ticker symbol ID by ticker symbol.
  * @param {function} mapFunction Function to map data to our format.
  * @param {Object} queryParameters Additional query parameters.
  * @returns {Promise<{string: {string: Object|[Object]}}>} Parsed EJSON object. Composed from several responses if max symbols count was exceeded. 
  * The first object keys are symbols. The next inner object keys are types. And the next inner object is an array of type objects.
  */
-async function _fetchBatchAndMapArray(type, tickers, idByTickerDictionary, mapFunction, queryParameters) {
+async function _fetchBatchAndMapArray(type, tickers, idByTicker, mapFunction, queryParameters) {
   return _fetchBatchNew([type], tickers, queryParameters)
     .then(tickerDataDictionary => {
       return tickers
         .map(ticker => {
           const tickerData = tickerDataDictionary[ticker];
           if (tickerData != null && tickerData[type]) {
-            return mapFunction(tickerData[type], idByTickerDictionary[ticker]);
+            return mapFunction(tickerData[type], idByTicker[ticker]);
           } else {
             return [];
           }
@@ -960,20 +960,20 @@ fetchBatchAndMapArray = _fetchBatchAndMapArray;
  * It switches between available tokens to evenly distribute the load.
  * @param {string} type Type to fetch, e.g. 'dividends'.
  * @param {[string]} tickers Ticker Symbols to fetch, e.g. ['AAP','AAPL','PBA'].
- * @param {[string]} idByTickerDictionary Dictionary of ticker symbol ID by ticker symbol.
+ * @param {[string]} idByTicker Dictionary of ticker symbol ID by ticker symbol.
  * @param {function} mapFunction Function to map data to our format.
  * @param {Object} queryParameters Additional query parameters.
  * @returns {Promise<{string: {string: Object|[Object]}}>} Parsed EJSON object. Composed from several responses if max symbols count was exceeded. 
  * The first object keys are symbols. The next inner object keys are types. And the next inner object is an array of type objects.
  */
-async function _fetchBatchAndMapObjects(type, tickers, idByTickerDictionary, mapFunction, queryParameters) {
+async function _fetchBatchAndMapObjects(type, tickers, idByTicker, mapFunction, queryParameters) {
   return _fetchBatchNew([type], tickers, queryParameters)
     .then(tickerDataDictionary =>
       tickers
         .compactMap(ticker => {
           const tickerData = tickerDataDictionary[ticker];
           if (tickerData != null && tickerData[type]) {
-            return mapFunction(tickerData[type], idByTickerDictionary[ticker]);
+            return mapFunction(tickerData[type], idByTicker[ticker]);
           } else {
             // {"AACOU":{"previous":null}}
             return null;
@@ -1119,10 +1119,10 @@ const defaultRange = '6y';
  */
  fetchCompanies = async function fetchCompanies(shortSymbols) {
   _throwIfUndefinedOrNull(shortSymbols, `fetchCompanies shortSymbols`);
-  const [tickers, idByTickerDictionary] = getTickersAndIDByTickerDictionary(shortSymbols);
+  const [tickers, idByTicker] = getTickersAndidByTicker(shortSymbols);
 
   // https://sandbox.iexapis.com/stable/stock/market/batch?token=Tpk_581685f711114d9f9ab06d77506fdd49&types=company&symbols=AAPL,AAP
-  return await _fetchBatchAndMapObjects('company', tickers, idByTickerDictionary, _fixCompany);
+  return await _fetchBatchAndMapObjects('company', tickers, idByTicker, _fixCompany);
 };
 
 /**
@@ -1140,7 +1140,7 @@ fetchDividends = async function fetchDividends(shortSymbols, isFuture, range) {
     range = defaultRange;
   }
 
-  const [tickers, idByTickerDictionary] = getTickersAndIDByTickerDictionary(shortSymbols);
+  const [tickers, idByTicker] = getTickersAndidByTicker(shortSymbols);
 
   const parameters = { range: range };
   if (isFuture) {
@@ -1148,7 +1148,7 @@ fetchDividends = async function fetchDividends(shortSymbols, isFuture, range) {
   }
 
   // https://sandbox.iexapis.com/stable/stock/market/batch?token=Tpk_581685f711114d9f9ab06d77506fdd49&types=dividends&symbols=AAPL,AAP&range=6y
-  return await _fetchBatchAndMapArray('dividends', tickers, idByTickerDictionary, _fixDividends, parameters);
+  return await _fetchBatchAndMapArray('dividends', tickers, idByTicker, _fixDividends, parameters);
 };
 
 /**
@@ -1158,10 +1158,10 @@ fetchDividends = async function fetchDividends(shortSymbols, isFuture, range) {
  */
  async function _fetchPreviousDayPrices(shortSymbols) {
   _throwIfUndefinedOrNull(shortSymbols, `fetchPreviousDayPrices shortSymbols`);
-  const [tickers, idByTickerDictionary] = getTickersAndIDByTickerDictionary(shortSymbols);
+  const [tickers, idByTicker] = getTickersAndidByTicker(shortSymbols);
 
   // https://sandbox.iexapis.com/stable/stock/market/batch?token=Tpk_581685f711114d9f9ab06d77506fdd49&types=previous&symbols=AAPL,AAP
-  return await _fetchBatchAndMapObjects('previous', tickers, idByTickerDictionary, _fixPreviousDayPrice);
+  return await _fetchBatchAndMapObjects('previous', tickers, idByTicker, _fixPreviousDayPrice);
 };
 
 fetchPreviousDayPrices = _fetchPreviousDayPrices;
@@ -1179,7 +1179,7 @@ fetchPreviousDayPrices = _fetchPreviousDayPrices;
     range = defaultRange;
   }
 
-  const [tickers, idByTickerDictionary] = getTickersAndIDByTickerDictionary(shortSymbols);
+  const [tickers, idByTicker] = getTickersAndidByTicker(shortSymbols);
   const parameters = { 
     range: range,
     chartCloseOnly: true, 
@@ -1187,7 +1187,7 @@ fetchPreviousDayPrices = _fetchPreviousDayPrices;
   };
 
   // https://sandbox.iexapis.com/stable/stock/market/batch?token=Tpk_581685f711114d9f9ab06d77506fdd49&types=chart&symbols=AAPL,AAP&range=6y&chartCloseOnly=true&chartInterval=21
-  return await _fetchBatchAndMapArray('chart', tickers, idByTickerDictionary, _fixHistoricalPrices, parameters);
+  return await _fetchBatchAndMapArray('chart', tickers, idByTicker, _fixHistoricalPrices, parameters);
 };
 
 /**
@@ -1197,10 +1197,10 @@ fetchPreviousDayPrices = _fetchPreviousDayPrices;
  */
  fetchQuotes = async function fetchQuotes(shortSymbols) {
   _throwIfUndefinedOrNull(shortSymbols, `fetchQuotes shortSymbols`);
-  const [tickers, idByTickerDictionary] = getTickersAndIDByTickerDictionary(shortSymbols);
+  const [tickers, idByTicker] = getTickersAndidByTicker(shortSymbols);
 
   // https://sandbox.iexapis.com/stable/stock/market/batch?token=Tpk_581685f711114d9f9ab06d77506fdd49&types=quote&symbols=AAPL,AAP
-  return await _fetchBatchAndMapObjects('quote', tickers, idByTickerDictionary, _fixQuote);
+  return await _fetchBatchAndMapObjects('quote', tickers, idByTicker, _fixQuote);
 };
 
 /**
@@ -1216,11 +1216,11 @@ fetchPreviousDayPrices = _fetchPreviousDayPrices;
     range = defaultRange;
   }
   
-  const [tickers, idByTickerDictionary] = getTickersAndIDByTickerDictionary(shortSymbols);
+  const [tickers, idByTicker] = getTickersAndidByTicker(shortSymbols);
   const parameters = { range: range };
 
   // https://cloud.iexapis.com/stable/stock/market/batch?types=splits&token=sk_de6f102262874cfab3d9a83a6980e1db&range=6y&symbols=AAPL,AAP
-  return await _fetchBatchAndMapArray('splits', tickers, idByTickerDictionary, _fixDividends, parameters);
+  return await _fetchBatchAndMapArray('splits', tickers, idByTicker, _fixSplits, parameters);
 };
 
 /**
@@ -1228,19 +1228,19 @@ fetchPreviousDayPrices = _fetchPreviousDayPrices;
  * @param {[ShortSymbol]} shortSymbols Short symbol models.
  * @returns {[["AAPL"], {"AAPL":ObjectId}]} Returns array with ticker symbols as the first element and ticker symbol IDs by ticker symbol dictionary as the second element.
  */
- function getTickersAndIDByTickerDictionary(shortSymbols) {
-  _throwIfUndefinedOrNull(shortSymbols, `getTickersAndIDByTickerDictionary shortSymbols`);
+ function getTickersAndidByTicker(shortSymbols) {
+  _throwIfUndefinedOrNull(shortSymbols, `getTickersAndidByTicker shortSymbols`);
   const tickers = [];
-  const idByTickerDictionary = {};
+  const idByTicker = {};
   for (const shortSymbol of shortSymbols) {
     const ticker = shortSymbol.t;
     tickers.push(ticker);
-    idByTickerDictionary[ticker] = shortSymbol._id;
+    idByTicker[ticker] = shortSymbol._id;
   }
 
   return [
     tickers,
-    idByTickerDictionary
+    idByTicker
   ];
 }
 
