@@ -48,7 +48,7 @@ exports = async function(changeEvent) {
 
   const v2Transaction = {};
   v2Transaction._id = v1Transaction._id;
-  v2Transaction._p = "2";
+  v2Transaction._p = v1Transaction._p;
   v2Transaction.a = v1Transaction.a;
   v2Transaction.c = v1Transaction.c;
   v2Transaction.d = v1Transaction.d;

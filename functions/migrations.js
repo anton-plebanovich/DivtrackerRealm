@@ -533,7 +533,7 @@ async function fillV2SettingsCollectionMigration(v2Symbols, invalidEntitesFind) 
     .map(v1Settings => {
       const v2Settings = {};
       v2Settings._id = v1Settings._id;
-      v2Settings._p = "2";
+      v2Settings._p = v1Settings._p;
       v2Settings.ce = v1Settings.ce;
       v2Settings.g = v1Settings.g;
       v2Settings.te = v1Settings.te;
@@ -664,7 +664,7 @@ async function fillV2TransactionsCollectionMigration(v2Symbols, invalidEntitesFi
     "_id": {
       "$oid": "61b4ec80b3083dd2cac32eb7"
     },
-    "_p": "61ae5154d9b3cb9ea55ec5c6",
+    "_p": "619c69468f19308bae927d4e",
     "a": {
       "$numberDouble": "25.1146"
     },
@@ -720,7 +720,7 @@ async function fillV2TransactionsCollectionMigration(v2Symbols, invalidEntitesFi
 
       const v2Transactions = {};
       v2Transactions._id = v1Transactions._id;
-      v2Transactions._p = "2";
+      v2Transactions._p = v1Transactions._p;
       v2Transactions.a = v1Transactions.a;
       v2Transactions.c = v1Transactions.c;
       v2Transactions.d = v1Transactions.d;
