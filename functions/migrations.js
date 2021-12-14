@@ -5,10 +5,12 @@
 // https://docs.mongodb.com/realm/mongodb/actions/collection.insertMany/
 // https://docs.mongodb.com/realm/mongodb/actions/collection.updateMany/
 // https://docs.mongodb.com/manual/reference/operator/update/unset/
+// https://docs.mongodb.com/manual/reference/method/db.collection.initializeOrderedBulkOp/
 // https://docs.mongodb.com/manual/reference/method/Bulk.find.removeOne/
 // https://docs.mongodb.com/manual/reference/method/Bulk.insert/
 
 // V2 roll out
+// - Deploy: V2 deploy
 // - Manual: Run V1 -> V2 data migration
 
 // V1 deprecation phase 1
@@ -557,10 +559,15 @@ async function fillV2SettingsCollectionMigration(v2Symbols, invalidEntitesFind) 
 
   const v2Collection = db.collection('settings');
 
-  // Delete existing if any to prevent duplication
-  await v2Collection.deleteMany({});
+  // We execute everything in bulk to prevent insertions between delete and insert due to sync triggers
+  const bulk = v2Collection.initializeOrderedBulkOp();
 
-  return await v2Collection.insertMany(v2Settings);
+  // Delete existing if any to prevent duplication.
+  bulk.find({}).remove();
+
+  v2Settings.forEach(x => bulk.insert(x));
+
+  return await bulk.safeExecute();
 }
 
 async function fillV2SplitsCollectionMigration(v2Symbols, invalidEntitesFind) {
@@ -723,10 +730,15 @@ async function fillV2TransactionsCollectionMigration(v2Symbols, invalidEntitesFi
 
   const v2Collection = db.collection('transactions');
 
-  // Delete existing if any to prevent duplication
-  await v2Collection.deleteMany({});
+  // We execute everything in bulk to prevent insertions between delete and insert due to sync triggers
+  const bulk = v2Collection.initializeOrderedBulkOp();
 
-  return await v2Collection.insertMany(v2Transactions);
+  // Delete existing if any to prevent duplication.
+  bulk.find({}).remove();
+
+  v2Transactions.forEach(x => bulk.insert(x));
+
+  return await bulk.safeExecute();
 }
 
 ////////////////////////////////////////////////////// Partition key migration
