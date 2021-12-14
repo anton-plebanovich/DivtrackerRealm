@@ -35,6 +35,11 @@ async function v2DatabaseFillMigration() {
 
   // Fetch V2 exchange rates and symbols if needed
   if (await v2SymbolsCollection.count() <= 0) {
+    // Insert disabled PCI symbol
+    const pciJSON = EJSON.parse('{"_id":{"$oid":"61b102c0048b84e9c13e6429"},"symbol":"PCI","exchange":"XNYS","exchangeSuffix":"","exchangeName":"New York Stock Exchange Inc","exchangeSegment":"XNYS","exchangeSegmentName":"New York Stock Exchange Inc","name":"PIMCO Dynamic Credit and Mortgage Income Fund","type":"cs","iexId":"IEX_5151505A56372D52","region":"US","currency":"USD","isEnabled":false,"figi":"BBG003GFZWD9","cik":"0001558629","lei":"549300Q41U0QIEXCOU14"}')
+    const iexSymbols = iex.collection('symbols');
+    await iexSymbols.insertOne(pciJSON);
+
     await Promise.all([
       context.functions.execute("updateExchangeRatesV2"),
       context.functions.execute("updateSymbolsV2")
