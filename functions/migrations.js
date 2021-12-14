@@ -548,8 +548,8 @@ async function fillV2SettingsCollectionMigration(v2Symbols, invalidEntitesFind) 
         v2Settings.ts = v1Settings.ts.map(v1Taxes => {
           // AAPL:XNAS -> AAPL
           const ticker = v1Taxes.i.split(':')[0];
-          const symbolID = v2Symbols.find(x => x.t === ticker)._id;
-          if (symbolID == null) {
+          const symbol = v2Symbols.find(x => x.t === ticker);
+          if (symbol == null) {
             throw `Unknown V1 ticker '${ticker}' for settings ${v1Settings.stringify()}`;
           }
           const symbolID = symbol._id;
