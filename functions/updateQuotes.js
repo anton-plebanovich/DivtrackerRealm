@@ -44,7 +44,7 @@ exports = async function() {
     const count = quotes.length;
     for (let i = 0; i < count; i += 1) {
       const quote = quotes[i];
-      const existingQuote = existingQuotes.find(x => x._id == quote._id);
+      const existingQuote = existingQuotes.find(x => x._id === quote._id);
       if (existingQuote) {
         if (quote.isEqual(existingQuote)) {
           console.logVerbose(`Skipping up to date quote: ${quote._id}`);

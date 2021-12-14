@@ -1,5 +1,5 @@
 
-// checkUserTransactions.js
+// checkUserTransactionsV2.js
 
 /**
  * Safety checks for inserting transactions. 
@@ -10,25 +10,22 @@
  * - It should have valid and existing exchange.
  * - There should be less than 1_000 unique symbols per user.
  * - There should be less than 1_000_000 transactions per user.
- * @param {string} arg1 User ID
+ * @param {string} userID User ID
  * @param {[Transaction]} arg2 The same user transactions.
- * @example exports('614b283c15a0dc11514db030', [{"_p": "614b283c15a0dc11514db030","p":300.1,"d":"2021-12-08T21:00:00.000+00:00","e":"NYS","s":"MA","a":1.1}]);
+ * @example exports('61ae5154d9b3cb9ea55ec5c6', [{ "_p": "61ae5154d9b3cb9ea55ec5c6","p":300.1,"d":"2021-12-08T21:00:00.000+00:00","s":new BSON.ObjectId("61b102c0048b84e9c13e4564"),"a":1.1}]);
  */ 
- exports = async function(arg1, arg2) {
-  context.functions.execute("utils");
+ exports = async function(userID, transactions) {
+  context.functions.execute("utilsV2");
 
-  const userID = throwIfUndefinedOrNull(arg1);
-  const transactions = throwIfUndefinedOrNull(arg2);
-  if (!transactions.length) {
-    console.log(`Nothing to verify. Transactions are empty.`);
-    return;
-  }
+  throwIfEmptyArray(
+    transactions, 
+    `Please pass non-empty transactions array as the second argument.`
+  );
 
   const requiredTransactionKeys = [
     "_p",
     "a",
     "d",
-    "e",
     "p",
     "s"
   ];
@@ -38,7 +35,7 @@
     "c"
   ];
 
-  const [validSymbols, validExchanges] = await getUniqueSymbolsAndExchanges();
+  const supportedSymbolIDs = await getSupportedSymbolIDs();
   const transactionsCollection = db.collection("transactions");
   // Check transactions
   for (const transaction of transactions) {
@@ -51,8 +48,7 @@
     }
 
     // Checking that no excessive keys are present
-    const entries = Object.entries(transaction);
-    for (const [key, value] of entries) {
+    for (const [key, value] of Object.entries(transaction)) {
       if (!requiredTransactionKeys.includes(key) && !optionalTransactionKeys.includes(key)) {
         logAndThrow(`Found excessive transaction key '${key}' for transaction: ${transaction.stringify()}`);
       }
@@ -63,34 +59,32 @@
     }
 
     if (transaction._p !== userID) {
-      logAndThrow(`Transaction partition '${transaction._p}' should match user ID '${userID}': ${transaction.stringify()}`);
-    }
-    
-    if (!transaction.e.length) {
-      logAndThrow(`Transaction exchange is absent: ${transaction.stringify()}`);
+      logAndThrow(`Transaction partition '${transaction._}' should match user ID '${userID}': ${transaction.stringify()}`);
     }
   
-    if (!transaction.s.length) {
-      logAndThrow(`Transaction symbol is absent: ${transaction.stringify()}`);
-    }
-
-    if (!validExchanges.includes(transaction.e)) {
-      logAndThrow(`Unknown transaction exchange: ${transaction.stringify()}`);
+    if (transaction.s.toString().length !== 24) {
+      logAndThrow(`Transaction symbol ID format is invalid. It should be 24 characters ObjectId: ${transaction.stringify()}`);
     }
   
-    if (!validSymbols.includes(transaction.s)) {
+    if (!supportedSymbolIDs.includesObject(transaction.s)) {
       logAndThrow(`Unknown transaction symbol: ${transaction.stringify()}`);
     }
+  
+    // TODO: Check type
+    console.log(transaction.d)
+    // if (typeof transaction.d !== 'string') {
+      // logAndThrow(`Transaction date type should be string: ${transaction.stringify()}`);
+    // }
 
     // TODO: Check that values are of proper type
   }
 
-  const transactionsCount = await transactionsCollection.count({ _p: userID }) + transactions.length;
+  const transactionsCount = await transactionsCollection.count({ p: userID }) + transactions.length;
   if (transactionsCount >= 1000000) {
     logAndThrow(`Maximum number of 1000000 unique transactions for user is reached: ${transactionsCount}`);
   }
 
-  const existingDistinctSymbols = await transactionsCollection.distinct("s", { _p: userID });
+  const existingDistinctSymbols = await transactionsCollection.distinct("s", { p: userID });
   const insertingDistinctSymbols = transactions.map(x => x.s);
   const distinctSymbols = existingDistinctSymbols
     .concat(insertingDistinctSymbols)

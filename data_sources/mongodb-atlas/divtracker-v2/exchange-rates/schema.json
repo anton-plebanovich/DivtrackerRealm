@@ -1,0 +1,22 @@
+{
+    "properties": {
+        "_id": {
+            "bsonType": "string"
+        },
+        "_p": {
+            "bsonType": "string"
+        },
+        "r": {
+            "bsonType": "double"
+        },
+        "s": {
+            "bsonType": "string"
+        }
+    },
+    "required": [
+        "_id",
+        "_p",
+        "r"
+    ],
+    "title": "ExchangeRateV2RealmModel"
+}

@@ -1,25 +1,26 @@
 {
-    "id": "6185ffbd6db886ed8f037b10",
-    "name": "checkTransactionOnInsert",
+    "id": "6185ffbd6db886ed8f037b12",
+    "name": "syncV1toV2Settings",
     "type": "DATABASE",
     "config": {
         "operation_types": [
-            "INSERT"
+            "INSERT",
+            "UPDATE"
         ],
         "database": "divtracker",
-        "collection": "transactions",
+        "collection": "settings",
         "service_name": "mongodb-atlas",
         "match": {},
         "project": {},
         "full_document": true,
         "full_document_before_change": false,
-        "unordered": false
+        "unordered": true
     },
-    "disabled": true,
+    "disabled": false,
     "event_processors": {
         "FUNCTION": {
             "config": {
-                "function_name": "checkTransactionForChangeEvent"
+                "function_name": "syncV1toV2Settings"
             }
         }
     }

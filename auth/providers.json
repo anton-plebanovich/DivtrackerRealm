@@ -2,7 +2,7 @@
     "anon-user": {
         "name": "anon-user",
         "type": "anon-user",
-        "disabled": false
+        "disabled": true
     },
     "api-key": {
         "name": "api-key",
@@ -24,7 +24,7 @@
             "emailConfirmationUrl": "https://dtsandboxanton-nmfsd.mongodbstitch.com/email-confirmation.html",
             "resetPasswordUrl": "https://dtsandboxanton-nmfsd.mongodbstitch.com/reset-password.html"
         },
-        "disabled": false
+        "disabled": true
     },
     "oauth2-google": {
         "name": "oauth2-google",
@@ -36,6 +36,6 @@
         "secret_config": {
             "clientSecret": "realm-web-client-ios"
         },
-        "disabled": false
+        "disabled": true
     }
 }

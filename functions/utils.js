@@ -199,6 +199,19 @@ SystemError = class SystemError {
   }
 }
 
+class _NetworkError {
+  constructor(statusCode, message) {
+    this.statusCode = statusCode
+    this.message = message
+  }
+
+  toString() {
+    return this.stringify();
+  }
+}
+
+NetworkError = _NetworkError;
+
 CompositeError = class CompositeError {
   constructor(errors) {
     if (Object.prototype.toString.call(errors) !== '[object Array]') {
@@ -630,7 +643,17 @@ fetchBatchNew = async function fetchBatchNew(_types, _symbols, _queryParameters)
     fullQueryParameters.symbols = symbolsParameter;
 
     console.log(`Fetching batch for symbols (${chunkedSymbols.length}) with query '${queryParameters.stringify()}': ${typesParameter} - ${symbolsParameter}`);
-    const response = await _fetch(api, fullQueryParameters);
+
+    let response
+    try {
+      response = await _fetch(api, fullQueryParameters);
+    } catch(error) {
+      if (error.statusCode == 404) {
+        response = {};
+      } else {
+        throw error;
+      }
+    }
 
     result = Object.assign(result, response);
   }
@@ -675,7 +698,11 @@ async function _fetch(_api, queryParameters) {
   }
   
   if (response.status != '200 OK') {
-    _logAndThrow(`Response status error '${response.status}' : '${response.body.text()}'`);
+    const statusCodeString = response.status.split(" ")[0];
+    const statusCode = parseInt(statusCodeString, 10);
+    const text = response.body.text();
+    console.error(`Response status error '${response.status}' : '${text}'`);
+    throw new _NetworkError(statusCode, text)
   }
   
   const ejsonBody = EJSON.parse(response.body.text());
@@ -718,11 +745,18 @@ const defaultRange = '6y';
   const uniqueIDs = _throwIfUndefinedOrNull(arg1, `fetchCompanies arg1`);
   const [symbols, symbolsDictionary] = getSymbols(uniqueIDs);
 
-  return await fetchBatch(`/company`, symbols)
-    .then(companies => 
-      companies.compactMap(company => 
-        fixCompany(company, symbolsDictionary[company.symbol])
-      )
+  // https://sandbox.iexapis.com/stable/stock/market/batch?token=Tpk_581685f711114d9f9ab06d77506fdd49&types=company&symbols=AAPL,AAP
+  return await fetchBatchNew(['company'], symbols)
+    .then(typesBySymbol =>
+      symbols
+        .compactMap(symbol => {
+          const dataByType = typesBySymbol[symbol];
+          if (dataByType != null && dataByType.company) {
+            return fixCompany(dataByType.company, symbolsDictionary[symbol]);
+          } else {
+            return null;
+          }
+        })
     );
 };
 
@@ -750,7 +784,7 @@ fetchDividends = async function fetchDividends(arg1, arg2, arg3) {
       symbols
         .map(symbol => {
           const symbolsTypesDividend = symbolsTypesDividends[symbol];
-          if (typeof symbolsTypesDividend != null && symbolsTypesDividend.dividends) {
+          if (symbolsTypesDividend != null && symbolsTypesDividend.dividends) {
             return _fixDividends(symbolsTypesDividend.dividends, symbolsDictionary[symbol]);
           } else {
             return [];
@@ -807,7 +841,7 @@ fetchDividends = async function fetchDividends(arg1, arg2, arg3) {
       symbols
         .map(symbol => {
           const symbolsTypesHP = symbolsTypesHPs[symbol];
-          if (typeof symbolsTypesHP != null && symbolsTypesHP.chart) {
+          if (symbolsTypesHP != null && symbolsTypesHP.chart) {
             return fixHistoricalPrices(symbolsTypesHP.chart, symbolsDictionary[symbol]);
           } else {
             return [];
@@ -832,7 +866,7 @@ fetchDividends = async function fetchDividends(arg1, arg2, arg3) {
       symbols
         .compactMap(symbol => {
           const symbolsTypesQuote = symbolsTypesQuotes[symbol];
-          if (typeof symbolsTypesQuote != null && symbolsTypesQuote.quote) {
+          if (symbolsTypesQuote != null && symbolsTypesQuote.quote) {
             return fixQuote(symbolsTypesQuote.quote, symbolsDictionary[symbol]);
           } else {
             return null;
@@ -852,15 +886,22 @@ fetchDividends = async function fetchDividends(arg1, arg2, arg3) {
   const range = (typeof arg2 === 'undefined') ? defaultRange : arg2;
   const [symbols, symbolsDictionary] = getSymbols(uniqueIDs);
   const parameters = { range: range };
-
-  return await fetchBatch(`/splits`, symbols, parameters)
-   .then(splitsArray => 
-      splitsArray
-        .map((splits, i) => 
-          fixSplits(splits, symbolsDictionary[symbols[i]])
-        )
+  
+  // https://cloud.iexapis.com/stable/stock/market/batch?types=splits&token=sk_de6f102262874cfab3d9a83a6980e1db&range=6y&symbols=AAPL,AAP
+  return await fetchBatchNew(['splits'], symbols, parameters)
+    .then(typesBySymbol =>
+      symbols
+        .map(symbol => {
+          const dataByType = typesBySymbol[symbol];
+          if (dataByType != null && dataByType.splits) {
+            return fixSplits(dataByType.splits, symbolsDictionary[symbol]);
+          } else {
+            // PCI - null
+            return [];
+          }
+        })
         .flat()
-   );
+    );
 };
 
 /**
