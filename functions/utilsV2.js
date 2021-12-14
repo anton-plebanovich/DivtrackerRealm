@@ -262,6 +262,14 @@ Array.prototype.toDictionary = function(key) {
 };
 
 /**
+ * Checks if object is included in the array using `isEqual`.
+ */
+Array.prototype.includesObject = function(object) {
+  if (object == null) { return false; }
+  return this.find(x => object.isEqual(x)) != null;
+};
+
+/**
  * @returns {Date} Yesterday day start date in UTC.
  */
 Date.yesterday = function() {
@@ -780,7 +788,7 @@ async function _getInUseShortSymbols() {
   const disabledSymbolIDs = await symbolsCollection.distinct("_id", { e: false });
 
   // Remove disabled symbols
-  symbolIDs = symbolIDs.filter(x => !disabledSymbolIDs.includes(x));
+  symbolIDs = symbolIDs.filter(x => !disabledSymbolIDs.includesObject(x));
 
   return await getShortSymbols(symbolIDs);
 };

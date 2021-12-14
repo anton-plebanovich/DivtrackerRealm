@@ -15,11 +15,10 @@
 
   // Check transactions
   const supportedSymbolIDs = await getSupportedSymbolIDs();
-  const supportedSymbolIDStrings = supportedSymbolIDs.map(x => x.toString());
   const errors = [];
   for (const transaction of transactions) {
     try {
-      checkTransaction(transaction, supportedSymbolIDStrings);
+      checkTransaction(transaction, supportedSymbolIDs);
     } catch(error) {
       errors.push(error);
     }
@@ -46,7 +45,7 @@ const optionalTransactionKeys = [
   "c"
 ];
 
-function checkTransaction(transaction, supportedSymbolIDStrings) {
+function checkTransaction(transaction, supportedSymbolIDs) {
     // Checking that all required keys are present
     for (const requiredKey of requiredTransactionKeys) {
       if (typeof transaction[requiredKey] === 'undefined') {
@@ -65,12 +64,11 @@ function checkTransaction(transaction, supportedSymbolIDStrings) {
       logAndThrow(`Transaction partition is absent: ${transaction.stringify()}`);
     }
   
-    const symbolIDString = transaction.s.toString()
     if (transaction.s.toString().length !== 24) {
       logAndThrow(`Transaction symbol ID format is invalid. It should be 24 characters ObjectId: ${transaction.stringify()}`);
     }
   
-    if (!supportedSymbolIDStrings.includes(symbolIDString)) {
+    if (!supportedSymbolIDs.includesObject(transaction.s)) {
       logAndThrow(`Unknown transaction symbol: ${transaction.stringify()}`);
     }
 

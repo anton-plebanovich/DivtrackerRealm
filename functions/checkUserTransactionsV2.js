@@ -36,7 +36,6 @@
   ];
 
   const supportedSymbolIDs = await getSupportedSymbolIDs();
-  const supportedSymbolIDStrings = supportedSymbolIDs.map(x => x.toString());
   const transactionsCollection = db.collection("transactions");
   // Check transactions
   for (const transaction of transactions) {
@@ -63,12 +62,11 @@
       logAndThrow(`Transaction partition '${transaction._}' should match user ID '${userID}': ${transaction.stringify()}`);
     }
   
-    const symbolIDString = transaction.s.toString()
     if (transaction.s.toString().length !== 24) {
       logAndThrow(`Transaction symbol ID format is invalid. It should be 24 characters ObjectId: ${transaction.stringify()}`);
     }
   
-    if (!supportedSymbolIDStrings.includes(symbolIDString)) {
+    if (!supportedSymbolIDs.includesObject(transaction.s)) {
       logAndThrow(`Unknown transaction symbol: ${transaction.stringify()}`);
     }
   

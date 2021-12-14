@@ -234,14 +234,12 @@ async function loadMissingSplits(shortSymbols) {
  */
 async function getMissingShortSymbols(collection, field, shortSymbols) {
   const symbolIDs = shortSymbols.map(x => x._id);
-  const existingIDStrings = await collection
-    .distinct(field, { [field]: { $in: symbolIDs } })
-    .then(x => x.toString());
+  const existingIDs = await collection
+    .distinct(field, { [field]: { $in: symbolIDs } });
     
-  const missingShortSymbols = shortSymbols.filter(shortSymbol => {
-    const idString = shortSymbol._id.toString();
-    return !existingIDStrings.includes(idString)
-  });
+  const missingShortSymbols = shortSymbols.filter(
+    x => !existingIDs.includesObject(x._id)
+  );
   
   return missingShortSymbols;
 }
