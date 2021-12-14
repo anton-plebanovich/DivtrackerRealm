@@ -9,7 +9,9 @@
                 "%%partition": {
                     "%in": [
                         "%%user.id",
-                        "P"
+                        "P",
+                        "2",
+                        null
                     ]
                 }
             },

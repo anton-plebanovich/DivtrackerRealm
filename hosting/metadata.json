@@ -58,6 +58,15 @@
     ]
   },
   {
+    "path": "/version_ios_new.json",
+    "attrs": [
+      {
+        "name": "Content-Type",
+        "value": "application/json"
+      }
+    ]
+  },
+  {
     "path": "/version_ios.json",
     "attrs": [
       {
