@@ -91,10 +91,11 @@ async function fillV2CompanyCollectionMigration(v2Symbols, invalidEntitesFind) {
     .map(v1Company => {
       // AAPL:XNAS -> AAPL
       const ticker = v1Company._id.split(':')[0];
-      const symbolID = v2Symbols.find(x => x.t === ticker)._id;
-      if (symbolID == null) {
+      const symbol = v2Symbols.find(x => x.t === ticker)
+      if (symbol == null) {
         throw `Unknown V1 ticker '${ticker}' for company ${v1Company.stringify()}`;
       }
+      const symbolID = symbol._id;
 
       const v2Company = {};
       v2Company._id = symbolID;
@@ -187,10 +188,11 @@ async function fillV2DividendsCollectionMigration(v2Symbols, invalidEntitesFind)
     .map(v1Dividend => {
       // AAPL:XNAS -> AAPL
       const ticker = v1Dividend._i.split(':')[0];
-      const symbolID = v2Symbols.find(x => x.t === ticker)._id;
-      if (symbolID == null) {
+      const symbol = v2Symbols.find(x => x.t === ticker)
+      if (symbol == null) {
         throw `Unknown V1 ticker '${ticker}' for dividend ${v1Dividend.stringify()}`;
       }
+      const symbolID = symbol._id;
 
       const v2Dividend = {};
       v2Dividend._id = v1Dividend._id;
@@ -265,10 +267,11 @@ async function fillV2HistoricalPricesCollectionMigration(v2Symbols, invalidEntit
     .map(v1HistoricalPrice => {
       // AAPL:XNAS -> AAPL
       const ticker = v1HistoricalPrice._i.split(':')[0];
-      const symbolID = v2Symbols.find(x => x.t === ticker)._id;
-      if (symbolID == null) {
+      const symbol = v2Symbols.find(x => x.t === ticker)
+      if (symbol == null) {
         throw `Unknown V1 ticker '${ticker}' for historical price ${v1HistoricalPrice.stringify()}`;
       }
+      const symbolID = symbol._id;
 
       const v2HistoricalPrice = {};
       v2HistoricalPrice._id = v1HistoricalPrice._id;
@@ -323,10 +326,11 @@ async function fillV2PreviousDayPricesCollectionMigration(v2Symbols, invalidEnti
     .map(v1PreviousDayPrice => {
       // AAPL:XNAS -> AAPL
       const ticker = v1PreviousDayPrice._id.split(':')[0];
-      const symbolID = v2Symbols.find(x => x.t === ticker)._id;
-      if (symbolID == null) {
+      const symbol = v2Symbols.find(x => x.t === ticker)
+      if (symbol == null) {
         throw `Unknown V1 ticker '${ticker}' for previous day price ${v1PreviousDayPrice.stringify()}`;
       }
+      const symbolID = symbol._id;
 
       const v2PreviousDayPrices = {};
       v2PreviousDayPrices._id = symbolID;
@@ -390,10 +394,11 @@ async function fillV2QoutesCollectionMigration(v2Symbols, invalidEntitesFind) {
     .map(v1Qoute => {
       // AAPL:XNAS -> AAPL
       const ticker = v1Qoute._id.split(':')[0];
-      const symbolID = v2Symbols.find(x => x.t === ticker)._id;
-      if (symbolID == null) {
+      const symbol = v2Symbols.find(x => x.t === ticker)
+      if (symbol == null) {
         throw `Unknown V1 ticker '${ticker}' for quote ${v1Qoute.stringify()}`;
       }
+      const symbolID = symbol._id;
 
       const v2Qoute = {};
       v2Qoute._id = symbolID;
@@ -547,6 +552,7 @@ async function fillV2SettingsCollectionMigration(v2Symbols, invalidEntitesFind) 
           if (symbolID == null) {
             throw `Unknown V1 ticker '${ticker}' for settings ${v1Settings.stringify()}`;
           }
+          const symbolID = symbol._id;
   
           const v2Taxes = {};
           v2Taxes.s = symbolID;
@@ -623,10 +629,11 @@ async function fillV2SplitsCollectionMigration(v2Symbols, invalidEntitesFind) {
     .map(v1Split => {
       // AAPL:XNAS -> AAPL
       const ticker = v1Split._i.split(':')[0];
-      const symbolID = v2Symbols.find(x => x.t === ticker)._id;
-      if (symbolID == null) {
+      const symbol = v2Symbols.find(x => x.t === ticker)
+      if (symbol == null) {
         throw `Unknown V1 ticker '${ticker}' for split ${v1Split.stringify()}`;
       }
+      const symbolID = symbol._id;
 
       const v2Split = {};
       v2Split._id = v1Split._id;
@@ -713,10 +720,11 @@ async function fillV2TransactionsCollectionMigration(v2Symbols, invalidEntitesFi
     .map(v1Transactions => {
       // AAPL:XNAS -> AAPL
       const ticker = v1Transactions.s;
-      const symbolID = v2Symbols.find(x => x.t === ticker)._id;
-      if (symbolID == null) {
+      const symbol = v2Symbols.find(x => x.t === ticker)
+      if (symbol == null) {
         throw `Unknown V1 ticker '${ticker}' for transaction ${v1Transactions.stringify()}`;
       }
+      const symbolID = symbol._id;
 
       const v2Transactions = {};
       v2Transactions._id = v1Transactions._id;
