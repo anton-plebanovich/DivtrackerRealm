@@ -608,7 +608,7 @@ checkExecutionTimeout = function checkExecutionTimeout() {
   const seconds = Math.round((endTime - startDate) / 1000);
 
   // One symbol full fetch takes 17.5s and we have only 120s function execution time so let's put some limit.
-  const limit = 110;
+  const limit = 100;
   if (seconds > limit) {
     _logAndThrow('execution timeout');
   } else {
