@@ -46,25 +46,25 @@ async function v2DatabaseFillMigration() {
     ]);
   }
 
-  checkExecutionTimeout();
+  checkExecutionTimeout(60);
   const v2Symbols = await v2SymbolsCollection.find().toArray();
   const invalidEntitesFind = { $regex: ":(NAS|NYS|POR|USAMEX|USBATS|USPAC)" };
 
-  checkExecutionTimeout();
+  checkExecutionTimeout(60);
   await fillV2CompanyCollectionMigration(v2Symbols, invalidEntitesFind);
-  checkExecutionTimeout();
+  checkExecutionTimeout(60);
   await fillV2DividendsCollectionMigration(v2Symbols, invalidEntitesFind);
-  checkExecutionTimeout();
+  checkExecutionTimeout(60);
   await fillV2HistoricalPricesCollectionMigration(v2Symbols, invalidEntitesFind);
-  checkExecutionTimeout();
+  checkExecutionTimeout(60);
   await fillV2PreviousDayPricesCollectionMigration(v2Symbols, invalidEntitesFind);
-  checkExecutionTimeout();
+  checkExecutionTimeout(60);
   await fillV2QoutesCollectionMigration(v2Symbols, invalidEntitesFind);
-  checkExecutionTimeout();
+  checkExecutionTimeout(60);
   await fillV2SettingsCollectionMigration(v2Symbols, invalidEntitesFind);
-  checkExecutionTimeout();
+  checkExecutionTimeout(60);
   await fillV2SplitsCollectionMigration(v2Symbols, invalidEntitesFind);
-  checkExecutionTimeout();
+  checkExecutionTimeout(60);
   await fillV2TransactionsCollectionMigration(v2Symbols, invalidEntitesFind);
 }
 
