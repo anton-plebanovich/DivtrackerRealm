@@ -27,7 +27,11 @@
 exports = async function() {
   context.functions.execute("utilsV2");
 
-  await v2DatabaseFillMigration();
+  try {
+    await v2DatabaseFillMigration();
+  } catch(error) {
+    console.error(error);
+  }
 };
 
 async function v2DatabaseFillMigration() {
