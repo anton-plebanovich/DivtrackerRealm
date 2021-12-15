@@ -24,6 +24,9 @@
 // - Manual: Drop `divtracker` database
 // - Manual: Run partition key migration
 // - Deploy: New schemes, function, and sync that are using optional _ partition key. V1 schemes remove.
+
+const limit = 60;
+
 exports = async function() {
   context.functions.execute("utilsV2");
 
@@ -50,25 +53,25 @@ async function v2DatabaseFillMigration() {
     ]);
   }
 
-  checkExecutionTimeout(60);
+  checkExecutionTimeout(limit);
   const v2Symbols = await v2SymbolsCollection.find().toArray();
   const invalidEntitesFind = { $regex: ":(NAS|NYS|POR|USAMEX|USBATS|USPAC)" };
 
-  checkExecutionTimeout(60);
+  checkExecutionTimeout(limit);
   await fillV2CompanyCollectionMigration(v2Symbols, invalidEntitesFind);
-  checkExecutionTimeout(60);
+  checkExecutionTimeout(limit);
   await fillV2DividendsCollectionMigration(v2Symbols, invalidEntitesFind);
-  checkExecutionTimeout(60);
+  checkExecutionTimeout(limit);
   await fillV2HistoricalPricesCollectionMigration(v2Symbols, invalidEntitesFind);
-  checkExecutionTimeout(60);
+  checkExecutionTimeout(limit);
   await fillV2PreviousDayPricesCollectionMigration(v2Symbols, invalidEntitesFind);
-  checkExecutionTimeout(60);
+  checkExecutionTimeout(limit);
   await fillV2QoutesCollectionMigration(v2Symbols, invalidEntitesFind);
-  checkExecutionTimeout(60);
+  checkExecutionTimeout(limit);
   await fillV2SettingsCollectionMigration(v2Symbols, invalidEntitesFind);
-  checkExecutionTimeout(60);
+  checkExecutionTimeout(limit);
   await fillV2SplitsCollectionMigration(v2Symbols, invalidEntitesFind);
-  checkExecutionTimeout(60);
+  checkExecutionTimeout(limit);
   await fillV2TransactionsCollectionMigration(v2Symbols, invalidEntitesFind);
 }
 
@@ -128,7 +131,7 @@ async function fillV2CompanyCollectionMigration(v2Symbols, invalidEntitesFind) {
   // Delete existing if any to prevent duplication
   await v2Collection.deleteMany({});
 
-  return await v2Collection.insertMany(v2Companies);
+  return await v2Collection.insertManyBy1000(v2Companies, limit);
 }
 
 async function fillV2DividendsCollectionMigration(v2Symbols, invalidEntitesFind) {
@@ -229,7 +232,7 @@ async function fillV2DividendsCollectionMigration(v2Symbols, invalidEntitesFind)
   // Delete existing if any to prevent duplication
   await v2Collection.deleteMany({});
 
-  return await v2Collection.insertMany(v2Dividends);
+  return await v2Collection.insertManyBy1000(v2Dividends, limit);
 }
 
 async function fillV2HistoricalPricesCollectionMigration(v2Symbols, invalidEntitesFind) {
@@ -304,7 +307,7 @@ async function fillV2HistoricalPricesCollectionMigration(v2Symbols, invalidEntit
   // Delete existing if any to prevent duplication
   await v2Collection.deleteMany({});
 
-  return await v2Collection.insertMany(v2HistoricalPrices);
+  return await v2Collection.insertManyBy1000(v2HistoricalPrices, limit);
 }
 
 async function fillV2PreviousDayPricesCollectionMigration(v2Symbols, invalidEntitesFind) {
@@ -361,7 +364,7 @@ async function fillV2PreviousDayPricesCollectionMigration(v2Symbols, invalidEnti
   // Delete existing if any to prevent duplication
   await v2Collection.deleteMany({});
 
-  return await v2Collection.insertMany(v2PreviousDayPrices);
+  return await v2Collection.insertManyBy1000(v2PreviousDayPrices, limit);
 }
 
 async function fillV2QoutesCollectionMigration(v2Symbols, invalidEntitesFind) {
@@ -430,7 +433,7 @@ async function fillV2QoutesCollectionMigration(v2Symbols, invalidEntitesFind) {
   // Delete existing if any to prevent duplication
   await v2Collection.deleteMany({});
 
-  return await v2Collection.insertMany(v2Qoutes);
+  return await v2Collection.insertManyBy1000(v2Qoutes, limit);
 }
 
 async function fillV2SettingsCollectionMigration(v2Symbols, invalidEntitesFind) {
@@ -666,7 +669,7 @@ async function fillV2SplitsCollectionMigration(v2Symbols, invalidEntitesFind) {
   // Delete existing if any to prevent duplication
   await v2Collection.deleteMany({});
 
-  return await v2Collection.insertMany(v2Splits);
+  return await v2Collection.insertManyBy1000(v2Splits, limit);
 }
 
 async function fillV2TransactionsCollectionMigration(v2Symbols, invalidEntitesFind) {
