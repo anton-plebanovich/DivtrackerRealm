@@ -24,10 +24,15 @@
 // - Manual: Drop `divtracker` database
 // - Manual: Run partition key migration
 // - Deploy: New schemes, function, and sync that are using optional _ partition key. V1 schemes remove.
+
 exports = async function() {
   context.functions.execute("utilsV2");
 
-  await v2DatabaseFillMigration();
+  try {
+    await v2DatabaseFillMigration();
+  } catch(error) {
+    console.error(error);
+  }
 };
 
 async function v2DatabaseFillMigration() {
@@ -36,7 +41,7 @@ async function v2DatabaseFillMigration() {
   // Fetch V2 exchange rates and symbols if needed
   if (await v2SymbolsCollection.count() <= 0) {
     // Insert disabled PCI symbol
-    const pciJSON = EJSON.parse('{"_id":{"$oid":"61b102c0048b84e9c13e6429"},"symbol":"PCI","exchange":"XNYS","exchangeSuffix":"","exchangeName":"New York Stock Exchange Inc","exchangeSegment":"XNYS","exchangeSegmentName":"New York Stock Exchange Inc","name":"PIMCO Dynamic Credit and Mortgage Income Fund","type":"cs","iexId":"IEX_5151505A56372D52","region":"US","currency":"USD","isEnabled":false,"figi":"BBG003GFZWD9","cik":"0001558629","lei":"549300Q41U0QIEXCOU14"}')
+    const pciJSON = EJSON.parse('{"_id":{"$oid":"61b102c0048b84e9c13e6429"},"symbol":"PCI","exchange":"XNYS","exchangeSuffix":"","exchangeName":"New York Stock Exchange Inc","exchangeSegment":"XNYS","exchangeSegmentName":"New York Stock Exchange Inc","name":"PIMCO Dynamic Credit and Mortgage Income Fund","type":"cs","iexId":"IEX_5151505A56372D52","region":"US","currency":"USD","isEnabled":false,"figi":"BBG003GFZWD9","cik":"0001558629","lei":"549300Q41U0QIEXCOU14"}');
     const iexSymbols = iex.collection('symbols');
     await iexSymbols.insertOne(pciJSON);
 
@@ -46,22 +51,35 @@ async function v2DatabaseFillMigration() {
     ]);
   }
 
+  checkExecutionTimeout();
   const v2Symbols = await v2SymbolsCollection.find().toArray();
+  const idByTicker = {};
+  for (const v2Symbol of v2Symbols) {
+    const ticker = v2Symbol.t;
+    idByTicker[ticker] = v2Symbol._id;
+  }
+
   const invalidEntitesFind = { $regex: ":(NAS|NYS|POR|USAMEX|USBATS|USPAC)" };
 
-  return await Promise.all([
-    fillV2CompanyCollectionMigration(v2Symbols, invalidEntitesFind),
-    fillV2DividendsCollectionMigration(v2Symbols, invalidEntitesFind),
-    fillV2HistoricalPricesCollectionMigration(v2Symbols, invalidEntitesFind),
-    fillV2PreviousDayPricesCollectionMigration(v2Symbols, invalidEntitesFind),
-    fillV2QoutesCollectionMigration(v2Symbols, invalidEntitesFind),
-    fillV2SettingsCollectionMigration(v2Symbols, invalidEntitesFind),
-    fillV2SplitsCollectionMigration(v2Symbols, invalidEntitesFind),
-    fillV2TransactionsCollectionMigration(v2Symbols, invalidEntitesFind),
-  ]);
+  checkExecutionTimeout();
+  await fillV2CompanyCollectionMigration(idByTicker, invalidEntitesFind);
+  checkExecutionTimeout();
+  await fillV2DividendsCollectionMigration(idByTicker, invalidEntitesFind);
+  checkExecutionTimeout();
+  await fillV2HistoricalPricesCollectionMigration(idByTicker, invalidEntitesFind);
+  checkExecutionTimeout();
+  await fillV2PreviousDayPricesCollectionMigration(idByTicker, invalidEntitesFind);
+  checkExecutionTimeout();
+  await fillV2QoutesCollectionMigration(idByTicker, invalidEntitesFind);
+  checkExecutionTimeout();
+  await fillV2SettingsCollectionMigration(idByTicker, invalidEntitesFind);
+  checkExecutionTimeout();
+  await fillV2SplitsCollectionMigration(idByTicker, invalidEntitesFind);
+  checkExecutionTimeout();
+  await fillV2TransactionsCollectionMigration(idByTicker, invalidEntitesFind);
 }
 
-async function fillV2CompanyCollectionMigration(v2Symbols, invalidEntitesFind) {
+async function fillV2CompanyCollectionMigration(idByTicker, invalidEntitesFind) {
   const v1Collection = atlas.db("divtracker").collection('companies');
 
   // Check that data is valid
@@ -96,11 +114,10 @@ async function fillV2CompanyCollectionMigration(v2Symbols, invalidEntitesFind) {
     .map(v1Company => {
       // AAPL:XNAS -> AAPL
       const ticker = v1Company._id.split(':')[0];
-      const symbol = v2Symbols.find(x => x.t === ticker)
-      if (symbol == null) {
+      const symbolID = idByTicker[ticker];
+      if (symbolID == null) {
         throw `Unknown V1 ticker '${ticker}' for company ${v1Company.stringify()}`;
       }
-      const symbolID = symbol._id;
 
       const v2Company = {};
       v2Company._id = symbolID;
@@ -120,7 +137,7 @@ async function fillV2CompanyCollectionMigration(v2Symbols, invalidEntitesFind) {
   return await v2Collection.insertMany(v2Companies);
 }
 
-async function fillV2DividendsCollectionMigration(v2Symbols, invalidEntitesFind) {
+async function fillV2DividendsCollectionMigration(idByTicker, invalidEntitesFind) {
   const v1Collection = atlas.db("divtracker").collection('dividends');
 
   // Check that data is valid
@@ -193,11 +210,10 @@ async function fillV2DividendsCollectionMigration(v2Symbols, invalidEntitesFind)
     .map(v1Dividend => {
       // AAPL:XNAS -> AAPL
       const ticker = v1Dividend._i.split(':')[0];
-      const symbol = v2Symbols.find(x => x.t === ticker)
-      if (symbol == null) {
+      const symbolID = idByTicker[ticker];
+      if (symbolID == null) {
         throw `Unknown V1 ticker '${ticker}' for dividend ${v1Dividend.stringify()}`;
       }
-      const symbolID = symbol._id;
 
       const v2Dividend = {};
       v2Dividend._id = v1Dividend._id;
@@ -221,7 +237,7 @@ async function fillV2DividendsCollectionMigration(v2Symbols, invalidEntitesFind)
   return await v2Collection.insertMany(v2Dividends);
 }
 
-async function fillV2HistoricalPricesCollectionMigration(v2Symbols, invalidEntitesFind) {
+async function fillV2HistoricalPricesCollectionMigration(idByTicker, invalidEntitesFind) {
   const v1Collection = atlas.db("divtracker").collection('historical-prices');
 
   // Check that data is valid
@@ -272,11 +288,10 @@ async function fillV2HistoricalPricesCollectionMigration(v2Symbols, invalidEntit
     .map(v1HistoricalPrice => {
       // AAPL:XNAS -> AAPL
       const ticker = v1HistoricalPrice._i.split(':')[0];
-      const symbol = v2Symbols.find(x => x.t === ticker)
-      if (symbol == null) {
+      const symbolID = idByTicker[ticker];
+      if (symbolID == null) {
         throw `Unknown V1 ticker '${ticker}' for historical price ${v1HistoricalPrice.stringify()}`;
       }
-      const symbolID = symbol._id;
 
       const v2HistoricalPrice = {};
       v2HistoricalPrice._id = v1HistoricalPrice._id;
@@ -296,7 +311,7 @@ async function fillV2HistoricalPricesCollectionMigration(v2Symbols, invalidEntit
   return await v2Collection.insertMany(v2HistoricalPrices);
 }
 
-async function fillV2PreviousDayPricesCollectionMigration(v2Symbols, invalidEntitesFind) {
+async function fillV2PreviousDayPricesCollectionMigration(idByTicker, invalidEntitesFind) {
   const v1Collection = atlas.db("divtracker").collection('previous-day-prices');
 
   // Check that data is valid
@@ -331,11 +346,10 @@ async function fillV2PreviousDayPricesCollectionMigration(v2Symbols, invalidEnti
     .map(v1PreviousDayPrice => {
       // AAPL:XNAS -> AAPL
       const ticker = v1PreviousDayPrice._id.split(':')[0];
-      const symbol = v2Symbols.find(x => x.t === ticker)
-      if (symbol == null) {
+      const symbolID = idByTicker[ticker];
+      if (symbolID == null) {
         throw `Unknown V1 ticker '${ticker}' for previous day price ${v1PreviousDayPrice.stringify()}`;
       }
-      const symbolID = symbol._id;
 
       const v2PreviousDayPrices = {};
       v2PreviousDayPrices._id = symbolID;
@@ -353,7 +367,7 @@ async function fillV2PreviousDayPricesCollectionMigration(v2Symbols, invalidEnti
   return await v2Collection.insertMany(v2PreviousDayPrices);
 }
 
-async function fillV2QoutesCollectionMigration(v2Symbols, invalidEntitesFind) {
+async function fillV2QoutesCollectionMigration(idByTicker, invalidEntitesFind) {
   const v1Collection = atlas.db("divtracker").collection('quotes');
 
   // Check that data is valid
@@ -399,11 +413,10 @@ async function fillV2QoutesCollectionMigration(v2Symbols, invalidEntitesFind) {
     .map(v1Qoute => {
       // AAPL:XNAS -> AAPL
       const ticker = v1Qoute._id.split(':')[0];
-      const symbol = v2Symbols.find(x => x.t === ticker)
-      if (symbol == null) {
+      const symbolID = idByTicker[ticker];
+      if (symbolID == null) {
         throw `Unknown V1 ticker '${ticker}' for quote ${v1Qoute.stringify()}`;
       }
-      const symbolID = symbol._id;
 
       const v2Qoute = {};
       v2Qoute._id = symbolID;
@@ -422,7 +435,7 @@ async function fillV2QoutesCollectionMigration(v2Symbols, invalidEntitesFind) {
   return await v2Collection.insertMany(v2Qoutes);
 }
 
-async function fillV2SettingsCollectionMigration(v2Symbols, invalidEntitesFind) {
+async function fillV2SettingsCollectionMigration(idByTicker, invalidEntitesFind) {
   const v1Collection = atlas.db("divtracker").collection('settings');
 
   // Check that data is valid
@@ -553,11 +566,10 @@ async function fillV2SettingsCollectionMigration(v2Symbols, invalidEntitesFind) 
         v2Settings.ts = v1Settings.ts.map(v1Taxes => {
           // AAPL:XNAS -> AAPL
           const ticker = v1Taxes.i.split(':')[0];
-          const symbol = v2Symbols.find(x => x.t === ticker);
-          if (symbol == null) {
+          const symbolID = idByTicker[ticker];
+          if (symbolID == null) {
             throw `Unknown V1 ticker '${ticker}' for settings ${v1Settings.stringify()}`;
           }
-          const symbolID = symbol._id;
   
           const v2Taxes = {};
           v2Taxes.s = symbolID;
@@ -583,7 +595,7 @@ async function fillV2SettingsCollectionMigration(v2Symbols, invalidEntitesFind) 
   return await bulk.safeExecute();
 }
 
-async function fillV2SplitsCollectionMigration(v2Symbols, invalidEntitesFind) {
+async function fillV2SplitsCollectionMigration(idByTicker, invalidEntitesFind) {
   const v1Collection = atlas.db("divtracker").collection('splits');
 
   // Check that data is valid
@@ -634,11 +646,10 @@ async function fillV2SplitsCollectionMigration(v2Symbols, invalidEntitesFind) {
     .map(v1Split => {
       // AAPL:XNAS -> AAPL
       const ticker = v1Split._i.split(':')[0];
-      const symbol = v2Symbols.find(x => x.t === ticker)
-      if (symbol == null) {
+      const symbolID = idByTicker[ticker];
+      if (symbolID == null) {
         throw `Unknown V1 ticker '${ticker}' for split ${v1Split.stringify()}`;
       }
-      const symbolID = symbol._id;
 
       const v2Split = {};
       v2Split._id = v1Split._id;
@@ -658,7 +669,7 @@ async function fillV2SplitsCollectionMigration(v2Symbols, invalidEntitesFind) {
   return await v2Collection.insertMany(v2Splits);
 }
 
-async function fillV2TransactionsCollectionMigration(v2Symbols, invalidEntitesFind) {
+async function fillV2TransactionsCollectionMigration(idByTicker, invalidEntitesFind) {
   const v1Collection = atlas.db("divtracker").collection('transactions');
 
   // Fixing regex
@@ -725,11 +736,10 @@ async function fillV2TransactionsCollectionMigration(v2Symbols, invalidEntitesFi
     .map(v1Transactions => {
       // AAPL:XNAS -> AAPL
       const ticker = v1Transactions.s;
-      const symbol = v2Symbols.find(x => x.t === ticker)
-      if (symbol == null) {
+      const symbolID = idByTicker[ticker];
+      if (symbolID == null) {
         throw `Unknown V1 ticker '${ticker}' for transaction ${v1Transactions.stringify()}`;
       }
-      const symbolID = symbol._id;
 
       const v2Transactions = {};
       v2Transactions._id = v1Transactions._id;
@@ -771,7 +781,6 @@ async function partitionKeyMigration() {
     db.collection('quotes'),
     db.collection('splits'),
     db.collection('symbols'),
-    db.collection('splits'),
   ];
 
   for (const collection of dataCollections) {

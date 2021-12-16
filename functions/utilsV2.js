@@ -599,7 +599,7 @@ function _logAndThrow(message) {
 logAndThrow = _logAndThrow;
 
 /** Checks that we didn't exceed 90s timeout. */
-checkExecutionTimeout = function checkExecutionTimeout() {
+checkExecutionTimeout = function checkExecutionTimeout(limit) {
   if (typeof startDate === 'undefined') {
     startDate = new Date();
   }
@@ -607,8 +607,11 @@ checkExecutionTimeout = function checkExecutionTimeout() {
   const endTime = new Date();
   const seconds = Math.round((endTime - startDate) / 1000);
 
-  // One symbol full fetch takes 17.5s and we have only 90s function execution time so let's put some limit.
-  const limit = 80;
+  // One symbol full fetch takes 17.5s and we have only 120s function execution time so let's put some limit.
+  if (limit == null) {
+    limit = 110;
+  }
+
   if (seconds > limit) {
     _logAndThrow('execution timeout');
   } else {
