@@ -17,21 +17,6 @@ Object.prototype.safeExecute = async function() {
 };
 
 /**
- * Safely executes Bulk operation by catching 'no operations' error.
- */
- Object.prototype.insertManyBy1000 = async function(objects, limit) {
-  _throwIfEmptyArray(objects, `Please pass non-empty new objects array as the first argument.`);
-
-  const chunks = objects.chunked(1000);
-  console.log(`Inserting ${objects.length} objects by ${chunks.length} chunks of 1000 objects`)
-  chunks.forEach((chunk, i) => {
-    console.log(`Inserting chunk (${i}/${chunks.length})...`)
-    await this.insertMany(chunk);
-    checkExecutionTimeout(limit);
-  })
-};
-
-/**
  * Safely computes and executes update operation from old to new objects on a collection.
  */
 Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, field) {
