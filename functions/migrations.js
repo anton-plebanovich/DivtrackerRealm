@@ -25,8 +25,6 @@
 // - Manual: Run partition key migration
 // - Deploy: New schemes, function, and sync that are using optional _ partition key. V1 schemes remove.
 
-const limit = 90;
-
 exports = async function() {
   context.functions.execute("utilsV2");
 
@@ -53,7 +51,7 @@ async function v2DatabaseFillMigration() {
     ]);
   }
 
-  checkExecutionTimeout(limit);
+  checkExecutionTimeout();
   const v2Symbols = await v2SymbolsCollection.find().toArray();
   const idByTicker = {};
   for (const v2Symbol of v2Symbols) {
@@ -63,21 +61,21 @@ async function v2DatabaseFillMigration() {
 
   const invalidEntitesFind = { $regex: ":(NAS|NYS|POR|USAMEX|USBATS|USPAC)" };
 
-  checkExecutionTimeout(limit);
+  checkExecutionTimeout();
   await fillV2CompanyCollectionMigration(idByTicker, invalidEntitesFind);
-  checkExecutionTimeout(limit);
+  checkExecutionTimeout();
   await fillV2DividendsCollectionMigration(idByTicker, invalidEntitesFind);
-  checkExecutionTimeout(limit);
+  checkExecutionTimeout();
   await fillV2HistoricalPricesCollectionMigration(idByTicker, invalidEntitesFind);
-  checkExecutionTimeout(limit);
+  checkExecutionTimeout();
   await fillV2PreviousDayPricesCollectionMigration(idByTicker, invalidEntitesFind);
-  checkExecutionTimeout(limit);
+  checkExecutionTimeout();
   await fillV2QoutesCollectionMigration(idByTicker, invalidEntitesFind);
-  checkExecutionTimeout(limit);
+  checkExecutionTimeout();
   await fillV2SettingsCollectionMigration(idByTicker, invalidEntitesFind);
-  checkExecutionTimeout(limit);
+  checkExecutionTimeout();
   await fillV2SplitsCollectionMigration(idByTicker, invalidEntitesFind);
-  checkExecutionTimeout(limit);
+  checkExecutionTimeout();
   await fillV2TransactionsCollectionMigration(idByTicker, invalidEntitesFind);
 }
 
