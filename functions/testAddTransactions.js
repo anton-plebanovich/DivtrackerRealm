@@ -44,12 +44,12 @@ function randomDate(start, end) {
   //     "$numberDouble": "25.1146"
   //   }
   // }
-  const symbols = db.collection('symbols').find().toArray();
+  const symbols = await db.collection('symbols').find().toArray();
   const symbolsCount = symbols.length;
   const transactions = [];
   for(var i = 0; i < 200; i++){
     const symbolIndex = Math.floor(Math.random() * symbolsCount);
-    const symbolID = symbols[i]._id;
+    const symbolID = symbols[symbolIndex]._id;
     const transaction = {};
     transaction.s = symbolID;
     transaction.p = BSON.Double(Math.random() * 100000);
