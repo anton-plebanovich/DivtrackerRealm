@@ -70,11 +70,11 @@ function randomDate(start, end) {
 
   // Check that all data is inserted
   const transactionsCount = await db.collection('transactions').count({});
-  if (transactionsCount !== transactionsJSON.length) {
-    errors.push([`Some transactions weren't inserted (${transactionsCount}/${transactionsJSON.length})`]);
+  if (transactionsCount !== transactions.length) {
+    errors.push([`Some transactions weren't inserted (${transactionsCount}/${transactions.length})`]);
   }
 
-  const distinctCompaniesCount = transactionsJSON
+  const distinctCompaniesCount = transactions
     .map(x => x.s)
     .distinct()
     .length;
