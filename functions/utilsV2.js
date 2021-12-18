@@ -892,7 +892,7 @@ getSupportedSymbolIDs = _getSupportedSymbolIDs;
  * @returns Parsed EJSON object. Composed from several responses if max symbols count was exceeded.
  */
 async function _fetchBatch(api, tickers, queryParameters) {
-  // https://cloud.iexapis.com/stable/stock/STOR/dividends/10y?token=pk_9f1d7a2688f24e26bb24335710eae053&calendar=true
+  // https://sandbox.iexapis.com/stable/stock/market/batch?token=Tpk_ca8d3de2a6db4a58a61a93ac027e4725&types=company&symbols=UZF
   _throwIfUndefinedOrNull(api, `_api`);
   const fullAPI = `/stock/market${api}/batch`;
   _throwIfUndefinedOrNull(tickers, `tickers`);
@@ -909,7 +909,7 @@ async function _fetchBatch(api, tickers, queryParameters) {
     const fullQueryParameters = Object.assign({}, queryParameters);
     fullQueryParameters.symbols = tickerParameter;
 
-    console.log(`Fetching batch for symbols (${chunkedTickers.length}) with query '${queryParameters.stringify()}': ${tickerParameter}`);
+    console.log(`Fetching '${api}' batch for symbols (${chunkedTickers.length}) with query '${queryParameters.stringify()}': ${tickerParameter}`);
     const response = await _fetch(fullAPI, fullQueryParameters);
 
     result = result.concat(response);
@@ -1336,7 +1336,9 @@ function _fixCompany(iexCompany, symbolID) {
     const company = {};
     company._id = symbolID;
     company._p = "2";
-    company.n = iexCompany.companyName.trim();
+    if  (iexCompany.companyName) {
+      company.n = iexCompany.companyName.trim();
+    }
     company.i = iexCompany.industry;
     company.t = iexCompany.issueType;
   
