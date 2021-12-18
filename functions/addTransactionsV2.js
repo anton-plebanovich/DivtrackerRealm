@@ -26,6 +26,7 @@ exports = async function(transactions, replace) {
   const userID = context.user.id;
 
   // Delete old if needed
+  const transactionsCollection = db.collection("transactions");
   if (replace) {
     if (userID != null, userID.length === 24) {
       console.log(`Removing old user transactions`)
@@ -55,8 +56,6 @@ exports = async function(transactions, replace) {
   await context.functions.execute("loadMissingDataV2", transactions);
 
   // Data is loaded we can safely insert our transactions
-  const transactionsCollection = db.collection("transactions");
-  
   const returnResult = await transactionsCollection.insertMany(transactions).mapErrorToSystem();
   console.log(`return result: ${returnResult.stringify()}`);
 
