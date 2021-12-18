@@ -703,14 +703,16 @@ getValueAndQuitIfUndefined = function _getValueAndQuitIfUndefined(object, key) {
  * the New York Stock Exchange (NYSE) and the Nasdaq Stock Market (Nasdaq),
  * are 9:30 a.m. to 4 p.m.
  */
-getCloseDate = function getCloseDate(closeDateValue) {
-  _throwIfUndefinedOrNull(closeDateValue, `cloiseDateValue`);
+function _getCloseDate(closeDateValue) {
+  if (closeDateValue == null) {
+    return;
+  }
 
   // Check if date is valid
   const date = new Date(closeDateValue);
   if (isNaN(date)) {
-    console.error(`Invalid close date: ${closeDateValue}`);
-    return null;
+    console.logVerbose(`Invalid close date: ${closeDateValue}`);
+    return;
   }
 
   // Eastern Standard Time (EST) time zone is 5 hours behind GMT during autumn/winter
@@ -718,12 +720,14 @@ getCloseDate = function getCloseDate(closeDateValue) {
   const closeDateStringWithTimeZone = `${date.dayString()}T16:00:00-0500`;
   const closeDate = new Date(closeDateStringWithTimeZone);
   if (isNaN(closeDate)) {
-    console.error(`Invalid close date with time zone: ${closeDateStringWithTimeZone}`);
-    return null;
+    console.logVerbose(`Invalid close date with time zone: ${closeDateStringWithTimeZone}`);
+    return;
   } else {
     return closeDate;
   }
 };
+
+getCloseDate = _getCloseDate;
 
 /** 
  * First parameter: Date in the "yyyy-mm-dd" or timestamp or Date format, e.g. "2020-03-27" or '1633046400000' or Date.
@@ -733,14 +737,16 @@ getCloseDate = function getCloseDate(closeDateValue) {
  * the New York Stock Exchange (NYSE) and the Nasdaq Stock Market (Nasdaq),
  * are 9:30 a.m. to 4 p.m.
  */
-getOpenDate = function getOpenDate(openDateValue) {
-  _throwIfUndefinedOrNull(openDateValue, `openDateValue`);
+function _getOpenDate(openDateValue) {
+  if (openDateValue == null) {
+    return;
+  }
 
   // Check if date is valid
   const date = new Date(openDateValue);
   if (isNaN(date)) {
-    console.error(`Invalid open date: ${openDateValue}`);
-    return null;
+    console.logVerbose(`Invalid open date: ${openDateValue}`);
+    return;
   }
 
   // Eastern Standard Time (EST) time zone is 5 hours behind GMT during autumn/winter
@@ -749,12 +755,14 @@ getOpenDate = function getOpenDate(openDateValue) {
   const openDate = new Date(openDateStringWithTimeZone);
 
   if (isNaN(openDate)) {
-    console.error(`Invalid open date with time zone: ${openDateStringWithTimeZone}`);
-    return null;
+    console.logVerbose(`Invalid open date with time zone: ${openDateStringWithTimeZone}`);
+    return;
   } else {
     return openDate;
   }
 };
+
+getOpenDate = _getOpenDate;
 
 // exports();
 //
@@ -1122,7 +1130,7 @@ const defaultRange = '6y';
  */
  fetchCompanies = async function fetchCompanies(shortSymbols) {
   _throwIfUndefinedOrNull(shortSymbols, `fetchCompanies shortSymbols`);
-  const [tickers, idByTicker] = getTickersAndidByTicker(shortSymbols);
+  const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
 
   // https://sandbox.iexapis.com/stable/stock/market/batch?token=Tpk_581685f711114d9f9ab06d77506fdd49&types=company&symbols=AAPL,AAP
   return await _fetchBatchAndMapObjects('company', tickers, idByTicker, _fixCompany);
@@ -1143,7 +1151,7 @@ fetchDividends = async function fetchDividends(shortSymbols, isFuture, range) {
     range = defaultRange;
   }
 
-  const [tickers, idByTicker] = getTickersAndidByTicker(shortSymbols);
+  const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
 
   const parameters = { range: range };
   if (isFuture) {
@@ -1161,7 +1169,7 @@ fetchDividends = async function fetchDividends(shortSymbols, isFuture, range) {
  */
  async function _fetchPreviousDayPrices(shortSymbols) {
   _throwIfUndefinedOrNull(shortSymbols, `fetchPreviousDayPrices shortSymbols`);
-  const [tickers, idByTicker] = getTickersAndidByTicker(shortSymbols);
+  const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
 
   // https://sandbox.iexapis.com/stable/stock/market/batch?token=Tpk_581685f711114d9f9ab06d77506fdd49&types=previous&symbols=AAPL,AAP
   return await _fetchBatchAndMapObjects('previous', tickers, idByTicker, _fixPreviousDayPrice);
@@ -1182,7 +1190,7 @@ fetchPreviousDayPrices = _fetchPreviousDayPrices;
     range = defaultRange;
   }
 
-  const [tickers, idByTicker] = getTickersAndidByTicker(shortSymbols);
+  const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
   const parameters = { 
     range: range,
     chartCloseOnly: true, 
@@ -1200,7 +1208,7 @@ fetchPreviousDayPrices = _fetchPreviousDayPrices;
  */
  fetchQuotes = async function fetchQuotes(shortSymbols) {
   _throwIfUndefinedOrNull(shortSymbols, `fetchQuotes shortSymbols`);
-  const [tickers, idByTicker] = getTickersAndidByTicker(shortSymbols);
+  const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
 
   // https://sandbox.iexapis.com/stable/stock/market/batch?token=Tpk_581685f711114d9f9ab06d77506fdd49&types=quote&symbols=AAPL,AAP
   return await _fetchBatchAndMapObjects('quote', tickers, idByTicker, _fixQuote);
@@ -1219,7 +1227,7 @@ fetchPreviousDayPrices = _fetchPreviousDayPrices;
     range = defaultRange;
   }
   
-  const [tickers, idByTicker] = getTickersAndidByTicker(shortSymbols);
+  const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
   const parameters = { range: range };
 
   // https://cloud.iexapis.com/stable/stock/market/batch?types=splits&token=sk_de6f102262874cfab3d9a83a6980e1db&range=6y&symbols=AAPL,AAP
@@ -1231,8 +1239,8 @@ fetchPreviousDayPrices = _fetchPreviousDayPrices;
  * @param {[ShortSymbol]} shortSymbols Short symbol models.
  * @returns {[["AAPL"], {"AAPL":ObjectId}]} Returns array with ticker symbols as the first element and ticker symbol IDs by ticker symbol dictionary as the second element.
  */
- function getTickersAndidByTicker(shortSymbols) {
-  _throwIfUndefinedOrNull(shortSymbols, `getTickersAndidByTicker shortSymbols`);
+ function getTickersAndIDByTicker(shortSymbols) {
+  _throwIfUndefinedOrNull(shortSymbols, `getTickersAndIDByTicker shortSymbols`);
   const tickers = [];
   const idByTicker = {};
   for (const shortSymbol of shortSymbols) {
@@ -1288,11 +1296,13 @@ fetchPreviousDayPrices = _fetchPreviousDayPrices;
   const entries = Object.entries(ejsonBody.rates);
   const exchangeRates = [];
   for (const [currency, rate] of entries) {
-    const exchangeRate = { 
-      _id: currency,
-      _p: "2",
-      r: BSON.Double(rate),
-    };
+    const exchangeRate = {};
+    exchangeRate._id = currency;
+    exchangeRate._p = "2";
+
+    if (rate != null) {
+      exchangeRate.r = BSON.Double(rate);
+    }
 
     const currencySymbol = getCurrencySymbol(currency);
     if (currencySymbol) {
@@ -1336,11 +1346,12 @@ function _fixCompany(iexCompany, symbolID) {
     const company = {};
     company._id = symbolID;
     company._p = "2";
+    company.i = iexCompany.industry;
+    company.t = iexCompany.issueType;
+
     if  (iexCompany.companyName) {
       company.n = iexCompany.companyName.trim();
     }
-    company.i = iexCompany.industry;
-    company.t = iexCompany.issueType;
   
     return company;
   } catch(error) {
@@ -1371,11 +1382,14 @@ function _fixDividends(iexDividends, symbolID) {
       .map(iexDividend => {
         const dividend = {};
         dividend._p = "2";
-        dividend.a = BSON.Double(iexDividend.amount);
-        dividend.d = getOpenDate(iexDividend.declaredDate);
-        dividend.e = getOpenDate(iexDividend.exDate);
-        dividend.p = getOpenDate(iexDividend.paymentDate);
+        dividend.d = _getOpenDate(iexDividend.declaredDate);
+        dividend.e = _getOpenDate(iexDividend.exDate);
+        dividend.p = _getOpenDate(iexDividend.paymentDate);
         dividend.s = symbolID;
+
+        if (iexDividend.amount != null) {
+          dividend.a = BSON.Double(iexDividend.amount);
+        }
 
         // We add only the first letter of a frequency
         if (iexDividend.frequency != null) {
@@ -1412,7 +1426,10 @@ function _fixPreviousDayPrice(iexPreviousDayPrice, symbolID) {
     const previousDayPrice = {};
     previousDayPrice._id = symbolID;
     previousDayPrice._p = "2";
-    previousDayPrice.c = BSON.Double(iexPreviousDayPrice.close);
+
+    if (iexPreviousDayPrice.close != null) {
+      previousDayPrice.c = BSON.Double(iexPreviousDayPrice.close);
+    }
   
     return previousDayPrice;
 
@@ -1444,9 +1461,12 @@ function _fixHistoricalPrices(iexHistoricalPrices, symbolID) {
       .map(iexHistoricalPrice => {
         const historicalPrice = {};
         historicalPrice._p = "2";
-        historicalPrice.c = BSON.Double(iexHistoricalPrice.close);
-        historicalPrice.d = getCloseDate(iexHistoricalPrice.date);
+        historicalPrice.d = _getCloseDate(iexHistoricalPrice.date);
         historicalPrice.s = symbolID;
+
+        if (iexHistoricalPrice.close != null) {
+          historicalPrice.c = BSON.Double(iexHistoricalPrice.close);
+        }
 
         return historicalPrice;
       });
@@ -1474,7 +1494,10 @@ function _fixQuote(iexQuote, symbolID) {
     quote._id = symbolID;
     quote._p = "2";
     quote.l = iexQuote.latestPrice;
-    quote.p = BSON.Double(iexQuote.peRatio);
+
+    if (iexQuote.peRatio != null) {
+      quote.p = BSON.Double(iexQuote.peRatio);
+    }
 
     return quote;
 
@@ -1506,9 +1529,12 @@ function _fixSplits(iexSplits, symbolID) {
       .map(iexSplit => {
         const split = {};
         split._p = "2";
-        split.e = getOpenDate(iexSplit.exDate);
-        split.r = BSON.Double(iexSplit.ratio);
+        split.e = _getOpenDate(iexSplit.exDate);
         split.s = symbolID;
+
+        if (iexSplit.ratio != null) {
+          split.r = BSON.Double(iexSplit.ratio);
+        }
 
         return split;
       });
