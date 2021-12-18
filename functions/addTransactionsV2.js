@@ -10,7 +10,7 @@
    context.user.id = '619c69468f19308bae927d4e';
    exports([{"a":1.1,"d":"2021-12-08T21:00:00.000+00:00","p":320.1,"s":new BSON.ObjectId("61b102c0048b84e9c13e4564")}]);
  */
-exports = async function(transactions) {
+exports = async function(transactions, replace) {
   context.functions.execute("utilsV2");
 
   throwIfEmptyArray(
@@ -18,6 +18,10 @@ exports = async function(transactions) {
     `Please pass non-empty transactions array as the first argument.`, 
     UserError
   );
+
+  if (replace == null) {
+    replace = false;
+  }
 
   const userID = context.user.id;
   console.log(`Adding transactions (${transactions.length}) for user '${userID}'`);
@@ -39,6 +43,12 @@ exports = async function(transactions) {
 
   // Data is loaded we can safely insert our transactions
   const transactionsCollection = db.collection("transactions");
+
+  // Delete old if needed
+  if (replace, userID != null, userID.length) {
+    await transactionsCollection.deleteMany({ _p: userID });
+  }
+  
   const returnResult = await transactionsCollection.insertMany(transactions).mapErrorToSystem();
   console.log(`return result: ${returnResult.stringify()}`);
 
