@@ -36,6 +36,7 @@
   ];
 
   const supportedSymbolIDs = await getSupportedSymbolIDs();
+  const sybmolIDBySymbolID = Object.assign({}, ...supportedSymbolIDs.map(x => ({ [x]: x })))
   const transactionsCollection = db.collection("transactions");
   // Check transactions
   for (const transaction of transactions) {
@@ -66,15 +67,13 @@
       logAndThrow(`Transaction symbol ID format is invalid. It should be 24 characters ObjectId: ${transaction.stringify()}`);
     }
   
-    if (!supportedSymbolIDs.includesObject(transaction.s)) {
+    if (sybmolIDBySymbolID[transaction.s] == null) {
       logAndThrow(`Unknown transaction symbol: ${transaction.stringify()}`);
     }
   
-    // TODO: Check type
-    console.log(transaction.d)
-    // if (typeof transaction.d !== 'string') {
-      // logAndThrow(`Transaction date type should be string: ${transaction.stringify()}`);
-    // }
+    if (typeof transaction.d !== 'string' || !transaction.d instanceof Date) {
+      logAndThrow(`Transaction date should be a String or a Date type: ${transaction.stringify()}`);
+    }
 
     // TODO: Check that values are of proper type
   }
