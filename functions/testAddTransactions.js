@@ -19,8 +19,8 @@ function randomDate(start, end) {
     db.collection('dividends').deleteMany( { } ),
     db.collection('historical-prices').deleteMany( { } ),
     db.collection('previous-day-prices').deleteMany( { } ),
-    db.collection('splits').deleteMany( { } ),
     db.collection('quotes').deleteMany( { } ),
+    db.collection('splits').deleteMany( { } ),
     db.collection('transactions').deleteMany( { } )
   ]);
 
@@ -44,7 +44,7 @@ function randomDate(start, end) {
   //     "$numberDouble": "25.1146"
   //   }
   // }
-  const symbols = await db.collection('symbols').find().toArray();
+  const symbols = await db.collection('symbols').find({ e: null }).toArray();
   const symbolsCount = symbols.length;
   const transactions = [];
   for(var i = 0; i < 200; i++){
