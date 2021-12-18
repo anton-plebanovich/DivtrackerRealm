@@ -1336,7 +1336,9 @@ function _fixCompany(iexCompany, symbolID) {
     const company = {};
     company._id = symbolID;
     company._p = "2";
-    company.n = iexCompany.companyName.trim();
+    if  (iexCompany.companyName) {
+      company.n = iexCompany.companyName.trim();
+    }
     company.i = iexCompany.industry;
     company.t = iexCompany.issueType;
   
