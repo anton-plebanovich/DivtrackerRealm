@@ -70,10 +70,6 @@
     if (sybmolIDBySymbolID[transaction.s] == null) {
       logAndThrow(`Unknown transaction symbol: ${transaction.stringify()}`);
     }
-  
-    if (typeof transaction.d !== 'string' || !transaction.d instanceof Date) {
-      logAndThrow(`Transaction date should be a String or a Date type: ${transaction.stringify()}`);
-    }
 
     // TODO: Check that values are of proper type
   }
