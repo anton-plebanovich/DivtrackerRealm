@@ -18,8 +18,7 @@
     },
     "required": [
         "_id",
-        "_p",
-        "n"
+        "_p"
     ],
     "title": "CompanyV2RealmModel"
 }
