@@ -24,6 +24,19 @@ exports = async function(transactions, replace) {
   }
 
   const userID = context.user.id;
+
+  // Delete old if needed
+  if (replace) {
+    if (userID != null, userID.length === 24) {
+      console.log(`Removing old user transactions`)
+      await transactionsCollection.deleteMany({ _p: userID });
+    } else {
+      throw new UserError(`Unable to replace transactions for userID: ${userID}`)
+    }
+  } else {
+    console.log(`Replace is not needed`)
+  }
+
   console.log(`Adding transactions (${transactions.length}) for user '${userID}'`);
 
   // Add `_p` key if missing
@@ -43,11 +56,6 @@ exports = async function(transactions, replace) {
 
   // Data is loaded we can safely insert our transactions
   const transactionsCollection = db.collection("transactions");
-
-  // Delete old if needed
-  if (replace, userID != null, userID.length) {
-    await transactionsCollection.deleteMany({ _p: userID });
-  }
   
   const returnResult = await transactionsCollection.insertMany(transactions).mapErrorToSystem();
   console.log(`return result: ${returnResult.stringify()}`);
