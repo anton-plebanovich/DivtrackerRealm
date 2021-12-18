@@ -712,7 +712,7 @@ function _getCloseDate(closeDateValue) {
   const date = new Date(closeDateValue);
   if (isNaN(date)) {
     console.error(`Invalid close date: ${closeDateValue}`);
-    return null;
+    return;
   }
 
   // Eastern Standard Time (EST) time zone is 5 hours behind GMT during autumn/winter
@@ -721,7 +721,7 @@ function _getCloseDate(closeDateValue) {
   const closeDate = new Date(closeDateStringWithTimeZone);
   if (isNaN(closeDate)) {
     console.error(`Invalid close date with time zone: ${closeDateStringWithTimeZone}`);
-    return null;
+    return;
   } else {
     return closeDate;
   }
@@ -746,7 +746,7 @@ function _getOpenDate(openDateValue) {
   const date = new Date(openDateValue);
   if (isNaN(date)) {
     console.error(`Invalid open date: ${openDateValue}`);
-    return null;
+    return;
   }
 
   // Eastern Standard Time (EST) time zone is 5 hours behind GMT during autumn/winter
@@ -756,7 +756,7 @@ function _getOpenDate(openDateValue) {
 
   if (isNaN(openDate)) {
     console.error(`Invalid open date with time zone: ${openDateStringWithTimeZone}`);
-    return null;
+    return;
   } else {
     return openDate;
   }
