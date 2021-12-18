@@ -711,7 +711,7 @@ function _getCloseDate(closeDateValue) {
   // Check if date is valid
   const date = new Date(closeDateValue);
   if (isNaN(date)) {
-    console.error(`Invalid close date: ${closeDateValue}`);
+    console.logVerbose(`Invalid close date: ${closeDateValue}`);
     return;
   }
 
@@ -720,7 +720,7 @@ function _getCloseDate(closeDateValue) {
   const closeDateStringWithTimeZone = `${date.dayString()}T16:00:00-0500`;
   const closeDate = new Date(closeDateStringWithTimeZone);
   if (isNaN(closeDate)) {
-    console.error(`Invalid close date with time zone: ${closeDateStringWithTimeZone}`);
+    console.logVerbose(`Invalid close date with time zone: ${closeDateStringWithTimeZone}`);
     return;
   } else {
     return closeDate;
@@ -745,7 +745,7 @@ function _getOpenDate(openDateValue) {
   // Check if date is valid
   const date = new Date(openDateValue);
   if (isNaN(date)) {
-    console.error(`Invalid open date: ${openDateValue}`);
+    console.logVerbose(`Invalid open date: ${openDateValue}`);
     return;
   }
 
@@ -755,7 +755,7 @@ function _getOpenDate(openDateValue) {
   const openDate = new Date(openDateStringWithTimeZone);
 
   if (isNaN(openDate)) {
-    console.error(`Invalid open date with time zone: ${openDateStringWithTimeZone}`);
+    console.logVerbose(`Invalid open date with time zone: ${openDateStringWithTimeZone}`);
     return;
   } else {
     return openDate;
