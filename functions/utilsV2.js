@@ -326,12 +326,14 @@ Object.prototype.stringify = function() {
 };
 
 /**
- * Checks simple plain objects equality.
+ * Checks database objects for equality. 
+ * Objects are considered equal if all non-null values are equal.
+ * Object values are compared using `toString()` comparison.
  * @returns {boolean} Comparison result.
  */
 Object.prototype.isEqual = function(rhs) {
-  const lhsEntries = Object.entries(this);
-  const rhsEntries = Object.entries(rhs);
+  const lhsEntries = Object.entries(this).filter(([key, value]) => value != null);
+  const rhsEntries = Object.entries(rhs).filter(([key, value]) => value != null);
 
   if (lhsEntries.length !== rhsEntries.length) {
     return false;
@@ -355,6 +357,11 @@ Object.prototype.isEqual = function(rhs) {
   }
 
   return true;
+};
+
+Boolean.prototype.isEqual = function(boolean) {
+  'use strict'; // https://stackoverflow.com/a/27736962/4124265
+  return this === boolean;
 };
 
 Number.prototype.isEqual = function(number) {
