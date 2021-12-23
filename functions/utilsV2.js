@@ -326,12 +326,14 @@ Object.prototype.stringify = function() {
 };
 
 /**
- * Checks simple plain objects equality.
+ * Checks database objects for equality. 
+ * Objects are considered equal if all non-null values are equal.
+ * Object values are compared using `toString()` comparison.
  * @returns {boolean} Comparison result.
  */
 Object.prototype.isEqual = function(rhs) {
-  const lhsEntries = Object.entries(this);
-  const rhsEntries = Object.entries(rhs);
+  const lhsEntries = Object.entries(this).filter(([key, value]) => value != null);
+  const rhsEntries = Object.entries(rhs).filter(([key, value]) => value != null);
 
   if (lhsEntries.length !== rhsEntries.length) {
     return false;
@@ -355,6 +357,11 @@ Object.prototype.isEqual = function(rhs) {
   }
 
   return true;
+};
+
+Boolean.prototype.isEqual = function(boolean) {
+  'use strict'; // https://stackoverflow.com/a/27736962/4124265
+  return this === boolean;
 };
 
 Number.prototype.isEqual = function(number) {
@@ -1132,6 +1139,7 @@ const defaultRange = '6y';
   _throwIfUndefinedOrNull(shortSymbols, `fetchCompanies shortSymbols`);
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
 
+  // https://cloud.iexapis.com/stable/stock/market/batch?token=pk_9f1d7a2688f24e26bb24335710eae053&types=company&symbols=AAPL,AAP
   // https://sandbox.iexapis.com/stable/stock/market/batch?token=Tpk_581685f711114d9f9ab06d77506fdd49&types=company&symbols=AAPL,AAP
   return await _fetchBatchAndMapObjects('company', tickers, idByTicker, _fixCompany);
 };
@@ -1157,7 +1165,10 @@ fetchDividends = async function fetchDividends(shortSymbols, isFuture, range) {
   if (isFuture) {
     parameters.calendar = 'true';
   }
-
+  
+  // https://cloud.iexapis.com/stable/stock/market/batch?token=pk_9f1d7a2688f24e26bb24335710eae053&types=dividends&symbols=AAPL,AAP&range=6y&calendar=true
+  // https://cloud.iexapis.com/stable/stock/market/batch?token=pk_9f1d7a2688f24e26bb24335710eae053&types=dividends&symbols=AAPL,AAP&range=6y
+  // https://sandbox.iexapis.com/stable/stock/market/batch?token=Tpk_581685f711114d9f9ab06d77506fdd49&types=dividends&symbols=AAPL,AAP&range=6y&calendar=true
   // https://sandbox.iexapis.com/stable/stock/market/batch?token=Tpk_581685f711114d9f9ab06d77506fdd49&types=dividends&symbols=AAPL,AAP&range=6y
   return await _fetchBatchAndMapArray('dividends', tickers, idByTicker, _fixDividends, parameters);
 };
@@ -1171,6 +1182,7 @@ fetchDividends = async function fetchDividends(shortSymbols, isFuture, range) {
   _throwIfUndefinedOrNull(shortSymbols, `fetchPreviousDayPrices shortSymbols`);
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
 
+  // https://cloud.iexapis.com/stable/stock/market/batch?token=pk_9f1d7a2688f24e26bb24335710eae053&types=previous&symbols=AAPL,AAP
   // https://sandbox.iexapis.com/stable/stock/market/batch?token=Tpk_581685f711114d9f9ab06d77506fdd49&types=previous&symbols=AAPL,AAP
   return await _fetchBatchAndMapObjects('previous', tickers, idByTicker, _fixPreviousDayPrice);
 };
@@ -1197,6 +1209,7 @@ fetchPreviousDayPrices = _fetchPreviousDayPrices;
     chartInterval: 21 
   };
 
+  // https://cloud.iexapis.com/stable/stock/market/batch?token=pk_9f1d7a2688f24e26bb24335710eae053&types=chart&symbols=AAPL,AAP&range=6y&chartCloseOnly=true&chartInterval=21
   // https://sandbox.iexapis.com/stable/stock/market/batch?token=Tpk_581685f711114d9f9ab06d77506fdd49&types=chart&symbols=AAPL,AAP&range=6y&chartCloseOnly=true&chartInterval=21
   return await _fetchBatchAndMapArray('chart', tickers, idByTicker, _fixHistoricalPrices, parameters);
 };
@@ -1210,6 +1223,7 @@ fetchPreviousDayPrices = _fetchPreviousDayPrices;
   _throwIfUndefinedOrNull(shortSymbols, `fetchQuotes shortSymbols`);
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
 
+  // https://cloud.iexapis.com/stable/stock/market/batch?token=pk_9f1d7a2688f24e26bb24335710eae053&types=quote&symbols=AAPL,AAP
   // https://sandbox.iexapis.com/stable/stock/market/batch?token=Tpk_581685f711114d9f9ab06d77506fdd49&types=quote&symbols=AAPL,AAP
   return await _fetchBatchAndMapObjects('quote', tickers, idByTicker, _fixQuote);
 };
@@ -1230,7 +1244,8 @@ fetchPreviousDayPrices = _fetchPreviousDayPrices;
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
   const parameters = { range: range };
 
-  // https://cloud.iexapis.com/stable/stock/market/batch?types=splits&token=sk_de6f102262874cfab3d9a83a6980e1db&range=6y&symbols=AAPL,AAP
+  // https://cloud.iexapis.com/stable/stock/market/batch?types=splits&token=pk_9f1d7a2688f24e26bb24335710eae053&range=6y&symbols=AAPL,AAP
+  // https://sandbox.iexapis.com/stable/stock/market/batch?types=splits&token=Tpk_581685f711114d9f9ab06d77506fdd49&range=6y&symbols=AAPL,AAP
   return await _fetchBatchAndMapArray('splits', tickers, idByTicker, _fixSplits, parameters);
 };
 

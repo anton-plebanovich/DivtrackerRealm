@@ -13,17 +13,21 @@
 // - Deploy: V2 deploy
 // - Manual: Run V1 -> V2 data migration
 
-// V1 deprecation phase 1
-// - V1 -> V2 settings sync is broken for an array so we might want to check if data is not lost.
-// - V1 functions and triggers should be removed
-// - V1 data should be erased in all collections
-// - Check that V2 data is properly fetched, e.g. enough dividends and historical prices
-
-// V1 deprecation phase 2
+// V1 deprecation phase (maintenance) and V2 migration to the new partition key strategy
+// - Manual: Backup V1 and V2 data
+// - Deploy: Maintenance. V1 functions and triggers (including migration) should be removed. V2 triggers are also temporary removed (disabling works as a pause).
+// - Manual: Disable drafts
 // - Manual: Disable sync
+// - Manual: V1 -> V2 settings sync is broken for an array so we might want to check if data is not lost. Execute `checkV1AndV2Settings()` function in the playground.js for that.
+// - Manual: Execute `loadMissingDataV2`
+// - Manual: Check that V2 data is properly fetched, e.g. enough historical prices. Execute `checkV2Data()` function in the playground.js for that.
 // - Manual: Drop `divtracker` database
 // - Manual: Run partition key migration
-// - Deploy: New schemes, function, and sync that are using optional _ partition key. V1 schemes remove.
+// - Manual: Delete V1 schemes
+// - Manual: Edit V2 schemes and make partition key optional while also renaming it to _
+// - Deploy: New schemes, functions, and sync that are using optional _ partition key. V1 schemes remove. Triggers restore.
+// - Manual: Release new app (not deprecated) to stores
+// - Deploy: Exchange maintenance with deprecation for old versions
 
 exports = async function() {
   context.functions.execute("utilsV2");
