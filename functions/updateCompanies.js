@@ -35,7 +35,7 @@ exports = async function() {
     const companiesCount = companies.length;
     for (let i = 0; i < companiesCount; i += 1) {
       const company = companies[i];
-      const existingCompany = existingCompanies.find(x => x._id == company._id);
+      const existingCompany = existingCompanies.find(x => x._id === company._id);
       if (existingCompany) {
         if (company.isEqual(existingCompany)) {
           console.logVerbose(`Skipping up to date company: ${company._id}`);

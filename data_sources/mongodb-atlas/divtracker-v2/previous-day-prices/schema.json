@@ -1,0 +1,19 @@
+{
+    "properties": {
+        "_id": {
+            "bsonType": "objectId"
+        },
+        "_p": {
+            "bsonType": "string"
+        },
+        "c": {
+            "bsonType": "double"
+        }
+    },
+    "required": [
+        "_id",
+        "_p",
+        "c"
+    ],
+    "title": "PreviousDayPriceV2RealmModel"
+}

@@ -1,0 +1,21 @@
+{
+    "properties": {
+        "_id": {
+            "bsonType": "objectId"
+        },
+        "_p": {
+            "bsonType": "string"
+        },
+        "l": {
+            "bsonType": "double"
+        },
+        "p": {
+            "bsonType": "double"
+        }
+    },
+    "required": [
+        "_id",
+        "_p"
+    ],
+    "title": "QuoteV2RealmModel"
+}

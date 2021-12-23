@@ -5,15 +5,24 @@
         "run_as_system": true
     },
     {
-        "name": "checkTransactionForChangeEvent",
-        "private": true
+        "name": "addTransactionsV2",
+        "private": false,
+        "run_as_system": true
     },
     {
         "name": "checkTransactions",
         "private": true
     },
     {
+        "name": "checkTransactionsV2",
+        "private": true
+    },
+    {
         "name": "checkUserTransactions",
+        "private": true
+    },
+    {
+        "name": "checkUserTransactionsV2",
         "private": true
     },
     {
@@ -25,20 +34,7 @@
         "private": true
     },
     {
-        "name": "loadMissingDataForChangeEvent",
-        "private": true
-    },
-    {
-        "name": "loadMissingDataForSymbol",
-        "private": true,
-        "run_as_system": true
-    },
-    {
-        "name": "loadMissingDataForUser",
-        "private": true
-    },
-    {
-        "name": "loadMissingDividendsForSymbol",
+        "name": "loadMissingDataV2",
         "private": true
     },
     {
@@ -54,7 +50,19 @@
         "private": true
     },
     {
+        "name": "syncV1toV2Settings",
+        "private": true
+    },
+    {
+        "name": "syncV1toV2Transaction",
+        "private": true
+    },
+    {
         "name": "updateCompanies",
+        "private": true
+    },
+    {
+        "name": "updateCompaniesV2",
         "private": true
     },
     {
@@ -62,7 +70,15 @@
         "private": true
     },
     {
+        "name": "updateDividendsV2",
+        "private": true
+    },
+    {
         "name": "updateExchangeRates",
+        "private": true
+    },
+    {
+        "name": "updateExchangeRatesV2",
         "private": true
     },
     {
@@ -70,7 +86,15 @@
         "private": true
     },
     {
+        "name": "updatePricesV2",
+        "private": true
+    },
+    {
         "name": "updateQuotes",
+        "private": true
+    },
+    {
+        "name": "updateQuotesV2",
         "private": true
     },
     {
@@ -78,11 +102,23 @@
         "private": true
     },
     {
+        "name": "updateSplitsV2",
+        "private": true
+    },
+    {
         "name": "updateSymbols",
         "private": true
     },
     {
+        "name": "updateSymbolsV2",
+        "private": true
+    },
+    {
         "name": "utils",
+        "private": true
+    },
+    {
+        "name": "utilsV2",
         "private": true
     }
 ]

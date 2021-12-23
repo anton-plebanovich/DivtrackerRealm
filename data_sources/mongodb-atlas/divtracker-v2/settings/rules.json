@@ -1,0 +1,18 @@
+{
+    "collection": "settings",
+    "database": "divtracker-v2",
+    "roles": [
+        {
+            "name": "owner",
+            "apply_when": {
+                "_p": "%%user.id"
+            },
+            "read": true,
+            "write": true,
+            "insert": true,
+            "delete": true,
+            "search": true,
+            "additional_fields": {}
+        }
+    ]
+}
