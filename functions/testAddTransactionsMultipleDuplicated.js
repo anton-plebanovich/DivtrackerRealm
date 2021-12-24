@@ -19,7 +19,9 @@ function randomDate(start, end) {
   // Prepare async operations
   const operations = [];
   const transactions = await generateRandomTransactions(50);
+  const transactionsToCheck = [];
   for (let i = 0; i < defaultAsyncOperations; i++) {
+    transactionsToCheck.push(transactions);
     operations.push(context.functions.execute("addTransactionsV2", transactions));
   }
   
@@ -27,5 +29,5 @@ function randomDate(start, end) {
   await Promise.all(operations);
 
   // Check
-  return await checkData(transactions);
+  return await checkData(transactionsToCheck);
 };

@@ -17,10 +17,12 @@ function randomDate(start, end) {
   await cleanup();
 
   // Prepare async operations
-  const operations = [];
   const symbols = await db.collection('symbols').find({ e: null }).toArray();
+  const operations = [];
+  const transactionsToCheck = [];
   for (let i = 0; i < defaultAsyncOperations; i++) {
     const transactions = await generateRandomTransactions(50, symbols);
+    transactionsToCheck.push(transactions);
     operations.push(context.functions.execute("addTransactionsV2", transactions));
   }
   
