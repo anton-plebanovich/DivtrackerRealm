@@ -29,7 +29,7 @@ cleanup = _cleanup;
 /**
  * Generates random transactions
  */
-async function generateRandomTransactions(count) {
+async function _generateRandomTransactions(count) {
   if (count == null) {
     count = defaultTransactionsCount;
   }
@@ -75,6 +75,8 @@ async function generateRandomTransactions(count) {
 
   return transactions;
 }
+
+generateRandomTransactions = _generateRandomTransactions;
 
 function randomDate(start, end) {
   return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
