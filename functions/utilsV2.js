@@ -258,7 +258,7 @@ Array.prototype.compactMap = function(callbackfn) {
 Array.prototype.toDictionary = function(arg) {
   if (typeof arg === 'string' || arg instanceof String) {
     return this.reduce((dictionary, value) => 
-      Object.assign(dictionary, {[value[key]]: value}
+      Object.assign(dictionary, {[value[arg]]: value}
     ), {});
 
   } else if (arg == null) {
