@@ -96,7 +96,7 @@ async function _checkData(transactions) {
   }
 
   const distinctSymbolIDs = transactions
-    .map(x => x.s)
+    .map(x => x.s.toString())
     .distinct();
 
   const distinctSymbolIDsCount = distinctSymbolIDs.length;
@@ -144,9 +144,9 @@ async function _checkData(transactions) {
 checkData = _checkData;
 
 async function getMissedSymbolIDs(collection, key, distinctSymbolIDs) {
-  let actualSymbolIDs = await db.collection(collection).find({}).toArray();
-  actualSymbolIDs.map(x => x[key]);
-  return distinctSymbolIDs.filter(x => !actualSymbolIDs.includesObject(x));
+  const objects = await db.collection(collection).find({}, { [key]: 1 });
+  const actualSymbolIDs = objects.map(x => x[key].toString());
+  return distinctSymbolIDs.filter(x => !actualSymbolIDs.includes(x));
 }
 
 //////////////////////////////////////////////////////////////////// Exports
