@@ -993,7 +993,6 @@ async function _fetchBatchAndMapObjects(type, tickers, idByTicker, mapFunction, 
           if (tickerData != null && tickerData[type]) {
             return mapFunction(tickerData[type], idByTicker[ticker]);
           } else {
-            // {"AACOU":{"previous":null}}
             return null;
           }
         })
@@ -1449,6 +1448,8 @@ function _fixPreviousDayPrice(iexPreviousDayPrice, symbolID) {
     return previousDayPrice;
 
   } catch(error) {
+    // {"AQNU":{"previous":null}}
+    // {"AACOU":{"previous":null}}
     return null;
   }
 };

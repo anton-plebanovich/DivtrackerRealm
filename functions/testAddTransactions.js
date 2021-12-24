@@ -74,14 +74,16 @@ function randomDate(start, end) {
     errors.push([`Some transactions weren't inserted (${transactionsCount}/${transactions.length})`]);
   }
 
-  const distinctCompaniesCount = transactions
+  const distinctSymbolIDs = transactions
     .map(x => x.s)
-    .distinct()
-    .length;
+    .distinct();
+
+  const distinctSymbolIDsCount = distinctSymbolIDs.length;
 
   const companiesCount = await db.collection('companies').count({});
-  if (companiesCount !== distinctCompaniesCount) {
-    errors.push([`Some companies weren't inserted (${companiesCount}/${distinctCompaniesCount})`]);
+  if (companiesCount !== distinctSymbolIDsCount) {
+    const missedSymbolIDs = getMissedSymbolIDs('companies', '_id', distinctSymbolIDs)
+    errors.push([`Some companies weren't inserted (${companiesCount}/${distinctSymbolIDsCount}): ${missedSymbolIDs}`]);
   }
 
   const dividendsCount = await db.collection('dividends').count({});
@@ -95,8 +97,9 @@ function randomDate(start, end) {
   }
 
   const previousDayPricesCount = await db.collection('previous-day-prices').count({});
-  if (previousDayPricesCount !== companiesCount) {
-    errors.push([`Some previous day prices weren't inserted (${previousDayPricesCount}/${companiesCount})`]);
+  if (previousDayPricesCount !== distinctSymbolIDsCount) {
+    const missedSymbolIDs = getMissedSymbolIDs('previous-day-prices', '_id', distinctSymbolIDs)
+    errors.push([`Some previous day prices weren't inserted (${previousDayPricesCount}/${distinctSymbolIDsCount}): ${missedSymbolIDs}`]);
   }
 
   const splitsCount = await db.collection('splits').count({});
@@ -104,9 +107,10 @@ function randomDate(start, end) {
     errors.push([`Splits weren't inserted`]);
   }
 
-  const quotesCount = await db.collection('companies').count({});
-  if (quotesCount !== companiesCount) {
-    errors.push([`Some quotes weren't inserted (${quotesCount}/${companiesCount})`]);
+  const quotesCount = await db.collection('quotes').count({});
+  if (quotesCount !== distinctSymbolIDsCount) {
+    const missedSymbolIDs = getMissedSymbolIDs('quotes', '_id', distinctSymbolIDs)
+    errors.push([`Some quotes weren't inserted (${quotesCount}/${distinctSymbolIDsCount}): ${missedSymbolIDs}`]);
   }
   
   if (errors.length) {
@@ -115,3 +119,9 @@ function randomDate(start, end) {
     console.log("SUCCESS!");
   }
 };
+
+async function getMissedSymbolIDs(collection, key, distinctSymbolIDs) {
+  let actualSymbolIDs = await db.collection(collection).find({}).toArray();
+  actualSymbolIDs.map(x => x[key]);
+  return distinctSymbolIDs.filter(x => !actualSymbolIDs.includesObject(x));
+}
