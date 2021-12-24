@@ -11,8 +11,6 @@ defaultAsyncOperations = _defaultAsyncOperations;
 //////////////////////////////////////////////////////////////////// Functions
 
 async function _cleanup() {
-  const db = context.services.get("mongodb-atlas").db("divtracker-v2")
-
   return await Promise.all([
     db.collection('companies').deleteMany({}),
     db.collection('dividends').deleteMany({}),
@@ -29,9 +27,13 @@ cleanup = _cleanup;
 /**
  * Generates random transactions
  */
-async function _generateRandomTransactions(count) {
+async function _generateRandomTransactions(count, symbols) {
   if (count == null) {
     count = defaultTransactionsCount;
+  }
+
+  if (symbols == null) {
+    symbols = await db.collection('symbols').find({ e: null }).toArray();
   }
 
   // {
@@ -53,7 +55,6 @@ async function _generateRandomTransactions(count) {
   //     "$numberDouble": "25.1146"
   //   }
   // }
-  const symbols = await db.collection('symbols').find({ e: null }).toArray();
   const symbolsCount = symbols.length;
   const transactions = [];
   for(var i = 0; i < count; i++){

@@ -10,7 +10,7 @@
   // Cleanup environment
   await cleanup();
 
-  const transactions = generateRandomTransactions();
+  const transactions = await generateRandomTransactions();
   await context.functions.execute("addTransactionsV2", transactions);
 
   return await checkData(transactions);
