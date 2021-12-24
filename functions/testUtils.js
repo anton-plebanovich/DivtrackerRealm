@@ -144,7 +144,7 @@ async function _checkData(transactions) {
 checkData = _checkData;
 
 async function getMissedSymbolIDs(collection, key, distinctSymbolIDs) {
-  const objects = await db.collection(collection).find({}, { [key]: 1 });
+  const objects = await db.collection(collection).find({}, { [key]: 1 }).toArray();
   const actualSymbolIDs = objects.map(x => x[key].toString());
   return distinctSymbolIDs.filter(x => !actualSymbolIDs.includes(x));
 }
