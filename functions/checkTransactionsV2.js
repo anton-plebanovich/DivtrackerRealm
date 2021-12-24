@@ -14,11 +14,12 @@
   }
 
   // Check transactions
-  const supportedSymbolIDs = await getSupportedSymbolIDs();
+  const symbolIDs = await db.collection("symbols").distinct("_id");
+  const symbolIDBySymbolID = symbolIDs.toDictionary(x => x.toString());
   const errors = [];
   for (const transaction of transactions) {
     try {
-      checkTransaction(transaction, supportedSymbolIDs);
+      checkTransaction(transaction, symbolIDBySymbolID);
     } catch(error) {
       errors.push(error);
     }
@@ -45,7 +46,7 @@ const optionalTransactionKeys = [
   "c"
 ];
 
-function checkTransaction(transaction, supportedSymbolIDs) {
+function checkTransaction(transaction, symbolIDBySymbolID) {
     // Checking that all required keys are present
     for (const requiredKey of requiredTransactionKeys) {
       if (typeof transaction[requiredKey] === 'undefined') {
@@ -68,7 +69,7 @@ function checkTransaction(transaction, supportedSymbolIDs) {
       logAndThrow(`Transaction symbol ID format is invalid. It should be 24 characters ObjectId: ${transaction.stringify()}`);
     }
   
-    if (!supportedSymbolIDs.includesObject(transaction.s)) {
+    if (symbolIDBySymbolID[transaction.s.toString()] == null) {
       logAndThrow(`Unknown transaction symbol: ${transaction.stringify()}`);
     }
 

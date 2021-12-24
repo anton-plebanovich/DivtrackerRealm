@@ -252,13 +252,25 @@ Array.prototype.compactMap = function(callbackfn) {
 };
 
 /**
- * Creates dictionary from objects using provided `key` as source for keys and object as value.
- * @param {*} callbackfn Mapping to perform. Null values are filtered.
+ * Creates dictionary from objects using provided `key` or function as source for keys and object as value.
+ * @param {function|string} arg Key map function or key.
  */
-Array.prototype.toDictionary = function(key) {
-  return this.reduce((dictionary, value) => 
-    Object.assign(dictionary, {[value[key]]: value}
-  ), {});
+Array.prototype.toDictionary = function(arg) {
+  if (typeof arg === 'string' || arg instanceof String) {
+    return this.reduce((dictionary, value) => 
+      Object.assign(dictionary, {[value[key]]: value}
+    ), {});
+
+  } else if (arg == null) {
+    return this.reduce((dictionary, value) => 
+      Object.assign(dictionary, {[value]: value}
+    ), {});
+    
+  } else {
+    return this.reduce((dictionary, value) => 
+      Object.assign(dictionary, {[arg(value)]: value}
+    ), {});
+  }
 };
 
 /**

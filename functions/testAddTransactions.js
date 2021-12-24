@@ -82,7 +82,7 @@ function randomDate(start, end) {
 
   const companiesCount = await db.collection('companies').count({});
   if (companiesCount !== distinctSymbolIDsCount) {
-    const missedSymbolIDs = getMissedSymbolIDs('companies', '_id', distinctSymbolIDs)
+    const missedSymbolIDs = getMissedSymbolIDs('companies', '_id', distinctSymbolIDs);
     errors.push([`Some companies weren't inserted (${companiesCount}/${distinctSymbolIDsCount}): ${missedSymbolIDs}`]);
   }
 
@@ -98,7 +98,7 @@ function randomDate(start, end) {
 
   const previousDayPricesCount = await db.collection('previous-day-prices').count({});
   if (previousDayPricesCount !== distinctSymbolIDsCount) {
-    const missedSymbolIDs = getMissedSymbolIDs('previous-day-prices', '_id', distinctSymbolIDs)
+    const missedSymbolIDs = getMissedSymbolIDs('previous-day-prices', '_id', distinctSymbolIDs);
     errors.push([`Some previous day prices weren't inserted (${previousDayPricesCount}/${distinctSymbolIDsCount}): ${missedSymbolIDs}`]);
   }
 
@@ -109,7 +109,7 @@ function randomDate(start, end) {
 
   const quotesCount = await db.collection('quotes').count({});
   if (quotesCount !== distinctSymbolIDsCount) {
-    const missedSymbolIDs = getMissedSymbolIDs('quotes', '_id', distinctSymbolIDs)
+    const missedSymbolIDs = getMissedSymbolIDs('quotes', '_id', distinctSymbolIDs);
     errors.push([`Some quotes weren't inserted (${quotesCount}/${distinctSymbolIDsCount}): ${missedSymbolIDs}`]);
   }
   
