@@ -78,6 +78,11 @@
         "run_as_system": true
     },
     {
+        "name": "testUtils",
+        "private": true,
+        "run_as_system": true
+    },
+    {
         "name": "updateCompanies",
         "private": true
     },
