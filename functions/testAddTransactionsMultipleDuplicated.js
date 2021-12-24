@@ -11,7 +11,7 @@ function randomDate(start, end) {
    exports();
  */
  exports = async function() {
-  context.functions.execute("utilsV2");
+  context.functions.execute("testUtils");
 
   // Cleanup environment
   await cleanup();
