@@ -252,13 +252,25 @@ Array.prototype.compactMap = function(callbackfn) {
 };
 
 /**
- * Creates dictionary from objects using provided `key` as source for keys and object as value.
- * @param {*} callbackfn Mapping to perform. Null values are filtered.
+ * Creates dictionary from objects using provided `key` or function as source for keys and object as value.
+ * @param {function|string} arg Key map function or key.
  */
-Array.prototype.toDictionary = function(key) {
-  return this.reduce((dictionary, value) => 
-    Object.assign(dictionary, {[value[key]]: value}
-  ), {});
+Array.prototype.toDictionary = function(arg) {
+  if (typeof arg === 'string' || arg instanceof String) {
+    return this.reduce((dictionary, value) => 
+      Object.assign(dictionary, {[value[arg]]: value}
+    ), {});
+
+  } else if (arg == null) {
+    return this.reduce((dictionary, value) => 
+      Object.assign(dictionary, {[value]: value}
+    ), {});
+    
+  } else {
+    return this.reduce((dictionary, value) => 
+      Object.assign(dictionary, {[arg(value)]: value}
+    ), {});
+  }
 };
 
 /**
@@ -993,7 +1005,6 @@ async function _fetchBatchAndMapObjects(type, tickers, idByTicker, mapFunction, 
           if (tickerData != null && tickerData[type]) {
             return mapFunction(tickerData[type], idByTicker[ticker]);
           } else {
-            // {"AACOU":{"previous":null}}
             return null;
           }
         })
@@ -1449,6 +1460,8 @@ function _fixPreviousDayPrice(iexPreviousDayPrice, symbolID) {
     return previousDayPrice;
 
   } catch(error) {
+    // {"AQNU":{"previous":null}}
+    // {"AACOU":{"previous":null}}
     return null;
   }
 };

@@ -57,5 +57,5 @@ exports = async function(transactions, replace) {
 
   // Data is loaded we can safely insert our transactions
   const returnResult = await transactionsCollection.insertMany(transactions).mapErrorToSystem();
-  console.log(`Result: ${returnResult.stringify()}`);
+  console.logVerbose(`Result: ${returnResult.stringify()}`);
 };
