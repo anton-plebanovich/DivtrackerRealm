@@ -138,7 +138,7 @@ async function _checkData(transactions) {
 
   const splitsCount = await db.collection('splits').count({});
   if (splitsCount <= 0) {
-    errors.push([`Splits weren't inserted`]);
+    console.log(`No splits`);
   }
 
   const quotesCount = await db.collection('quotes').count({});
