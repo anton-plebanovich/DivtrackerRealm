@@ -5,10 +5,10 @@
 
 const defaultTransactionsCount = 200;
 
-const _defaultAsyncOperations = 100;
+const _defaultAsyncOperations = 30;
 defaultAsyncOperations = _defaultAsyncOperations;
 
-const _defaultAsyncTransactionsCount = 5;
+const _defaultAsyncTransactionsCount = 10;
 defaultAsyncTransactionsCount = _defaultAsyncTransactionsCount;
 
 //////////////////////////////////////////////////////////////////// Functions
