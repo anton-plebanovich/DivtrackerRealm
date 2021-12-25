@@ -21,7 +21,7 @@ function randomDate(start, end) {
   const operations = [];
   let transactionsToCheck = [];
   for (let i = 0; i < defaultAsyncOperations; i++) {
-    const transactions = await generateRandomTransactions(50, symbols);
+    const transactions = await generateRandomTransactions(defaultAsyncTransactionsCount, symbols);
     transactionsToCheck = transactionsToCheck.concat(transactions);
     operations.push(context.functions.execute("addTransactionsV2", transactions));
   }
