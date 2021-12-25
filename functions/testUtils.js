@@ -5,16 +5,16 @@
 
 const defaultTransactionsCount = 200;
 
-const _defaultAsyncOperations = 30;
+const _defaultAsyncOperations = 15;
 defaultAsyncOperations = _defaultAsyncOperations;
 
-const _defaultAsyncTransactionsCount = 10;
+const _defaultAsyncTransactionsCount = 15;
 defaultAsyncTransactionsCount = _defaultAsyncTransactionsCount;
 
 //////////////////////////////////////////////////////////////////// Functions
 
 async function _cleanup() {
-  return await Promise.all([
+  await Promise.all([
     db.collection('companies').deleteMany({}),
     db.collection('dividends').deleteMany({}),
     db.collection('historical-prices').deleteMany({}),
@@ -30,7 +30,7 @@ cleanup = _cleanup;
 /**
  * Generates random transactions
  */
-async function _generateRandomTransactions(count, symbols) {
+async function _generateRandomTransactions(count, symbols, quotes) {
   if (count == null) {
     count = defaultTransactionsCount;
   }
@@ -38,6 +38,12 @@ async function _generateRandomTransactions(count, symbols) {
   if (symbols == null) {
     symbols = await db.collection('symbols').find({ e: null }).toArray();
   }
+
+  if (quotes == null) {
+    quotes = await db.collection('quotes').find({}).toArray();
+  }
+
+  const quoteBySymbolID = quotes.toDictionary(x => x._id);
 
   // {
   //   "s": {
@@ -65,13 +71,17 @@ async function _generateRandomTransactions(count, symbols) {
     const symbolID = symbols[symbolIndex]._id;
     const transaction = {};
     transaction.s = symbolID;
-    transaction.p = BSON.Double(Math.random() * 100000);
+
+    // 0.05 - 1.95 price coef
+    const coef = 0.05 + 1.9 * Math.random()
+    transaction.p = BSON.Double(coef * quoteBySymbolID[symbolID].c);
+
     if (Math.random() >= 0.5) {
-      transaction.c = BSON.Double(Math.random() * 1000);
+      transaction.c = BSON.Double(Math.random());
     }
 
     transaction.d = randomDate(new Date(2016, 0, 1), new Date());
-    transaction.a = BSON.Double(Math.random() * 10000);
+    transaction.a = BSON.Double(Math.random() * 1000);
 
     console.log(`Adding transaction: ${transaction.stringify()}`);
     transactions.push(transaction);
