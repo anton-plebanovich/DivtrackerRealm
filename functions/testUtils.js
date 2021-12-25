@@ -4,6 +4,7 @@
 //////////////////////////////////////////////////////////////////// Constants
 
 const defaultTransactionsCount = 200;
+const averagePrice = 109.02;
 
 const _defaultAsyncOperations = 15;
 defaultAsyncOperations = _defaultAsyncOperations;
@@ -30,7 +31,7 @@ cleanup = _cleanup;
 /**
  * Generates random transactions
  */
-async function _generateRandomTransactions(count, symbols, quotes) {
+async function _generateRandomTransactions(count, symbols) {
   if (count == null) {
     count = defaultTransactionsCount;
   }
@@ -38,12 +39,6 @@ async function _generateRandomTransactions(count, symbols, quotes) {
   if (symbols == null) {
     symbols = await db.collection('symbols').find({ e: null }).toArray();
   }
-
-  if (quotes == null) {
-    quotes = await db.collection('quotes').find({}).toArray();
-  }
-
-  const quoteBySymbolID = quotes.toDictionary(x => x._id);
 
   // {
   //   "s": {
@@ -73,8 +68,8 @@ async function _generateRandomTransactions(count, symbols, quotes) {
     transaction.s = symbolID;
 
     // 0.05 - 1.95 price coef
-    const coef = 0.05 + 1.9 * Math.random()
-    transaction.p = BSON.Double(coef * quoteBySymbolID[symbolID].c);
+    const coef = 0.05 + 1.9 * Math.random();
+    transaction.p = BSON.Double(coef * averagePrice);
 
     if (Math.random() >= 0.5) {
       transaction.c = BSON.Double(Math.random());
