@@ -70,13 +70,21 @@ async function _generateRandomTransactions(count, symbols) {
     // 0.05 - 1.95 price coef
     const coef = 0.05 + 1.9 * Math.random();
     transaction.p = BSON.Double(coef * averagePrice);
+    transaction.d = randomDate(new Date(2016, 0, 1), new Date());
 
-    if (Math.random() >= 0.5) {
-      transaction.c = BSON.Double(Math.random());
+    const random = Math.random();
+    if (random <= 0.5) {
+      const amount = Math.round(Math.random() * 100);
+      transaction.a = BSON.Double(amount);
+
+    } else {
+      const amount = Math.round(Math.random() * 10000) / 100;
+      transaction.a = BSON.Double(amount);
     }
 
-    transaction.d = randomDate(new Date(2016, 0, 1), new Date());
-    transaction.a = BSON.Double(Math.random() * 1000);
+    if (random >= 0.5) {
+      transaction.c = BSON.Double(Math.random());
+    }
 
     console.log(`Adding transaction: ${transaction.stringify()}`);
     transactions.push(transaction);
