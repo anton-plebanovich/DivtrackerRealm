@@ -129,7 +129,8 @@ async function _checkData(transactions) {
   if (previousDayPricesCount !== distinctSymbolIDsCount) {
     const missedSymbolIDs = await getMissedSymbolIDs('previous-day-prices', '_id', distinctSymbolIDs);
     // Using threshold because previous day prices for some symbols are actually just `null`
-    if (previousDayPricesCount / distinctSymbolIDsCount >= 0.95) {
+    const allowedMissingCount = Math.ceil(previousDayPricesCount * 0.05);
+    if (previousDayPricesCount - distinctSymbolIDsCount > allowedMissingCount) {
       console.log(`Some previous day prices weren't inserted (${previousDayPricesCount}/${distinctSymbolIDsCount}): ${missedSymbolIDs}`);
     } else {
       errors.push([`Some previous day prices weren't inserted (${previousDayPricesCount}/${distinctSymbolIDsCount}): ${missedSymbolIDs}`]);
