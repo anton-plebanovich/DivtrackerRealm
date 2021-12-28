@@ -3,7 +3,7 @@
         "_id": {
             "bsonType": "objectId"
         },
-        "_p": {
+        "_": {
             "bsonType": "string"
         },
         "l": {
@@ -14,8 +14,7 @@
         }
     },
     "required": [
-        "_id",
-        "_p"
+        "_id"
     ],
     "title": "QuoteV2RealmModel"
 }
