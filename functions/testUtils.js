@@ -67,8 +67,8 @@ async function _generateRandomTransactions(count, symbols) {
     const transaction = {};
     transaction.s = symbolID;
 
-    // 0.05 - 1.95 price coef
-    const coef = 0.05 + 1.9 * Math.random();
+    // 0.05 - 1.5 price coef
+    const coef = 0.05 + 1.5 * Math.random();
     transaction.p = BSON.Double(coef * averagePrice);
     transaction.d = randomDate(new Date(2016, 0, 1), new Date());
 
