@@ -30,7 +30,7 @@ exports = async function(transactions, replace) {
   if (replace) {
     if (userID != null, userID.length === 24) {
       console.log(`Removing old user transactions`)
-      await transactionsCollection.deleteMany({ _p: userID });
+      await transactionsCollection.deleteMany({ _: userID });
     } else {
       throw new UserError(`Unable to replace transactions for userID: ${userID}`)
     }
@@ -40,10 +40,10 @@ exports = async function(transactions, replace) {
 
   console.log(`Adding transactions (${transactions.length}) for user '${userID}'`);
 
-  // Add `_p` key if missing
+  // Add `_` key if missing
   transactions.forEach(transaction => {
-    if (transaction._p == null) {
-      transaction._p = userID;
+    if (transaction._ == null) {
+      transaction._ = userID;
     }
   });
 
