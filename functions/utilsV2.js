@@ -699,7 +699,7 @@ function _throwIfUndefinedOrNull(object, message) {
 
 throwIfUndefinedOrNull = _throwIfUndefinedOrNull;
 
-getValueAndQuitIfUndefined = function _getValueAndQuitIfUndefined(object, key) {
+getValueAndThrowfUndefined = function _getValueAndThrowfUndefined(object, key) {
   if (!object) {
     _logAndThrow(`Object undefined`);
     
