@@ -1,24 +1,11 @@
 [
     {
-        "name": "addTransactions",
-        "private": false,
-        "run_as_system": true
-    },
-    {
         "name": "addTransactionsV2",
         "private": false,
         "run_as_system": true
     },
     {
-        "name": "checkTransactions",
-        "private": true
-    },
-    {
         "name": "checkTransactionsV2",
-        "private": true
-    },
-    {
-        "name": "checkUserTransactions",
         "private": true
     },
     {
@@ -27,10 +14,6 @@
     },
     {
         "name": "eraseData",
-        "private": true
-    },
-    {
-        "name": "loadMissingData",
         "private": true
     },
     {
@@ -50,23 +33,7 @@
         "private": true
     },
     {
-        "name": "syncV1toV2Settings",
-        "private": true
-    },
-    {
-        "name": "syncV1toV2Transaction",
-        "private": true
-    },
-    {
-        "name": "updateCompanies",
-        "private": true
-    },
-    {
         "name": "updateCompaniesV2",
-        "private": true
-    },
-    {
-        "name": "updateDividends",
         "private": true
     },
     {
@@ -74,15 +41,7 @@
         "private": true
     },
     {
-        "name": "updateExchangeRates",
-        "private": true
-    },
-    {
         "name": "updateExchangeRatesV2",
-        "private": true
-    },
-    {
-        "name": "updatePrices",
         "private": true
     },
     {
@@ -90,15 +49,7 @@
         "private": true
     },
     {
-        "name": "updateQuotes",
-        "private": true
-    },
-    {
         "name": "updateQuotesV2",
-        "private": true
-    },
-    {
-        "name": "updateSplits",
         "private": true
     },
     {
@@ -106,15 +57,7 @@
         "private": true
     },
     {
-        "name": "updateSymbols",
-        "private": true
-    },
-    {
         "name": "updateSymbolsV2",
-        "private": true
-    },
-    {
-        "name": "utils",
         "private": true
     },
     {
