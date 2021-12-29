@@ -29,13 +29,13 @@ exports = async function(transactions, replace) {
   const transactionsCollection = db.collection("transactions");
   if (replace) {
     if (userID != null, userID.length === 24) {
-      console.log(`Removing old user transactions`)
+      console.log(`Removing old user transactions`);
       await transactionsCollection.deleteMany({ _: userID });
     } else {
-      throw new UserError(`Unable to replace transactions for userID: ${userID}`)
+      throw new UserError(`Unable to replace transactions for userID: ${userID}`);
     }
   } else {
-    console.log(`Replace is not needed`)
+    console.log(`Replace is not needed`);
   }
 
   console.log(`Adding transactions (${transactions.length}) for user '${userID}'`);
