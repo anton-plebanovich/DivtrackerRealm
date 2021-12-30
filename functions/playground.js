@@ -73,11 +73,15 @@ async function checkV2Data() {
   const symbolsCollection = db.collection('symbols');
   if (records.length > 0) {
     const tickers = [];
+    const tickerWithSymbolS = [];
     for (const record of records) {
       const symbolID = record._id;
       const symbol = await symbolsCollection.findOne({ _id: symbolID });
-      tickers.push(`${symbol.t} - ${symbolID}`);
+      tickers.push(symbol.t);
+      tickerWithSymbolS.push(`${symbol.t} - ${symbolID}`);
     }
-    console.error(`Found suspicious tickers (${tickers.length}): ${tickers.stringify()}`);
+    console.error(`Found suspicious tickers`);
+    console.error(`https://cloud.iexapis.com/stable/stock/market/batch?token=pk_01ef04dd60b5404b81d9cc47b2388176&types=chart&symbols=${tickers}&range=6y&chartCloseOnly=true&chartInterval=21`);
+    console.error(tickerWithSymbolS.stringify());
   }
 }
