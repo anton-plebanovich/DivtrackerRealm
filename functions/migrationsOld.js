@@ -662,7 +662,7 @@ async function fillV2TransactionsCollectionMigration(idByTicker, invalidEntitesF
     "_id": {
       "$oid": "61b4ec80b3083dd2cac32eb7"
     },
-    "_p": "619c69468f19308bae927d4e",
+    "_p": "614b283c15a0dc11514db030",
     "a": {
       "$numberDouble": "25.1146"
     },

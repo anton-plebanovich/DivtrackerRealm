@@ -22,7 +22,8 @@
 // - Manual: Drop `divtracker` database
 // - Manual: Run partition key migration
 // - Manual: Delete V1 schemes
-// - Manual: Edit V2 schemes and make partition key optional while also renaming it to _
+// - Manual: Edit V2 schemes and make partition key optional while also renaming it to _. Recheck them once more.
+// - Manual: Enable Automatic Deployment
 // - Deploy: New schemes, functions, and sync that are using optional _ partition key. V1 schemes remove. Triggers restore.
 // - Manual: Release new app (not deprecated) to stores
 // - Deploy: Exchange maintenance with deprecation for old versions

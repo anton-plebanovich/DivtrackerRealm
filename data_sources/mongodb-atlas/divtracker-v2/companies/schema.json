@@ -3,7 +3,7 @@
         "_id": {
             "bsonType": "objectId"
         },
-        "_p": {
+        "_": {
             "bsonType": "string"
         },
         "n": {
@@ -17,8 +17,7 @@
         }
     },
     "required": [
-        "_id",
-        "_p"
+        "_id"
     ],
     "title": "CompanyV2RealmModel"
 }

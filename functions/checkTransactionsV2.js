@@ -35,7 +35,7 @@
 
 const requiredTransactionKeys = [
   "_id",
-  "_p",
+  "_",
   "a",
   "d",
   "p",
@@ -61,7 +61,7 @@ function checkTransaction(transaction, symbolIDBySymbolID) {
       }
     }
 
-    if (!transaction._p.length) {
+    if (!transaction._.length) {
       logAndThrow(`Transaction partition is absent: ${transaction.stringify()}`);
     }
   

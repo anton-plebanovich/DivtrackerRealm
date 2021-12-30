@@ -3,7 +3,7 @@
         "_id": {
             "bsonType": "objectId"
         },
-        "_p": {
+        "_": {
             "bsonType": "string"
         },
         "ce": {
@@ -39,8 +39,7 @@
         }
     },
     "required": [
-        "_id",
-        "_p"
+        "_id"
     ],
     "title": "SettingsV2RealmModel"
 }

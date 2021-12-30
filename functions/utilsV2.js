@@ -701,7 +701,7 @@ function _throwIfUndefinedOrNull(object, message) {
 
 throwIfUndefinedOrNull = _throwIfUndefinedOrNull;
 
-getValueAndQuitIfUndefined = function _getValueAndQuitIfUndefined(object, key) {
+getValueAndThrowfUndefined = function _getValueAndThrowfUndefined(object, key) {
   if (!object) {
     _logAndThrow(`Object undefined`);
     
@@ -1326,7 +1326,6 @@ fetchPreviousDayPrices = _fetchPreviousDayPrices;
   for (const [currency, rate] of entries) {
     const exchangeRate = {};
     exchangeRate._id = currency;
-    exchangeRate._p = "2";
 
     if (rate != null) {
       exchangeRate.r = BSON.Double(rate);
@@ -1373,7 +1372,6 @@ function _fixCompany(iexCompany, symbolID) {
     console.logVerbose(`Company data fix start`);
     const company = {};
     company._id = symbolID;
-    company._p = "2";
     company.i = iexCompany.industry;
     company.t = iexCompany.issueType;
 
@@ -1409,7 +1407,6 @@ function _fixDividends(iexDividends, symbolID) {
       .filterNull()
       .map(iexDividend => {
         const dividend = {};
-        dividend._p = "2";
         dividend.d = _getOpenDate(iexDividend.declaredDate);
         dividend.e = _getOpenDate(iexDividend.exDate);
         dividend.p = _getOpenDate(iexDividend.paymentDate);
@@ -1453,7 +1450,6 @@ function _fixPreviousDayPrice(iexPreviousDayPrice, symbolID) {
     console.logVerbose(`Previous day price data fix start`);
     const previousDayPrice = {};
     previousDayPrice._id = symbolID;
-    previousDayPrice._p = "2";
 
     if (iexPreviousDayPrice.close != null) {
       previousDayPrice.c = BSON.Double(iexPreviousDayPrice.close);
@@ -1490,7 +1486,6 @@ function _fixHistoricalPrices(iexHistoricalPrices, symbolID) {
       .filterNull()
       .map(iexHistoricalPrice => {
         const historicalPrice = {};
-        historicalPrice._p = "2";
         historicalPrice.d = _getCloseDate(iexHistoricalPrice.date);
         historicalPrice.s = symbolID;
 
@@ -1522,7 +1517,6 @@ function _fixQuote(iexQuote, symbolID) {
     console.logVerbose(`Previous day price data fix start`);
     const quote = {};
     quote._id = symbolID;
-    quote._p = "2";
     quote.l = iexQuote.latestPrice;
 
     if (iexQuote.peRatio != null) {
@@ -1558,7 +1552,6 @@ function _fixSplits(iexSplits, symbolID) {
       .filterNull()
       .map(iexSplit => {
         const split = {};
-        split._p = "2";
         split.e = _getOpenDate(iexSplit.exDate);
         split.s = symbolID;
 

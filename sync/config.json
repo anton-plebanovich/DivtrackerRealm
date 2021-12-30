@@ -1,16 +1,14 @@
 {
     "state": "enabled",
     "partition": {
-        "key": "_p",
+        "key": "_",
         "type": "string",
-        "required": true,
+        "required": false,
         "permissions": {
             "read": {
                 "%%partition": {
                     "%in": [
                         "%%user.id",
-                        "P",
-                        "2",
                         null
                     ]
                 }
