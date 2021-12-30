@@ -392,12 +392,14 @@ String.prototype.removeSensitiveData = function() {
   let safeString = this;
   
   if (premiumToken != null) {
-    safeString = safeString.replaceAll(premiumToken, 'sk_***')
+    const regexp = new RegExp(premiumToken, "g");
+    safeString = safeString.replace(regexp, 'sk_***')
   }
 
   if (tokens != null) {
     for (const token of tokens) {
-      safeString = safeString.replaceAll(token, 'pk_***')
+      const regexp = new RegExp(token, "g");
+      safeString = safeString.replace(token, 'pk_***')
     }
   }
 
