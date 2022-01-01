@@ -372,34 +372,43 @@ Object.prototype.isEqual = function(rhs) {
 };
 
 Boolean.prototype.isEqual = function(boolean) {
-  'use strict'; // https://stackoverflow.com/a/27736962/4124265
+  // We should always use 'strict' for primitive type extensions - https://stackoverflow.com/a/27736962/4124265
+  'use strict';
+
   return this === boolean;
 };
 
 Number.prototype.isEqual = function(number) {
-  'use strict'; // https://stackoverflow.com/a/27736962/4124265
+  // We should always use 'strict' for primitive type extensions - https://stackoverflow.com/a/27736962/4124265
+  'use strict';
+
   return this === number;
 };
 
 String.prototype.isEqual = function(string) {
-  'use strict'; // https://stackoverflow.com/a/27736962/4124265
+  // We should always use 'strict' for primitive type extensions - https://stackoverflow.com/a/27736962/4124265
+  'use strict';
+
   return this === string;
 };
 
 String.prototype.removeSensitiveData = function() {
+  // We should always use 'strict' for primitive type extensions - https://stackoverflow.com/a/27736962/4124265
+  'use strict';
+
   if (isSandbox) { return this; }
 
   let safeString = this;
   
   if (premiumToken != null) {
     const regexp = new RegExp(premiumToken, "g");
-    safeString = safeString.replace(regexp, 'sk_***')
+    safeString = safeString.replace(regexp, 'sk_***');
   }
 
   if (tokens != null) {
     for (const token of tokens) {
       const regexp = new RegExp(token, "g");
-      safeString = safeString.replace(regexp, 'pk_***')
+      safeString = safeString.replace(regexp, 'pk_***');
     }
   }
 
@@ -433,7 +442,19 @@ class _NetworkResponse {
 
     // https://docs.mongodb.com/realm/services/http-actions/http.get/#return-value
     this.statusCode = response.statusCode;
-    this.string = response.body.text();
+    this.rawBody = response.body;
+
+    let string;
+    Object.defineProperty(this, "string", {
+      get: function() {
+        if (typeof string !== 'undefined') {
+          return string;
+        } else {
+          string = this.rawBody.text();
+          return string;
+        }
+      }
+    });
 
     let json;
     Object.defineProperty(this, "json", {
@@ -478,7 +499,6 @@ class _NetworkResponse {
         return retryable;
       }
     });
-
   }
 
   toString() {
@@ -486,7 +506,7 @@ class _NetworkResponse {
   }
 
   toNetworkError() {
-    return new _NetworkError(this.statusCode, this.string)
+    return new _NetworkError(this.statusCode, this.string);
   }
 }
 
