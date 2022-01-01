@@ -427,10 +427,85 @@ LazyString = _LazyString;
 
 ///////////////////////////////////////////////////////////////////////////////// ERRORS PROCESSING
 
+class _NetworkResponse {
+  constructor(url, response) {
+    this.url = url;
+
+    // https://docs.mongodb.com/realm/services/http-actions/http.get/#return-value
+    this.statusCode = response.statusCode;
+    this.rawBody = response.body;
+
+    let string;
+    Object.defineProperty(this, "string", {
+      get: function() {
+        if (typeof string !== 'undefined') {
+          return string;
+        } else {
+          string = this.rawBody.text().removeSensitiveData();
+          return string;
+        }
+      }
+    });
+
+    let json;
+    Object.defineProperty(this, "json", {
+      get: function() {
+        if (typeof json !== 'undefined') {
+          return json;
+        } else {
+          json = EJSON.parse(this.string);
+          return json;
+        }
+      }
+    });
+
+    let retryable;
+    Object.defineProperty(this, "retryable", {
+      get: function() {
+        if (typeof retryable !== 'undefined') {
+          return retryable;
+        }
+
+        const alwaysRetryableStatusCodes = [
+          403, // Forbidden
+          429, // Too Many Requests
+          502, // Bad Gateway
+        ];
+
+        if (alwaysRetryableStatusCodes.includes(this.statusCode)) {
+          retryable = true;
+          return retryable;
+        }
+
+        // You have used all available credits for the month. Please upgrade or purchase additional packages to access more data.
+        if (this.statusCode === 402) {
+          // We can try and retry if there is no premium token and we are using ordinary tokens.
+          // Some might not be expired yet.
+          retryable = typeof premiumToken === 'undefined';
+
+          return retryable;
+        }
+
+        retryable = false;
+        return retryable;
+      }
+    });
+
+  }
+
+  toString() {
+    return this.string;
+  }
+
+  toNetworkError() {
+    return new _NetworkError(this.statusCode, this.string)
+  }
+}
+
 class _NetworkError {
   constructor(statusCode, message) {
-    this.statusCode = statusCode
-    this.message = message.removeSensitiveData()
+    this.statusCode = statusCode;
+    this.message = message;
   }
 
   toString() {
@@ -1078,7 +1153,48 @@ fetchBatchNew = _fetchBatchNew;
  * @returns Parsed EJSON object.
  */
 async function _fetch(api, queryParameters) {
+  let response = await get(api, queryParameters);
+
+  // Retry 5 times on retryable errors
+  const delay = 100;
+
+  for (let step = 0; step < 5 && response.retryable; step++) {
+    console.log(`Received '${response.status}' error with text '${response.body.text()}'. Trying to retry after a '${delay}' delay.`);
+    await new Promise(r => setTimeout(r, delay));
+    response = await get(api, queryParameters);
+  }
+  
+  if (response.statusCode === 200) {
+    console.log(`Response for URL: ${response.url}`);
+  } else {
+    console.error(`Response status error '${response.statusCode}' : '${response.string}'`);
+    throw response.toNetworkError();
+  }
+  
+  const json = response.json;
+  if (json.length && json.length > 1) {
+    console.logVerbose(`Parse end. Objects count: ${json.length}`);
+  } else {
+    console.logVerbose(`Parse end. Object: ${response.string}`);
+  }
+  
+  return json;
+}
+
+fetch = _fetch;
+
+async function get(api, queryParameters) {
+  const url = getURL(api, queryParameters);
+  console.log(`Request with URL: ${url}`);
+  
+  const response = await context.http.get({ url: url });
+
+  return new _NetworkResponse(url, response)
+}
+
+function getURL(api, queryParameters) {
   _throwIfUndefinedOrNull(api, `api`);
+
   var query = "";
   if (queryParameters) {
     const querystring = require('querystring');
@@ -1091,42 +1207,9 @@ async function _fetch(api, queryParameters) {
 
   const baseURL = context.values.get("base_url");
   const url = `${baseURL}${api}?token=${token}${query}`;
-  console.log(`Request with URL: ${url}`);
-  var response = await context.http.get({ url: url });
 
-  // Retry 5 times on retryable errors
-  const delay = 100;
-  for (let step = 0; step < 5 && (response.status === '403 Forbidden' || response.status === '502 Bad Gateway' || response.status === '429 Too Many Requests'); step++) {
-    console.log(`Received '${response.status}' error with text '${response.body.text()}'. Trying to retry after a '${delay}' delay.`);
-    await new Promise(r => setTimeout(r, delay));
-    response = await context.http.get({ url: url });
-  }
-  
-  if (response.status === '200 OK') {
-    console.log(`Response for URL: ${url}`);
-  } else {
-    const statusCodeString = response.status.split(" ")[0];
-    const statusCode = parseInt(statusCodeString, 10);
-    const text = response.body.text();
-    console.error(`Response status error '${response.status}' : '${text}'`);
-    throw new _NetworkError(statusCode, text)
-  }
-  
-  const ejsonBody = EJSON.parse(response.body.text());
-  if (ejsonBody.length && ejsonBody.length > 1) {
-    console.logVerbose(`Parse end. Objects count: ${ejsonBody.length}`);
-  } else {
-    console.logVerbose(`Parse end. Object: ${response.body.text()}`);
-  }
-
-  // We need some delay to prevent '429 Too Many Requests' error.
-  // It looks like we can't have more than 8 requests per second so just inserting some safety delay.
-  // await new Promise(r => setTimeout(r, 50));
-  
-  return ejsonBody;
+  return url;
 }
-
-fetch = _fetch;
 
 // exports();
 //
