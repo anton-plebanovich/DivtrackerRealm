@@ -433,19 +433,7 @@ class _NetworkResponse {
 
     // https://docs.mongodb.com/realm/services/http-actions/http.get/#return-value
     this.statusCode = response.statusCode;
-    this.rawBody = response.body;
-
-    let string;
-    Object.defineProperty(this, "string", {
-      get: function() {
-        if (typeof string !== 'undefined') {
-          return string;
-        } else {
-          string = this.rawBody.text();
-          return string;
-        }
-      }
-    });
+    this.string = response.body.text();
 
     let json;
     Object.defineProperty(this, "json", {
