@@ -399,7 +399,7 @@ String.prototype.removeSensitiveData = function() {
   if (tokens != null) {
     for (const token of tokens) {
       const regexp = new RegExp(token, "g");
-      safeString = safeString.replace(token, 'pk_***')
+      safeString = safeString.replace(regexp, 'pk_***')
     }
   }
 
@@ -441,7 +441,7 @@ class _NetworkResponse {
         if (typeof string !== 'undefined') {
           return string;
         } else {
-          string = this.rawBody.text().removeSensitiveData();
+          string = this.rawBody.text();
           return string;
         }
       }
@@ -505,7 +505,7 @@ class _NetworkResponse {
 class _NetworkError {
   constructor(statusCode, message) {
     this.statusCode = statusCode;
-    this.message = message;
+    this.message = message.removeSensitiveData();
   }
 
   toString() {
@@ -1153,15 +1153,14 @@ fetchBatchNew = _fetchBatchNew;
  * @returns Parsed EJSON object.
  */
 async function _fetch(api, queryParameters) {
-  let response = await get(api, queryParameters);
+  let response = await _get(api, queryParameters);
 
   // Retry 5 times on retryable errors
   const delay = 100;
-
   for (let step = 0; step < 5 && response.retryable; step++) {
     console.log(`Received '${response.status}' error with text '${response.body.text()}'. Trying to retry after a '${delay}' delay.`);
     await new Promise(r => setTimeout(r, delay));
-    response = await get(api, queryParameters);
+    response = await _get(api, queryParameters);
   }
   
   if (response.statusCode === 200) {
@@ -1183,22 +1182,24 @@ async function _fetch(api, queryParameters) {
 
 fetch = _fetch;
 
-async function get(api, queryParameters) {
-  const url = getURL(api, queryParameters);
+async function _get(api, queryParameters) {
+  const url = _getURL(api, queryParameters);
   console.log(`Request with URL: ${url}`);
-  
+
   const response = await context.http.get({ url: url });
 
-  return new _NetworkResponse(url, response)
+  return new _NetworkResponse(url, response);
 }
 
-function getURL(api, queryParameters) {
+function _getURL(api, queryParameters) {
   _throwIfUndefinedOrNull(api, `api`);
 
-  var query = "";
+  let query;
   if (queryParameters) {
     const querystring = require('querystring');
     query = `&${querystring.stringify(queryParameters)}`;
+  } else {
+    query = "";
   }
   
   // Use premium token if defined.
