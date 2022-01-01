@@ -441,7 +441,10 @@ class _NetworkResponse {
     this.url = url;
 
     // https://docs.mongodb.com/realm/services/http-actions/http.get/#return-value
-    this.statusCode = response.statusCode;
+    // `statusCode` is a weird `number`. Something like `int32` instead of default `int64`.
+    // This looks like Mongo customization. It leads to inability to properly use `include`.
+    // Calling `.valueOf()` fixes the issue.
+    this.statusCode = response.statusCode.valueOf();
     this.rawBody = response.body;
 
     let string;
