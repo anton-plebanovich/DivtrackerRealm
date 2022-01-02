@@ -3,7 +3,7 @@
         "_id": {
             "bsonType": "objectId"
         },
-        "_p": {
+        "_": {
             "bsonType": "string"
         },
         "a": {
@@ -30,7 +30,6 @@
     },
     "required": [
         "_id",
-        "_p",
         "a",
         "e",
         "f",

@@ -3,7 +3,7 @@
         "_id": {
             "bsonType": "string"
         },
-        "_p": {
+        "_": {
             "bsonType": "string"
         },
         "r": {
@@ -15,7 +15,6 @@
     },
     "required": [
         "_id",
-        "_p",
         "r"
     ],
     "title": "ExchangeRateV2RealmModel"

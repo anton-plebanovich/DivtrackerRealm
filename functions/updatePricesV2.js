@@ -61,7 +61,6 @@
     .filter(x => !upToDateSymbolIDs.includes(x._id.toString()))
     .map(previousDayPrice => {
       const historicalPrice = {};
-      historicalPrice._p = previousDayPrice._p;
       historicalPrice.c = previousDayPrice.c;
       historicalPrice.d = yesterdayCloseDate;
       historicalPrice.s = previousDayPrice._id;
