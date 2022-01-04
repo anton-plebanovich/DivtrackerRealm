@@ -64,18 +64,18 @@ async function updateIEXSymbols() {
   // We drop `_id` field so we can compare old and new objects.
   // All updates are done through other fields anyway.
   const oldSymbols = await iexCollection.find({}, { "_id": 0 }).toArray();
-  const oldSymbolsDictionary = oldSymbols.toDictionary('symbol');
+  const oldSymbolByTicker = oldSymbols.toDictionary('symbol');
 
   const bulk = iexCollection.initializeUnorderedBulkOp();
   for (const newSymbol of newSymbols) {
     // We try to update all symbold using IDs that allow us to track symbol renames.
-    if (isProduction && newSymbol.iexId != null && update('iexId', bulk, oldSymbolsDictionary, oldSymbols, newSymbol)) {
+    if (isIEXProduction && newSymbol.iexId != null && update('iexId', bulk, oldSymbolByTicker, oldSymbols, newSymbol)) {
       continue;
     }
-    if (isProduction && newSymbol.figi != null && update('figi', bulk, oldSymbolsDictionary, oldSymbols, newSymbol)) {
+    if (isIEXProduction && newSymbol.figi != null && update('figi', bulk, oldSymbolByTicker, oldSymbols, newSymbol)) {
       continue;
     }
-    if (update('symbol', bulk, oldSymbolsDictionary, oldSymbols, newSymbol)) {
+    if (update('symbol', bulk, oldSymbolByTicker, oldSymbols, newSymbol)) {
       continue;
     }
 
@@ -105,12 +105,12 @@ async function updateIEXSymbols() {
 // Checks if update is required for `newSymbol` using provided `fields`.
 // Adds bulk operation if needed and returns `true` if update check passed.
 // Returns `false` is update check wasn't possible.
-function update(field, bulk, oldSymbolsDictionary, oldSymbols, newSymbol) {
+function update(field, bulk, oldSymbolByTicker, oldSymbols, newSymbol) {
 
   // First, we try to use dictionary because in most cases symbols will just match
   // and so we can increase performance.
   const newSymbolFieldValue = newSymbol[field];
-  let oldSymbol = oldSymbolsDictionary[newSymbol.symbol];
+  let oldSymbol = oldSymbolByTicker[newSymbol.symbol];
   if (field !== 'symbol' && (!oldSymbol || oldSymbol[field] !== newSymbolFieldValue)) {
     // Perform search since our assumption failed. This one is slower.
     oldSymbol = oldSymbols.find(oldSymbol => {
@@ -120,6 +120,10 @@ function update(field, bulk, oldSymbolsDictionary, oldSymbols, newSymbol) {
 
   if (oldSymbol == null) {
     return false;
+
+  } else if (isIEXSandbox && newSymbol.isEnabled === oldSymbol.isEnabled) {
+    // It takes too much time to update every symbol on sandbox so we just skip update if enabled field didn't change
+    return true
 
   } else {
     bulk.findAndUpdateIfNeeded(newSymbol, oldSymbol, field);
