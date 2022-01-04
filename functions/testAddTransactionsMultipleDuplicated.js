@@ -29,5 +29,5 @@ function randomDate(start, end) {
   await Promise.all(operations);
 
   // Check
-  return await checkData(transactionsToCheck);
+  await checkData(transactionsToCheck);
 };
