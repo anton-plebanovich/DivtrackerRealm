@@ -6,10 +6,10 @@
 const defaultTransactionsCount = 200;
 const averagePrice = 109.02;
 
-const _defaultAsyncOperations = 10;
+const _defaultAsyncOperations = 15;
 defaultAsyncOperations = _defaultAsyncOperations;
 
-const _defaultAsyncTransactionsCount = 20;
+const _defaultAsyncTransactionsCount = 15;
 defaultAsyncTransactionsCount = _defaultAsyncTransactionsCount;
 
 //////////////////////////////////////////////////////////////////// Functions
