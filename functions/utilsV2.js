@@ -452,8 +452,11 @@ class _NetworkResponse {
       get: function() {
         if (typeof string !== 'undefined') {
           return string;
-        } else {
+        } else if (this.rawBody != null) {
           string = this.rawBody.text();
+          return string;
+        } else {
+          string = null;
           return string;
         }
       }
@@ -464,8 +467,11 @@ class _NetworkResponse {
       get: function() {
         if (typeof json !== 'undefined') {
           return json;
-        } else {
+        } else if (this.string != null) {
           json = EJSON.parse(this.string);
+          return json;
+        } else {
+          json = null;
           return json;
         }
       }
@@ -1169,7 +1175,7 @@ async function _fetch(api, queryParameters) {
   // Retry 5 times on retryable errors
   const delay = 100;
   for (let step = 0; step < 5 && response.retryable; step++) {
-    console.log(`Received '${response.status}' error with text '${response.body.text()}'. Trying to retry after a '${delay}' delay.`);
+    console.log(`Received '${response.status}' error with text '${response.string}'. Trying to retry after a '${delay}' delay.`);
     await new Promise(r => setTimeout(r, delay));
     response = await _get(api, queryParameters);
   }
