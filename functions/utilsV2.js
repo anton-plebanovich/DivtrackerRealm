@@ -1450,6 +1450,7 @@ function getCurrencySymbol(currency) {
   switch(currency) {
     case "CAD": return "$";
     case "CHF": return "¤";
+    case "EUR": return "€";
     case "ILS": return "₪";
     case "NOK": return "kr";
     case "USD": return "$";
