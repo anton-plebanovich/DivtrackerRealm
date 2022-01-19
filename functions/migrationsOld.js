@@ -8,6 +8,50 @@
 
 exports = function() {};
 
+////////////////////////////////////////////////////// 03-01-2022 Partition key migration
+
+async function partitionKeyMigration() {
+  const operations = [];
+
+  // Deleting _p key in all data collections
+  const dataCollections = [
+    db.collection('companies'),
+    db.collection('dividends'),
+    db.collection('exchange-rates'),
+    db.collection('historical-prices'),
+    db.collection('previous-day-prices'),
+    db.collection('quotes'),
+    db.collection('splits'),
+    db.collection('symbols'),
+  ];
+
+  for (const collection of dataCollections) {
+    const query = {};
+    const update = { $unset: { "_p": "" } };
+    const options = { "upsert": false };
+    operations.push(
+      collection.updateMany(query, update, options)
+    );
+  }
+
+  // Renaming _p key to _ in all user collections
+  const userCollections = [
+    db.collection('settings'),
+    db.collection('transactions'),
+  ];
+
+  for (const collection of userCollections) {
+    const query = {};
+    const update = { $rename: { _p: "_" } };
+    const options = { "upsert": false };
+    operations.push(
+      collection.updateMany(query, update, options)
+    );
+  }
+
+  return Promise.all(operations);
+}
+
 ////////////////////////////////// 25-12-2021
 
 async function v2DatabaseFillMigration() {
