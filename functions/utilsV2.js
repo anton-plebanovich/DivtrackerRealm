@@ -152,7 +152,7 @@ Object.prototype.updateFrom = function(object) {
     update = { $set: set };
   }
 
-  if (isSandbox) {
+  if (isIEXSandbox) {
     console.logData(`Updating`, update);
   } else {
     console.log(`Updating: ${update.stringify()}`);
@@ -396,7 +396,7 @@ String.prototype.removeSensitiveData = function() {
   // We should always use 'strict' for primitive type extensions - https://stackoverflow.com/a/27736962/4124265
   'use strict';
 
-  if (isSandbox) { return this; }
+  if (isIEXSandbox) { return this; }
 
   let safeString = this;
   
@@ -1450,6 +1450,7 @@ function getCurrencySymbol(currency) {
   switch(currency) {
     case "CAD": return "$";
     case "CHF": return "¤";
+    case "EUR": return "€";
     case "ILS": return "₪";
     case "NOK": return "kr";
     case "USD": return "$";
@@ -1690,12 +1691,12 @@ getDateLogString = function getDateLogString() {
 exports = function() {
   extendRuntime();
 
-  if (typeof isSandbox === 'undefined') {
-    isSandbox = context.values.get("base_url") === 'https://sandbox.iexapis.com/stable';
+  if (typeof isIEXSandbox === 'undefined') {
+    isIEXSandbox = context.values.get("base_url") === 'https://sandbox.iexapis.com/stable';
   }
 
-  if (typeof isProduction === 'undefined') {
-    isProduction = !isSandbox;
+  if (typeof isIEXProduction === 'undefined') {
+    isIEXProduction = !isIEXSandbox;
   }
 
   if (typeof atlas === 'undefined') {
