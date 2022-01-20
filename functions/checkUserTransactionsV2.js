@@ -40,7 +40,7 @@
   const transactionsCollection = db.collection("transactions");
   // Check transactions
   for (const transaction of transactions) {
-    
+
     // Checking that all required keys are present
     for (const requiredKey of requiredTransactionKeys) {
       if (typeof transaction[requiredKey] === 'undefined') {
@@ -72,7 +72,7 @@
     }
 
     if (transaction.c != null && transaction.c < 0) {
-      return logAndReject(`The commission should be a positive value`, transaction.stringify());
+      return logAndReject(`The commission cannot be negative`, transaction.stringify());
     }
 
     // TODO: Check that values are of proper type
