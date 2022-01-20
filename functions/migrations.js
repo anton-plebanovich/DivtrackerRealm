@@ -24,8 +24,10 @@ async function positiveCommissionsMigration() {
   const oldTransactions = await transactionsCollection.find({ c: { $lt: 0 } }).toArray();
   const newTransactions = [];
   for (const oldTransaction of oldTransactions) {
+    console.log(`Fixing: ${oldTransaction.stringify()}`);
     const newTransaction = Object.assign({}, oldTransaction);
     newTransaction.c = newTransaction.c * -1;
+    console.log(`Fixed: ${newTransaction.stringify()}`);
     newTransactions.push(newTransaction);
   }
 
