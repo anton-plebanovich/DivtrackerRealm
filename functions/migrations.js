@@ -21,7 +21,7 @@ exports = async function() {
 
 async function positiveCommissionsMigration() {
   const transactionsCollection = db.collection("transactions");
-  const oldTransactions = await transactionsCollection.find({ c: { $lt: 0 } });
+  const oldTransactions = await transactionsCollection.find({ c: { $lt: 0 } }).toArray();
   const newTransactions = [];
   for (const oldTransaction of oldTransactions) {
     const newTransaction = Object.assign({}, oldTransaction);
