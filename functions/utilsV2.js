@@ -711,9 +711,15 @@ function _logAndThrow(message) {
 
 logAndThrow = _logAndThrow;
 
-function _logAndReject(message) {
+function _logAndReject(message, data) {
   _throwIfUndefinedOrNull(message, `_logAndReject message`);
-  console.error(message);
+
+  if (data != null) {
+    console.error(`${message}: ${data}`);
+  } else {
+    console.error(message);
+  }
+  
   return Promise.reject(message);
 }
 
