@@ -31,5 +31,9 @@ async function positiveCommissionsMigration() {
     newTransactions.push(newTransaction);
   }
 
-  await transactionsCollection.safeUpdateMany(newTransactions, oldTransactions);
+  if (newTransactions.length) {
+    await transactionsCollection.safeUpdateMany(newTransactions, oldTransactions);
+  } else {
+    console.log("Noting to migrate");
+  }
 }
