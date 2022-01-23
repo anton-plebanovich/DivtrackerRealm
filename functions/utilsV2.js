@@ -918,7 +918,7 @@ async function _getInUseShortSymbols() {
   console.logData(`Unique companies IDs (${companyIDs.length})`, companyIDs);
 
   // Compute distinct symbol IDs using both sources
-  const symbolIDs = [...new Set(companyIDs.concat(distinctTransactionSymbolIDs))];
+  let symbolIDs = [...new Set(companyIDs.concat(distinctTransactionSymbolIDs))];
 
   const symbolsCollection = db.collection("symbols");
   const disabledSymbolIDs = await symbolsCollection.distinct("_id", { e: false });
