@@ -917,10 +917,8 @@ async function _getInUseShortSymbols() {
   console.log(`Unique companies IDs (${companyIDs.length})`);
   console.logData(`Unique companies IDs (${companyIDs.length})`, companyIDs);
 
-  // Compute symbol IDs using both sources
-  let symbolIDs = companyIDs
-    .concat(distinctTransactionSymbolIDs)
-    .distinct();
+  // Compute distinct symbol IDs using both sources
+  const symbolIDs = [...new Set(companyIDs.concat(distinctTransactionSymbolIDs))];
 
   const symbolsCollection = db.collection("symbols");
   const disabledSymbolIDs = await symbolsCollection.distinct("_id", { e: false });
@@ -928,7 +926,7 @@ async function _getInUseShortSymbols() {
   // Remove disabled symbols
   symbolIDs = symbolIDs.filter(x => !disabledSymbolIDs.includesObject(x));
 
-  return await getShortSymbols(symbolIDs);
+  return await _getShortSymbols(symbolIDs);
 };
 
 getInUseShortSymbols = _getInUseShortSymbols;
