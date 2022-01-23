@@ -711,6 +711,20 @@ function _logAndThrow(message) {
 
 logAndThrow = _logAndThrow;
 
+function _logAndReject(message, data) {
+  _throwIfUndefinedOrNull(message, `_logAndReject message`);
+
+  if (data != null) {
+    console.error(`${message}: ${data}`);
+  } else {
+    console.error(message);
+  }
+  
+  return Promise.reject(message);
+}
+
+logAndReject = _logAndReject;
+
 /** Checks that we didn't exceed 90s timeout. */
 checkExecutionTimeout = function checkExecutionTimeout(limit) {
   if (typeof startDate === 'undefined') {
