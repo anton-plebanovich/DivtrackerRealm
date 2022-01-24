@@ -44,31 +44,35 @@
     // Checking that all required keys are present
     for (const requiredKey of requiredTransactionKeys) {
       if (typeof transaction[requiredKey] === 'undefined') {
-        logAndThrow(`Transaction required key '${requiredKey}' not found for transaction: ${transaction.stringify()}`);
+        return logAndReject(`Transaction required key '${requiredKey}' not found for transaction`, transaction.stringify());
       }
     }
 
     // Checking that no excessive keys are present
     for (const [key, value] of Object.entries(transaction)) {
       if (!requiredTransactionKeys.includes(key) && !optionalTransactionKeys.includes(key)) {
-        logAndThrow(`Found excessive transaction key '${key}' for transaction: ${transaction.stringify()}`);
+        return logAndReject(`Found excessive transaction key '${key}' for transaction`, transaction.stringify());
       }
     }
 
     if (!transaction._.length) {
-      logAndThrow(`Transaction partition is absent: ${transaction.stringify()}`);
+      return logAndReject(`Transaction partition is absent`, transaction.stringify());
     }
 
     if (transaction._ !== userID) {
-      logAndThrow(`Transaction partition '${transaction._}' should match user ID '${userID}': ${transaction.stringify()}`);
+      return logAndReject(`Transaction partition '${transaction._}' should match user ID '${userID}'`, transaction.stringify());
     }
   
     if (transaction.s.toString().length !== 24) {
-      logAndThrow(`Transaction symbol ID format is invalid. It should be 24 characters ObjectId: ${transaction.stringify()}`);
+      return logAndReject(`Transaction symbol ID format is invalid. It should be 24 characters ObjectId`, transaction.stringify());
     }
   
     if (sybmolIDBySymbolID[transaction.s] == null) {
-      logAndThrow(`Unknown transaction symbol: ${transaction.stringify()}`);
+      return logAndReject(`Unknown transaction symbol`, transaction.stringify());
+    }
+
+    if (transaction.c != null && transaction.c < 0) {
+      return logAndReject(`The commission cannot be negative`, transaction.stringify());
     }
 
     // TODO: Check that values are of proper type
@@ -76,7 +80,7 @@
 
   const transactionsCount = await transactionsCollection.count({ p: userID }) + transactions.length;
   if (transactionsCount >= 1000000) {
-    logAndThrow(`Maximum number of 1000000 unique transactions for user is reached: ${transactionsCount}`);
+    return logAndReject(`Maximum number of 1000000 unique transactions for user is reached`, transactionsCount);
   }
 
   const existingDistinctSymbols = await transactionsCollection.distinct("s", { p: userID });
@@ -86,7 +90,7 @@
     .distinct();
 
   if (distinctSymbols.length >= 1000) {
-    logAndThrow(`Maximum number of 1000 unique companies for user is reached: ${distinctSymbols.length}`);
+    return logAndReject(`Maximum number of 1000 unique companies for user is reached`, distinctSymbols.length);
   }
 
   console.log(`Verification success. Transactions (${transactions.length}) are valid.`);

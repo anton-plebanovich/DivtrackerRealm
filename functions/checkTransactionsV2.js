@@ -73,5 +73,9 @@ function checkTransaction(transaction, symbolIDBySymbolID) {
       logAndThrow(`Unknown transaction symbol: ${transaction.stringify()}`);
     }
 
+    if (transaction.c != null && transaction.c < 0) {
+      logAndThrow(`The commission cannot be negative: ${transaction.stringify()}`);
+    }
+
     // TODO: Check that values are of proper type
 }
