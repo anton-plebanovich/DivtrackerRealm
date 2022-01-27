@@ -1072,26 +1072,15 @@ fetchBatch = _fetchBatch;
  */
 async function _fetchBatchAndMapArray(type, tickers, idByTicker, mapFunction, queryParameters) {
   return _fetchBatchNew([type], tickers, queryParameters)
-    .then(dataByTicker => {
+    .then(tickerDataDictionary => {
       return tickers
         .map(ticker => {
-          let tickerData = dataByTicker[ticker];
-          if (tickerData == null) { 
-            // Try to use stripped ticker.
-            // YSAC+ actually fetches YSAC data.
-            const regexp = new RegExp("\+$", "g");
-            const stippedTicker = ticker.replace(regexp, '');
-            tickerData = dataByTicker[stippedTicker];
-          }
-          if (tickerData == null) { 
-            return []; 
-          }
-
-          if (tickerData[type]) {
+          const tickerData = tickerDataDictionary[ticker];
+          if (tickerData != null && tickerData[type]) {
             return mapFunction(tickerData[type], idByTicker[ticker]);
+          } else {
+            return [];
           }
-          
-          return [];
         })
         .flat()
       }
@@ -1115,26 +1104,15 @@ fetchBatchAndMapArray = _fetchBatchAndMapArray;
  */
 async function _fetchBatchAndMapObjects(type, tickers, idByTicker, mapFunction, queryParameters) {
   return _fetchBatchNew([type], tickers, queryParameters)
-    .then(dataByTicker =>
+    .then(tickerDataDictionary =>
       tickers
         .compactMap(ticker => {
-          let tickerData = dataByTicker[ticker];
-          if (tickerData == null) { 
-            // Try to use stripped ticker.
-            // YSAC+ actually fetches YSAC data.
-            const regexp = new RegExp("\+$", "g");
-            const stippedTicker = ticker.replace(regexp, '');
-            tickerData = dataByTicker[stippedTicker];
-          }
-          if (tickerData == null) { 
-            return null; 
-          }
-
-          if (tickerData[type]) {
+          const tickerData = tickerDataDictionary[ticker];
+          if (tickerData != null && tickerData[type]) {
             return mapFunction(tickerData[type], idByTicker[ticker]);
+          } else {
+            return null;
           }
-
-          return null;
         })
     );
 }
