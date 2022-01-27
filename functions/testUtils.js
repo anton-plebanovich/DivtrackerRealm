@@ -120,6 +120,7 @@ async function _checkData(transactions) {
   const companiesCount = await db.collection('companies').count({});
   if (companiesCount !== distinctSymbolIDsCount) {
     const missedSymbolIDs = await getMissedSymbolIDs('companies', '_id', distinctSymbolIDs);
+    // Some symbols doesn't have company or other data. E.g. YSAC+
     errors.push([`Some companies weren't inserted (${companiesCount}/${distinctSymbolIDsCount}): ${missedSymbolIDs}`]);
   }
 
@@ -153,6 +154,7 @@ async function _checkData(transactions) {
   const quotesCount = await db.collection('quotes').count({});
   if (quotesCount !== distinctSymbolIDsCount) {
     const missedSymbolIDs = await getMissedSymbolIDs('quotes', '_id', distinctSymbolIDs);
+    // Some symbols doesn't have company or other data. E.g. YSAC+
     errors.push([`Some quotes weren't inserted (${quotesCount}/${distinctSymbolIDsCount}): ${missedSymbolIDs}`]);
   }
   
