@@ -1185,9 +1185,10 @@ async function _fetch(api, queryParameters) {
   let response = await _get(api, queryParameters);
 
   // Retry 5 times on retryable errors
-  const delay = 100;
   for (let step = 0; step < 5 && response.retryable; step++) {
-    console.log(`Received '${response.status}' error with text '${response.string}'. Trying to retry after a '${delay}' delay.`);
+    // 500 - 1500 ms
+    const delay = 500 + Math.random() * 1000;
+    console.log(`Received '${response.statusCode}' error with text '${response.string}'. Trying to retry after a '${delay}' delay.`);
     await new Promise(r => setTimeout(r, delay));
     response = await _get(api, queryParameters);
   }
