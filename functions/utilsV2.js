@@ -1079,7 +1079,7 @@ async function _fetchBatchAndMapArray(type, tickers, idByTicker, mapFunction, qu
           if (tickerData == null) { 
             // Try to use stripped ticker.
             // YSAC+ actually fetches YSAC data.
-            const regexp = new RegExp("\\+$", "g");
+            const regexp = new RegExp("\+$", "g");
             const stippedTicker = ticker.replace(regexp, '');
             tickerData = dataByTicker[stippedTicker];
           }
@@ -1090,7 +1090,7 @@ async function _fetchBatchAndMapArray(type, tickers, idByTicker, mapFunction, qu
           if (tickerData[type]) {
             return mapFunction(tickerData[type], idByTicker[ticker]);
           }
-
+          
           return [];
         })
         .flat()
@@ -1122,7 +1122,7 @@ async function _fetchBatchAndMapObjects(type, tickers, idByTicker, mapFunction, 
           if (tickerData == null) { 
             // Try to use stripped ticker.
             // YSAC+ actually fetches YSAC data.
-            const regexp = new RegExp("\\+$", "g");
+            const regexp = new RegExp("\+$", "g");
             const stippedTicker = ticker.replace(regexp, '');
             tickerData = dataByTicker[stippedTicker];
           }
