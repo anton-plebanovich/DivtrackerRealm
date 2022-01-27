@@ -1072,10 +1072,10 @@ fetchBatch = _fetchBatch;
  */
 async function _fetchBatchAndMapArray(type, tickers, idByTicker, mapFunction, queryParameters) {
   return _fetchBatchNew([type], tickers, queryParameters)
-    .then(tickerDataDictionary => {
+    .then(dataByTicker => {
       return tickers
         .map(ticker => {
-          const tickerData = tickerDataDictionary[ticker];
+          const tickerData = dataByTicker[ticker];
           if (tickerData != null && tickerData[type]) {
             return mapFunction(tickerData[type], idByTicker[ticker]);
           } else {
@@ -1104,10 +1104,10 @@ fetchBatchAndMapArray = _fetchBatchAndMapArray;
  */
 async function _fetchBatchAndMapObjects(type, tickers, idByTicker, mapFunction, queryParameters) {
   return _fetchBatchNew([type], tickers, queryParameters)
-    .then(tickerDataDictionary =>
+    .then(dataByTicker =>
       tickers
         .compactMap(ticker => {
-          const tickerData = tickerDataDictionary[ticker];
+          const tickerData = dataByTicker[ticker];
           if (tickerData != null && tickerData[type]) {
             return mapFunction(tickerData[type], idByTicker[ticker]);
           } else {
