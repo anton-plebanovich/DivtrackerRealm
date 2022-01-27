@@ -1072,10 +1072,10 @@ fetchBatch = _fetchBatch;
  */
 async function _fetchBatchAndMapArray(type, tickers, idByTicker, mapFunction, queryParameters) {
   return _fetchBatchNew([type], tickers, queryParameters)
-    .then(tickerDataDictionary => {
+    .then(dataByTicker => {
       return tickers
         .map(ticker => {
-          const tickerData = tickerDataDictionary[ticker];
+          const tickerData = dataByTicker[ticker];
           if (tickerData != null && tickerData[type]) {
             return mapFunction(tickerData[type], idByTicker[ticker]);
           } else {
@@ -1104,10 +1104,10 @@ fetchBatchAndMapArray = _fetchBatchAndMapArray;
  */
 async function _fetchBatchAndMapObjects(type, tickers, idByTicker, mapFunction, queryParameters) {
   return _fetchBatchNew([type], tickers, queryParameters)
-    .then(tickerDataDictionary =>
+    .then(dataByTicker =>
       tickers
         .compactMap(ticker => {
-          const tickerData = tickerDataDictionary[ticker];
+          const tickerData = dataByTicker[ticker];
           if (tickerData != null && tickerData[type]) {
             return mapFunction(tickerData[type], idByTicker[ticker]);
           } else {
@@ -1185,9 +1185,9 @@ async function _fetch(api, queryParameters) {
   let response = await _get(api, queryParameters);
 
   // Retry 5 times on retryable errors
-  const delay = 100;
   for (let step = 0; step < 5 && response.retryable; step++) {
-    console.log(`Received '${response.status}' error with text '${response.string}'. Trying to retry after a '${delay}' delay.`);
+    const delay = (step + 1) * (500 + Math.random() * 1000);
+    console.log(`Received '${response.statusCode}' error with text '${response.string}'. Trying to retry after a '${delay}' delay.`);
     await new Promise(r => setTimeout(r, delay));
     response = await _get(api, queryParameters);
   }
@@ -1415,8 +1415,8 @@ fetchPreviousDayPrices = _fetchPreviousDayPrices;
   var response = await context.http.get({ url: url });
 
   // Retry 5 times on retryable errors
-  const delay = 100;
   for (let step = 0; step < 5 && (response.status === '??????'); step++) {
+    const delay = (step + 1) * (500 + Math.random() * 1000);
     console.log(`Received '${response.status}' error with text '${response.body.text()}'. Trying to retry after a '${delay}' delay.`);
     await new Promise(r => setTimeout(r, delay));
     response = await context.http.get({ url: url });
