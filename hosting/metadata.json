@@ -4,7 +4,7 @@
     "attrs": null
   },
   {
-    "path": "/email-confirmation.html",
+    "path": "/universal-linking/email-confirmation.html",
     "attrs": [
       {
         "name": "Content-Type",
@@ -22,7 +22,7 @@
     ]
   },
   {
-    "path": "/reset-password.html",
+    "path": "/universal-linking/reset-password.html",
     "attrs": [
       {
         "name": "Content-Type",
