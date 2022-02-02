@@ -5,8 +5,7 @@
       {
         "appID": "UW54N2U6G5.com.anton-plebanovich.Divtracker",
         "paths": [
-          "/email-confirmation.html",
-          "/reset-password.html"
+          "/universal-linking/*"
         ]
       }
     ]
