@@ -21,8 +21,8 @@
         "name": "local-userpass",
         "type": "local-userpass",
         "config": {
-            "emailConfirmationUrl": "https://divtracker-uhfjk.mongodbstitch.com/email-confirmation.html",
-            "resetPasswordUrl": "https://divtracker-uhfjk.mongodbstitch.com/reset-password.html"
+            "emailConfirmationUrl": "https://divtracker-uhfjk.mongodbstitch.com/universal-linking/email-confirmation.html",
+            "resetPasswordUrl": "https://divtracker-uhfjk.mongodbstitch.com/universal-linking/reset-password.html"
         },
         "disabled": true
     },
