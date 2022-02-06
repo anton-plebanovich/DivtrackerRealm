@@ -1463,6 +1463,7 @@ function getCurrencySymbol(currency) {
     case "CAD": return "$";
     case "CHF": return "¤";
     case "EUR": return "€";
+    case "GBP": return "£";
     case "ILS": return "₪";
     case "NOK": return "kr";
     case "USD": return "$";
