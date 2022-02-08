@@ -70,8 +70,8 @@ async function loadMissingCompanies(shortSymbols, symbolIDs) {
   }
 
   console.log(`Performing ${companies.length} update operations for companies.`);
-  
-  return collection.bulkWrite(operations);
+  await collection.bulkWrite(operations);
+  console.log(`Performed ${companies.length} update operations for companies.`);
 }
 
 //////////////////////////////////////////////////////////////////// Dividends
@@ -105,8 +105,8 @@ async function loadMissingDividends(shortSymbols, symbolIDs) {
   }
 
   console.log(`Performing ${dividends.length} update operations for dividends.`);
-  
-  return bulk.execute();
+  await bulk.execute();
+  console.log(`Performed ${dividends.length} update operations for dividends.`);
 }
 
 //////////////////////////////////////////////////////////////////// Historical Prices
@@ -138,8 +138,8 @@ async function loadMissingHistoricalPrices(shortSymbols, symbolIDs) {
   }
 
   console.log(`Performing ${historicalPrices.length} update operations for historical prices.`);
-  
-  return bulk.execute();
+  await bulk.execute();
+  console.log(`Performed ${historicalPrices.length} update operations for historical prices.`);
 }
 
 //////////////////////////////////////////////////////////////////// Previous Day Prices
@@ -171,8 +171,8 @@ async function loadMissingPreviousDayPrices(shortSymbols, symbolIDs) {
   }
 
   console.log(`Performing ${previousDayPrices.length} update operations for previous day prices.`);
-  
-  return bulk.execute();
+  await bulk.execute();
+  console.log(`Performed ${previousDayPrices.length} update operations for previous day prices.`);
 }
 
 //////////////////////////////////////////////////////////////////// Quote
@@ -204,8 +204,8 @@ async function loadMissingQuotes(shortSymbols, symbolIDs) {
   }
 
   console.log(`Performing ${quotes.length} update operations for quotes.`);
-  
-  return bulk.execute();
+  await bulk.execute();
+  console.log(`Performed ${quotes.length} update operations for quotes.`);
 }
 
 //////////////////////////////////////////////////////////////////// Splits
@@ -237,8 +237,8 @@ async function loadMissingSplits(shortSymbols, symbolIDs) {
   }
 
   console.log(`Performing ${splits.length} update operations for splits.`);
-  
-  return bulk.execute();
+  await bulk.execute();
+  console.log(`Performed ${splits.length} update operations for splits.`);
 }
 
 //////////////////////////////////////////////////////////////////// Helpers
