@@ -26,14 +26,16 @@ exports = async function loadMissingData(transactions) {
 
   const tickers = shortSymbols.map(x => x.t);
   console.log(`Loading missing data for tickers (${tickers.length}): ${tickers}`);
+
+  const symbolIDs = shortSymbols.map(x => x._id);
   
   return Promise.safeAllAndUnwrap([
-    loadMissingCompanies(shortSymbols).mapErrorToSystem(),
-    loadMissingDividends(shortSymbols).mapErrorToSystem(),
-    loadMissingHistoricalPrices(shortSymbols).mapErrorToSystem(),
-    loadMissingPreviousDayPrices(shortSymbols).mapErrorToSystem(),
-    loadMissingQuotes(shortSymbols).mapErrorToSystem(),
-    loadMissingSplits(shortSymbols).mapErrorToSystem()
+    loadMissingCompanies(shortSymbols, symbolIDs).mapErrorToSystem(),
+    loadMissingDividends(shortSymbols, symbolIDs).mapErrorToSystem(),
+    loadMissingHistoricalPrices(shortSymbols, symbolIDs).mapErrorToSystem(),
+    loadMissingPreviousDayPrices(shortSymbols, symbolIDs).mapErrorToSystem(),
+    loadMissingQuotes(shortSymbols, symbolIDs).mapErrorToSystem(),
+    loadMissingSplits(shortSymbols, symbolIDs).mapErrorToSystem()
   ]);
 };
 
@@ -42,9 +44,9 @@ exports = async function loadMissingData(transactions) {
 /**
  * @param {[ShortSymbol]} shortSymbols
  */
-async function loadMissingCompanies(shortSymbols) {
+async function loadMissingCompanies(shortSymbols, symbolIDs) {
   const collection = db.collection('companies');
-  const missingShortSymbols = await getMissingShortSymbols(collection, '_id', shortSymbols);
+  const missingShortSymbols = await getMissingShortSymbols(collection, '_id', shortSymbols, symbolIDs);
   if (missingShortSymbols.length) {
     console.log(`Found missing companies for tickers: ${missingShortSymbols.map(x => x.t)}`);
   } else {
@@ -66,6 +68,8 @@ async function loadMissingCompanies(shortSymbols) {
     const operation = { updateOne: updateOne };
     operations.push(operation);
   }
+
+  console.log(`Performing ${companies.length} update operations for companies.`);
   
   return collection.bulkWrite(operations);
 }
@@ -75,9 +79,9 @@ async function loadMissingCompanies(shortSymbols) {
 /**
  * @param {[ShortSymbol]} shortSymbols
  */
-async function loadMissingDividends(shortSymbols) {
+async function loadMissingDividends(shortSymbols, symbolIDs) {
   const collection = db.collection('dividends');
-  const missingShortSymbols = await getMissingShortSymbols(collection, 's', shortSymbols);
+  const missingShortSymbols = await getMissingShortSymbols(collection, 's', shortSymbols, symbolIDs);
   if (missingShortSymbols.length) {
     console.log(`Found missing dividends for tickers: ${missingShortSymbols.map(x => x.t)}`);
   } else {
@@ -99,6 +103,8 @@ async function loadMissingDividends(shortSymbols) {
     const update = { $setOnInsert: dividend };
     bulk.find(query).upsert().updateOne(update);
   }
+
+  console.log(`Performing ${dividends.length} update operations for dividends.`);
   
   return bulk.execute();
 }
@@ -108,9 +114,9 @@ async function loadMissingDividends(shortSymbols) {
 /**
  * @param {[ShortSymbol]} shortSymbols
  */
-async function loadMissingHistoricalPrices(shortSymbols) {
+async function loadMissingHistoricalPrices(shortSymbols, symbolIDs) {
   const collection = db.collection('historical-prices');
-  const missingShortSymbols = await getMissingShortSymbols(collection, 's', shortSymbols);
+  const missingShortSymbols = await getMissingShortSymbols(collection, 's', shortSymbols, symbolIDs);
   if (missingShortSymbols.length) {
     console.log(`Found missing historical prices for tickers: ${missingShortSymbols.map(x => x.t)}`);
   } else {
@@ -130,6 +136,8 @@ async function loadMissingHistoricalPrices(shortSymbols) {
     const update = { $setOnInsert: historicalPrice };
     bulk.find(query).upsert().updateOne(update);
   }
+
+  console.log(`Performing ${historicalPrices.length} update operations for historical prices.`);
   
   return bulk.execute();
 }
@@ -139,9 +147,9 @@ async function loadMissingHistoricalPrices(shortSymbols) {
 /**
  * @param {[ShortSymbol]} shortSymbols
  */
-async function loadMissingPreviousDayPrices(shortSymbols) {
+async function loadMissingPreviousDayPrices(shortSymbols, symbolIDs) {
   const collection = db.collection('previous-day-prices');
-  const missingShortSymbols = await getMissingShortSymbols(collection, '_id', shortSymbols);
+  const missingShortSymbols = await getMissingShortSymbols(collection, '_id', shortSymbols, symbolIDs);
   if (missingShortSymbols.length) {
     console.log(`Found missing previous day prices for tickers: ${missingShortSymbols.map(x => x.t)}`);
   } else {
@@ -161,6 +169,8 @@ async function loadMissingPreviousDayPrices(shortSymbols) {
     const update = { $setOnInsert: previousDayPrice };
     bulk.find(query).upsert().updateOne(update);
   }
+
+  console.log(`Performing ${previousDayPrices.length} update operations for previous day prices.`);
   
   return bulk.execute();
 }
@@ -170,9 +180,9 @@ async function loadMissingPreviousDayPrices(shortSymbols) {
 /**
  * @param {[ShortSymbol]} shortSymbols
  */
-async function loadMissingQuotes(shortSymbols) {
+async function loadMissingQuotes(shortSymbols, symbolIDs) {
   const collection = db.collection('quotes');
-  const missingShortSymbols = await getMissingShortSymbols(collection, '_id', shortSymbols);
+  const missingShortSymbols = await getMissingShortSymbols(collection, '_id', shortSymbols, symbolIDs);
   if (missingShortSymbols.length) {
     console.log(`Found missing qoutes for tickers: ${missingShortSymbols.map(x => x.t)}`);
   } else {
@@ -192,6 +202,8 @@ async function loadMissingQuotes(shortSymbols) {
     const update = { $setOnInsert: quote };
     bulk.find(query).upsert().updateOne(update);
   }
+
+  console.log(`Performing ${quotes.length} update operations for quotes.`);
   
   return bulk.execute();
 }
@@ -201,9 +213,9 @@ async function loadMissingQuotes(shortSymbols) {
 /**
  * @param {[ShortSymbol]} shortSymbols
  */
-async function loadMissingSplits(shortSymbols) {
+async function loadMissingSplits(shortSymbols, symbolIDs) {
   const collection = db.collection('splits');
-  const missingShortSymbols = await getMissingShortSymbols(collection, 's', shortSymbols);
+  const missingShortSymbols = await getMissingShortSymbols(collection, 's', shortSymbols, symbolIDs);
   if (missingShortSymbols.length) {
     console.log(`Found missing splits for tickers: ${missingShortSymbols.map(x => x.t)}`);
   } else {
@@ -223,6 +235,8 @@ async function loadMissingSplits(shortSymbols) {
     const update = { $setOnInsert: split };
     bulk.find(query).upsert().updateOne(update);
   }
+
+  console.log(`Performing ${splits.length} update operations for splits.`);
   
   return bulk.execute();
 }
@@ -232,13 +246,13 @@ async function loadMissingSplits(shortSymbols) {
 /**
  * Returns only missing IDs from `shortSymbols`.
  */
-async function getMissingShortSymbols(collection, field, shortSymbols) {
-  const symbolIDs = shortSymbols.map(x => x._id);
+async function getMissingShortSymbols(collection, field, shortSymbols, symbolIDs) {
   const existingIDs = await collection
     .distinct(field, { [field]: { $in: symbolIDs } });
-    
+
+  const idByID = existingIDs.toDictionary();
   const missingShortSymbols = shortSymbols.filter(
-    x => !existingIDs.includesObject(x._id)
+    x => idByID[x._id] == null
   );
   
   return missingShortSymbols;
