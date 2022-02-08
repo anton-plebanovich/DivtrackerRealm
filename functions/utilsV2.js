@@ -932,7 +932,7 @@ async function _getInUseShortSymbols() {
 getInUseShortSymbols = _getInUseShortSymbols;
 
 /** 
- * Returns sorted short symbols for symbol IDs
+ * Returns short symbols for symbol IDs
  * @param {[ObjectId]} symbolIDs
  * @returns {Promise<[ShortSymbol]>}
 */
@@ -944,7 +944,6 @@ async function _getShortSymbols(symbolIDs) {
       { _id: { $in: symbolIDs } }, 
       { _id: 1, t: 1 }
     )
-    .sort({ t: 1 })
     .toArray();
 
   console.log(`Got short symbols (${shortSymbols.length}) for '${symbolIDs}'`);
