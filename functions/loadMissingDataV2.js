@@ -104,6 +104,7 @@ async function loadMissingDividends(shortSymbols, symbolIDs) {
     bulk.find(query).upsert().updateOne(update);
   }
 
+  // ~2s for Sergey portfolio on tests environment, 1680 entities
   console.log(`Performing ${dividends.length} update operations for dividends.`);
   await bulk.execute();
   console.log(`Performed ${dividends.length} update operations for dividends.`);
@@ -137,6 +138,8 @@ async function loadMissingHistoricalPrices(shortSymbols, symbolIDs) {
     bulk.find(query).upsert().updateOne(update);
   }
 
+  // TODO: Next target for optimization
+  // ~9s for Sergey portfolio on tests environment, 4622 entities
   console.log(`Performing ${historicalPrices.length} update operations for historical prices.`);
   await bulk.execute();
   console.log(`Performed ${historicalPrices.length} update operations for historical prices.`);
