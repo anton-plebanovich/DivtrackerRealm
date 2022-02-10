@@ -37,12 +37,7 @@ exports = async function() {
 
   // Future dividends update.
   // We remove symbols that already have future dividends and update only those that don't.
-  // We ignore invalid dividends since declared dividends might not have amount and currency and require an update.
-  const upToDateSymbolIDs = await collection.distinct("s", { $and: [
-    { e: { $gte : new Date() } }, 
-    { c: { $ne: "" } },
-    { a: { $gt : 0.0 } }
-  ]});
+  const upToDateSymbolIDs = await collection.distinct("s", { "e" : { $gte : new Date() }});
   const shortSymbolsToUpdate = shortSymbols.filter(x => !upToDateSymbolIDs.includes(x.s));
   console.log(`Updating future dividends (${shortSymbolsToUpdate.length}) for '${shortSymbolsToUpdate.stringify()}' IDs`);
 
