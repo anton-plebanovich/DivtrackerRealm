@@ -1683,6 +1683,23 @@ function _fixSplits(iexSplits, symbolID) {
 
 fixSplits = _fixSplits;
 
+///////////////////////////////////////////////////////////////////////////////// UPDATE
+
+async function _setUpdateDate(_id, date) {
+  _throwIfUndefinedOrNull(_id, `_setUpdateDate _id`);
+  if (date == null) {
+    date = new Date();
+  }
+
+  const collection = db.collection("updates");
+  return await collection
+    .find({ _id: _id })
+    .upsert()
+    .updateOne({ $set: { d: date } });
+}
+
+setUpdateDate = _setUpdateDate
+
 ///////////////////////////////////////////////////////////////////////////////// INITIALIZATION
 
 const zeroPad = (num, places) => String(num).padStart(places, '0');

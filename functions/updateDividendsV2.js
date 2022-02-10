@@ -144,4 +144,6 @@ exports = async function() {
   } else {
     console.log(`Past dividends are empty for IDs '${shortSymbols}'`);
   }
+
+  await setUpdateDate("dividends");
 };
