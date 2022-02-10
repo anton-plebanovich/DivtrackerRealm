@@ -38,6 +38,7 @@ exports = async function() {
 
   await updateIEXSymbols();
   await updateDivtrackerSymbols();
+  await setUpdateDate("symbols");
   
   console.log(`SUCCESS`);
 };

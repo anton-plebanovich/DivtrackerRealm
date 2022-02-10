@@ -34,5 +34,10 @@ exports = async function() {
   const existingQuotes = await quotesCollection.find().toArray();
   await quotesCollection.safeUpdateMany(quotes, existingQuotes);
 
+  // IEX quotes are 15 minutes late prices so applying a fix
+  const date = new Date();
+  date.setUTCMinutes(date.getUTCMinutes() - 15);
+  await setUpdateDate("quotes", date);
+
   console.log(`SUCCESS`);
 };

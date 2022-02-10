@@ -41,4 +41,6 @@ exports = async function() {
   } else {
     console.log(`Splits are empty for symbols: '${shortSymbols.map(x => x.t)}'`);
   }
+
+  await setUpdateDate("splits");
 };
