@@ -1692,10 +1692,11 @@ async function _setUpdateDate(_id, date) {
   }
 
   const collection = db.collection("updates");
-  return await collection
-    .find({ _id: _id })
-    .upsert()
-    .updateOne({ $set: { d: date } });
+  return await collection.updateOne(
+    { _id: _id }, 
+    { $set: { d: date } }, 
+    { "upsert": true }
+  )
 }
 
 setUpdateDate = _setUpdateDate
