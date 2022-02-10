@@ -10,14 +10,14 @@
 
 function getLowerExDate(dividend) {
   const date = new Date(dividend.e);
-  date.setDate(date.getDate() - 14);
+  date.setDate(date.getDate() - 6);
 
   return date;
 }
 
 function getUpperExDate(dividend) {
   const date = new Date(dividend.e);
-  date.setDate(date.getDate() + 14);
+  date.setDate(date.getDate() + 6);
 
   return date;
 }
@@ -144,4 +144,6 @@ exports = async function() {
   } else {
     console.log(`Past dividends are empty for IDs '${shortSymbols}'`);
   }
+
+  await setUpdateDate("dividends");
 };

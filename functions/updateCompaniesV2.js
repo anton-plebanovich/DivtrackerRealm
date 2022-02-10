@@ -25,5 +25,7 @@ exports = async function() {
   const existingCompanies = await companiesCollection.find().toArray();
   await companiesCollection.safeUpdateMany(companies, existingCompanies);
 
+  await setUpdateDate("companies");
+
   console.log(`SUCCESS`);
 };

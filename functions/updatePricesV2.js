@@ -76,4 +76,13 @@
   } else {
     console.log(`Historical prices are up to date.`);
   }
+
+  // Update is happening on 4:00 ET (9:00 GMT) but price is for end of day, 16:00 ET (21:00 GMT) for previous day so we need to fix that
+  // Assume we won't update before 4:00 ET (9:00 GMT)
+  const date = new Date();
+  date.setUTCHours(21, 0, 0, 0);
+  if (date > new Date()) {
+    date.setUTCDate(date.getUTCDate() - 1)
+  }
+  await setUpdateDate("prices", date);
 };
