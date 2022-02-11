@@ -22,5 +22,6 @@ exports = async function() {
     operations.push(operation);
   }
   
-  return collection.bulkWrite(operations);
+  await collection.bulkWrite(operations);
+  await setUpdateDate("exchange-rates");
 };

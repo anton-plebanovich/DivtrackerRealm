@@ -1,0 +1,17 @@
+{
+    "properties": {
+        "_id": {
+            "bsonType": "string"
+        },
+        "_": {
+            "bsonType": "string"
+        },
+        "d": {
+            "bsonType": "date"
+        }
+    },
+    "required": [
+        "_id"
+    ],
+    "title": "UpdateV2RealmModel"
+}

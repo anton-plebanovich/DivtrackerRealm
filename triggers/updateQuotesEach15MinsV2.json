@@ -1,9 +1,9 @@
 {
     "id": "6185ffbd6db886ed8f037b81",
-    "name": "updateQuotesThriceDailyV2",
+    "name": "updateQuotesEach15MinsV2",
     "type": "SCHEDULED",
     "config": {
-        "schedule": "17 15,18,21 * * 1-5"
+        "schedule": "2,17,32,47 14-22 * * 1-5"
     },
     "disabled": false,
     "event_processors": {
