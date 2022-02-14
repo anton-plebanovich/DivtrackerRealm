@@ -16,6 +16,29 @@ Object.prototype.safeExecute = async function() {
   }
 };
 
+Object.prototype.safeUpsertMany = async function(newObjects, field) {
+  _throwIfEmptyArray(newObjects, `Please pass non-empty new objects array as the first argument.`);
+
+  if (newObjects.length === 0) {
+    console.error(`New objects are empty. Skipping update.`);
+    return;
+  }
+
+  if (field == null) {
+    field = "_id";
+  }
+
+  const bulk = this.initializeUnorderedBulkOp();
+  for (const newObject of newObjects) {
+    bulk
+      .find({ [field]: newObject[field] })
+      .upsert()
+      .updateOne({ $set: newObject });
+  }
+
+  return await bulk.safeExecute();
+}
+
 /**
  * Safely computes and executes update operation from old to new objects on a collection.
  */
@@ -152,11 +175,7 @@ Object.prototype.updateFrom = function(object) {
     update = { $set: set };
   }
 
-  if (isIEXSandbox) {
-    console.logData(`Updating`, update);
-  } else {
-    console.log(`Updating: ${update.stringify()}`);
-  }
+  console.logData(`Updating`, update);
 
   return update;
 };
@@ -1033,6 +1052,7 @@ async function _fetchBatch(api, tickers, queryParameters) {
     queryParameters = {};
   }
 
+  // TODO: We might fetch in parallel
   const maxSymbolsAmount = 100;
   const chunkedTickersArray = tickers.chunked(maxSymbolsAmount);
   var result = [];
@@ -1487,7 +1507,10 @@ function _fixCompany(iexCompany, symbolID) {
     const company = {};
     company._id = symbolID;
     company.i = iexCompany.industry;
-    company.t = iexCompany.issueType;
+
+    if  (iexCompany.issueType) {
+      company.t = iexCompany.issueType.trim();
+    }
 
     if  (iexCompany.companyName) {
       company.n = iexCompany.companyName.trim();
