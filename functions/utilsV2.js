@@ -1052,6 +1052,7 @@ async function _fetchBatch(api, tickers, queryParameters) {
     queryParameters = {};
   }
 
+  // TODO: We might fetch in parallel
   const maxSymbolsAmount = 100;
   const chunkedTickersArray = tickers.chunked(maxSymbolsAmount);
   var result = [];
