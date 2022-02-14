@@ -16,6 +16,29 @@ Object.prototype.safeExecute = async function() {
   }
 };
 
+Object.prototype.safeUpsertMany = async function(newObjects, field) {
+  _throwIfEmptyArray(newObjects, `Please pass non-empty new objects array as the first argument.`);
+
+  if (newObjects.length === 0) {
+    console.error(`New objects are empty. Skipping update.`);
+    return;
+  }
+
+  if (field == null) {
+    field = "_id";
+  }
+
+  const bulk = this.initializeUnorderedBulkOp();
+  for (const newObject of newObjects) {
+    bulk
+      .find({ [field]: newObject[field] })
+      .upsert()
+      .updateOne({ $set: newObject });
+  }
+
+  return await bulk.safeExecute();
+}
+
 /**
  * Safely computes and executes update operation from old to new objects on a collection.
  */
