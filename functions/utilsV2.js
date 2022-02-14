@@ -152,11 +152,7 @@ Object.prototype.updateFrom = function(object) {
     update = { $set: set };
   }
 
-  if (isIEXSandbox) {
-    console.logData(`Updating`, update);
-  } else {
-    console.log(`Updating: ${update.stringify()}`);
-  }
+  console.logData(`Updating`, update);
 
   return update;
 };
@@ -1487,7 +1483,10 @@ function _fixCompany(iexCompany, symbolID) {
     const company = {};
     company._id = symbolID;
     company.i = iexCompany.industry;
-    company.t = iexCompany.issueType;
+
+    if  (iexCompany.issueType) {
+      company.t = iexCompany.issueType.trim();
+    }
 
     if  (iexCompany.companyName) {
       company.n = iexCompany.companyName.trim();
