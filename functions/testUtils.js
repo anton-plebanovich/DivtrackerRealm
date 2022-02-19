@@ -176,7 +176,7 @@ async function getMissedSymbolIDs(collection, key, distinctSymbolIDs) {
 //////////////////////////////////////////////////////////////////// Exports
 
 exports = function() {
-  context.functions.execute("utilsV2");
+  context.functions.execute("iexUtils");
   
   context.user.id = '61ae5154d9b3cb9ea55ec5c6';
 }

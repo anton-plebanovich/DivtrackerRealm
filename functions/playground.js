@@ -2,7 +2,7 @@
 // playground.js
 
 exports = async function() {
-  context.functions.execute("utilsV2");
+  context.functions.execute("utils");
   
   console.log(context.user.stringify());
 };

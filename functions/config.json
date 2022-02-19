@@ -17,6 +17,10 @@
         "private": true
     },
     {
+        "name": "iexUtils",
+        "private": true
+    },
+    {
         "name": "loadMissingDataV2",
         "private": true
     },
@@ -86,7 +90,7 @@
         "private": true
     },
     {
-        "name": "utilsV2",
+        "name": "utils",
         "private": true
     }
 ]

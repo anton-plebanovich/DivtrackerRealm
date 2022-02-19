@@ -10,7 +10,7 @@
  * exports([{"s":new BSON.ObjectId("61b102c0048b84e9c13e4564")}]);
  */
 exports = async function loadMissingData(transactions) {
-  context.functions.execute("utilsV2");
+  context.functions.execute("iexUtils");
   
   let shortSymbols;
   if (Object.prototype.toString.call(transactions) === '[object Array]') {
