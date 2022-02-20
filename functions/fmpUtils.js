@@ -13,7 +13,7 @@
  * @returns {[Company]} Array of requested objects.
  */
  fetchCompanies = async function fetchCompanies(shortSymbols) {
-  _throwIfEmptyArray(shortSymbols, `fetchCompanies shortSymbols`);
+  throwIfEmptyArray(shortSymbols, `fetchCompanies shortSymbols`);
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
   // https://financialmodelingprep.com/api/v3/profile/AAPL,AAP?apikey=969387165d69a8607f9726e8bb52b901
   return await _fmpFetchAndMapObjects('/v3/profile', tickers, null, idByTicker, _fixFMPCompany);
@@ -25,7 +25,7 @@
  * @returns {[Dividend]} Array of requested objects.
  */
 fetchDividends = async function fetchDividends(shortSymbols) {
-  _throwIfEmptyArray(shortSymbols, `fetchDividends shortSymbols`);
+  throwIfEmptyArray(shortSymbols, `fetchDividends shortSymbols`);
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
   // https://financialmodelingprep.com/api/v3/historical-price-full/stock_dividend/AAPL?apikey=969387165d69a8607f9726e8bb52b901
   // https://financialmodelingprep.com/api/v3/historical-price-full/stock_dividend/AAPL,AAP?apikey=969387165d69a8607f9726e8bb52b901
@@ -45,7 +45,7 @@ fetchDividends = async function fetchDividends(shortSymbols) {
  * @returns {[Dividend]} Array of requested objects.
  */
  fetchDividendsCalendar = async function fetchDividendsCalendar(shortSymbols) {
-  _throwIfEmptyArray(shortSymbols, `fetchDividends shortSymbols`);
+  throwIfEmptyArray(shortSymbols, `fetchDividends shortSymbols`);
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
   // https://financialmodelingprep.com/api/v3/stock_dividend_calendar?apikey=969387165d69a8607f9726e8bb52b901
   return await _fmpFetchAndMapFlatArray(
@@ -63,7 +63,7 @@ fetchDividends = async function fetchDividends(shortSymbols) {
  * @returns {[PreviousDayPrice]} Array of requested objects.
  */
  async function _fetchPreviousDayPrices(shortSymbols) {
-  _throwIfEmptyArray(shortSymbols, `fetchPreviousDayPrices shortSymbols`);
+  throwIfEmptyArray(shortSymbols, `fetchPreviousDayPrices shortSymbols`);
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
 
   // https://financialmodelingprep.com/api/v3/historical-price-full/AAPL,AAP?timeseries=1&apikey=969387165d69a8607f9726e8bb52b901
@@ -86,7 +86,7 @@ fetchPreviousDayPrices = _fetchPreviousDayPrices;
  * @returns {[HistoricalPrice]} Array of requested objects.
  */
  fetchHistoricalPrices = async function fetchHistoricalPrices(shortSymbols) {
-  _throwIfEmptyArray(shortSymbols, `fetchHistoricalPrices shortSymbols`);
+  throwIfEmptyArray(shortSymbols, `fetchHistoricalPrices shortSymbols`);
 
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
 
@@ -108,7 +108,7 @@ fetchPreviousDayPrices = _fetchPreviousDayPrices;
  * @returns {[Quote]} Array of requested objects.
  */
  fetchQuotes = async function fetchQuotes(shortSymbols) {
-  _throwIfEmptyArray(shortSymbols, `fetchQuotes shortSymbols`);
+  throwIfEmptyArray(shortSymbols, `fetchQuotes shortSymbols`);
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
 
   // https://financialmodelingprep.com/api/v3/quote/GOOG,AAPL,FB?apikey=969387165d69a8607f9726e8bb52b901
@@ -127,7 +127,7 @@ fetchPreviousDayPrices = _fetchPreviousDayPrices;
  * @returns {[Split]} Array of requested objects.
  */
  fetchSplits = async function fetchSplits(shortSymbols) {
-  _throwIfEmptyArray(shortSymbols, `fetchSplits shortSymbols`);
+  throwIfEmptyArray(shortSymbols, `fetchSplits shortSymbols`);
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
 
   // https://financialmodelingprep.com/api/v3/historical-price-full/stock_split/AAPL,AAP?apikey=969387165d69a8607f9726e8bb52b901
@@ -148,7 +148,7 @@ fetchPreviousDayPrices = _fetchPreviousDayPrices;
  * @returns {[["AAPL"], {"AAPL":ObjectId}]} Returns array with ticker symbols as the first element and ticker symbol IDs by ticker symbol dictionary as the second element.
  */
  function getTickersAndIDByTicker(shortSymbols) {
-  _throwIfEmptyArray(shortSymbols, `getTickersAndIDByTicker shortSymbols`);
+  throwIfEmptyArray(shortSymbols, `getTickersAndIDByTicker shortSymbols`);
   const tickers = [];
   const idByTicker = {};
   for (const shortSymbol of shortSymbols) {
@@ -263,8 +263,8 @@ async function _fmpFetchAndMapObjects(api, tickers, queryParameters, idByTicker,
  * @returns Parsed EJSON object.
  */
 async function _fmpFetch(api, tickers, queryParameters) {
-  _throwIfUndefinedOrNull(api, `_fmpFetch api`);
-  _throwIfEmptyArray(tickers, `_fmpFetch tickers`);
+  throwIfUndefinedOrNull(api, `_fmpFetch api`);
+  throwIfEmptyArray(tickers, `_fmpFetch tickers`);
   if (queryParameters == null) {
     queryParameters = {}
   }
@@ -298,8 +298,8 @@ async function _fmpFetch(api, tickers, queryParameters) {
  */
 function _fixFMPCompany(fmpCompany, symbolID) {
   try {
-    _throwIfUndefinedOrNull(fmpCompany, `fixCompany company`);
-    _throwIfUndefinedOrNull(symbolID, `fixCompany symbolID`);
+    throwIfUndefinedOrNull(fmpCompany, `fixCompany company`);
+    throwIfUndefinedOrNull(symbolID, `fixCompany symbolID`);
   
     console.logVerbose(`Company data fix start`);
     const company = {};
@@ -331,8 +331,8 @@ function _fixFMPCompany(fmpCompany, symbolID) {
  */
 function _fixFMPDividends(fmpDividends, symbolID) {
   try {
-    _throwIfUndefinedOrNull(fmpDividends, `fixDividends fmpDividends`);
-    _throwIfUndefinedOrNull(symbolID, `fixDividends uniqueID`);
+    throwIfUndefinedOrNull(fmpDividends, `fixDividends fmpDividends`);
+    throwIfUndefinedOrNull(symbolID, `fixDividends uniqueID`);
     if (!fmpDividends.length) { 
       console.logVerbose(`FMP dividends are empty for ${symbolID}. Nothing to fix.`);
       return []; 
@@ -368,8 +368,8 @@ function _fixFMPDividends(fmpDividends, symbolID) {
  */
 function _fixFMPPreviousDayPrice(fmpPreviousDayPrice, symbolID) {
   try {
-    _throwIfUndefinedOrNull(fmpPreviousDayPrice, `fixPreviousDayPrice fmpPreviousDayPrice`);
-    _throwIfUndefinedOrNull(symbolID, `fixPreviousDayPrice symbolID`);
+    throwIfUndefinedOrNull(fmpPreviousDayPrice, `fixPreviousDayPrice fmpPreviousDayPrice`);
+    throwIfUndefinedOrNull(symbolID, `fixPreviousDayPrice symbolID`);
   
     console.logVerbose(`Previous day price data fix start`);
     const previousDayPrice = {};
@@ -396,8 +396,8 @@ function _fixFMPPreviousDayPrice(fmpPreviousDayPrice, symbolID) {
  */
 function _fixFMPHistoricalPrices(fmpHistoricalPrices, symbolID) {
   try {
-    _throwIfUndefinedOrNull(fmpHistoricalPrices, `fixHistoricalPrices fmpHistoricalPrices`);
-    _throwIfUndefinedOrNull(symbolID, `fixHistoricalPrices uniqueID`);
+    throwIfUndefinedOrNull(fmpHistoricalPrices, `fixHistoricalPrices fmpHistoricalPrices`);
+    throwIfUndefinedOrNull(symbolID, `fixHistoricalPrices uniqueID`);
     if (!fmpHistoricalPrices.length) { 
       console.logVerbose(`Historical prices are empty for ${symbolID}. Nothing to fix.`);
       return []; 
@@ -449,8 +449,8 @@ function _fixFMPHistoricalPrices(fmpHistoricalPrices, symbolID) {
  */
 function _fixFMPQuote(fmpQuote, symbolID) {
   try {
-    _throwIfUndefinedOrNull(fmpQuote, `fixQuote quote`);
-    _throwIfUndefinedOrNull(symbolID, `fixQuote symbolID`);
+    throwIfUndefinedOrNull(fmpQuote, `fixQuote quote`);
+    throwIfUndefinedOrNull(symbolID, `fixQuote symbolID`);
   
     console.logVerbose(`Previous day price data fix start`);
     const quote = {};
@@ -476,8 +476,8 @@ function _fixFMPQuote(fmpQuote, symbolID) {
  */
 function _fixFMPSplits(fmpSplits, symbolID) {
   try {
-    _throwIfUndefinedOrNull(fmpSplits, `fixSplits splits`);
-    _throwIfUndefinedOrNull(symbolID, `fixSplits symbolID`);
+    throwIfUndefinedOrNull(fmpSplits, `fixSplits splits`);
+    throwIfUndefinedOrNull(symbolID, `fixSplits symbolID`);
     if (!fmpSplits.length) { 
       console.logVerbose(`Splits are empty for ${symbolID}. Nothing to fix.`);
       return []; 

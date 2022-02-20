@@ -37,7 +37,7 @@ const defaultRange = '6y';
  * @returns {[Company]} Array of requested objects.
  */
  fetchCompanies = async function fetchCompanies(shortSymbols) {
-  _throwIfUndefinedOrNull(shortSymbols, `fetchCompanies shortSymbols`);
+  throwIfUndefinedOrNull(shortSymbols, `fetchCompanies shortSymbols`);
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
 
   // https://cloud.iexapis.com/stable/stock/market/batch?token=pk_9f1d7a2688f24e26bb24335710eae053&types=company&symbols=AAPL,AAP
@@ -53,8 +53,8 @@ const defaultRange = '6y';
  * @returns {[Dividend]} Array of requested objects.
  */
 fetchDividends = async function fetchDividends(shortSymbols, isFuture, range) {
-  _throwIfUndefinedOrNull(shortSymbols, `fetchDividends shortSymbols`);
-  _throwIfUndefinedOrNull(isFuture, `fetchDividends isFuture`);
+  throwIfUndefinedOrNull(shortSymbols, `fetchDividends shortSymbols`);
+  throwIfUndefinedOrNull(isFuture, `fetchDividends isFuture`);
 
   if (range == null) {
     range = defaultRange;
@@ -80,7 +80,7 @@ fetchDividends = async function fetchDividends(shortSymbols, isFuture, range) {
  * @returns {[PreviousDayPrice]} Array of requested objects.
  */
  async function _fetchPreviousDayPrices(shortSymbols) {
-  _throwIfUndefinedOrNull(shortSymbols, `fetchPreviousDayPrices shortSymbols`);
+  throwIfUndefinedOrNull(shortSymbols, `fetchPreviousDayPrices shortSymbols`);
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
 
   // https://cloud.iexapis.com/stable/stock/market/batch?token=pk_9f1d7a2688f24e26bb24335710eae053&types=previous&symbols=AAPL,AAP
@@ -97,7 +97,7 @@ fetchPreviousDayPrices = _fetchPreviousDayPrices;
  * @returns {[HistoricalPrice]} Array of requested objects.
  */
  fetchHistoricalPrices = async function fetchHistoricalPrices(shortSymbols, range) {
-   _throwIfUndefinedOrNull(shortSymbols, `fetchHistoricalPrices shortSymbols`);
+   throwIfUndefinedOrNull(shortSymbols, `fetchHistoricalPrices shortSymbols`);
 
   if (range == null) {
     range = defaultRange;
@@ -121,7 +121,7 @@ fetchPreviousDayPrices = _fetchPreviousDayPrices;
  * @returns {[Quote]} Array of requested objects.
  */
  fetchQuotes = async function fetchQuotes(shortSymbols) {
-  _throwIfUndefinedOrNull(shortSymbols, `fetchQuotes shortSymbols`);
+  throwIfUndefinedOrNull(shortSymbols, `fetchQuotes shortSymbols`);
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
 
   // https://cloud.iexapis.com/stable/stock/market/batch?token=pk_9f1d7a2688f24e26bb24335710eae053&types=quote&symbols=AAPL,AAP
@@ -136,7 +136,7 @@ fetchPreviousDayPrices = _fetchPreviousDayPrices;
  * @returns {[Split]} Array of requested objects.
  */
  fetchSplits = async function fetchSplits(shortSymbols, range) {
-  _throwIfUndefinedOrNull(shortSymbols, `fetchSplits shortSymbols`);
+  throwIfUndefinedOrNull(shortSymbols, `fetchSplits shortSymbols`);
 
   if (range == null) {
     range = defaultRange;
@@ -156,7 +156,7 @@ fetchPreviousDayPrices = _fetchPreviousDayPrices;
  * @returns {[["AAPL"], {"AAPL":ObjectId}]} Returns array with ticker symbols as the first element and ticker symbol IDs by ticker symbol dictionary as the second element.
  */
  function getTickersAndIDByTicker(shortSymbols) {
-  _throwIfUndefinedOrNull(shortSymbols, `getTickersAndIDByTicker shortSymbols`);
+  throwIfUndefinedOrNull(shortSymbols, `getTickersAndIDByTicker shortSymbols`);
   const tickers = [];
   const idByTicker = {};
   for (const shortSymbol of shortSymbols) {
@@ -243,8 +243,8 @@ async function _iexFetchBatchAndMapObjects(type, tickers, idByTicker, mapFunctio
  */
 async function _iexFetchBatchNew(types, tickers, queryParameters) {
   // https://sandbox.iexapis.com/stable/stock/market/batch?token=Tpk_d8f3a048a7a94866ad08c8b62042b16b&calendar=true&symbols=MSFT%2CAAPL&types=dividends&range=1y
-  _throwIfUndefinedOrNull(types, `types`);
-  _throwIfEmptyArray(tickers, `tickers`);
+  throwIfUndefinedOrNull(types, `types`);
+  throwIfEmptyArray(tickers, `tickers`);
 
   if (queryParameters == null) {
     queryParameters = {};
@@ -329,8 +329,8 @@ iexFetch = _iexFetch;
  */
 function _fixCompany(iexCompany, symbolID) {
   try {
-    _throwIfUndefinedOrNull(iexCompany, `fixCompany company`);
-    _throwIfUndefinedOrNull(symbolID, `fixCompany symbolID`);
+    throwIfUndefinedOrNull(iexCompany, `fixCompany company`);
+    throwIfUndefinedOrNull(symbolID, `fixCompany symbolID`);
   
     console.logVerbose(`Company data fix start`);
     const company = {};
@@ -361,8 +361,8 @@ fixCompany = _fixCompany;
  */
 function _fixDividends(iexDividends, symbolID) {
   try {
-    _throwIfUndefinedOrNull(iexDividends, `fixDividends iexDividends`);
-    _throwIfUndefinedOrNull(symbolID, `fixDividends uniqueID`);
+    throwIfUndefinedOrNull(iexDividends, `fixDividends iexDividends`);
+    throwIfUndefinedOrNull(symbolID, `fixDividends uniqueID`);
     if (!iexDividends.length) { 
       console.logVerbose(`IEX dividends are empty for ${symbolID}. Nothing to fix.`);
       return []; 
@@ -410,8 +410,8 @@ fixDividends = _fixDividends;
  */
 function _fixPreviousDayPrice(iexPreviousDayPrice, symbolID) {
   try {
-    _throwIfUndefinedOrNull(iexPreviousDayPrice, `fixPreviousDayPrice iexPreviousDayPrice`);
-    _throwIfUndefinedOrNull(symbolID, `fixPreviousDayPrice symbolID`);
+    throwIfUndefinedOrNull(iexPreviousDayPrice, `fixPreviousDayPrice iexPreviousDayPrice`);
+    throwIfUndefinedOrNull(symbolID, `fixPreviousDayPrice symbolID`);
   
     console.logVerbose(`Previous day price data fix start`);
     const previousDayPrice = {};
@@ -440,8 +440,8 @@ fixPreviousDayPrice = _fixPreviousDayPrice;
  */
 function _fixHistoricalPrices(iexHistoricalPrices, symbolID) {
   try {
-    _throwIfUndefinedOrNull(iexHistoricalPrices, `fixHistoricalPrices iexHistoricalPrices`);
-    _throwIfUndefinedOrNull(symbolID, `fixHistoricalPrices uniqueID`);
+    throwIfUndefinedOrNull(iexHistoricalPrices, `fixHistoricalPrices iexHistoricalPrices`);
+    throwIfUndefinedOrNull(symbolID, `fixHistoricalPrices uniqueID`);
     if (!iexHistoricalPrices.length) { 
       console.logVerbose(`Historical prices are empty for ${symbolID}. Nothing to fix.`);
       return []; 
@@ -477,8 +477,8 @@ fixHistoricalPrices = _fixHistoricalPrices;
  */
 function _fixQuote(iexQuote, symbolID) {
   try {
-    _throwIfUndefinedOrNull(iexQuote, `fixQuote quote`);
-    _throwIfUndefinedOrNull(symbolID, `fixQuote symbolID`);
+    throwIfUndefinedOrNull(iexQuote, `fixQuote quote`);
+    throwIfUndefinedOrNull(symbolID, `fixQuote symbolID`);
   
     console.logVerbose(`Previous day price data fix start`);
     const quote = {};
@@ -506,8 +506,8 @@ fixQuote = _fixQuote;
  */
 function _fixSplits(iexSplits, symbolID) {
   try {
-    _throwIfUndefinedOrNull(iexSplits, `fixSplits splits`);
-    _throwIfUndefinedOrNull(symbolID, `fixSplits symbolID`);
+    throwIfUndefinedOrNull(iexSplits, `fixSplits splits`);
+    throwIfUndefinedOrNull(symbolID, `fixSplits symbolID`);
     if (!iexSplits.length) { 
       console.logVerbose(`Splits are empty for ${symbolID}. Nothing to fix.`);
       return []; 
