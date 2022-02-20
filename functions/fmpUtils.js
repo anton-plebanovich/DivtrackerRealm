@@ -143,27 +143,6 @@ fetchPreviousDayPrices = _fetchPreviousDayPrices;
 };
 
 /**
- * Returns ticker symbols and ticker symbol IDs by symbol ticker name dictionary.
- * @param {[ShortSymbol]} shortSymbols Short symbol models.
- * @returns {[["AAPL"], {"AAPL":ObjectId}]} Returns array with ticker symbols as the first element and ticker symbol IDs by ticker symbol dictionary as the second element.
- */
- function getTickersAndIDByTicker(shortSymbols) {
-  throwIfEmptyArray(shortSymbols, `getTickersAndIDByTicker shortSymbols`);
-  const tickers = [];
-  const idByTicker = {};
-  for (const shortSymbol of shortSymbols) {
-    const ticker = shortSymbol.t;
-    tickers.push(ticker);
-    idByTicker[ticker] = shortSymbol._id;
-  }
-
-  return [
-    tickers,
-    idByTicker
-  ];
-}
-
-/**
  * @param {string} api API to call.
  * @param {[string]} tickers Ticker Symbols to fetch, e.g. ['AAP','AAPL','PBA'].
  * @param {Object} queryParameters Additional query parameters.

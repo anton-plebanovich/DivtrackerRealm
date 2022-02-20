@@ -286,7 +286,7 @@ Array.prototype.toDictionary = function(arg) {
 
   return this.reduce((dictionary, value) => {
     const key = getKey(value);
-    dictionary[key] = value;
+    return Object.assign(dictionary, { [key]: value })
   }, {});
 };
 
@@ -452,7 +452,7 @@ String.prototype.removeSensitiveData = function() {
   // We should always use 'strict' for primitive type extensions - https://stackoverflow.com/a/27736962/4124265
   'use strict';
 
-  if (isIEXSandbox) { return this; }
+  if (isIEXSandbox === true) { return this; }
 
   let safeString = this;
   
@@ -812,7 +812,7 @@ checkExecutionTimeout = function checkExecutionTimeout(limit) {
 function _throwIfEmptyArray(object, message, ErrorType) {
   _throwIfNotArray(object, message, ErrorType)
 
-  if (object.length) { return object; }
+  if (object.length > 0) { return object; }
   if (ErrorType == null) { ErrorType = _SystemError; }
   if (message == null) { message = ""; }
 
@@ -1037,21 +1037,6 @@ function _getURL(baseURL, api, queryParameters) {
   return url;
 }
 
-// exports();
-//
-// fetch("/ref-data/symbols")
-// fetch("/stock/JAZZ/company")
-// fetch(`/stock/AAP/chart/1d`, { 
-//     chartByDay: true,
-//     chartCloseOnly: true,
-//     exactDate: exactDateAPIString
-//   })
-
-/**
- * Default range to fetch.
- */
-const defaultRange = '6y';
-
 /**
  * Returns ticker symbols and ticker symbol IDs by symbol ticker name dictionary.
  * @param {[ShortSymbol]} shortSymbols Short symbol models.
@@ -1063,6 +1048,7 @@ const defaultRange = '6y';
   const idByTicker = {};
   for (const shortSymbol of shortSymbols) {
     const ticker = shortSymbol.t;
+    _throwIfUndefinedOrNull(ticker, `_getTickersAndIDByTicker ticker`);
     tickers.push(ticker);
     idByTicker[ticker] = shortSymbol._id;
   }

@@ -150,27 +150,6 @@ fetchPreviousDayPrices = _fetchPreviousDayPrices;
   return await _iexFetchBatchAndMapArray('splits', tickers, idByTicker, _fixSplits, parameters);
 };
 
-/**
- * Returns ticker symbols and ticker symbol IDs by symbol ticker name dictionary.
- * @param {[ShortSymbol]} shortSymbols Short symbol models.
- * @returns {[["AAPL"], {"AAPL":ObjectId}]} Returns array with ticker symbols as the first element and ticker symbol IDs by ticker symbol dictionary as the second element.
- */
- function getTickersAndIDByTicker(shortSymbols) {
-  throwIfUndefinedOrNull(shortSymbols, `getTickersAndIDByTicker shortSymbols`);
-  const tickers = [];
-  const idByTicker = {};
-  for (const shortSymbol of shortSymbols) {
-    const ticker = shortSymbol.t;
-    tickers.push(ticker);
-    idByTicker[ticker] = shortSymbol._id;
-  }
-
-  return [
-    tickers,
-    idByTicker
-  ];
-}
-
 // exports();
 //
 // iexFetchBatch('/dividends', ['AAP','AAPL','PBA'], { 'range': '90d' })
