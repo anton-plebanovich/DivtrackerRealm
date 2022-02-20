@@ -7,16 +7,28 @@
 
 // 969387165d69a8607f9726e8bb52b901 - trackerdividend@gmail.com
 
+//////////////////////////////////// Predefined Fetches
+
 /**
  * Fetches companies in batch for short symbols.
  * @param {[ShortSymbol]} shortSymbols Short symbol models for which to fetch.
  * @returns {[Company]} Array of requested objects.
  */
- fetchCompanies = async function fetchCompanies(shortSymbols) {
+fetchCompanies = async function fetchCompanies(shortSymbols) {
   throwIfEmptyArray(shortSymbols, `fetchCompanies shortSymbols`);
+
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
+  const tickersString = tickers.join(",");
+  const api = `/v3/profile/${tickersString}`;
+
   // https://financialmodelingprep.com/api/v3/profile/AAPL,AAP?apikey=969387165d69a8607f9726e8bb52b901
-  return await _fmpFetchAndMapObjects('/v3/profile', tickers, null, idByTicker, _fixFMPCompany);
+  return await _fmpFetchAndMapObjects(
+    api,
+    tickers,
+    null,
+    idByTicker,
+    _fixFMPCompany
+  );
 };
 
 /**
@@ -26,11 +38,15 @@
  */
 fetchDividends = async function fetchDividends(shortSymbols) {
   throwIfEmptyArray(shortSymbols, `fetchDividends shortSymbols`);
+
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
+  const tickersString = tickers.join(",");
+  const api = `/v3/historical-price-full/stock_dividend/${tickersString}`;
+
   // https://financialmodelingprep.com/api/v3/historical-price-full/stock_dividend/AAPL?apikey=969387165d69a8607f9726e8bb52b901
   // https://financialmodelingprep.com/api/v3/historical-price-full/stock_dividend/AAPL,AAP?apikey=969387165d69a8607f9726e8bb52b901
   return await _fmpFetchAndMapArray(
-    '/v3/historical-price-full/stock_dividend',
+    api,
     tickers,
     null,
     'historicalStockList',
@@ -44,9 +60,11 @@ fetchDividends = async function fetchDividends(shortSymbols) {
  * Fetches dividends calendar for an year.
  * @returns {[Dividend]} Array of requested objects.
  */
- fetchDividendsCalendar = async function fetchDividendsCalendar(shortSymbols) {
+fetchDividendsCalendar = async function fetchDividendsCalendar(shortSymbols) {
   throwIfEmptyArray(shortSymbols, `fetchDividends shortSymbols`);
+
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
+
   // https://financialmodelingprep.com/api/v3/stock_dividend_calendar?apikey=969387165d69a8607f9726e8bb52b901
   return await _fmpFetchAndMapFlatArray(
     '/v3/stock_dividend_calendar',
@@ -62,13 +80,16 @@ fetchDividends = async function fetchDividends(shortSymbols) {
  * @param {[ShortSymbol]} shortSymbols Short symbol models for which to fetch.
  * @returns {[PreviousDayPrice]} Array of requested objects.
  */
- async function _fetchPreviousDayPrices(shortSymbols) {
+fetchPreviousDayPrices = async function _fetchPreviousDayPrices(shortSymbols) {
   throwIfEmptyArray(shortSymbols, `fetchPreviousDayPrices shortSymbols`);
+
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
+  const tickersString = tickers.join(",");
+  const api = `/v3/historical-price-full/${tickersString}`;
 
   // https://financialmodelingprep.com/api/v3/historical-price-full/AAPL,AAP?timeseries=1&apikey=969387165d69a8607f9726e8bb52b901
   return await _fmpFetchAndMapArray(
-    '/v3/historical-price-full',
+    api,
     tickers,
     { timeseries: 1 },
     'historicalStockList',
@@ -78,21 +99,21 @@ fetchDividends = async function fetchDividends(shortSymbols) {
   );
 };
 
-fetchPreviousDayPrices = _fetchPreviousDayPrices;
-
 /**
  * Fetches historical prices in batch for uniqueIDs.
  * @param {[ShortSymbol]} shortSymbols Short symbol models for which to fetch.
  * @returns {[HistoricalPrice]} Array of requested objects.
  */
- fetchHistoricalPrices = async function fetchHistoricalPrices(shortSymbols) {
+fetchHistoricalPrices = async function fetchHistoricalPrices(shortSymbols) {
   throwIfEmptyArray(shortSymbols, `fetchHistoricalPrices shortSymbols`);
 
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
+  const tickersString = tickers.join(",");
+  const api = `/v3/historical-price-full/${tickersString}`;
 
   // https://financialmodelingprep.com/api/v3/historical-price-full/AAPL,AAP?serietype=line&apikey=969387165d69a8607f9726e8bb52b901
   return await _fmpFetchAndMapArray(
-    '/v3/historical-price-full',
+    api,
     tickers,
     { serietype: "line" },
     'historicalStockList',
@@ -107,13 +128,16 @@ fetchPreviousDayPrices = _fetchPreviousDayPrices;
  * @param {[ShortSymbol]} shortSymbols Short symbol models for which to fetch.
  * @returns {[Quote]} Array of requested objects.
  */
- fetchQuotes = async function fetchQuotes(shortSymbols) {
+fetchQuotes = async function fetchQuotes(shortSymbols) {
   throwIfEmptyArray(shortSymbols, `fetchQuotes shortSymbols`);
+
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
+  const tickersString = tickers.join(",");
+  const api = `/v3/quote/${tickersString}`;
 
   // https://financialmodelingprep.com/api/v3/quote/GOOG,AAPL,FB?apikey=969387165d69a8607f9726e8bb52b901
   return await _fmpFetchAndMapObjects(
-    '/v3/quote',
+    api,
     tickers,
     null,
     idByTicker,
@@ -126,13 +150,16 @@ fetchPreviousDayPrices = _fetchPreviousDayPrices;
  * @param {[ShortSymbol]} shortSymbols Short symbol models for which to fetch.
  * @returns {[Split]} Array of requested objects.
  */
- fetchSplits = async function fetchSplits(shortSymbols) {
+fetchSplits = async function fetchSplits(shortSymbols) {
   throwIfEmptyArray(shortSymbols, `fetchSplits shortSymbols`);
+
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
+  const tickersString = tickers.join(",");
+  const api = `/v3/historical-price-full/stock_split/${tickersString}`;
 
   // https://financialmodelingprep.com/api/v3/historical-price-full/stock_split/AAPL,AAP?apikey=969387165d69a8607f9726e8bb52b901
   return await _fmpFetchAndMapArray(
-    '/v3/historical-price-full/stock_split',
+    api,
     tickers,
     null,
     'historicalStockList',
@@ -142,20 +169,24 @@ fetchPreviousDayPrices = _fetchPreviousDayPrices;
   );
 };
 
+//////////////////////////////////// Generic Fetches
+
 /**
  * @param {string} api API to call.
- * @param {[string]} tickers Ticker Symbols to fetch, e.g. ['AAP','AAPL','PBA'].
  * @param {Object} queryParameters Additional query parameters.
  * @param {[string]} idByTicker Dictionary of ticker symbol ID by ticker symbol.
  * @param {function} mapFunction Function to map data to our format.
  * @returns {Promise<[Object]>} Flat array of entities.
  */
 async function _fmpFetchAndMapFlatArray(api, tickers, queryParameters, idByTicker, mapFunction) {
-  return _fmpFetch(api, tickers, queryParameters)
+  return _fmpFetch(api, queryParameters)
     .then(datas => {
       const datasByTicker = datas.toBuckets('symbol');
-      return Object.entries(datasByTicker)
-        .map(([ticker, datas]) => mapFunction(datas, idByTicker[ticker]))
+      return tickers
+        .map(ticker => {
+          const datas = datasByTicker[ticker];
+          return mapFunction(datas, idByTicker[ticker]);
+        })
         .flat()
       }
     );
@@ -166,7 +197,6 @@ async function _fmpFetchAndMapFlatArray(api, tickers, queryParameters, idByTicke
  * Then, maps arrays data to our format in a flat array.
  * If symbols count exceed max allowed amount it splits it to several requests and returns composed result.
  * @param {string} api API to call.
- * @param {[string]} tickers Ticker Symbols to fetch, e.g. ['AAP','AAPL','PBA'].
  * @param {Object} queryParameters Additional query parameters.
  * @param {string} groupingKey Batch grouping key, e.g. 'historicalStockList'.
  * @param {string} dataKey Data key, e.g. 'historical'.
@@ -175,7 +205,7 @@ async function _fmpFetchAndMapFlatArray(api, tickers, queryParameters, idByTicke
  * @returns {Promise<[Object]>} Flat array of entities.
  */
 async function _fmpFetchAndMapArray(api, tickers, queryParameters, groupingKey, dataKey, idByTicker, mapFunction) {
-  return _fmpFetch(api, tickers, queryParameters)
+  return _fmpFetch(api, queryParameters)
     .then(datas => {
       if (tickers.length === 1) {
         const data = datas;
@@ -212,14 +242,13 @@ async function _fmpFetchAndMapArray(api, tickers, queryParameters, groupingKey, 
  * Then, maps objects data to our format in a array.
  * If symbols count exceed max allowed amount it splits it to several requests and returns composed result.
  * @param {string} api API to call.
- * @param {[string]} tickers Ticker Symbols to fetch, e.g. ['AAP','AAPL','PBA'].
  * @param {Object} queryParameters Additional query parameters.
  * @param {[string]} idByTicker Dictionary of ticker symbol ID by ticker symbol.
  * @param {function} mapFunction Function to map data to our format.
  * @returns {Promise<[Object]>} Flat array of entities.
  */
 async function _fmpFetchAndMapObjects(api, tickers, queryParameters, idByTicker, mapFunction) {
-  return _fmpFetch(api, tickers, queryParameters)
+  return _fmpFetch(api, queryParameters)
     .then(datas => {
       const dataByTicker = datas.toDictionary('symbol');
 
@@ -235,35 +264,22 @@ async function _fmpFetchAndMapObjects(api, tickers, queryParameters, idByTicker,
     });
 }
 
+//////////////////////////////////// Base Fetch
+
 /**
  * Requests data from FMP. 
  * @param {string} api API to call.
- * @param {[string]} tickers Ticker Symbols to fetch, e.g. ['AAP','AAPL','PBA'].
  * @param {Object} queryParameters Query parameters.
  * @returns Parsed EJSON object.
  */
-async function _fmpFetch(api, tickers, queryParameters) {
+async function _fmpFetch(api, queryParameters) {
   throwIfUndefinedOrNull(api, `_fmpFetch api`);
-  throwIfEmptyArray(tickers, `_fmpFetch tickers`);
   if (queryParameters == null) {
     queryParameters = {}
   }
   
   const baseURL = "https://financialmodelingprep.com/api";
   queryParameters.apikey = "969387165d69a8607f9726e8bb52b901";
-  if (api.startsWith("/v3")) {
-    const tickersString = tickers.join(",");
-    api = `${api}/${tickersString}`;
-
-  } else if (api.startsWith("/v4")) {
-    if (tickers.length > 1) {
-      throw 'v4 API does not support batches';
-    }
-    queryParameters.symbol = tickers[0];
-
-  } else {
-    throw `Unexpected API version: ${api}`;
-  }
 
   return await fetch(baseURL, api, queryParameters);
 }
