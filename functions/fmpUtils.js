@@ -367,6 +367,14 @@ function _fixFMPDividends(fmpDividends, symbolID) {
  * @returns {PreviousDayPrice|null} Returns fixed object or `null` if fix wasn't possible.
  */
 function _fixFMPPreviousDayPrice(fmpPreviousDayPrice, symbolID) {
+  if (Object.prototype.toString.call(fmpPreviousDayPrice) === '[object Array]') {
+    if (fmpPreviousDayPrice.length == 1) {
+      fmpPreviousDayPrice = fmpPreviousDayPrice[0];
+    } else {
+      return null
+    }
+  }
+
   try {
     throwIfUndefinedOrNull(fmpPreviousDayPrice, `fixPreviousDayPrice fmpPreviousDayPrice`);
     throwIfUndefinedOrNull(symbolID, `fixPreviousDayPrice symbolID`);
