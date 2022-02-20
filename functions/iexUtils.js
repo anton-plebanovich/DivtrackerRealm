@@ -171,45 +171,6 @@ fetchPreviousDayPrices = _fetchPreviousDayPrices;
   ];
 }
 
-/**
- * Requests data from IEX cloud/sandbox depending on an environment by a batch.
- * If symbols count exceed max allowed amount it splits it to several requests and returns composed result.
- * It switches between available tokens to evenly distribute the load.
- * @param {string} api API to call.
- * @param {[string]} tickers Ticker symbols to fetch, e.g. ['AAP','AAPL','PBA'].
- * @param {Object} queryParameters Query parameters.
- * @returns Parsed EJSON object. Composed from several responses if max symbols count was exceeded.
- */
-async function _iexFetchBatch(api, tickers, queryParameters) {
-  // https://sandbox.iexapis.com/stable/stock/market/batch?token=Tpk_ca8d3de2a6db4a58a61a93ac027e4725&types=company&symbols=UZF
-  _throwIfUndefinedOrNull(api, `_api`);
-  const fullAPI = `/stock/market${api}/batch`;
-  _throwIfUndefinedOrNull(tickers, `tickers`);
-
-  if (queryParameters == null) {
-    queryParameters = {};
-  }
-
-  // TODO: We might fetch in parallel
-  const maxSymbolsAmount = 100;
-  const chunkedTickersArray = tickers.chunked(maxSymbolsAmount);
-  var result = [];
-  for (const chunkedTickers of chunkedTickersArray) {
-    const tickerParameter = chunkedTickers.join(",");
-    const fullQueryParameters = Object.assign({}, queryParameters);
-    fullQueryParameters.symbols = tickerParameter;
-
-    console.log(`Fetching '${api}' batch for symbols (${chunkedTickers.length}) with query '${queryParameters.stringify()}': ${tickerParameter}`);
-    const response = await _iexFetch(fullAPI, fullQueryParameters);
-
-    result = result.concat(response);
-  }
-
-  return result;
-};
-
-iexFetchBatch = _iexFetchBatch;
-
 // exports();
 //
 // iexFetchBatch('/dividends', ['AAP','AAPL','PBA'], { 'range': '90d' })
@@ -224,8 +185,7 @@ iexFetchBatch = _iexFetchBatch;
  * @param {[string]} idByTicker Dictionary of ticker symbol ID by ticker symbol.
  * @param {function} mapFunction Function to map data to our format.
  * @param {Object} queryParameters Additional query parameters.
- * @returns {Promise<{string: {string: Object|[Object]}}>} Parsed EJSON object. Composed from several responses if max symbols count was exceeded. 
- * The first object keys are symbols. The next inner object keys are types. And the next inner object is an array of type objects.
+ * @returns {Promise<[Object]>} Flat array of entities.
  */
 async function _iexFetchBatchAndMapArray(type, tickers, idByTicker, mapFunction, queryParameters) {
   return _iexFetchBatchNew([type], tickers, queryParameters)
@@ -244,8 +204,6 @@ async function _iexFetchBatchAndMapArray(type, tickers, idByTicker, mapFunction,
     );
 }
 
-iexFetchBatchAndMapArray = _iexFetchBatchAndMapArray;
-
 /**
  * Requests data from IEX cloud/sandbox for types and symbols by a batch.
  * Then, maps objects data to our format in a array.
@@ -256,8 +214,7 @@ iexFetchBatchAndMapArray = _iexFetchBatchAndMapArray;
  * @param {[string]} idByTicker Dictionary of ticker symbol ID by ticker symbol.
  * @param {function} mapFunction Function to map data to our format.
  * @param {Object} queryParameters Additional query parameters.
- * @returns {Promise<{string: {string: Object|[Object]}}>} Parsed EJSON object. Composed from several responses if max symbols count was exceeded. 
- * The first object keys are symbols. The next inner object keys are types. And the next inner object is an array of type objects.
+ * @returns {Promise<[Object]>} Flat array of entities.
  */
 async function _iexFetchBatchAndMapObjects(type, tickers, idByTicker, mapFunction, queryParameters) {
   return _iexFetchBatchNew([type], tickers, queryParameters)
@@ -274,8 +231,6 @@ async function _iexFetchBatchAndMapObjects(type, tickers, idByTicker, mapFunctio
     );
 }
 
-iexFetchBatchAndMapObjects = _iexFetchBatchAndMapObjects;
-
 /**
  * Requests data from IEX cloud/sandbox for types and symbols by a batch.
  * If symbols count exceed max allowed amount it splits it to several requests and returns composed result.
@@ -289,7 +244,7 @@ iexFetchBatchAndMapObjects = _iexFetchBatchAndMapObjects;
 async function _iexFetchBatchNew(types, tickers, queryParameters) {
   // https://sandbox.iexapis.com/stable/stock/market/batch?token=Tpk_d8f3a048a7a94866ad08c8b62042b16b&calendar=true&symbols=MSFT%2CAAPL&types=dividends&range=1y
   _throwIfUndefinedOrNull(types, `types`);
-  _throwIfUndefinedOrNull(tickers, `tickers`);
+  _throwIfEmptyArray(tickers, `tickers`);
 
   if (queryParameters == null) {
     queryParameters = {};
@@ -324,8 +279,6 @@ async function _iexFetchBatchNew(types, tickers, queryParameters) {
 
   return result;
 };
-
-iexFetchBatchNew = _iexFetchBatchNew;
 
 // exports();
 //
@@ -581,6 +534,75 @@ function _fixSplits(iexSplits, symbolID) {
 };
 
 fixSplits = _fixSplits;
+
+/** 
+ * First parameter: Date in the "yyyy-mm-dd" or timestamp or Date format, e.g. "2020-03-27" or '1633046400000' or Date.
+ * Returns close 'Date' pointing to the U.S. stock market close time.
+ *
+ * Regular trading hours for the U.S. stock market, including 
+ * the New York Stock Exchange (NYSE) and the Nasdaq Stock Market (Nasdaq),
+ * are 9:30 a.m. to 4 p.m.
+ */
+ function _getCloseDate(closeDateValue) {
+  if (closeDateValue == null) {
+    return;
+  }
+
+  // Check if date is valid
+  const date = new Date(closeDateValue);
+  if (isNaN(date)) {
+    console.logVerbose(`Invalid close date: ${closeDateValue}`);
+    return;
+  }
+
+  // Eastern Standard Time (EST) time zone is 5 hours behind GMT during autumn/winter
+  // https://en.wikipedia.org/wiki/Eastern_Time_Zone
+  const closeDateStringWithTimeZone = `${date.dayString()}T16:00:00-0500`;
+  const closeDate = new Date(closeDateStringWithTimeZone);
+  if (isNaN(closeDate)) {
+    console.logVerbose(`Invalid close date with time zone: ${closeDateStringWithTimeZone}`);
+    return;
+  } else {
+    return closeDate;
+  }
+};
+
+getCloseDate = _getCloseDate;
+
+/** 
+ * First parameter: Date in the "yyyy-mm-dd" or timestamp or Date format, e.g. "2020-03-27" or '1633046400000' or Date.
+ * Returns open 'Date' pointing to the U.S. stock market open time.
+ *
+ * Regular trading hours for the U.S. stock market, including 
+ * the New York Stock Exchange (NYSE) and the Nasdaq Stock Market (Nasdaq),
+ * are 9:30 a.m. to 4 p.m.
+ */
+function _getOpenDate(openDateValue) {
+  if (openDateValue == null) {
+    return;
+  }
+
+  // Check if date is valid
+  const date = new Date(openDateValue);
+  if (isNaN(date)) {
+    console.logVerbose(`Invalid open date: ${openDateValue}`);
+    return;
+  }
+
+  // Eastern Standard Time (EST) time zone is 5 hours behind GMT during autumn/winter
+  // https://en.wikipedia.org/wiki/Eastern_Time_Zone
+  const openDateStringWithTimeZone = `${date.dayString()}T9:30:00-0500`;
+  const openDate = new Date(openDateStringWithTimeZone);
+
+  if (isNaN(openDate)) {
+    console.logVerbose(`Invalid open date with time zone: ${openDateStringWithTimeZone}`);
+    return;
+  } else {
+    return openDate;
+  }
+};
+
+getOpenDate = _getOpenDate;
 
 ///////////////////////////////////////////////////////////////////////////////// INITIALIZATION
 

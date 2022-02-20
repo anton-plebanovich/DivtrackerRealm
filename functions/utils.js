@@ -275,21 +275,44 @@ Array.prototype.compactMap = function(callbackfn) {
  * @param {function|string} arg Key map function or key.
  */
 Array.prototype.toDictionary = function(arg) {
+  let getKey
   if (typeof arg === 'string' || arg instanceof String) {
-    return this.reduce((dictionary, value) => 
-      Object.assign(dictionary, {[value[arg]]: value}
-    ), {});
-
+    getKey = (value) => value[arg];
   } else if (arg == null) {
-    return this.reduce((dictionary, value) => 
-      Object.assign(dictionary, {[value]: value}
-    ), {});
-    
+    getKey = (value) => value;
   } else {
-    return this.reduce((dictionary, value) => 
-      Object.assign(dictionary, {[arg(value)]: value}
-    ), {});
+    getKey = arg;
   }
+
+  return this.reduce((dictionary, value) => {
+    const key = getKey(value);
+    dictionary[key] = value;
+  }, {});
+};
+
+/**
+ * Creates dictionary from objects using provided `key` or function as source for keys and objects with the same keys are collected to an array.
+ * @param {function|string} arg Key map function or key.
+ */
+Array.prototype.toBuckets = function(arg) {
+  let getKey
+  if (typeof arg === 'string' || arg instanceof String) {
+    getKey = (value) => value[arg];
+  } else if (arg == null) {
+    getKey = (value) => value;
+  } else {
+    getKey = arg;
+  }
+
+  return this.reduce((dictionary, value) => {
+    const key = getKey(value);
+    const dictionaryValue = dictionary[key];
+    if (dictionaryValue == null) {
+      dictionary[key] = [value];
+    } else {
+      dictionaryValue.push(value);
+    }
+  }, {});
 };
 
 /**
@@ -306,6 +329,20 @@ Array.prototype.includesObject = function(object) {
 Date.yesterday = function() {
   const yesterday = new Date();
   yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+  yesterday.setUTCHours(0);
+  yesterday.setUTCMinutes(0);
+  yesterday.setUTCSeconds(0);
+  yesterday.setUTCMilliseconds(0);
+
+  return yesterday;
+};
+
+/**
+ * @returns {Date} Month day start date in UTC.
+ */
+Date.monthStart = function() {
+  const yesterday = new Date();
+  yesterday.setUTCDate(1);
   yesterday.setUTCHours(0);
   yesterday.setUTCMinutes(0);
   yesterday.setUTCSeconds(0);
@@ -842,81 +879,6 @@ getValueAndThrowfUndefined = function _getValueAndThrowfUndefined(object, key) {
 };
 
 /** 
- * First parameter: Date in the "yyyy-mm-dd" or timestamp or Date format, e.g. "2020-03-27" or '1633046400000' or Date.
- * Returns close 'Date' pointing to the U.S. stock market close time.
- *
- * Regular trading hours for the U.S. stock market, including 
- * the New York Stock Exchange (NYSE) and the Nasdaq Stock Market (Nasdaq),
- * are 9:30 a.m. to 4 p.m.
- */
-function _getCloseDate(closeDateValue) {
-  if (closeDateValue == null) {
-    return;
-  }
-
-  // Check if date is valid
-  const date = new Date(closeDateValue);
-  if (isNaN(date)) {
-    console.logVerbose(`Invalid close date: ${closeDateValue}`);
-    return;
-  }
-
-  // Eastern Standard Time (EST) time zone is 5 hours behind GMT during autumn/winter
-  // https://en.wikipedia.org/wiki/Eastern_Time_Zone
-  const closeDateStringWithTimeZone = `${date.dayString()}T16:00:00-0500`;
-  const closeDate = new Date(closeDateStringWithTimeZone);
-  if (isNaN(closeDate)) {
-    console.logVerbose(`Invalid close date with time zone: ${closeDateStringWithTimeZone}`);
-    return;
-  } else {
-    return closeDate;
-  }
-};
-
-getCloseDate = _getCloseDate;
-
-/** 
- * First parameter: Date in the "yyyy-mm-dd" or timestamp or Date format, e.g. "2020-03-27" or '1633046400000' or Date.
- * Returns open 'Date' pointing to the U.S. stock market open time.
- *
- * Regular trading hours for the U.S. stock market, including 
- * the New York Stock Exchange (NYSE) and the Nasdaq Stock Market (Nasdaq),
- * are 9:30 a.m. to 4 p.m.
- */
-function _getOpenDate(openDateValue) {
-  if (openDateValue == null) {
-    return;
-  }
-
-  // Check if date is valid
-  const date = new Date(openDateValue);
-  if (isNaN(date)) {
-    console.logVerbose(`Invalid open date: ${openDateValue}`);
-    return;
-  }
-
-  // Eastern Standard Time (EST) time zone is 5 hours behind GMT during autumn/winter
-  // https://en.wikipedia.org/wiki/Eastern_Time_Zone
-  const openDateStringWithTimeZone = `${date.dayString()}T9:30:00-0500`;
-  const openDate = new Date(openDateStringWithTimeZone);
-
-  if (isNaN(openDate)) {
-    console.logVerbose(`Invalid open date with time zone: ${openDateStringWithTimeZone}`);
-    return;
-  } else {
-    return openDate;
-  }
-};
-
-getOpenDate = _getOpenDate;
-
-// exports();
-//
-// checkExecutionTimeout()
-// getCloseDate("2020-03-27");
-// getOpenDate("2020-03-27");
-
-/** 
  * Computes and returns enabled in use symbols from companies and user transactions.
  * Returned symbols are shortened to `_id` and `s` fields.
  * @returns {Promise<[ShortSymbol]>} Array of short symbols.
@@ -1014,6 +976,9 @@ getSupportedSymbolIDs = _getSupportedSymbolIDs;
  * @returns Parsed EJSON object.
  */
 async function _fetch(baseURL, api, queryParameters) {
+  _throwIfUndefinedOrNull(baseURL, `_fetch baseURL`);
+  _throwIfUndefinedOrNull(api, `_fetch api`);
+
   let response = await _get(baseURL, api, queryParameters);
 
   // Retry 5 times on retryable errors
@@ -1044,6 +1009,9 @@ async function _fetch(baseURL, api, queryParameters) {
 fetch = _fetch;
 
 async function _get(baseURL, api, queryParameters) {
+  _throwIfUndefinedOrNull(baseURL, `_get baseURL`);
+  _throwIfUndefinedOrNull(api, `_get api`);
+
   const url = _getURL(baseURL, api, queryParameters);
   console.log(`Request with URL: ${url}`);
 
