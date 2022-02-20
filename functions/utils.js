@@ -312,6 +312,7 @@ Array.prototype.toBuckets = function(arg) {
     } else {
       dictionaryValue.push(value);
     }
+    return dictionary
   }, {});
 };
 
