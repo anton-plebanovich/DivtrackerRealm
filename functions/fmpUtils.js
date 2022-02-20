@@ -226,8 +226,8 @@ async function _fmpFetchAndMapArray(api, tickers, queryParameters, groupingKey, 
         return tickers
           .map(ticker => {
             const data = dataByTicker[ticker];
-            const tickerData = data[dataKey];
-            if (tickerData != null) {
+            if (data != null) {
+              const tickerData = data[dataKey];
               return mapFunction(tickerData, idByTicker[ticker]);
             } else {
               return [];
