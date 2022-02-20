@@ -185,7 +185,11 @@ async function _fmpFetchAndMapFlatArray(api, tickers, queryParameters, idByTicke
       return tickers
         .map(ticker => {
           const datas = datasByTicker[ticker];
-          return mapFunction(datas, idByTicker[ticker]);
+          if (datas == null) {
+            return []
+          } else {
+            return mapFunction(datas, idByTicker[ticker]);
+          }
         })
         .flat()
       }
