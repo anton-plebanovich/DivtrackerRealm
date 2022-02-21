@@ -1,9 +1,9 @@
 {
     "properties": {
-        "_id": {
+        "_": {
             "bsonType": "string"
         },
-        "_": {
+        "_id": {
             "bsonType": "string"
         },
         "r": {
