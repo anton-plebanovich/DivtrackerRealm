@@ -1,15 +1,28 @@
 [
     {
-        "name": "updateQuotesV2",
+        "name": "addTransactionsV2",
+        "private": false,
+        "run_as_system": true
+    },
+    {
+        "name": "checkTransactionsV2",
         "private": true
     },
     {
-        "name": "updateExchangeRatesV2",
+        "name": "checkUserTransactionsV2",
         "private": true
     },
     {
-        "name": "utilsV2",
+        "name": "eraseData",
         "private": true
+    },
+    {
+        "name": "loadMissingDataV2",
+        "private": true
+    },
+    {
+        "name": "login",
+        "private": false
     },
     {
         "name": "migrations",
@@ -24,40 +37,23 @@
         "private": true
     },
     {
-        "name": "checkUserTransactionsV2",
+        "name": "updateDividendsV2",
         "private": true
     },
     {
-        "name": "eraseData",
+        "name": "updateExchangeRatesV2",
         "private": true
-    },
-    {
-        "name": "migrationsOld",
-        "private": false
-    },
-    {
-        "name": "updateSplitsV2",
-        "private": true
-    },
-    {
-        "name": "checkTransactionsV2",
-        "private": true
-    },
-    {
-        "name": "login",
-        "private": false
     },
     {
         "name": "updatePricesV2",
         "private": true
     },
     {
-        "name": "addTransactionsV2",
-        "private": false,
-        "run_as_system": true
+        "name": "updateQuotesV2",
+        "private": true
     },
     {
-        "name": "updateDividendsV2",
+        "name": "updateSplitsV2",
         "private": true
     },
     {
@@ -65,7 +61,7 @@
         "private": true
     },
     {
-        "name": "loadMissingDataV2",
+        "name": "utilsV2",
         "private": true
     }
 ]

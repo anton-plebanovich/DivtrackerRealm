@@ -1,15 +1,15 @@
 {
     "properties": {
-        "_": {
-            "bsonType": "string"
-        },
         "_id": {
             "bsonType": "objectId"
         },
-        "i": {
+        "_": {
             "bsonType": "string"
         },
         "n": {
+            "bsonType": "string"
+        },
+        "i": {
             "bsonType": "string"
         },
         "t": {
