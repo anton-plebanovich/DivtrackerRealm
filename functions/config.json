@@ -1,39 +1,15 @@
 [
     {
+        "name": "eraseData",
+        "private": true
+    },
+    {
         "name": "addTransactionsV2",
         "private": false,
         "run_as_system": true
     },
     {
-        "name": "checkTransactionsV2",
-        "private": true
-    },
-    {
         "name": "checkUserTransactionsV2",
-        "private": true
-    },
-    {
-        "name": "eraseData",
-        "private": true
-    },
-    {
-        "name": "loadMissingDataV2",
-        "private": true
-    },
-    {
-        "name": "login",
-        "private": false
-    },
-    {
-        "name": "migrations",
-        "private": true
-    },
-    {
-        "name": "playground",
-        "private": true
-    },
-    {
-        "name": "updateCompaniesV2",
         "private": true
     },
     {
@@ -41,7 +17,19 @@
         "private": true
     },
     {
-        "name": "updateExchangeRatesV2",
+        "name": "checkTransactionsV2",
+        "private": true
+    },
+    {
+        "name": "migrationsOld",
+        "private": false
+    },
+    {
+        "name": "loadMissingDataV2",
+        "private": true
+    },
+    {
+        "name": "updateCompaniesV2",
         "private": true
     },
     {
@@ -49,11 +37,11 @@
         "private": true
     },
     {
-        "name": "updateQuotesV2",
+        "name": "migrations",
         "private": true
     },
     {
-        "name": "updateSplitsV2",
+        "name": "updateExchangeRatesV2",
         "private": true
     },
     {
@@ -61,7 +49,23 @@
         "private": true
     },
     {
+        "name": "updateSplitsV2",
+        "private": true
+    },
+    {
+        "name": "login",
+        "private": false
+    },
+    {
+        "name": "playground",
+        "private": true
+    },
+    {
         "name": "utilsV2",
+        "private": true
+    },
+    {
+        "name": "updateQuotesV2",
         "private": true
     }
 ]

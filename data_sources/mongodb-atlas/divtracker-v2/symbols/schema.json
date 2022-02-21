@@ -1,10 +1,10 @@
 {
     "properties": {
-        "_id": {
-            "bsonType": "objectId"
-        },
         "_": {
             "bsonType": "string"
+        },
+        "_id": {
+            "bsonType": "objectId"
         },
         "e": {
             "bsonType": "bool"
