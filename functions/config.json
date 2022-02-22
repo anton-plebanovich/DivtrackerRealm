@@ -17,6 +17,10 @@
         "private": true
     },
     {
+        "name": "fmpUpdateSymbolsV2",
+        "private": true
+    },
+    {
         "name": "fmpUtils",
         "private": true
     },
