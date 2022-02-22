@@ -1,10 +1,10 @@
 {
     "properties": {
-        "_": {
-            "bsonType": "string"
-        },
         "_id": {
             "bsonType": "objectId"
+        },
+        "_": {
+            "bsonType": "string"
         },
         "c": {
             "bsonType": "double"

@@ -1,1 +1,87 @@
-[{"path":"/.well-known/apple-app-site-association","attrs":null},{"path":"/index.html","attrs":[{"name":"Content-Type","value":"text/html"}]},{"path":"/policy.html","attrs":[{"name":"Content-Type","value":"text/html"}]},{"path":"/support.html","attrs":[{"name":"Content-Type","value":"text/html"}]},{"path":"/universal-linking/email-confirmation.html","attrs":[{"name":"Content-Type","value":"text/html"}]},{"path":"/universal-linking/reset-password.html","attrs":[{"name":"Content-Type","value":"text/html"}]},{"path":"/va","attrs":[{"name":"Content-Type","value":"application/octet-stream"}]},{"path":"/version.json","attrs":[{"name":"Content-Type","value":"application/json"}]},{"path":"/version_android.json","attrs":[{"name":"Content-Type","value":"application/json"}]},{"path":"/version_ios.json","attrs":[{"name":"Content-Type","value":"application/json"}]},{"path":"/version_ios_new.json","attrs":[{"name":"Content-Type","value":"application/json"}]},{"path":"/vi","attrs":[{"name":"Content-Type","value":"application/octet-stream"}]}]
+[
+  {
+    "path": "/.well-known/apple-app-site-association",
+    "attrs": null
+  },
+  {
+    "path": "/universal-linking/email-confirmation.html",
+    "attrs": [
+      {
+        "name": "Content-Type",
+        "value": "text/html"
+      }
+    ]
+  },
+  {
+    "path": "/index.html",
+    "attrs": [
+      {
+        "name": "Content-Type",
+        "value": "text/html"
+      }
+    ]
+  },
+  {
+    "path": "/universal-linking/reset-password.html",
+    "attrs": [
+      {
+        "name": "Content-Type",
+        "value": "text/html"
+      }
+    ]
+  },
+  {
+    "path": "/va",
+    "attrs": [
+      {
+        "name": "Content-Type",
+        "value": "application/octet-stream"
+      }
+    ]
+  },
+  {
+    "path": "/version.json",
+    "attrs": [
+      {
+        "name": "Content-Type",
+        "value": "application/json"
+      }
+    ]
+  },
+  {
+    "path": "/version_android.json",
+    "attrs": [
+      {
+        "name": "Content-Type",
+        "value": "application/json"
+      }
+    ]
+  },
+  {
+    "path": "/version_ios_new.json",
+    "attrs": [
+      {
+        "name": "Content-Type",
+        "value": "application/json"
+      }
+    ]
+  },
+  {
+    "path": "/version_ios.json",
+    "attrs": [
+      {
+        "name": "Content-Type",
+        "value": "application/json"
+      }
+    ]
+  },
+  {
+    "path": "/vi",
+    "attrs": [
+      {
+        "name": "Content-Type",
+        "value": "application/octet-stream"
+      }
+    ]
+  }
+]
