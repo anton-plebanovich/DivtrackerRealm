@@ -87,7 +87,7 @@ fetchDividends = async function fetchDividends(shortSymbols, limit) {
     "/v3/historical-price-full/stock_dividend",
     tickers,
     null,
-    10,
+    5,
     limit,
     'historicalStockList',
     'historical',
