@@ -40,16 +40,16 @@ async function updateFMPSymbols() {
   await fmpCollection.safeUpsertMany(newSymbols, 't');
   
   // We do not delete old symbols but instead mark them as disabled to be able to display user transactions.
-  const newSymbolIDs = newSymbols.map(x => x.symbol);
-  const allSymbolIDs = await fmpCollection.distinct('t');
-  const symbolsIDsToDisable = allSymbolIDs.filter(symbolID =>
-    !newSymbolIDs.includes(symbolID)
+  const newTickers = newSymbols.map(x => x.t);
+  const allTickers = await fmpCollection.distinct('t');
+  const tickersToDisable = allTickers.filter(symbolID =>
+    !newTickers.includes(symbolID)
   );
 
-  if (symbolsIDsToDisable.length) {
-    console.log(`Disabling FMP symbols: ${symbolsIDsToDisable}`);
+  if (tickersToDisable.length) {
+    console.log(`Disabling FMP symbols: ${tickersToDisable}`);
     await fmpCollection.updateMany(
-      { symbol: { $in: symbolsIDsToDisable } },
+      { t: { $in: tickersToDisable } },
       { $set: { isEnabled: false } }
     );
   }
