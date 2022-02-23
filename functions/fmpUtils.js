@@ -57,9 +57,10 @@ fetchCompanies = async function fetchCompanies(shortSymbols) {
 /**
  * Fetches dividends in batch for short symbols.
  * @param {[ShortSymbol]} shortSymbols Short symbol models for which to fetch.
+ * @param {Int} Limit Per ticker limit.
  * @returns {[Dividend]} Array of requested objects.
  */
-fetchDividends = async function fetchDividends(shortSymbols) {
+fetchDividends = async function fetchDividends(shortSymbols, limit) {
   throwIfEmptyArray(shortSymbols, `fetchDividends shortSymbols`);
 
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
@@ -72,6 +73,7 @@ fetchDividends = async function fetchDividends(shortSymbols) {
     api,
     tickers,
     null,
+    limit,
     'historicalStockList',
     'historical',
     idByTicker,
@@ -115,6 +117,7 @@ fetchPreviousDayPrices = async function _fetchPreviousDayPrices(shortSymbols) {
     api,
     tickers,
     { timeseries: 1 },
+    null,
     'historicalStockList',
     'historical',
     idByTicker,
@@ -139,6 +142,7 @@ fetchHistoricalPrices = async function fetchHistoricalPrices(shortSymbols) {
     api,
     tickers,
     { serietype: "line" },
+    null,
     'historicalStockList',
     'historical',
     idByTicker,
@@ -184,6 +188,7 @@ fetchSplits = async function fetchSplits(shortSymbols) {
   return await _fmpFetchAndMapArray(
     api,
     tickers,
+    null,
     null,
     'historicalStockList',
     'historical',
@@ -235,21 +240,26 @@ async function _fmpFetchAndMapFlatArray(api, tickers, queryParameters, idByTicke
  * If symbols count exceed max allowed amount it splits it to several requests and returns composed result.
  * @param {string} api API to call.
  * @param {Object} queryParameters Additional query parameters.
+ * @param {Int} Limit Per ticker limit.
  * @param {string} groupingKey Batch grouping key, e.g. 'historicalStockList'.
  * @param {string} dataKey Data key, e.g. 'historical'.
  * @param {[string]} idByTicker Dictionary of ticker symbol ID by ticker symbol.
  * @param {function} mapFunction Function to map data to our format.
  * @returns {Promise<[Object]>} Flat array of entities.
  */
-async function _fmpFetchAndMapArray(api, tickers, queryParameters, groupingKey, dataKey, idByTicker, mapFunction) {
+async function _fmpFetchAndMapArray(api, tickers, queryParameters, limit, groupingKey, dataKey, idByTicker, mapFunction) {
   return _fmpFetch(api, queryParameters)
     .then(datas => {
       if (tickers.length === 1) {
         const data = datas;
         const ticker = tickers[0];
-        const tickerData = data[dataKey];
+        let tickerData = data[dataKey];
+        if (limit != null) {
+          tickerData = tickerData.slice(0, limit);
+        }
+
         if (tickerData != null) {
-          return mapFunction(tickerData, idByTicker[ticker]);
+          return await mapFunction(tickerData, idByTicker[ticker]);
         } else {
           return [];
         }
@@ -260,8 +270,12 @@ async function _fmpFetchAndMapArray(api, tickers, queryParameters, groupingKey, 
           .map(ticker => {
             const data = dataByTicker[ticker];
             if (data != null) {
-              const tickerData = data[dataKey];
-              return mapFunction(tickerData, idByTicker[ticker]);
+              let tickerData = data[dataKey];
+              if (limit != null) {
+                tickerData = tickerData.slice(0, limit);
+              }
+
+              return await mapFunction(tickerData, idByTicker[ticker]);
             } else {
               return [];
             }
@@ -337,6 +351,7 @@ function _fixFMPCompany(fmpCompany, symbolID) {
     console.logVerbose(`Company data fix start`);
     const company = {};
     company._id = symbolID;
+    company.c = fmpCompany.currency;
     company.i = fmpCompany.industry;
     company.n = fmpCompany.companyName;
 
@@ -362,7 +377,7 @@ function _fixFMPCompany(fmpCompany, symbolID) {
  * @param {ObjectId} symbolID Symbol object ID.
  * @returns {[Dividend]} Returns fixed objects or an empty array if fix wasn't possible.
  */
-function _fixFMPDividends(fmpDividends, symbolID) {
+async function _fixFMPDividends(fmpDividends, symbolID) {
   try {
     throwIfNotArray(fmpDividends, `fixDividends fmpDividends`);
     throwIfUndefinedOrNull(symbolID, `fixDividends uniqueID`);
@@ -370,12 +385,22 @@ function _fixFMPDividends(fmpDividends, symbolID) {
       console.logVerbose(`FMP dividends are empty for ${symbolID}. Nothing to fix.`);
       return []; 
     }
+
+    // Get currency from company
+    const currency = await fmp.collection("companies")
+      .findOne(
+        { _id: symbolID },
+        { c: 1 }
+      )
+      .then(x => x.c);
   
     console.logVerbose(`Fixing dividends for ${symbolID}`);
     return fmpDividends
       .filterNull()
       .map(fmpDividend => {
         const dividend = {};
+        dividend.c = currency;
+        dividend.f = 'u'; // TODO: Compute frequency
         dividend.e = _getOpenDate(fmpDividend.date);
         dividend.d = _getOpenDate(fmpDividend.declarationDate);
         dividend.p = _getOpenDate(fmpDividend.paymentDate);

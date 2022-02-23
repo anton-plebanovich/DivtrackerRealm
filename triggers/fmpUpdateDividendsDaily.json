@@ -1,15 +1,15 @@
 {
-    "id": "6185ffbd6db886ed8f037b22",
-    "name": "fmpUpdateCompaniesMonthlyV2",
+    "id": "6185ffbd6db886ed8f037b23",
+    "name": "fmpUpdateDividendsDaily",
     "type": "SCHEDULED",
     "config": {
-        "schedule": "3 23 * * *"
+        "schedule": "7 23 * * *"
     },
     "disabled": false,
     "event_processors": {
         "FUNCTION": {
             "config": {
-                "function_name": "fmpUpdateCompaniesV2"
+                "function_name": "fmpUpdateDividends"
             }
         }
     }

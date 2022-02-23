@@ -1,5 +1,5 @@
 
-// fmpUpdateCompaniesV2.js
+// fmpUpdateCompanies.js
 
 // https://docs.mongodb.com/manual/reference/method/js-collection/
 // https://docs.mongodb.com/manual/reference/method/js-bulk/

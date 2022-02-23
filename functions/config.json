@@ -17,11 +17,19 @@
         "private": true
     },
     {
-        "name": "fmpUpdateCompaniesV2",
+        "name": "fmpLoadMissingData",
         "private": true
     },
     {
-        "name": "fmpUpdateSymbolsV2",
+        "name": "fmpUpdateCompanies",
+        "private": true
+    },
+    {
+        "name": "fmpUpdateDividends",
+        "private": true
+    },
+    {
+        "name": "fmpUpdateSymbols",
         "private": true
     },
     {
