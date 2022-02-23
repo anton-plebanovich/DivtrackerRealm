@@ -217,7 +217,7 @@ fetchSymbols = async function fetchSymbols() {
  * @returns {Promise<[Object]>} Flat array of entities.
  */
 async function _fmpFetchAndMapFlatArray(api, tickers, queryParameters, idByTicker, mapFunction) {
-  return _fmpFetch(api, queryParameters)
+  return await _fmpFetch(api, queryParameters)
     .then(datas => {
       const datasByTicker = datas.toBuckets('symbol');
       return tickers
@@ -248,7 +248,7 @@ async function _fmpFetchAndMapFlatArray(api, tickers, queryParameters, idByTicke
  * @returns {Promise<[Object]>} Flat array of entities.
  */
 async function _fmpFetchAndMapArray(api, tickers, queryParameters, limit, groupingKey, dataKey, idByTicker, mapFunction) {
-  return _fmpFetch(api, queryParameters)
+  const datas = await _fmpFetch(api, queryParameters)
     .then(async datas => {
       if (tickers.length === 1) {
         const data = datas;
@@ -266,8 +266,8 @@ async function _fmpFetchAndMapArray(api, tickers, queryParameters, limit, groupi
 
       } else if (datas[groupingKey] != null) {
         const dataByTicker = datas[groupingKey].toDictionary('symbol');
-        return tickers
-          .map(ticker => {
+        const fixedDataPromises = tickers
+          .map(async ticker => {
             const data = dataByTicker[ticker];
             if (data != null) {
               let tickerData = data[dataKey];
@@ -280,7 +280,9 @@ async function _fmpFetchAndMapArray(api, tickers, queryParameters, limit, groupi
               return [];
             }
           })
-          .flat()
+          
+        return await Promise.allLmited(fixedDataPromises, 100)
+          .then(x => x.flat())
 
         } else {
           throw `Unexpected response format for ${api}`
@@ -299,7 +301,7 @@ async function _fmpFetchAndMapArray(api, tickers, queryParameters, limit, groupi
  * @returns {Promise<[Object]>} Flat array of entities.
  */
 async function _fmpFetchAndMapObjects(api, tickers, queryParameters, idByTicker, mapFunction) {
-  return _fmpFetch(api, queryParameters)
+  return await _fmpFetch(api, queryParameters)
     .then(datas => {
       const dataByTicker = datas.toDictionary('symbol');
 
