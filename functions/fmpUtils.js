@@ -169,6 +169,16 @@ fetchSplits = async function fetchSplits(shortSymbols) {
   );
 };
 
+/**
+ * Fetches symbols.
+ * @returns {[Symbol]} Array of requested objects.
+ */
+fetchSymbols = async function fetchSymbols() {
+  // https://financialmodelingprep.com/api/v3/stock/list?apikey=969387165d69a8607f9726e8bb52b901
+  const symbols = await fmpFetch("/v3/stock/list")
+    .then(_fixFMPSymbols);
+};
+
 //////////////////////////////////// Generic Fetches
 
 /**
@@ -478,7 +488,7 @@ function _fixFMPQuote(fmpQuote, symbolID) {
 
 /**
  * Fixes splits object so it can be added to MongoDB.
- * @param {Object} fmpSplits Splits object.
+ * @param {[FMPSplit]} fmpSplits Splits object.
  * @param {ObjectId} symbolID Symbol object ID.
  * @returns {[Object]} Returns fixed objects or an empty array if fix wasn't possible.
  */
@@ -513,6 +523,36 @@ function _fixFMPSplits(fmpSplits, symbolID) {
   }
 };
 
+/**
+ * Fixes symbos object so it can be added to MongoDB.
+ * @param {[FMPSymbol]} fmpSymbols Symbols object.
+ * @returns {[Object]} Returns fixed objects or an empty array if fix wasn't possible.
+ */
+function _fixFMPSymbols(fmpSymbols) {
+  try {
+    throwIfUndefinedOrNull(fmpSymbols, `_fixFMPSymbols fmpSymbols`);
+    if (!fmpSymbols.length) { 
+      console.logVerbose(`Symbols are empty. Nothing to fix.`);
+      return []; 
+    }
+  
+    console.logVerbose(`Fixing symbols for ${symbolID}`);
+    return fmpSymbols
+      .filterNull()
+      // We only support 'MCX' at the moment
+      .filter(fmpSymbol => fmpSymbol.exchangeShortName === "MCX")
+      .map(fmpSymbol => {
+        const symbol = {};
+        symbol.n = fmpSymbol.name;
+        symbol.t = fmpSymbol.symbol;
+
+        return symbol;
+      });
+
+  } catch (error) {
+    return [];
+  }
+};
 /** 
  * First parameter: Date in the "yyyy-mm-dd" or timestamp or Date format, e.g. "2020-03-27" or '1633046400000' or Date.
  * Returns close 'Date' pointing to the U.S. stock market close time.
