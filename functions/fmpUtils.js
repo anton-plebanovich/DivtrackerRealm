@@ -64,13 +64,11 @@ fetchDividends = async function fetchDividends(shortSymbols, limit) {
   throwIfEmptyArray(shortSymbols, `fetchDividends shortSymbols`);
 
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
-  const tickersString = tickers.join(",");
-  const api = `/v3/historical-price-full/stock_dividend/${tickersString}`;
 
   // https://financialmodelingprep.com/api/v3/historical-price-full/stock_dividend/AAPL?apikey=969387165d69a8607f9726e8bb52b901
   // https://financialmodelingprep.com/api/v3/historical-price-full/stock_dividend/AAPL,AAP?apikey=969387165d69a8607f9726e8bb52b901
   return await _fmpFetchBatchAndMapArray(
-    api,
+    "/v3/historical-price-full/stock_dividend",
     tickers,
     null,
     10,
@@ -110,14 +108,12 @@ fetchPreviousDayPrices = async function _fetchPreviousDayPrices(shortSymbols) {
   throwIfEmptyArray(shortSymbols, `fetchPreviousDayPrices shortSymbols`);
 
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
-  const tickersString = tickers.join(",");
-  const api = `/v3/historical-price-full/${tickersString}`;
 
   // https://financialmodelingprep.com/api/v3/historical-price-full/AAPL,AAP?timeseries=1&apikey=969387165d69a8607f9726e8bb52b901
   return await _fmpFetchBatchAndMapArray(
-    api,
+    "/v3/historical-price-full",
     tickers,
-    { timeseries: 1 },
+    { serietype: "line", timeseries: 1 },
     null,
     null,
     'historicalStockList',
@@ -136,12 +132,10 @@ fetchHistoricalPrices = async function fetchHistoricalPrices(shortSymbols) {
   throwIfEmptyArray(shortSymbols, `fetchHistoricalPrices shortSymbols`);
 
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
-  const tickersString = tickers.join(",");
-  const api = `/v3/historical-price-full/${tickersString}`;
 
   // https://financialmodelingprep.com/api/v3/historical-price-full/AAPL,AAP?serietype=line&apikey=969387165d69a8607f9726e8bb52b901
   return await _fmpFetchBatchAndMapArray(
-    api,
+    "/v3/historical-price-full",
     tickers,
     { serietype: "line" },
     null,
@@ -184,12 +178,10 @@ fetchSplits = async function fetchSplits(shortSymbols) {
   throwIfEmptyArray(shortSymbols, `fetchSplits shortSymbols`);
 
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
-  const tickersString = tickers.join(",");
-  const api = `/v3/historical-price-full/stock_split/${tickersString}`;
 
   // https://financialmodelingprep.com/api/v3/historical-price-full/stock_split/AAPL,AAP?apikey=969387165d69a8607f9726e8bb52b901
   return await _fmpFetchBatchAndMapArray(
-    api,
+    "/v3/historical-price-full/stock_split",
     tickers,
     null,
     null,

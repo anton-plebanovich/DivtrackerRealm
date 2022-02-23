@@ -462,7 +462,7 @@ String.prototype.removeSensitiveData = function() {
   // We should always use 'strict' for primitive type extensions - https://stackoverflow.com/a/27736962/4124265
   'use strict';
 
-  if (isIEXSandbox === true) { return this; }
+  if (typeof isIEXSandbox !== 'undefined' && isIEXSandbox === true) { return this; }
 
   let safeString = this;
   
