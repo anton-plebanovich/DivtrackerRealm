@@ -378,9 +378,12 @@ async function _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, group
     if (chunkedSymbols.length == 1) {
       result[groupingKey].push(response[groupingKey]);
 
-    } else {
+    } else if (response[groupingKey] != null) {
       throwIfNotArray(response[groupingKey], `_fmpFetchBatch response[groupingKey]`);
       result[groupingKey] = result[groupingKey].concat(response[groupingKey]);
+
+    } else {
+      logVerbose(`No data for tickers: ${tickersString}`);
     }
   }
 

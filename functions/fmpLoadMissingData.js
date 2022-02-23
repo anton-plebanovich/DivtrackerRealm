@@ -17,7 +17,7 @@ exports = async function loadMissingData() {
 
   const symbolIDs = shortSymbols.map(x => x._id);
   
-  return Promise.safeAllAndUnwrap([
+  await Promise.safeAllAndUnwrap([
     loadMissingCompanies(shortSymbols, symbolIDs).mapErrorToSystem(),
     loadMissingDividends(shortSymbols, symbolIDs).mapErrorToSystem(),
     loadMissingHistoricalPrices(shortSymbols, symbolIDs).mapErrorToSystem(),
