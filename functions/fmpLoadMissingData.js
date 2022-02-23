@@ -87,7 +87,31 @@ async function loadMissingDividends(shortSymbols, symbolIDs) {
 
   const bulk = collection.initializeUnorderedBulkOp();
   for (const dividend of dividends) {
-    const query = { e: dividend.e, a: dividend.a, f: dividend.f, s: dividend.s };
+    const query = {}
+    if (dividend.e != null) {
+      query.e = dividend.e;
+    } else {
+      console.error(`Invalid ex date: ${dividend.stringify()}`);
+    }
+
+    if (dividend.a != null) {
+      query.a = dividend.a;
+    } else {
+      console.error(`Invalid amount: ${dividend.stringify()}`);
+    }
+
+    if (dividend.f != null) {
+      query.f = dividend.f;
+    } else {
+      console.error(`Invalid frequency: ${dividend.stringify()}`);
+    }
+
+    if (dividend.s != null) {
+      query.s = dividend.s;
+    } else {
+      console.error(`Invalid symbol: ${dividend.stringify()}`);
+    }
+
     const update = { $setOnInsert: dividend };
     bulk.find(query).upsert().updateOne(update);
   }
