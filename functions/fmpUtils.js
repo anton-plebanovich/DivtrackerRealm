@@ -359,12 +359,12 @@ async function _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, group
   var result = { [groupingKey]: [] };
   for (const chunkedSymbols of chunkedSymbolsArray) {
     const tickersString = chunkedSymbols.join(",");
-    api = `${api}/${tickersString}`;
+    const batchAPI = `${api}/${tickersString}`;
     console.log(`Fetching batch for symbols (${chunkedSymbols.length}) with query '${queryParameters.stringify()}': ${tickersString}`);
     
     let response
     try {
-      response = await _fmpFetch(api, queryParameters);
+      response = await _fmpFetch(batchAPI, queryParameters);
     } catch(error) {
       if (error.statusCode == 404) {
         response = {};
@@ -390,6 +390,8 @@ async function _fmpFetch(api, queryParameters) {
   throwIfUndefinedOrNull(api, `_fmpFetch api`);
   if (queryParameters == null) {
     queryParameters = {}
+  } else {
+    queryParameters = Object.assign({}, queryParameters);
   }
   
   const baseURL = "https://financialmodelingprep.com/api";

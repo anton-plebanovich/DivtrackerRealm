@@ -388,6 +388,8 @@ async function _iexFetch(api, queryParameters) {
 
   if (queryParameters == null) {
     queryParameters = {}
+  } else {
+    queryParameters = Object.assign({}, queryParameters);
   }
   
   // Use premium token if defined.
