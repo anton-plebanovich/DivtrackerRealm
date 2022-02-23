@@ -942,6 +942,11 @@ async function _fetch(baseURL, api, queryParameters) {
   }
   
   const json = response.json;
+  if (!json.length && json.error != null) {
+    console.error(`Response error '${response.statusCode}' : '${response.string}'`);
+    throw response.toNetworkError();
+  }
+
   if (json.length && json.length > 1) {
     console.logVerbose(`Parse end. Objects count: ${json.length}`);
   } else {

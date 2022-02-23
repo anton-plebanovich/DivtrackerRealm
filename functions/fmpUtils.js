@@ -45,7 +45,7 @@ fetchCompanies = async function fetchCompanies(shortSymbols) {
   const api = `/v3/profile/${tickersString}`;
 
   // https://financialmodelingprep.com/api/v3/profile/AAPL,AAP?apikey=969387165d69a8607f9726e8bb52b901
-  return await _fmpFetchAndMapObjects(
+  return await _fmpFetchBatchAndMapObjects(
     api,
     tickers,
     null,
@@ -69,10 +69,11 @@ fetchDividends = async function fetchDividends(shortSymbols, limit) {
 
   // https://financialmodelingprep.com/api/v3/historical-price-full/stock_dividend/AAPL?apikey=969387165d69a8607f9726e8bb52b901
   // https://financialmodelingprep.com/api/v3/historical-price-full/stock_dividend/AAPL,AAP?apikey=969387165d69a8607f9726e8bb52b901
-  return await _fmpFetchAndMapArray(
+  return await _fmpFetchBatchAndMapArray(
     api,
     tickers,
     null,
+    5,
     limit,
     'historicalStockList',
     'historical',
@@ -113,10 +114,11 @@ fetchPreviousDayPrices = async function _fetchPreviousDayPrices(shortSymbols) {
   const api = `/v3/historical-price-full/${tickersString}`;
 
   // https://financialmodelingprep.com/api/v3/historical-price-full/AAPL,AAP?timeseries=1&apikey=969387165d69a8607f9726e8bb52b901
-  return await _fmpFetchAndMapArray(
+  return await _fmpFetchBatchAndMapArray(
     api,
     tickers,
     { timeseries: 1 },
+    null,
     null,
     'historicalStockList',
     'historical',
@@ -138,10 +140,11 @@ fetchHistoricalPrices = async function fetchHistoricalPrices(shortSymbols) {
   const api = `/v3/historical-price-full/${tickersString}`;
 
   // https://financialmodelingprep.com/api/v3/historical-price-full/AAPL,AAP?serietype=line&apikey=969387165d69a8607f9726e8bb52b901
-  return await _fmpFetchAndMapArray(
+  return await _fmpFetchBatchAndMapArray(
     api,
     tickers,
     { serietype: "line" },
+    null,
     null,
     'historicalStockList',
     'historical',
@@ -163,7 +166,7 @@ fetchQuotes = async function fetchQuotes(shortSymbols) {
   const api = `/v3/quote/${tickersString}`;
 
   // https://financialmodelingprep.com/api/v3/quote/GOOG,AAPL,FB?apikey=969387165d69a8607f9726e8bb52b901
-  return await _fmpFetchAndMapObjects(
+  return await _fmpFetchBatchAndMapObjects(
     api,
     tickers,
     null,
@@ -185,9 +188,10 @@ fetchSplits = async function fetchSplits(shortSymbols) {
   const api = `/v3/historical-price-full/stock_split/${tickersString}`;
 
   // https://financialmodelingprep.com/api/v3/historical-price-full/stock_split/AAPL,AAP?apikey=969387165d69a8607f9726e8bb52b901
-  return await _fmpFetchAndMapArray(
+  return await _fmpFetchBatchAndMapArray(
     api,
     tickers,
+    null,
     null,
     null,
     'historicalStockList',
@@ -240,6 +244,7 @@ async function _fmpFetchAndMapFlatArray(api, tickers, queryParameters, idByTicke
  * If symbols count exceed max allowed amount it splits it to several requests and returns composed result.
  * @param {string} api API to call.
  * @param {Object} queryParameters Additional query parameters.
+ * @param {Int} maxBatchSize Max allowed batch size.
  * @param {Int} Limit Per ticker limit.
  * @param {string} groupingKey Batch grouping key, e.g. 'historicalStockList'.
  * @param {string} dataKey Data key, e.g. 'historical'.
@@ -247,8 +252,8 @@ async function _fmpFetchAndMapFlatArray(api, tickers, queryParameters, idByTicke
  * @param {function} mapFunction Function to map data to our format.
  * @returns {Promise<[Object]>} Flat array of entities.
  */
-async function _fmpFetchAndMapArray(api, tickers, queryParameters, limit, groupingKey, dataKey, idByTicker, mapFunction) {
-  const datas = await _fmpFetch(api, queryParameters)
+async function _fmpFetchBatchAndMapArray(api, tickers, queryParameters, maxBatchSize, limit, groupingKey, dataKey, idByTicker, mapFunction) {
+  const datas = await _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, groupingKey)
     .then(async datas => {
       if (tickers.length === 1) {
         const data = datas;
@@ -284,9 +289,9 @@ async function _fmpFetchAndMapArray(api, tickers, queryParameters, limit, groupi
         return await Promise.allLmited(fixedDataPromises, 100)
           .then(x => x.flat())
 
-        } else {
-          throw `Unexpected response format for ${api}`
-        }
+      } else {
+        throw `Unexpected response format for ${api}`
+      }
     });
 }
 
@@ -318,6 +323,54 @@ async function _fmpFetchAndMapObjects(api, tickers, queryParameters, idByTicker,
 }
 
 //////////////////////////////////// Base Fetch
+
+/**
+ * @param {string} api API to call.
+ * @param {[string]} tickers Ticker Symbols to fetch, e.g. ['AAP','AAPL','PBA'].
+ * @param {Object} queryParameters Additional query parameters.
+ * @param {Int} maxBatchSize Max allowed batch size.
+ * @param {string} groupingKey Batch grouping key, e.g. 'historicalStockList'.
+ * @returns {Promise<{string: {string: Object|[Object]}}>} Parsed EJSON object. Composed from several responses if max symbols count was exceeded. 
+ * The first object keys are symbols. The next inner object keys are types. And the next inner object is an array of type objects.
+ */
+async function _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, groupingKey) {
+  throwIfUndefinedOrNull(api, `_fmpFetchBatch api`);
+  throwIfEmptyArray(tickers, `_fmpFetchBatch tickers`);
+
+  if (queryParameters == null) {
+    queryParameters = {};
+  }
+
+  let chunkedSymbolsArray;
+  if (maxBatchSize == null) {
+    chunkedSymbolsArray = tickers
+  } else {
+    chunkedSymbolsArray = tickers.chunked(maxSymbolsAmount);
+  }
+
+  var result = { [groupingKey]: [] };
+  for (const chunkedSymbols of chunkedSymbolsArray) {
+    const tickersString = chunkedSymbols.join(",");
+    api = `${api}/${tickersString}`;
+    console.log(`Fetching batch for symbols (${chunkedSymbols.length}) with query '${queryParameters.stringify()}': ${tickersString}`);
+    
+    let response
+    try {
+      response = await _iexFetch(api, queryParameters);
+    } catch(error) {
+      if (error.statusCode == 404) {
+        response = {};
+      } else {
+        throw error;
+      }
+    }
+
+    _throwIfNotArray(response[groupingKey], `_fmpFetchBatch response[groupingKey]`);
+    result[groupingKey] = result[groupingKey].concat(response[groupingKey]);
+  }
+
+  return result;
+};
 
 /**
  * Requests data from FMP. 
