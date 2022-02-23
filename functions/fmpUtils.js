@@ -73,7 +73,7 @@ fetchDividends = async function fetchDividends(shortSymbols, limit) {
     api,
     tickers,
     null,
-    5,
+    10,
     limit,
     'historicalStockList',
     'historical',
@@ -356,7 +356,7 @@ async function _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, group
     
     let response
     try {
-      response = await _iexFetch(api, queryParameters);
+      response = await _fmpFetch(api, queryParameters);
     } catch(error) {
       if (error.statusCode == 404) {
         response = {};
