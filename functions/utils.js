@@ -17,7 +17,7 @@ Object.prototype.safeExecute = async function() {
 };
 
 Object.prototype.safeUpsertMany = async function(newObjects, field) {
-  _throwIfEmptyArray(newObjects, `Please pass non-empty new objects array as the first argument.`);
+  _throwIfEmptyArray(newObjects, `Please pass non-empty new objects array as the first argument. safeUpsertMany`);
 
   if (newObjects.length === 0) {
     console.error(`New objects are empty. Skipping update.`);
@@ -43,7 +43,7 @@ Object.prototype.safeUpsertMany = async function(newObjects, field) {
  * Safely computes and executes update operation from old to new objects on a collection.
  */
 Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, field) {
-  _throwIfEmptyArray(newObjects, `Please pass non-empty new objects array as the first argument.`);
+  _throwIfEmptyArray(newObjects, `Please pass non-empty new objects array as the first argument. safeUpdateMany`);
 
   if (newObjects.length === 0) {
     console.error(`New objects are empty. Skipping update.`);

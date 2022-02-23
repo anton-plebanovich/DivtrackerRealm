@@ -536,7 +536,7 @@ function _fixFMPSymbols(fmpSymbols) {
       return []; 
     }
   
-    console.logVerbose(`Fixing symbols for ${symbolID}`);
+    console.logVerbose(`Fixing symbols`);
     return fmpSymbols
       .filterNull()
       // We only support 'MCX' at the moment
@@ -553,6 +553,7 @@ function _fixFMPSymbols(fmpSymbols) {
     return [];
   }
 };
+
 /** 
  * First parameter: Date in the "yyyy-mm-dd" or timestamp or Date format, e.g. "2020-03-27" or '1633046400000' or Date.
  * Returns close 'Date' pointing to the U.S. stock market close time.
