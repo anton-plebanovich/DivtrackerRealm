@@ -175,7 +175,7 @@ fetchSplits = async function fetchSplits(shortSymbols) {
  */
 fetchSymbols = async function fetchSymbols() {
   // https://financialmodelingprep.com/api/v3/stock/list?apikey=969387165d69a8607f9726e8bb52b901
-  const symbols = await _fmpFetch("/v3/stock/list")
+  return await _fmpFetch("/v3/stock/list")
     .then(_fixFMPSymbols);
 };
 
@@ -341,7 +341,7 @@ function _fixFMPCompany(fmpCompany, symbolID) {
  */
 function _fixFMPDividends(fmpDividends, symbolID) {
   try {
-    throwIfUndefinedOrNull(fmpDividends, `fixDividends fmpDividends`);
+    throwIfNotArray(fmpDividends, `fixDividends fmpDividends`);
     throwIfUndefinedOrNull(symbolID, `fixDividends uniqueID`);
     if (!fmpDividends.length) { 
       console.logVerbose(`FMP dividends are empty for ${symbolID}. Nothing to fix.`);
@@ -414,7 +414,7 @@ function _fixFMPPreviousDayPrice(fmpPreviousDayPrice, symbolID) {
  */
 function _fixFMPHistoricalPrices(fmpHistoricalPrices, symbolID) {
   try {
-    throwIfUndefinedOrNull(fmpHistoricalPrices, `fixHistoricalPrices fmpHistoricalPrices`);
+    throwIfNotArray(fmpHistoricalPrices, `fixHistoricalPrices fmpHistoricalPrices`);
     throwIfUndefinedOrNull(symbolID, `fixHistoricalPrices uniqueID`);
     if (!fmpHistoricalPrices.length) { 
       console.logVerbose(`Historical prices are empty for ${symbolID}. Nothing to fix.`);
@@ -494,7 +494,7 @@ function _fixFMPQuote(fmpQuote, symbolID) {
  */
 function _fixFMPSplits(fmpSplits, symbolID) {
   try {
-    throwIfUndefinedOrNull(fmpSplits, `fixSplits splits`);
+    throwIfNotArray(fmpSplits, `fixSplits splits`);
     throwIfUndefinedOrNull(symbolID, `fixSplits symbolID`);
     if (!fmpSplits.length) { 
       console.logVerbose(`Splits are empty for ${symbolID}. Nothing to fix.`);
@@ -530,7 +530,7 @@ function _fixFMPSplits(fmpSplits, symbolID) {
  */
 function _fixFMPSymbols(fmpSymbols) {
   try {
-    throwIfUndefinedOrNull(fmpSymbols, `_fixFMPSymbols fmpSymbols`);
+    throwIfNotArray(fmpSymbols, `_fixFMPSymbols fmpSymbols`);
     if (!fmpSymbols.length) { 
       console.logVerbose(`Symbols are empty. Nothing to fix.`);
       return []; 
