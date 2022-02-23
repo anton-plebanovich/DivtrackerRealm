@@ -1,6 +1,22 @@
 
 // fmpUtils.js
 
+///////////////////////////////////////////////////////////////////////////////// EXTENSIONS
+
+String.prototype.removeSensitiveData = function() {
+  // We should always use 'strict' for primitive type extensions - https://stackoverflow.com/a/27736962/4124265
+  'use strict';
+
+  let safeString = this;
+  
+  const regexp = new RegExp(apikey, "g");
+  safeString = safeString.replace(apikey, '<APIKEY>');
+
+  return safeString;
+};
+
+///////////////////////////////////////////////////////////////////////////////// SYMBOLS
+
 /** 
  * Computes and returns enabled short symbols.
  * Returned symbols are shortened to `_id` and `t` fields.
@@ -377,7 +393,7 @@ async function _fmpFetch(api, queryParameters) {
   }
   
   const baseURL = "https://financialmodelingprep.com/api";
-  queryParameters.apikey = "969387165d69a8607f9726e8bb52b901";
+  queryParameters.apikey = apikey;
 
   return await fetch(baseURL, api, queryParameters);
 }
@@ -717,6 +733,10 @@ exports = function() {
 
   if (typeof fmp === 'undefined') {
     fmp = atlas.db("fmp");
+  }
+
+  if (typeof apikey === 'undefined') {
+    apikey = "969387165d69a8607f9726e8bb52b901";
   }
   
   console.log("Imported FMP utils");

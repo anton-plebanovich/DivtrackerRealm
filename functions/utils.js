@@ -458,29 +458,6 @@ String.prototype.isEqual = function(string) {
   return this === string;
 };
 
-String.prototype.removeSensitiveData = function() {
-  // We should always use 'strict' for primitive type extensions - https://stackoverflow.com/a/27736962/4124265
-  'use strict';
-
-  if (typeof isIEXSandbox !== 'undefined' && isIEXSandbox === true) { return this; }
-
-  let safeString = this;
-  
-  if (premiumToken != null) {
-    const regexp = new RegExp(premiumToken, "g");
-    safeString = safeString.replace(regexp, 'sk_***');
-  }
-
-  if (tokens != null) {
-    for (const token of tokens) {
-      const regexp = new RegExp(token, "g");
-      safeString = safeString.replace(regexp, 'pk_***');
-    }
-  }
-
-  return safeString;
-};
-
 ///////////////////////////////////////////////////////////////////////////////// CLASSES
 
 class _LazyString {

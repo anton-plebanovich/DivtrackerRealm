@@ -1,6 +1,33 @@
 
 // iexUtils.js
 
+///////////////////////////////////////////////////////////////////////////////// EXTENSIONS
+
+String.prototype.removeSensitiveData = function() {
+  // We should always use 'strict' for primitive type extensions - https://stackoverflow.com/a/27736962/4124265
+  'use strict';
+
+  if (isIEXSandbox === true) { return this; }
+
+  let safeString = this;
+  
+  if (premiumToken != null) {
+    const regexp = new RegExp(premiumToken, "g");
+    safeString = safeString.replace(regexp, 'sk_***');
+  }
+
+  if (tokens != null) {
+    for (const token of tokens) {
+      const regexp = new RegExp(token, "g");
+      safeString = safeString.replace(regexp, 'pk_***');
+    }
+  }
+
+  return safeString;
+};
+
+///////////////////////////////////////////////////////////////////////////////// SYMBOLS
+
 /** 
  * Computes and returns enabled in use symbols from companies and user transactions.
  * Returned symbols are shortened to `_id` and `s` fields.
