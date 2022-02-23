@@ -144,6 +144,10 @@ Object.prototype.updateFrom = function(object) {
   }
 
   const set = Object.assign({}, this);
+
+  // Skip '_id' set
+  delete set['_id'];
+  
   const unset = {};
 
   // Delete `null` values from the `set`
@@ -158,6 +162,11 @@ Object.prototype.updateFrom = function(object) {
   let hasUnsets = false;
   const oldEntries = Object.entries(object);
   for (const [key, oldValue] of oldEntries) {
+    // Just skip '_id'
+    if (key === '_id') {
+      continue;
+    }
+
     const newValue = set[key];
     if (newValue == null) {
       unset[key] = "";
