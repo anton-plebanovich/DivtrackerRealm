@@ -16,8 +16,8 @@ async function _getShortSymbols() {
     )
     .toArray();
 
-  console.log(`Got short symbols (${shortSymbols.length}) for '${symbolIDs}'`);
-  console.logData(`Got short symbols (${shortSymbols.length}) for '${symbolIDs}'`, shortSymbols);
+  console.log(`Got short symbols (${shortSymbols.length})`);
+  console.logData(`Got short symbols (${shortSymbols.length})`, shortSymbols);
 
   return shortSymbols;
 };
