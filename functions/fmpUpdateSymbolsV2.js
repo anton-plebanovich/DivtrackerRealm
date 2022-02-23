@@ -37,7 +37,7 @@ async function updateFMPSymbols() {
 
   const newSymbols = await fetchSymbols();
   const fmpCollection = fmp.collection("symbols");
-  await fmpCollection.safeUpsertMany(newSymbols, 't');
+  await fmpCollection.safeUpdateMany(newSymbols, undefined, 't');
   
   // We do not delete old symbols but instead mark them as disabled to be able to display user transactions.
   const newTickers = newSymbols.map(x => x.t);
