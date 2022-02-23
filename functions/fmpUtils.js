@@ -1,6 +1,29 @@
 
 // fmpUtils.js
 
+/** 
+ * Computes and returns enabled short symbols.
+ * Returned symbols are shortened to `_id` and `t` fields.
+ * @returns {Promise<[ShortSymbol]>} Array of short symbols.
+*/
+async function _getShortSymbols() {
+  // Getting short symbols for IDs
+  const symbolsCollection = fmp.collection("symbols");
+  const shortSymbols = await symbolsCollection
+    .find(
+      { e: false },
+      { _id: 1, t: 1 }
+    )
+    .toArray();
+
+  console.log(`Got short symbols (${shortSymbols.length}) for '${symbolIDs}'`);
+  console.logData(`Got short symbols (${shortSymbols.length}) for '${symbolIDs}'`, shortSymbols);
+
+  return shortSymbols;
+};
+
+getShortSymbols = _getShortSymbols;
+
 ///////////////////////////////////////////////////////////////////////////////// fetch.js
 
 //////////////////////////////////// Tokens

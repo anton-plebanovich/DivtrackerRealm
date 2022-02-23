@@ -20,9 +20,6 @@
 }
  */
 
-/**
- * @note FMP update happens at 8am, 9am, 12pm, 1pm UTC
- */
 exports = async function() {
   context.functions.execute("fmpUtils");
 
@@ -50,7 +47,7 @@ async function updateFMPSymbols() {
     console.log(`Disabling FMP symbols: ${tickersToDisable}`);
     await fmpCollection.updateMany(
       { t: { $in: tickersToDisable } },
-      { $set: { isEnabled: false } }
+      { $set: { e: false } }
     );
   }
 }
