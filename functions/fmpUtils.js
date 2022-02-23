@@ -249,7 +249,7 @@ async function _fmpFetchAndMapFlatArray(api, tickers, queryParameters, idByTicke
  */
 async function _fmpFetchAndMapArray(api, tickers, queryParameters, limit, groupingKey, dataKey, idByTicker, mapFunction) {
   return _fmpFetch(api, queryParameters)
-    .then(datas => {
+    .then(async datas => {
       if (tickers.length === 1) {
         const data = datas;
         const ticker = tickers[0];
