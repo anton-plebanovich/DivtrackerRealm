@@ -679,16 +679,16 @@ var runtimeExtended = false;
 function extendRuntime() {
   if (runtimeExtended) { return; }
 
-  Promise.allLmited = async (queue, limit) => {
+  Promise.allLmited = async (promises, limit) => {
     let index = 0;
     const results = [];
   
     // Run a pseudo-thread
     const execThread = async () => {
-      while (index < queue.length) {
+      while (index < promises.length) {
         const curIndex = index++;
         // Use of `curIndex` is important because `index` may change after await is resolved
-        results[curIndex] = await queue[curIndex]();
+        results[curIndex] = await promises[curIndex];
       }
     };
   

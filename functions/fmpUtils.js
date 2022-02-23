@@ -61,7 +61,7 @@ fetchCompanies = async function fetchCompanies(shortSymbols) {
   const api = `/v3/profile/${tickersString}`;
 
   // https://financialmodelingprep.com/api/v3/profile/AAPL,AAP?apikey=969387165d69a8607f9726e8bb52b901
-  return await _fmpFetchBatchAndMapObjects(
+  return await _fmpFetchAndMapObjects(
     api,
     tickers,
     null,
@@ -176,7 +176,7 @@ fetchQuotes = async function fetchQuotes(shortSymbols) {
   const api = `/v3/quote/${tickersString}`;
 
   // https://financialmodelingprep.com/api/v3/quote/GOOG,AAPL,FB?apikey=969387165d69a8607f9726e8bb52b901
-  return await _fmpFetchBatchAndMapObjects(
+  return await _fmpFetchAndMapObjects(
     api,
     tickers,
     null,
