@@ -175,7 +175,7 @@ fetchSplits = async function fetchSplits(shortSymbols) {
  */
 fetchSymbols = async function fetchSymbols() {
   // https://financialmodelingprep.com/api/v3/stock/list?apikey=969387165d69a8607f9726e8bb52b901
-  const symbols = await fmpFetch("/v3/stock/list")
+  const symbols = await _fmpFetch("/v3/stock/list")
     .then(_fixFMPSymbols);
 };
 
