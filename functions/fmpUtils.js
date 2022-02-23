@@ -261,7 +261,7 @@ async function _fmpFetchAndMapFlatArray(api, tickers, queryParameters, idByTicke
  * @returns {Promise<[Object]>} Flat array of entities.
  */
 async function _fmpFetchBatchAndMapArray(api, tickers, queryParameters, maxBatchSize, limit, groupingKey, dataKey, idByTicker, mapFunction) {
-  const datas = await _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, groupingKey)
+  return await _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, groupingKey)
     .then(async datas => {
       if (tickers.length === 1) {
         const data = datas;
@@ -347,6 +347,8 @@ async function _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, group
 
   if (queryParameters == null) {
     queryParameters = {};
+  } else {
+    queryParameters = Object.assign({}, queryParameters);
   }
 
   let chunkedSymbolsArray;
