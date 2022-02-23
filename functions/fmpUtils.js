@@ -383,7 +383,7 @@ async function _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, group
       result[groupingKey] = result[groupingKey].concat(response[groupingKey]);
 
     } else {
-      logVerbose(`No data for tickers: ${tickersString}`);
+      console.logVerbose(`No data for tickers: ${tickersString}`);
     }
   }
 
