@@ -1,6 +1,93 @@
 
 // iexUtils.js
 
+/** 
+ * Computes and returns enabled in use symbols from companies and user transactions.
+ * Returned symbols are shortened to `_id` and `s` fields.
+ * @returns {Promise<[ShortSymbol]>} Array of short symbols.
+*/
+async function _getInUseShortSymbols() {
+  // We combine transactions and companies distinct IDs. 
+  // Idealy, we should be checking all tables but we assume that only two will be enough.
+  // All symbols have company record so company DB contains all ever fetched symbols.
+  // Meanwhile transactions may contain not yet fetched symbols or have less symbols than we already should be updating (transactions may be deleted).
+  // So by combining we have all current + all future symbols. Idealy.
+  const companiesCollection = db.collection("companies");
+  const [companyIDs, distinctTransactionSymbolIDs] = await Promise.all([
+    companiesCollection.distinct("_id", {}),
+    _getDistinctTransactionSymbolIDs()
+  ]);
+
+  console.log(`Unique companies IDs (${companyIDs.length})`);
+  console.logData(`Unique companies IDs (${companyIDs.length})`, companyIDs);
+
+  // Compute distinct symbol IDs using both sources
+  let symbolIDs = [...new Set(companyIDs.concat(distinctTransactionSymbolIDs))];
+
+  const symbolsCollection = db.collection("symbols");
+  const disabledSymbolIDs = await symbolsCollection.distinct("_id", { e: false });
+
+  // Remove disabled symbols
+  symbolIDs = symbolIDs.filter(x => !disabledSymbolIDs.includesObject(x));
+
+  return await _getShortSymbols(symbolIDs);
+};
+
+getInUseShortSymbols = _getInUseShortSymbols;
+
+/** 
+ * Returns short symbols for symbol IDs
+ * @param {[ObjectId]} symbolIDs
+ * @returns {Promise<[ShortSymbol]>}
+*/
+async function _getShortSymbols(symbolIDs) {
+  // Getting short symbols for IDs
+  const symbolsCollection = db.collection("symbols");
+  const shortSymbols = await symbolsCollection
+    .find(
+      { _id: { $in: symbolIDs } }, 
+      { _id: 1, t: 1 }
+    )
+    .toArray();
+
+  console.log(`Got short symbols (${shortSymbols.length}) for '${symbolIDs}'`);
+  console.logData(`Got short symbols (${shortSymbols.length}) for '${symbolIDs}'`, shortSymbols);
+
+  return shortSymbols;
+};
+
+getShortSymbols = _getShortSymbols;
+
+/** 
+ * @returns {Promise<[ObjectId]>} Array of unique transaction IDs
+*/
+async function _getDistinctTransactionSymbolIDs() {
+  const transactionsCollection = db.collection("transactions");
+  const distinctTransactionSymbolIDs = await transactionsCollection.distinct("s");
+  distinctTransactionSymbolIDs.sort();
+
+  console.log(`Distinct symbol IDs for transactions (${distinctTransactionSymbolIDs.length})`);
+  console.logData(`Distinct symbol IDs for transactions (${distinctTransactionSymbolIDs.length})`, distinctTransactionSymbolIDs);
+
+  return distinctTransactionSymbolIDs;
+}
+
+getDistinctTransactionSymbolIDs = _getDistinctTransactionSymbolIDs;
+
+/** 
+ * @returns {Promise<[ObjectId]>} Array of existing enabled symbol IDs, e.g. [ObjectId("61b102c0048b84e9c13e454d")]
+*/
+async function _getSupportedSymbolIDs() {
+  const symbolsCollection = db.collection("symbols");
+  const supportedSymbolIDs = await symbolsCollection.distinct("_id", { e: null });
+  console.log(`Supported symbols (${supportedSymbolIDs.length})`);
+  console.logData(`Supported symbols (${supportedSymbolIDs.length})`, supportedSymbolIDs);
+
+  return supportedSymbolIDs;
+};
+
+getSupportedSymbolIDs = _getSupportedSymbolIDs;
+
 ///////////////////////////////////////////////////////////////////////////////// fetch.js
 
 //////////////////////////////////// Tokens
