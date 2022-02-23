@@ -11,7 +11,7 @@ async function _getShortSymbols() {
   const symbolsCollection = fmp.collection("symbols");
   const shortSymbols = await symbolsCollection
     .find(
-      { e: false },
+      { e: null },
       { _id: 1, t: 1 }
     )
     .toArray();
