@@ -2,7 +2,7 @@
 // eraseData.js
 
 exports = function() {
-  context.functions.execute("utilsV2");
+  context.functions.execute("utils");
   console.log(`Erasing data`);
   
   /// Delete ALL

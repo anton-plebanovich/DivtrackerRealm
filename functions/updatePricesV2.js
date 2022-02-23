@@ -15,7 +15,7 @@
  * there is a period gap.
  */
  exports = async function() {
-  context.functions.execute("utilsV2");
+  context.functions.execute("iexUtils");
   const shortSymbols = await getInUseShortSymbols();
 
   if (shortSymbols.length <= 0) {

@@ -1,5 +1,5 @@
 
-// updateDividendsV2.js
+// fmpUpdateDividends.js
 
 // https://docs.mongodb.com/manual/reference/method/js-collection/
 // https://docs.mongodb.com/manual/reference/method/js-bulk/
@@ -22,13 +22,10 @@ function getUpperExDate(dividend) {
   return date;
 }
 
-/**
- * @note IEX update happens at 9am UTC
- */
 exports = async function() {
-  context.functions.execute("iexUtils");
-  const shortSymbols = await getInUseShortSymbols();
-  const collection = db.collection("dividends");
+  context.functions.execute("fmpUtils");
+  const shortSymbols = await getShortSymbols();
+  const collection = fmp.collection("dividends");
 
   if (shortSymbols.length <= 0) {
     console.log(`No symbols. Skipping update.`);
@@ -41,7 +38,7 @@ exports = async function() {
   const shortSymbolsToUpdate = shortSymbols.filter(x => !upToDateSymbolIDs.includes(x.s));
   console.log(`Updating future dividends (${shortSymbolsToUpdate.length}) for '${shortSymbolsToUpdate.stringify()}' IDs`);
 
-  const futureDividends = await fetchDividends(shortSymbolsToUpdate, true);
+  const futureDividends = await fetchDividendsCalendar(shortSymbolsToUpdate);
   if (futureDividends.length) {
     console.log(`Inserting missed future dividends (${futureDividends.length})`);
     const bulk = collection.initializeUnorderedBulkOp();
@@ -50,17 +47,7 @@ exports = async function() {
       const upperExDate = getUpperExDate(futureDividend);
       console.logVerbose(`Checking future dividend '${futureDividend.s}' for '${futureDividend.e}' ex date; lower - ${lowerExDate}; upper - ${upperExDate}`);
 
-      const currency = futureDividend.c == null ? null : futureDividend.c;
-      let updateOne;
-      if (currency == null) {
-        // We might have empty string for future dividends and we need to unset it if 
-        // the currency was changed to USD and so the field is absent.
-        updateOne = { $set: futureDividend, $unset: { c: "" } };
-
-      } else {
-        updateOne = { $set: futureDividend };
-      }
-
+      const updateOne = { $set: futureDividend };
       const lowerAmount = futureDividend.a * 0.9;
       const upperAmount = futureDividend.a * 1.1;
 
@@ -72,8 +59,6 @@ exports = async function() {
           $and: [
             // We might have different frequency dividends on same or close date.
             { f: futureDividend.f },
-            // Currency might be "" for future dividends.
-            { $or: [{ c: currency }, { c: "" }] },
             // Amount might be 0.0 for future dividends.
             // GSK, TTE. Amount might change a little bit.
             { $or: [{ a: { $gte: lowerAmount, $lte: upperAmount } }, { a: 0.0 }] }
@@ -91,10 +76,8 @@ exports = async function() {
   }
 
   // Past dividends update. Just in case they weren't added for the future or were updated.
-  const days = 3;
   console.log(`Fetching past dividends for the last ${days} days`);
-  const daysParam = `${days}d`;
-  const pastDividends = await fetchDividends(shortSymbols, false, daysParam);
+  const pastDividends = await fetchDividends(shortSymbols, 1);
   if (pastDividends.length) {
     console.log(`Inserting missed past dividends (${pastDividends.length})`);
     const bulk = collection.initializeUnorderedBulkOp();
@@ -103,17 +86,7 @@ exports = async function() {
       const upperExDate = getUpperExDate(pastDividend);
       console.logVerbose(`Checking past dividend '${pastDividend.s}' for '${pastDividend.e}' ex date; lower - ${lowerExDate}; upper - ${upperExDate}`);
       
-      const currency = pastDividend.c == null ? null : pastDividend.c;
-      let updateOne;
-      if (currency == null) {
-        // We might have empty string for future dividends and we need to unset it if 
-        // the currency was changed to USD and so the field is absent.
-        updateOne = { $set: pastDividend, $unset: { c: "" } };
-
-      } else {
-        updateOne = { $set: pastDividend };
-      }
-
+      const updateOne = { $set: pastDividend };
       const lowerAmount = pastDividend.a * 0.9;
       const upperAmount = pastDividend.a * 1.1;
 
@@ -125,8 +98,6 @@ exports = async function() {
           $and: [
             // We might have different frequency dividends on same or close date.
             { f: pastDividend.f },
-            // Currency might be "" for future dividends.
-            { $or: [{ c: currency }, { c: "" }] },
             // Amount might be 0.0 for future dividends.
             // GSK, TTE. Amount might change a little bit.
             { $or: [{ a: { $gte: lowerAmount, $lte: upperAmount } }, { a: 0.0 }] }

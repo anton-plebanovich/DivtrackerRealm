@@ -5,7 +5,7 @@
  * Checks all existing transactions to be valid.
  */
  exports = async function() {
-  context.functions.execute("utilsV2");
+  context.functions.execute("utils");
   const transactionsCollection = db.collection("transactions");
   const transactions = await transactionsCollection.find({}).toArray();
   if (!transactions.length) {

@@ -21,7 +21,7 @@
  * @note IEX update happens at 4:30am-8pm ET Mon-Fri
  */
 exports = async function() {
-  context.functions.execute("utilsV2");
+  context.functions.execute("iexUtils");
   const shortSymbols = await getInUseShortSymbols();
 
   if (shortSymbols.length <= 0) {

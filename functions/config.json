@@ -17,6 +17,30 @@
         "private": true
     },
     {
+        "name": "fmpLoadMissingData",
+        "private": true
+    },
+    {
+        "name": "fmpUpdateCompanies",
+        "private": true
+    },
+    {
+        "name": "fmpUpdateDividends",
+        "private": true
+    },
+    {
+        "name": "fmpUpdateSymbols",
+        "private": true
+    },
+    {
+        "name": "fmpUtils",
+        "private": true
+    },
+    {
+        "name": "iexUtils",
+        "private": true
+    },
+    {
         "name": "loadMissingDataV2",
         "private": true
     },
@@ -61,7 +85,7 @@
         "private": true
     },
     {
-        "name": "utilsV2",
+        "name": "utils",
         "private": true
     }
 ]

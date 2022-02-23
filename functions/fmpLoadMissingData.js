@@ -1,35 +1,23 @@
 
-// loadMissingDataV2.js
+// fmpLoadMissingData.js
 
-// https://docs.mongodb.com/manual/reference/method/Bulk.find.upsert/
-// https://docs.mongodb.com/realm/mongodb/actions/collection.bulkWrite/
+// https://docs.mongofmp.com/manual/reference/method/Bulk.find.upsert/
+// https://docs.mongofmp.com/realm/mongodb/actions/collection.bulkWrite/
 
 /**
  * @example
  * exports();
- * exports([{"s":new BSON.ObjectId("61b102c0048b84e9c13e4564")}]);
  */
-exports = async function loadMissingData(transactions) {
-  context.functions.execute("iexUtils");
+exports = async function loadMissingData() {
+  context.functions.execute("fmpUtils");
   
-  let shortSymbols;
-  if (Object.prototype.toString.call(transactions) === '[object Array]') {
-    const symbolIDs = transactions
-      .map(x => x.s)
-      .distinct();
-
-    shortSymbols = await getShortSymbols(symbolIDs);
-
-  } else {
-    shortSymbols = await getInUseShortSymbols();
-  }
-
+  const shortSymbols = await getShortSymbols();
   const tickers = shortSymbols.map(x => x.t);
   console.log(`Loading missing data for tickers (${tickers.length}): ${tickers}`);
 
   const symbolIDs = shortSymbols.map(x => x._id);
   
-  return Promise.safeAllAndUnwrap([
+  await Promise.safeAllAndUnwrap([
     loadMissingCompanies(shortSymbols, symbolIDs).mapErrorToSystem(),
     loadMissingDividends(shortSymbols, symbolIDs).mapErrorToSystem(),
     loadMissingHistoricalPrices(shortSymbols, symbolIDs).mapErrorToSystem(),
@@ -45,7 +33,7 @@ exports = async function loadMissingData(transactions) {
  * @param {[ShortSymbol]} shortSymbols
  */
 async function loadMissingCompanies(shortSymbols, symbolIDs) {
-  const collection = db.collection('companies');
+  const collection = fmp.collection('companies');
   const missingShortSymbols = await getMissingShortSymbols(collection, '_id', shortSymbols, symbolIDs);
   if (missingShortSymbols.length) {
     console.log(`Found missing companies for tickers: ${missingShortSymbols.map(x => x.t)}`);
@@ -80,7 +68,7 @@ async function loadMissingCompanies(shortSymbols, symbolIDs) {
  * @param {[ShortSymbol]} shortSymbols
  */
 async function loadMissingDividends(shortSymbols, symbolIDs) {
-  const collection = db.collection('dividends');
+  const collection = fmp.collection('dividends');
   const missingShortSymbols = await getMissingShortSymbols(collection, 's', shortSymbols, symbolIDs);
   if (missingShortSymbols.length) {
     console.log(`Found missing dividends for tickers: ${missingShortSymbols.map(x => x.t)}`);
@@ -89,8 +77,8 @@ async function loadMissingDividends(shortSymbols, symbolIDs) {
     return;
   }
 
-  const futureDividends = await fetchDividends(missingShortSymbols, true);
-  const pastDividends = await fetchDividends(missingShortSymbols, false);
+  const futureDividends = await fetchDividendsCalendar(missingShortSymbols);
+  const pastDividends = await fetchDividends(missingShortSymbols);
   const dividends = futureDividends.concat(pastDividends);
   if (!dividends.length) {
     console.log(`No dividends. Skipping insert.`);
@@ -116,7 +104,7 @@ async function loadMissingDividends(shortSymbols, symbolIDs) {
  * @param {[ShortSymbol]} shortSymbols
  */
 async function loadMissingHistoricalPrices(shortSymbols, symbolIDs) {
-  const collection = db.collection('historical-prices');
+  const collection = fmp.collection('historical-prices');
   const missingShortSymbols = await getMissingShortSymbols(collection, 's', shortSymbols, symbolIDs);
   if (missingShortSymbols.length) {
     console.log(`Found missing historical prices for tickers: ${missingShortSymbols.map(x => x.t)}`);
@@ -151,7 +139,7 @@ async function loadMissingHistoricalPrices(shortSymbols, symbolIDs) {
  * @param {[ShortSymbol]} shortSymbols
  */
 async function loadMissingPreviousDayPrices(shortSymbols, symbolIDs) {
-  const collection = db.collection('previous-day-prices');
+  const collection = fmp.collection('previous-day-prices');
   const missingShortSymbols = await getMissingShortSymbols(collection, '_id', shortSymbols, symbolIDs);
   if (missingShortSymbols.length) {
     console.log(`Found missing previous day prices for tickers: ${missingShortSymbols.map(x => x.t)}`);
@@ -184,7 +172,7 @@ async function loadMissingPreviousDayPrices(shortSymbols, symbolIDs) {
  * @param {[ShortSymbol]} shortSymbols
  */
 async function loadMissingQuotes(shortSymbols, symbolIDs) {
-  const collection = db.collection('quotes');
+  const collection = fmp.collection('quotes');
   const missingShortSymbols = await getMissingShortSymbols(collection, '_id', shortSymbols, symbolIDs);
   if (missingShortSymbols.length) {
     console.log(`Found missing qoutes for tickers: ${missingShortSymbols.map(x => x.t)}`);
@@ -217,7 +205,7 @@ async function loadMissingQuotes(shortSymbols, symbolIDs) {
  * @param {[ShortSymbol]} shortSymbols
  */
 async function loadMissingSplits(shortSymbols, symbolIDs) {
-  const collection = db.collection('splits');
+  const collection = fmp.collection('splits');
   const missingShortSymbols = await getMissingShortSymbols(collection, 's', shortSymbols, symbolIDs);
   if (missingShortSymbols.length) {
     console.log(`Found missing splits for tickers: ${missingShortSymbols.map(x => x.t)}`);
