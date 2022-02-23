@@ -373,8 +373,13 @@ async function _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, group
       }
     }
 
-    throwIfNotArray(response[groupingKey], `_fmpFetchBatch response[groupingKey]`);
-    result[groupingKey] = result[groupingKey].concat(response[groupingKey]);
+    if (chunkedSymbols.length == 1) {
+      result[groupingKey].push(response[groupingKey]);
+
+    } else {
+      throwIfNotArray(response[groupingKey], `_fmpFetchBatch response[groupingKey]`);
+      result[groupingKey] = result[groupingKey].concat(response[groupingKey]);
+    }
   }
 
   return result;

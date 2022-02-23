@@ -341,6 +341,8 @@ async function _iexFetchBatchNew(types, tickers, queryParameters) {
 
   if (queryParameters == null) {
     queryParameters = {};
+  } else {
+    queryParameters = Object.assign({}, queryParameters);
   }
 
   const api = `/stock/market/batch`;
@@ -350,15 +352,14 @@ async function _iexFetchBatchNew(types, tickers, queryParameters) {
   var result = {};
   for (const chunkedSymbols of chunkedSymbolsArray) {
     const symbolsParameter = chunkedSymbols.join(",");
-    const fullQueryParameters = Object.assign({}, queryParameters);
-    fullQueryParameters.types = typesParameter;
-    fullQueryParameters.symbols = symbolsParameter;
 
     console.log(`Fetching batch for symbols (${chunkedSymbols.length}) with query '${queryParameters.stringify()}': ${typesParameter} - ${symbolsParameter}`);
+    queryParameters.types = typesParameter;
+    queryParameters.symbols = symbolsParameter;
     
     let response
     try {
-      response = await _iexFetch(api, fullQueryParameters);
+      response = await _iexFetch(api, queryParameters);
     } catch(error) {
       if (error.statusCode == 404) {
         response = {};
