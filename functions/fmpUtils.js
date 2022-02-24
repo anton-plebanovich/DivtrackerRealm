@@ -442,6 +442,7 @@ function _fixFMPCompany(fmpCompany, symbolID) {
 
     return company;
   } catch(error) {
+    console.error(`Unable to fix company ${fmpCompany.stringify()}: ${error}`);
     return null;
   }
 };
@@ -494,6 +495,7 @@ async function _fixFMPDividends(fmpDividends, symbolID) {
       });
 
   } catch(error) {
+    console.error(`Unable to fix dividends ${fmpDividends.stringify()}: ${error}`);
     return [];
   }
 }
@@ -530,6 +532,7 @@ function _fixFMPPreviousDayPrice(fmpPreviousDayPrice, symbolID) {
   } catch(error) {
     // {"AQNU":{"previous":null}}
     // {"AACOU":{"previous":null}}
+    console.error(`Unable to fix previous day price ${fmpPreviousDayPrice.stringify()}: ${error}`);
     return null;
   }
 };
@@ -583,6 +586,7 @@ function _fixFMPHistoricalPrices(fmpHistoricalPrices, symbolID) {
       });
 
   } catch (error) {
+    console.error(`Unable to fix historical prices ${fmpHistoricalPrices.stringify()}: ${error}`);
     return [];
   }
 };
@@ -610,6 +614,7 @@ function _fixFMPQuote(fmpQuote, symbolID) {
     return quote;
 
   } catch(error) {
+    console.error(`Unable to fix quote ${fmpQuote.stringify()}: ${error}`);
     return null;
   }
 };
@@ -647,6 +652,7 @@ function _fixFMPSplits(fmpSplits, symbolID) {
       });
 
   } catch (error) {
+    console.error(`Unable to fix splits ${fmpSplits.stringify()}: ${error}`);
     return [];
   }
 };
@@ -678,6 +684,7 @@ function _fixFMPSymbols(fmpSymbols) {
       });
 
   } catch (error) {
+    console.error(`Unable to fix symbols ${fmpSymbols.stringify()}: ${error}`);
     return [];
   }
 };
