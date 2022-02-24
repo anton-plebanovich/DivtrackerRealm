@@ -489,10 +489,15 @@ async function _fixFMPDividends(fmpDividends, symbolID) {
           // Workaround, some records doesn't have `dividend` and it looks like `adjDividend` may be used if there were no splits.
           // We can improve this later using splits info but just using `adjDividend` as is for now.
           dividend.a = BSON.Double(fmpDividend.adjDividend);
+
+        } else {
+          console.error(`No amount for dividend: ${fmpDividend.stringify()}`)
+          return null
         }
     
         return dividend;
-      });
+      })
+      .filterNull();
 
   } catch(error) {
     console.error(`Unable to fix dividends ${fmpDividends.stringify()}: ${error}`);
@@ -637,14 +642,16 @@ function _fixFMPSplits(fmpSplits, symbolID) {
         split.e = _getOpenDate(fmpSplit.date);
         split.s = symbolID;
 
-        if (fmpSplit.denominator != null && fmpSplit.numerator != null) {
+        if (fmpSplit.denominator > 0 && fmpSplit.numerator > 0) {
           split.r = BSON.Double(fmpSplit.denominator / fmpSplit.numerator);
         } else {
           console.error(`No ratio for split: ${fmpSplit.stringify()}`)
+          return null
         }
 
         return split;
-      });
+      })
+      .filterNull();
 
   } catch (error) {
     console.error(`Unable to fix splits ${fmpSplits.stringify()}: ${error}`);
