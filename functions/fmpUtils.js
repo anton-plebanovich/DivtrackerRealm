@@ -483,6 +483,11 @@ async function _fixFMPDividends(fmpDividends, symbolID) {
 
         if (fmpDividend.dividend != null) {
           dividend.a = BSON.Double(fmpDividend.dividend);
+
+        } else if (fmpDividend.adjDividend != null) {
+          // Workaround, some records doesn't have `dividend` and it looks like `adjDividend` may be used if there were no splits.
+          // We can improve this later using splits info but just using `adjDividend` as is for now.
+          dividend.a = BSON.Double(fmpDividend.adjDividend);
         }
     
         return dividend;
