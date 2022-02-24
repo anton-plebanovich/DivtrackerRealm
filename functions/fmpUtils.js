@@ -135,7 +135,7 @@ fetchPreviousDayPrices = async function _fetchPreviousDayPrices(shortSymbols) {
     'historicalStockList',
     'historical',
     idByTicker,
-    _fixFMPPreviousDayPrice
+    _fixFMPPreviousDayPrices
   );
 };
 
@@ -502,38 +502,33 @@ async function _fixFMPDividends(fmpDividends, symbolID) {
 
 /**
  * Fixes previous day price object so it can be added to MongoDB.
- * @param {FMPPreviousDayPrice} fmpPreviousDayPrice Previous day price object.
+ * @param {FMPPreviousDayPrice} fmpPreviousDayPrices Previous day price object.
  * @param {ObjectId} symbolID Symbol object ID.
  * @returns {PreviousDayPrice|null} Returns fixed object or `null` if fix wasn't possible.
  */
-function _fixFMPPreviousDayPrice(fmpPreviousDayPrice, symbolID) {
-  if (Object.prototype.toString.call(fmpPreviousDayPrice) === '[object Array]') {
-    if (fmpPreviousDayPrice.length == 1) {
-      fmpPreviousDayPrice = fmpPreviousDayPrice[0];
-    } else {
-      return null
-    }
-  }
-
+function _fixFMPPreviousDayPrices(fmpPreviousDayPrices, symbolID) {
   try {
-    throwIfUndefinedOrNull(fmpPreviousDayPrice, `fixPreviousDayPrice fmpPreviousDayPrice`);
+    throwIfUndefinedOrNull(fmpPreviousDayPrices, `fixPreviousDayPrice fmpPreviousDayPrice`);
     throwIfUndefinedOrNull(symbolID, `fixPreviousDayPrice symbolID`);
   
-    console.logVerbose(`Previous day price data fix start`);
-    const previousDayPrice = {};
-    previousDayPrice._id = symbolID;
+    console.logVerbose(`Previous day price data fix start for ${symbolID}`);
+    return fmpPreviousDayPrices
+      .filterNull()
+      .map(fmpPreviousDayPrice => {
+        const previousDayPrice = {};
+        previousDayPrice.d = _getCloseDate(fmpPreviousDayPrice.date);
+        previousDayPrice.s = symbolID;
 
-    if (fmpPreviousDayPrice.close != null) {
-      previousDayPrice.c = BSON.Double(fmpPreviousDayPrice.close);
-    }
-  
-    return previousDayPrice;
+        if (fmpPreviousDayPrices.close != null) {
+          previousDayPrice.c = BSON.Double(fmpPreviousDayPrices.close);
+        }
+
+        return previousDayPrice;
+      });
 
   } catch(error) {
-    // {"AQNU":{"previous":null}}
-    // {"AACOU":{"previous":null}}
-    console.error(`Unable to fix previous day price ${fmpPreviousDayPrice.stringify()}: ${error}`);
-    return null;
+    console.error(`Unable to fix previous day prices ${fmpPreviousDayPrices.stringify()}: ${error}`);
+    return [];
   }
 };
 
