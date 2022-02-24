@@ -491,7 +491,7 @@ async function _fixFMPDividends(fmpDividends, symbolID) {
           dividend.a = BSON.Double(fmpDividend.adjDividend);
 
         } else {
-          console.error(`No amount for dividend: ${fmpDividend.stringify()}`)
+          console.error(`No amount for dividend ${symbolID}: ${fmpDividend.stringify()}`)
           return null
         }
     
@@ -645,7 +645,7 @@ function _fixFMPSplits(fmpSplits, symbolID) {
         if (fmpSplit.denominator > 0 && fmpSplit.numerator > 0) {
           split.r = BSON.Double(fmpSplit.denominator / fmpSplit.numerator);
         } else {
-          console.error(`No ratio for split: ${fmpSplit.stringify()}`)
+          console.error(`No ratio for split '${symbolID}': ${fmpSplit.stringify()}`)
           return null
         }
 
