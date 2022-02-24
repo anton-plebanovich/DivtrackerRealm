@@ -516,8 +516,8 @@ function _fixFMPPreviousDayPrices(fmpPreviousDayPrices, symbolID) {
       .filterNull()
       .map(fmpPreviousDayPrice => {
         const previousDayPrice = {};
+        previousDayPrice._id = symbolID;
         previousDayPrice.d = _getCloseDate(fmpPreviousDayPrice.date);
-        previousDayPrice.s = symbolID;
 
         if (fmpPreviousDayPrices.close != null) {
           previousDayPrice.c = BSON.Double(fmpPreviousDayPrices.close);
