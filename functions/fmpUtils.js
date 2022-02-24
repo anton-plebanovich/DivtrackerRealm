@@ -519,8 +519,8 @@ function _fixFMPPreviousDayPrices(fmpPreviousDayPrices, symbolID) {
         previousDayPrice._id = symbolID;
         previousDayPrice.d = _getCloseDate(fmpPreviousDayPrice.date);
 
-        if (fmpPreviousDayPrices.close != null) {
-          previousDayPrice.c = BSON.Double(fmpPreviousDayPrices.close);
+        if (fmpPreviousDayPrice.close != null) {
+          previousDayPrice.c = BSON.Double(fmpPreviousDayPrice.close);
         }
 
         return previousDayPrice;
