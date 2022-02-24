@@ -353,7 +353,7 @@ async function _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, group
 
   let chunkedSymbolsArray;
   if (maxBatchSize == null) {
-    chunkedSymbolsArray = tickers
+    chunkedSymbolsArray = [tickers];
   } else {
     chunkedSymbolsArray = tickers.chunked(maxBatchSize);
   }
