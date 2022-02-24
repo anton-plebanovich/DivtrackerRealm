@@ -76,7 +76,7 @@ exports = async function() {
   }
 
   // Past dividends update. Just in case they weren't added for the future or were updated.
-  console.log(`Fetching past dividends for the last ${days} days`);
+  console.log(`Fetching 1 last dividend for each symbol`);
   const pastDividends = await fetchDividends(shortSymbols, 1);
   if (pastDividends.length) {
     console.log(`Inserting missed past dividends (${pastDividends.length})`);
