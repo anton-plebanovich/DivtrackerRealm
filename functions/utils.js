@@ -54,6 +54,12 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, field) 
     field = "_id";
   }
 
+  const newObjectsLength = newObjects.length;
+  const validNewObjectsLength = newObjects.filter(x => x[field] != null).length
+  if (newObjectsLength != validNewObjectsLength) {
+    _logAndReject(`${newObjectsLength - validNewObjectsLength} of ${newObjectsLength} new objects do not contain required '${field}' field`);
+  }
+
   if (typeof oldObjects === 'undefined') {
     if (newObjects.length < 1000) {
       console.log(`Old objects are undefined. Fetching them by '${field}'.`);
