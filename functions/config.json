@@ -33,6 +33,10 @@
         "private": true
     },
     {
+        "name": "fmpUpdateSplits",
+        "private": true
+    },
+    {
         "name": "fmpUpdateSymbols",
         "private": true
     },
