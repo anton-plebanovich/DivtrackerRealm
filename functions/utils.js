@@ -16,13 +16,33 @@ Object.prototype.safeExecute = async function() {
   }
 };
 
+Object.prototype.safeInsertMissing = async function(newObjects, fields) {
+  _throwIfEmptyArray(newObjects, `Please pass non-empty new objects array as the first argument. safeInsertMissing`);
+
+  if (fields == null) {
+    fields = ["_id"];
+  } else if (Object.prototype.toString.call(fields) !== '[object Array]') {
+    fields = [fields];
+  }
+  _throwIfEmptyArray(fields, `Please pass non-empty fields array as the second argument. safeInsertMissing`);
+  
+  const bulk = this.initializeUnorderedBulkOp();
+  for (const newObject of newObjects) {
+    const find = fields.reduce((find, field) => {
+      return Object.assign(find, { [field]: newObject[field] })
+    }, {});
+
+    bulk
+      .find(find)
+      .upsert()
+      .updateOne({ $setOnInsert: newObject });
+  }
+
+  return await bulk.safeExecute();
+}
+
 Object.prototype.safeUpsertMany = async function(newObjects, field) {
   _throwIfEmptyArray(newObjects, `Please pass non-empty new objects array as the first argument. safeUpsertMany`);
-
-  if (newObjects.length === 0) {
-    console.error(`New objects are empty. Skipping update.`);
-    return;
-  }
 
   if (field == null) {
     field = "_id";
@@ -44,11 +64,6 @@ Object.prototype.safeUpsertMany = async function(newObjects, field) {
  */
 Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, field) {
   _throwIfEmptyArray(newObjects, `Please pass non-empty new objects array as the first argument. safeUpdateMany`);
-
-  if (newObjects.length === 0) {
-    console.error(`New objects are empty. Skipping update.`);
-    return;
-  }
 
   if (field == null) {
     field = "_id";
@@ -343,28 +358,43 @@ Array.prototype.includesObject = function(object) {
  * @returns {Date} Yesterday day start date in UTC.
  */
 Date.yesterday = function() {
-  const yesterday = new Date();
-  yesterday.setUTCDate(yesterday.getUTCDate() - 1);
-  yesterday.setUTCHours(0);
-  yesterday.setUTCMinutes(0);
-  yesterday.setUTCSeconds(0);
-  yesterday.setUTCMilliseconds(0);
+  const date = new Date();
+  date.setUTCDate(date.getUTCDate() - 1);
+  date.setUTCHours(0);
+  date.setUTCMinutes(0);
+  date.setUTCSeconds(0);
+  date.setUTCMilliseconds(0);
 
-  return yesterday;
+  return date;
 };
 
 /**
  * @returns {Date} Month day start date in UTC.
  */
 Date.monthStart = function() {
-  const yesterday = new Date();
-  yesterday.setUTCDate(1);
-  yesterday.setUTCHours(0);
-  yesterday.setUTCMinutes(0);
-  yesterday.setUTCSeconds(0);
-  yesterday.setUTCMilliseconds(0);
+  const date = new Date();
+  date.setUTCDate(1);
+  date.setUTCHours(0);
+  date.setUTCMinutes(0);
+  date.setUTCSeconds(0);
+  date.setUTCMilliseconds(0);
 
-  return yesterday;
+  return date;
+};
+
+/**
+ * @returns {Date} Previous month day start date in UTC.
+ */
+Date.previousMonthStart = function() {
+  const date = new Date();
+  date.setUTCMonth(date.getUTCMonth() - 1);
+  date.setUTCDate(1);
+  date.setUTCHours(0);
+  date.setUTCMinutes(0);
+  date.setUTCSeconds(0);
+  date.setUTCMilliseconds(0);
+
+  return date;
 };
 
 /**

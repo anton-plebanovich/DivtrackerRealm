@@ -120,16 +120,22 @@ fetchDividendsCalendar = async function fetchDividendsCalendar(shortSymbols) {
  * @param {[ShortSymbol]} shortSymbols Short symbol models for which to fetch.
  * @returns {[HistoricalPrice]} Array of requested objects.
  */
-fetchHistoricalPrices = async function fetchHistoricalPrices(shortSymbols) {
+fetchHistoricalPrices = async function fetchHistoricalPrices(shortSymbols, queryParameters) {
   throwIfEmptyArray(shortSymbols, `fetchHistoricalPrices shortSymbols`);
 
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
+
+  if (queryParameters == null) {
+    queryParameters = { serietype: "line" };
+  } else {
+    queryParameters.serietype = "line";
+  }
 
   // https://financialmodelingprep.com/api/v3/historical-price-full/AAPL,AAP?serietype=line&apikey=969387165d69a8607f9726e8bb52b901
   return await _fmpFetchBatchAndMapArray(
     "/v3/historical-price-full",
     tickers,
-    { serietype: "line" },
+    queryParameters,
     5,
     null,
     'historicalStockList',
