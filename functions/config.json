@@ -29,6 +29,10 @@
         "private": true
     },
     {
+        "name": "fmpUpdatePrices",
+        "private": true
+    },
+    {
         "name": "fmpUpdateQuotes",
         "private": true
     },
