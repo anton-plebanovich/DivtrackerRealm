@@ -1,0 +1,16 @@
+{
+    "id": "6185ffbd6db886ed8f037b81",
+    "name": "fmpUpdateQuotesEach15Mins",
+    "type": "SCHEDULED",
+    "config": {
+        "schedule": "0,15,30,45 * * * *"
+    },
+    "disabled": false,
+    "event_processors": {
+        "FUNCTION": {
+            "config": {
+                "function_name": "fmpUpdateQuotes"
+            }
+        }
+    }
+}

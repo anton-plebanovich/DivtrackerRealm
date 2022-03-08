@@ -29,6 +29,10 @@
         "private": true
     },
     {
+        "name": "fmpUpdateQuotes",
+        "private": true
+    },
+    {
         "name": "fmpUpdateSymbols",
         "private": true
     },
