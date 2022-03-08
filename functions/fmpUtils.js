@@ -116,30 +116,6 @@ fetchDividendsCalendar = async function fetchDividendsCalendar(shortSymbols) {
 };
 
 /**
- * Fetches previous day prices in batch for short symbols.
- * @param {[ShortSymbol]} shortSymbols Short symbol models for which to fetch.
- * @returns {[PreviousDayPrice]} Array of requested objects.
- */
-fetchPreviousDayPrices = async function _fetchPreviousDayPrices(shortSymbols) {
-  throwIfEmptyArray(shortSymbols, `fetchPreviousDayPrices shortSymbols`);
-
-  const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
-
-  // https://financialmodelingprep.com/api/v3/historical-price-full/AAPL,AAP?timeseries=1&apikey=969387165d69a8607f9726e8bb52b901
-  return await _fmpFetchBatchAndMapArray(
-    "/v3/historical-price-full",
-    tickers,
-    { serietype: "line", timeseries: 1 },
-    5,
-    null,
-    'historicalStockList',
-    'historical',
-    idByTicker,
-    _fixFMPPreviousDayPrices
-  );
-};
-
-/**
  * Fetches historical prices in batch for uniqueIDs.
  * @param {[ShortSymbol]} shortSymbols Short symbol models for which to fetch.
  * @returns {[HistoricalPrice]} Array of requested objects.
@@ -507,38 +483,6 @@ async function _fixFMPDividends(fmpDividends, symbolID) {
     return [];
   }
 }
-
-/**
- * Fixes previous day price object so it can be added to MongoDB.
- * @param {FMPPreviousDayPrice} fmpPreviousDayPrices Previous day price object.
- * @param {ObjectId} symbolID Symbol object ID.
- * @returns {PreviousDayPrice|null} Returns fixed object or `null` if fix wasn't possible.
- */
-function _fixFMPPreviousDayPrices(fmpPreviousDayPrices, symbolID) {
-  try {
-    throwIfUndefinedOrNull(fmpPreviousDayPrices, `fixPreviousDayPrice fmpPreviousDayPrice`);
-    throwIfUndefinedOrNull(symbolID, `fixPreviousDayPrice symbolID`);
-  
-    console.logVerbose(`Previous day price data fix start for ${symbolID}`);
-    return fmpPreviousDayPrices
-      .filterNull()
-      .map(fmpPreviousDayPrice => {
-        const previousDayPrice = {};
-        previousDayPrice._id = symbolID;
-        previousDayPrice.d = _getCloseDate(fmpPreviousDayPrice.date);
-
-        if (fmpPreviousDayPrice.close != null) {
-          previousDayPrice.c = BSON.Double(fmpPreviousDayPrice.close);
-        }
-
-        return previousDayPrice;
-      });
-
-  } catch(error) {
-    console.error(`Unable to fix previous day prices ${fmpPreviousDayPrices.stringify()}: ${error}`);
-    return [];
-  }
-};
 
 /**
  * Fixes historical prices object so it can be added to MongoDB.
