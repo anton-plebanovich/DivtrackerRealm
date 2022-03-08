@@ -267,11 +267,10 @@ async function _fmpFetchBatchAndMapArray(api, tickers, queryParameters, maxBatch
         const data = datas;
         const ticker = tickers[0];
         let tickerData = data[dataKey];
-        if (limit != null) {
-          tickerData = tickerData.slice(0, limit);
-        }
-
         if (tickerData != null) {
+          if (limit != null) {
+            tickerData = tickerData.slice(0, limit);
+          }
           return await mapFunction(tickerData, idByTicker[ticker]);
         } else {
           return [];
@@ -282,7 +281,7 @@ async function _fmpFetchBatchAndMapArray(api, tickers, queryParameters, maxBatch
         const fixedDataPromises = tickers
           .map(async ticker => {
             const data = dataByTicker[ticker];
-            if (data != null) {
+            if (data != null && data[dataKey] != null) {
               let tickerData = data[dataKey];
               if (limit != null) {
                 tickerData = tickerData.slice(0, limit);
@@ -376,7 +375,7 @@ async function _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, group
     }
 
     if (chunkedSymbols.length == 1) {
-      result[groupingKey].push(response[groupingKey]);
+      result[groupingKey].push(response);
 
     } else if (response[groupingKey] != null) {
       throwIfNotArray(response[groupingKey], `_fmpFetchBatch response[groupingKey]`);
