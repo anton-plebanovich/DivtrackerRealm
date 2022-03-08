@@ -57,7 +57,7 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, field) 
   const newObjectsLength = newObjects.length;
   const validNewObjectsLength = newObjects.filter(x => x[field] != null).length
   if (newObjectsLength != validNewObjectsLength) {
-    _logAndReject(`${newObjectsLength - validNewObjectsLength} of ${newObjectsLength} new objects do not contain required '${field}' field`);
+    return await _logAndReject(`${newObjectsLength - validNewObjectsLength} of ${newObjectsLength} new objects do not contain required '${field}' field`);
   }
 
   if (typeof oldObjects === 'undefined') {
@@ -782,6 +782,9 @@ function _logAndThrow(message) {
 
 logAndThrow = _logAndThrow;
 
+/**
+ * @note Do not forget to use `return`!
+ */
 function _logAndReject(message, data) {
   _throwIfUndefinedOrNull(message, `_logAndReject message`);
 
