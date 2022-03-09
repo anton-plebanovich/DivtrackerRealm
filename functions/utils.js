@@ -1071,8 +1071,11 @@ getTickersAndIDByTicker = _getTickersAndIDByTicker;
     const exchangeRate = {};
     exchangeRate._id = currency;
 
-    if (rate != null) {
+    if (rate != null && rate >= 0.0) {
       exchangeRate.r = BSON.Double(rate);
+    } else {
+      // Skip invalid exchange rates and presume previous valid.
+      continue;
     }
 
     const currencySymbol = getCurrencySymbol(currency);
