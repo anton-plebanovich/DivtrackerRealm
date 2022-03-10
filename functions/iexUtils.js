@@ -286,7 +286,7 @@ async function _iexFetchBatchAndMapArray(type, tickers, idByTicker, mapFunction,
       return tickers
         .map(ticker => {
           const tickerData = dataByTicker[ticker];
-          if (tickerData != null && tickerData[type]) {
+          if (tickerData != null && tickerData[type] != null) {
             return mapFunction(tickerData[type], idByTicker[ticker]);
           } else {
             return [];
@@ -315,9 +315,10 @@ async function _iexFetchBatchAndMapObjects(type, tickers, idByTicker, mapFunctio
       tickers
         .compactMap(ticker => {
           const tickerData = dataByTicker[ticker];
-          if (tickerData != null && tickerData[type]) {
+          if (tickerData != null && tickerData[type] != null) {
             return mapFunction(tickerData[type], idByTicker[ticker]);
           } else {
+            // {"MULG":{}}
             return null;
           }
         })

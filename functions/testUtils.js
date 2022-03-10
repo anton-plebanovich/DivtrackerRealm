@@ -154,8 +154,13 @@ async function _checkData(transactions) {
   const quotesCount = await db.collection('quotes').count({});
   if (quotesCount !== distinctSymbolIDsCount) {
     const missedSymbolIDs = await getMissedSymbolIDs('quotes', '_id', distinctSymbolIDs);
-    // Some symbols doesn't have company or other data. E.g. YSAC+
-    errors.push([`Some quotes weren't inserted (${quotesCount}/${distinctSymbolIDsCount}): ${missedSymbolIDs}`]);
+    // Using threshold because quotes for some symbols are actually just `null`. E.g. MULG
+    const allowedMissingCount = Math.ceil(previousDayPricesCount * 0.05);
+    if (previousDayPricesCount - distinctSymbolIDsCount > allowedMissingCount) {
+      errors.push([`Some quotes weren't inserted (${previousDayPricesCount}/${distinctSymbolIDsCount}): ${missedSymbolIDs}`]);
+    } else {
+      console.log(`Some quotes weren't inserted (${previousDayPricesCount}/${distinctSymbolIDsCount}): ${missedSymbolIDs}`);
+    }
   }
   
   if (errors.length) {
