@@ -942,8 +942,8 @@ async function _fetch(baseURL, api, queryParameters) {
 
   let response = await _get(baseURL, api, queryParameters);
 
-  // Retry 5 times on retryable errors
-  for (let step = 0; step < 5 && response.retryable; step++) {
+  // Retry several times on retryable errors
+  for (let step = 0; step < 10 && response.retryable; step++) {
     const delay = (step + 1) * (500 + Math.random() * 1000);
     console.log(`Received '${response.statusCode}' error with text '${response.string}'. Trying to retry after a '${delay}' delay.`);
     await new Promise(r => setTimeout(r, delay));
@@ -1045,8 +1045,8 @@ getTickersAndIDByTicker = _getTickersAndIDByTicker;
   console.log(`Exchange rates request with URL: ${url}`);
   var response = await context.http.get({ url: url });
 
-  // Retry 5 times on retryable errors
-  for (let step = 0; step < 5 && (response.status === '??????'); step++) {
+  // Retry several times on retryable errors
+  for (let step = 0; step < 10 && (response.status === '??????'); step++) {
     const delay = (step + 1) * (500 + Math.random() * 1000);
     console.log(`Received '${response.status}' error with text '${response.body.text()}'. Trying to retry after a '${delay}' delay.`);
     await new Promise(r => setTimeout(r, delay));

@@ -138,8 +138,8 @@ async function _checkData(transactions) {
   if (previousDayPricesCount !== distinctSymbolIDsCount) {
     const missedSymbolIDs = await getMissedSymbolIDs('previous-day-prices', '_id', distinctSymbolIDs);
     // Using threshold because previous day prices for some symbols are actually just `null`
-    const allowedMissingCount = Math.ceil(previousDayPricesCount * 0.05);
-    if (previousDayPricesCount - distinctSymbolIDsCount > allowedMissingCount) {
+    const allowedMissingCount = Math.ceil(distinctSymbolIDsCount * 0.05);
+    if (distinctSymbolIDsCount - previousDayPricesCount > allowedMissingCount) {
       errors.push([`Some previous day prices weren't inserted (${previousDayPricesCount}/${distinctSymbolIDsCount}): ${missedSymbolIDs}`]);
     } else {
       console.log(`Some previous day prices weren't inserted (${previousDayPricesCount}/${distinctSymbolIDsCount}): ${missedSymbolIDs}`);
@@ -155,8 +155,8 @@ async function _checkData(transactions) {
   if (quotesCount !== distinctSymbolIDsCount) {
     const missedSymbolIDs = await getMissedSymbolIDs('quotes', '_id', distinctSymbolIDs);
     // Using threshold because quotes for some symbols are actually just `null`. E.g. MULG
-    const allowedMissingCount = Math.ceil(previousDayPricesCount * 0.05);
-    if (previousDayPricesCount - distinctSymbolIDsCount > allowedMissingCount) {
+    const allowedMissingCount = Math.ceil(distinctSymbolIDsCount * 0.05);
+    if (distinctSymbolIDsCount - quotesCount > allowedMissingCount) {
       errors.push([`Some quotes weren't inserted (${previousDayPricesCount}/${distinctSymbolIDsCount}): ${missedSymbolIDs}`]);
     } else {
       console.log(`Some quotes weren't inserted (${previousDayPricesCount}/${distinctSymbolIDsCount}): ${missedSymbolIDs}`);
