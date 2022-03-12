@@ -81,14 +81,20 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, field, 
   }
 
   if (typeof oldObjects === 'undefined') {
+    // No need to fetch '_id' for old objects if we do not compare objects by it.
+    const projection = {};
+    if (field !== "_id") {
+      projection._id = 0;
+    }
+
     if (newObjects.length < 1000) {
       console.log(`Old objects are undefined. Fetching them by '${field}'.`);
       const fileds = newObjects.map(x => x[field]);
-      oldObjects = await this.find({ [field]: { $in: fileds } }).toArray();
+      oldObjects = await this.find({ [field]: { $in: fileds } }, projection).toArray();
 
     } else {
       console.log(`Old objects are undefined. Fetching them by requesting all existing objects.`);
-      oldObjects = await this.find().toArray();
+      oldObjects = await this.find({}, projection).toArray();
     }
   }
 
@@ -165,14 +171,14 @@ Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, field, s
  * are added to `$unset`.
  */
 Object.prototype.updateFrom = function(object, setUpdateDate) {
-  if (this.isEqual(object)) {
-    return null;
-  }
-
   const set = Object.assign({}, this);
 
   // Skip '_id' set
   delete set['_id'];
+
+  if (set.isEqual(object)) {
+    return null;
+  }
   
   const unset = {};
 
