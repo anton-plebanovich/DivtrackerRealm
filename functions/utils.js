@@ -41,7 +41,7 @@ Object.prototype.safeInsertMissing = async function(newObjects, fields) {
   return await bulk.safeExecute();
 }
 
-Object.prototype.safeUpsertMany = async function(newObjects, field) {
+Object.prototype.safeUpsertMany = async function(newObjects, field, setUpdateDate) {
   _throwIfEmptyArray(newObjects, `Please pass non-empty new objects array as the first argument. safeUpsertMany`);
 
   if (field == null) {
@@ -50,10 +50,15 @@ Object.prototype.safeUpsertMany = async function(newObjects, field) {
 
   const bulk = this.initializeUnorderedBulkOp();
   for (const newObject of newObjects) {
+    const update = { $set: newObject };
+    if (setUpdateDate == true) {
+      update.$currentDate = { u: { $type: "timestamp" } };
+    }
+
     bulk
       .find({ [field]: newObject[field] })
       .upsert()
-      .updateOne({ $set: newObject });
+      .updateOne(update);
   }
 
   return await bulk.safeExecute();
@@ -62,7 +67,7 @@ Object.prototype.safeUpsertMany = async function(newObjects, field) {
 /**
  * Safely computes and executes update operation from old to new objects on a collection.
  */
-Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, field) {
+Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, field, setUpdateDate) {
   _throwIfEmptyArray(newObjects, `Please pass non-empty new objects array as the first argument. safeUpdateMany`);
 
   if (field == null) {
@@ -95,7 +100,7 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, field) 
   const bulk = this.initializeUnorderedBulkOp();
   for (const newObject of newObjects) {
     const existingObject = oldObjects.find(x => x[field].isEqual(newObject[field]));
-    bulk.findAndUpdateOrInsertIfNeeded(newObject, existingObject, field);
+    bulk.findAndUpdateOrInsertIfNeeded(newObject, existingObject, field, setUpdateDate);
   }
 
   return await bulk.safeExecute();
@@ -105,7 +110,7 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, field) 
  * Executes find by field and update or insert for a new object from an old object.
  * Uses `_id` field by default.
  */
-Object.prototype.findAndUpdateOrInsertIfNeeded = function(newObject, oldObject, field) {
+Object.prototype.findAndUpdateOrInsertIfNeeded = function(newObject, oldObject, field, setUpdateDate) {
   if (newObject == null) {
     throw new _SystemError(`New object should not be null for insert or update`);
     
@@ -115,7 +120,7 @@ Object.prototype.findAndUpdateOrInsertIfNeeded = function(newObject, oldObject, 
     return this.insert(newObject);
 
   } else {
-    return this.findAndUpdateIfNeeded(newObject, oldObject, field);
+    return this.findAndUpdateIfNeeded(newObject, oldObject, field, setUpdateDate);
   }
 };
 
@@ -123,7 +128,7 @@ Object.prototype.findAndUpdateOrInsertIfNeeded = function(newObject, oldObject, 
  * Executes find by field and update for a new object from an old object if needed.
  * Uses `_id` field by default.
  */
-Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, field) {
+Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, field, setUpdateDate) {
   if (field == null) {
     field = '_id';
   }
@@ -140,7 +145,7 @@ Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, field) {
     throw new _SystemError(`New object '${field}' field should not be null for update`);
 
   } else {
-    const update = newObject.updateFrom(oldObject);
+    const update = newObject.updateFrom(oldObject, setUpdateDate);
     if (update == null) {
       // Update is not needed
       return;
@@ -159,7 +164,7 @@ Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, field) {
  * Only non-equal fields are added to `$set` and missing fields
  * are added to `$unset`.
  */
-Object.prototype.updateFrom = function(object) {
+Object.prototype.updateFrom = function(object, setUpdateDate) {
   if (this.isEqual(object)) {
     return null;
   }
@@ -188,6 +193,11 @@ Object.prototype.updateFrom = function(object) {
       continue;
     }
 
+    // Just skip 'u' field. It will be computed separately if needed.
+    if (key === 'u') {
+      continue;
+    }
+
     const newValue = set[key];
     if (newValue == null) {
       unset[key] = "";
@@ -203,6 +213,10 @@ Object.prototype.updateFrom = function(object) {
     update = { $set: set, $unset: unset };
   } else {
     update = { $set: set };
+  }
+
+  if (setUpdateDate == true) {
+    update.$currentDate = { u: { $type: "timestamp" } };
   }
 
   console.logData(`Updating`, update);

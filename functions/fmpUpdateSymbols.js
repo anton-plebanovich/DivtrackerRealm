@@ -34,7 +34,7 @@ async function updateFMPSymbols() {
 
   const newSymbols = await fetchSymbols();
   const fmpCollection = fmp.collection("symbols");
-  await fmpCollection.safeUpdateMany(newSymbols, undefined, 't');
+  await fmpCollection.safeUpdateMany(newSymbols, undefined, 't', true);
   
   // We do not delete old symbols but instead mark them as disabled to be able to display user transactions.
   const newTickers = newSymbols.map(x => x.t);
@@ -47,7 +47,10 @@ async function updateFMPSymbols() {
     console.log(`Disabling FMP symbols: ${tickersToDisable}`);
     await fmpCollection.updateMany(
       { t: { $in: tickersToDisable } },
-      { $set: { e: false } }
+      { 
+        $set: { e: false },
+        $currentDate: { "u": { $type: "timestamp" } },
+      }
     );
   }
 }
