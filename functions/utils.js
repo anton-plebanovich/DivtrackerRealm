@@ -50,9 +50,10 @@ Object.prototype.safeUpsertMany = async function(newObjects, field, setUpdateDat
 
   const bulk = this.initializeUnorderedBulkOp();
   for (const newObject of newObjects) {
+    // https://docs.mongodb.com/manual/reference/operator/update/currentDate/
     const update = { $set: newObject };
     if (setUpdateDate == true) {
-      update.$currentDate = { u: { $type: "timestamp" } };
+      update.$currentDate = { u: true };
     }
 
     bulk
@@ -222,7 +223,7 @@ Object.prototype.updateFrom = function(object, setUpdateDate) {
   }
 
   if (setUpdateDate == true) {
-    update.$currentDate = { u: { $type: "timestamp" } };
+    update.$currentDate = { u: true };
   }
 
   console.logData(`Updating`, update);
