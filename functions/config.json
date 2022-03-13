@@ -18,7 +18,7 @@
     },
     {
         "name": "fmpGetData",
-        "private": true
+        "private": false
     },
     {
         "name": "fmpLoadMissingData",
