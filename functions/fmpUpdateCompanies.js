@@ -19,7 +19,7 @@ exports = async function() {
 
   const companiesCollection = fmp.collection("companies");
   const companies = await fetchCompanies(shortSymbols);
-  await companiesCollection.safeUpdateMany(companies);
+  await companiesCollection.safeUpdateMany(companies, undefined, '_id', true);
 
   await setUpdateDate("fmp-companies");
 

@@ -20,7 +20,7 @@ exports = async function() {
   // TODO: We might insert after each batch fetch
   const quotes = await fetchQuotes(shortSymbols);
   const quotesCollection = fmp.collection("quotes");
-  await quotesCollection.safeUpsertMany(quotes);
+  await quotesCollection.safeUpsertMany(quotes, '_id', true);
 
   await setUpdateDate("fmp-quotes");
 
