@@ -15,7 +15,7 @@
  * @example exports('619c69468f19308bae927d4e', [{ "_": "619c69468f19308bae927d4e","p":300.1,"d":"2021-12-08T21:00:00.000+00:00","s":new BSON.ObjectId("61b102c0048b84e9c13e4564"),"a":1.1}]);
  */ 
  exports = async function(userID, transactions) {
-  context.functions.execute("utils");
+  context.functions.execute("iexUtils");
 
   throwIfEmptyArray(
     transactions, 
