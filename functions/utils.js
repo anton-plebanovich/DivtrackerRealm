@@ -918,6 +918,19 @@ function _throwIfNotArray(object, message, ErrorType) {
 
 throwIfNotArray = _throwIfNotArray;
 
+function _throwIfNotDate(object, message, ErrorType) {
+  _throwIfUndefinedOrNull(object, message, ErrorType)
+
+  const type = Object.prototype.toString.call(object);
+  if (type === '[object Date]') { return object; }
+  if (ErrorType == null) { ErrorType = _SystemError; }
+  if (message == null) { message = ""; }
+  
+  throw new ErrorType(`Argument should be of the Date type. Instead, received '${type}'. ${message}`);
+}
+
+throwIfNotDate = _throwIfNotDate;
+
 /**
  * Throws error with optional `message` if `object` is `undefined` or `null`.
  * @param {object} object Object to check.
