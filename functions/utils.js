@@ -172,10 +172,13 @@ Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, field, s
  * are added to `$unset`.
  */
 Object.prototype.updateFrom = function(object, setUpdateDate) {
-  const set = Object.assign({}, this);
+  object = Object.assign({}, object);
+  delete object['_id'];
+  delete object['u'];
 
-  // Skip '_id' set
+  const set = Object.assign({}, this);
   delete set['_id'];
+  delete set['u'];
 
   if (set.isEqual(object)) {
     return null;
@@ -195,16 +198,6 @@ Object.prototype.updateFrom = function(object, setUpdateDate) {
   let hasUnsets = false;
   const oldEntries = Object.entries(object);
   for (const [key, oldValue] of oldEntries) {
-    // Just skip '_id'
-    if (key === '_id') {
-      continue;
-    }
-
-    // Just skip 'u' field. It will be computed separately if needed.
-    if (key === 'u') {
-      continue;
-    }
-
     const newValue = set[key];
     if (newValue == null) {
       unset[key] = "";
