@@ -515,6 +515,21 @@ String.prototype.isEqual = function(string) {
   return this === string;
 };
 
+/**
+ * This function returns an ObjectId embedded with a given datetime
+ * Accepts both Date object and string input
+ */
+BSON.ObjectId.fromDate = function(date) {
+    /* Convert string date to Date object (otherwise assume timestamp is a date) */
+    if (typeof date === 'string') {
+        date = new Date(date);
+    }
+
+    const hexSeconds = Math.floor(date/1000).toString(16);
+
+    return BSON.ObjectId(hexSeconds + "0000000000000000");
+};
+
 ///////////////////////////////////////////////////////////////////////////////// CLASSES
 
 class _LazyString {

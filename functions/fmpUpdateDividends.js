@@ -47,7 +47,7 @@ exports = async function() {
       const upperExDate = getUpperExDate(futureDividend);
       console.logVerbose(`Checking future dividend '${futureDividend.s}' for '${futureDividend.e}' ex date; lower - ${lowerExDate}; upper - ${upperExDate}`);
 
-      const updateOne = { $set: futureDividend };
+      const updateOne = { $set: futureDividend, $currentDate: { u: true } };
       const lowerAmount = futureDividend.a * 0.9;
       const upperAmount = futureDividend.a * 1.1;
 
@@ -86,7 +86,7 @@ exports = async function() {
       const upperExDate = getUpperExDate(pastDividend);
       console.logVerbose(`Checking past dividend '${pastDividend.s}' for '${pastDividend.e}' ex date; lower - ${lowerExDate}; upper - ${upperExDate}`);
       
-      const updateOne = { $set: pastDividend };
+      const updateOne = { $set: pastDividend, $currentDate: { u: true } };
       const lowerAmount = pastDividend.a * 0.9;
       const upperAmount = pastDividend.a * 1.1;
 

@@ -49,7 +49,7 @@ async function updateFMPSymbols() {
       { t: { $in: tickersToDisable } },
       { 
         $set: { e: false },
-        $currentDate: { "u": { $type: "timestamp" } },
+        $currentDate: { "u": true },
       }
     );
   }
