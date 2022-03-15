@@ -1069,6 +1069,25 @@ function _getURL(baseURL, api, queryParameters) {
 
 getTickersAndIDByTicker = _getTickersAndIDByTicker;
 
+/** 
+ * @returns {Promise<[ObjectId]>} Array of existing enabled symbol IDs from both IEX and FMP databases, e.g. [ObjectId("61b102c0048b84e9c13e454d")]
+*/
+async function _getSupportedSymbolIDs() {
+  const iexSymbolsCollection = db.collection("symbols");
+  const fmpSymbolsCollection = atlas.db("fmp").collection("symbols");
+  const iexSupportedSymbolIDs = await iexSymbolsCollection.distinct("_id", { e: null });
+  const fmpSupportedSymbolIDs = await fmpSymbolsCollection.distinct("_id", { e: null });
+  const supportedSymbolIDs = iexSupportedSymbolIDs.concat(fmpSupportedSymbolIDs)
+  console.log(`Supported symbols (${supportedSymbolIDs.length})`);
+  console.logData(`Supported symbols (${supportedSymbolIDs.length})`, supportedSymbolIDs);
+
+  return supportedSymbolIDs;
+};
+
+getSupportedSymbolIDs = _getSupportedSymbolIDs;
+
+///////////////////////////////////////////////////////////////////////////////// fetch.js
+
 // EUR examples
 // http://api.exchangeratesapi.io/v1/latest?access_key=3e5abac4ea1a6d6a306fee11759de63e
 // http://data.fixer.io/api/latest?access_key=47e966a176f1449a35309057baac8f29

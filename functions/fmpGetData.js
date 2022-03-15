@@ -14,6 +14,8 @@ exports = async function(date) {
 
   const find = {};
   if (date != null) {
+    // TODO: We might need to use date - 5 mins to prevent race conditions. I am not 100% sure because I don't know if MongoDB handles it properly.
+
     find.$or = [
       { _id: { $gte: BSON.ObjectId.fromDate(date) } },
       { u: { $gte: date } }

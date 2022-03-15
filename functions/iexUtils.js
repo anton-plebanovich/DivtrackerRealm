@@ -101,20 +101,6 @@ async function _getDistinctTransactionSymbolIDs() {
 
 getDistinctTransactionSymbolIDs = _getDistinctTransactionSymbolIDs;
 
-/** 
- * @returns {Promise<[ObjectId]>} Array of existing enabled symbol IDs, e.g. [ObjectId("61b102c0048b84e9c13e454d")]
-*/
-async function _getSupportedSymbolIDs() {
-  const symbolsCollection = db.collection("symbols");
-  const supportedSymbolIDs = await symbolsCollection.distinct("_id", { e: null });
-  console.log(`Supported symbols (${supportedSymbolIDs.length})`);
-  console.logData(`Supported symbols (${supportedSymbolIDs.length})`, supportedSymbolIDs);
-
-  return supportedSymbolIDs;
-};
-
-getSupportedSymbolIDs = _getSupportedSymbolIDs;
-
 ///////////////////////////////////////////////////////////////////////////////// fetch.js
 
 //////////////////////////////////// Tokens
