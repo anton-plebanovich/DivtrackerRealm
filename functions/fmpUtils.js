@@ -530,7 +530,7 @@ async function _fixFMPDividends(fmpDividends, symbolID) {
         }
         
         const nextDividend = arr[i + 1];
-        if (dividend.f != previousFrequency && dividend.a == nextDividend.a) {
+        if (dividend.f != nextDividend.f && dividend.a == nextDividend.a) {
           console.error(`Duplicate dividend for ${symbolID}: ${fmpDividends.stringify()}`);
           return false;
         } else {
