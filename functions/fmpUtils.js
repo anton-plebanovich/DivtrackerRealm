@@ -515,14 +515,10 @@ async function _fixFMPDividends(fmpDividends, symbolID) {
         }
         
         const nextDividend = arr[i + 1];
-        if (dividend.f !== nextDividend.f && dividend.f === 'w' && dividend.a === nextDividend.a) {
+        if (dividend.f !== nextDividend.f && dividend.f === 'w' && dividend.a.valueOf() === nextDividend.a.valueOf()) {
           console.error(`Duplicate dividend for ${dividend.s}: ${dividend.stringify()}`);
           return false;
         } else {
-          console.log(`----`);
-          console.log(`dividend: ${dividend.stringify()}`);
-          console.log(`nextDividend: ${nextDividend.stringify()}`);
-          console.log(`----`);
           return true;
         }
       });
