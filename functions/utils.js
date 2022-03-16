@@ -1075,8 +1075,11 @@ getTickersAndIDByTicker = _getTickersAndIDByTicker;
 async function _getSupportedSymbolIDs() {
   const iexSymbolsCollection = db.collection("symbols");
   const fmpSymbolsCollection = atlas.db("fmp").collection("symbols");
-  const iexSupportedSymbolIDs = await iexSymbolsCollection.distinct("_id", { e: null });
-  const fmpSupportedSymbolIDs = await fmpSymbolsCollection.distinct("_id", { e: null });
+  const [iexSupportedSymbolIDs, fmpSupportedSymbolIDs] = await Promise.all([
+    iexSymbolsCollection.distinct("_id", { e: null }),
+    fmpSymbolsCollection.distinct("_id", { e: null }),
+  ]);
+
   const supportedSymbolIDs = iexSupportedSymbolIDs.concat(fmpSupportedSymbolIDs)
   console.log(`Supported symbols (${supportedSymbolIDs.length})`);
   console.logData(`Supported symbols (${supportedSymbolIDs.length})`, supportedSymbolIDs);
