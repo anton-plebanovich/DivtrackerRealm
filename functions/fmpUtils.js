@@ -455,7 +455,6 @@ async function _fixFMPDividends(fmpDividends, symbolID) {
       )
       .then(x => x.c);
 
-    let previousAmount = null;
     let previousFrequency = 'u';
     let nextDate = null;
   
@@ -487,17 +486,13 @@ async function _fixFMPDividends(fmpDividends, symbolID) {
         dividend.p = _getOpenDate(fmpDividend.paymentDate);
         dividend.s = symbolID;
 
-        if (fmpDividend.dividend != null) {
-          dividend.a = BSON.Double(fmpDividend.dividend);
-
-        } else if (fmpDividend.adjDividend != null) {
-          // Workaround, some records doesn't have `dividend` and it looks like `adjDividend` may be used if there were no splits.
-          // We can improve this later using splits info but just using `adjDividend` as is for now.
-          dividend.a = BSON.Double(fmpDividend.adjDividend);
+        const amount = _getFmpDividendAmount(fmpDividend);
+        if (amount == null) {
+          console.error(`No amount for dividend ${symbolID}: ${fmpDividend.stringify()}`)
+          return null;
 
         } else {
-          console.error(`No amount for dividend ${symbolID}: ${fmpDividend.stringify()}`)
-          return null
+          dividend.a = amount;
         }
 
         // Frequency computation
@@ -522,23 +517,44 @@ async function _fixFMPDividends(fmpDividends, symbolID) {
           dividend.f = previousFrequency;
         }
 
-        // Filter duplicate
-        // TODO: Improve later by including more cases
-        if (dividend.f != previousFrequency && previousAmount == dividend.a) {
-          console.error(`Duplicate dividend for ${symbolID}: ${fmpDividends.stringify()}`);
-          return null;
-        }
-
-        previousAmount = dividend.a;
         previousFrequency = dividend.f;
     
         return dividend;
       })
-      .filterNull();
+      .filterNull()
+      // Filter duplicate
+      // TODO: Improve later by including more cases
+      .filter((dvidend, i, arr) => {
+        if (i >= arr.length - 1) {
+          return true
+        }
+        
+        const nextDividend = arr[i + 1];
+        if (dividend.f != previousFrequency && dividend.a == nextDividend.a) {
+          console.error(`Duplicate dividend for ${symbolID}: ${fmpDividends.stringify()}`);
+          return false;
+        } else {
+          return true;
+        }
+      });
 
   } catch(error) {
     console.error(`Unable to fix dividends ${fmpDividends.stringify()}: ${error}`);
     return [];
+  }
+}
+
+function _getFmpDividendAmount(fmpDividend) {
+  if (fmpDividend.dividend != null) {
+    return BSON.Double(fmpDividend.dividend);
+
+  } else if (fmpDividend.adjDividend != null) {
+    // Workaround, some records doesn't have `dividend` and it looks like `adjDividend` may be used if there were no splits.
+    // We can improve this later using splits info but just using `adjDividend` as is for now.
+    return BSON.Double(fmpDividend.adjDividend);
+
+  } else {
+    return null
   }
 }
 
