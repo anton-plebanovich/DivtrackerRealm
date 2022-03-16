@@ -520,8 +520,8 @@ async function _fixFMPDividends(fmpDividends, symbolID) {
           return false;
         } else {
           console.log(`----`);
-          console.log(`dividend: ${dividend}`);
-          console.log(`nextDividend: ${nextDividend}`);
+          console.log(`dividend: ${dividend.stringify()}`);
+          console.log(`nextDividend: ${nextDividend.stringify()}`);
           console.log(`----`);
           return true;
         }
