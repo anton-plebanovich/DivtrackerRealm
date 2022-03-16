@@ -454,18 +454,60 @@ async function _fixFMPDividends(fmpDividends, symbolID) {
         { c: 1 }
       )
       .then(x => x.c);
+
+    let nextDate = null;
+    let previousFrequency = 'u';
   
     console.logVerbose(`Fixing dividends for ${symbolID}`);
     return fmpDividends
       .filterNull()
-      .map(fmpDividend => {
+      .sort((l, r) => l.date.localeCompare(r.date))
+      .map((fmpDividend, i, arr) => {
+        let date;
+        if (nextDate == null) {
+          date = _getOpenDate(fmpDividend.date)
+        } else {
+          date = nextDate;
+        }
+
+        let nextDividend;
+        if (i >= arr.length - 1) {
+          nextDividend = null;
+          nextDate = null;
+        } else {
+          nextDividend = arr[i + 1];
+          nextDate = _getOpenDate(nextDividend.date);
+        }
+
         const dividend = {};
         dividend.c = currency;
-        dividend.f = 'u'; // TODO: Compute frequency
-        dividend.e = _getOpenDate(fmpDividend.date);
+        dividend.e = date;
         dividend.d = _getOpenDate(fmpDividend.declarationDate);
         dividend.p = _getOpenDate(fmpDividend.paymentDate);
         dividend.s = symbolID;
+
+        // TODO: Improve later by including more cases
+        if (nextDate != null) {
+          const days = (nextDate - date) / 86400;
+          if (days <= 1) {
+            dividend.f = 'u';
+          } else if (days <= 11) {
+            dividend.f = 'w';
+          } else if (days <= 45) {
+            dividend.f = 'q';
+          } else if (days <= 270) {
+            dividend.f = 's';
+          } else if (days <= 540) {
+            dividend.f = 'a';
+          } else {
+            dividend.f = 'u';
+          }
+        } else {
+          // Continue previous frequency when there is no next dividend
+            dividend.f = previousFrequency;
+        }
+
+        previousFrequency = dividend.f;
 
         if (fmpDividend.dividend != null) {
           dividend.a = BSON.Double(fmpDividend.dividend);
