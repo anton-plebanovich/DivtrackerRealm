@@ -511,7 +511,6 @@ async function _fixFMPDividends(fmpDividends, symbolID) {
       // TODO: Improve later by including more cases
       .filter((dividend, i, arr) => {
         if (i + 1 >= arr.length) {
-          console.log(`MAX`);
           return true
         }
         
@@ -520,7 +519,10 @@ async function _fixFMPDividends(fmpDividends, symbolID) {
           console.error(`Duplicate dividend for ${dividend.s}: ${dividend.stringify()}`);
           return false;
         } else {
-          console.log(`ALLOW`);
+          console.log(`----`);
+          console.log(`dividend: ${dividend}`);
+          console.log(`nextDividend: ${nextDividend}`);
+          console.log(`----`);
           return true;
         }
       });
