@@ -524,7 +524,7 @@ async function _fixFMPDividends(fmpDividends, symbolID) {
       .filterNull()
       // Filter duplicate
       // TODO: Improve later by including more cases
-      .filter((dvidend, i, arr) => {
+      .filter((dividend, i, arr) => {
         if (i >= arr.length - 1) {
           return true
         }
