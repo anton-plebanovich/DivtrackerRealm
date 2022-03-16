@@ -455,8 +455,9 @@ async function _fixFMPDividends(fmpDividends, symbolID) {
       )
       .then(x => x.c);
 
-    let nextDate = null;
+    let previousAmount = null;
     let previousFrequency = 'u';
+    let nextDate = null;
   
     console.logVerbose(`Fixing dividends for ${symbolID}`);
     return fmpDividends
@@ -486,6 +487,20 @@ async function _fixFMPDividends(fmpDividends, symbolID) {
         dividend.p = _getOpenDate(fmpDividend.paymentDate);
         dividend.s = symbolID;
 
+        if (fmpDividend.dividend != null) {
+          dividend.a = BSON.Double(fmpDividend.dividend);
+
+        } else if (fmpDividend.adjDividend != null) {
+          // Workaround, some records doesn't have `dividend` and it looks like `adjDividend` may be used if there were no splits.
+          // We can improve this later using splits info but just using `adjDividend` as is for now.
+          dividend.a = BSON.Double(fmpDividend.adjDividend);
+
+        } else {
+          console.error(`No amount for dividend ${symbolID}: ${fmpDividend.stringify()}`)
+          return null
+        }
+
+        // Frequency computation
         // TODO: Improve later by including more cases
         if (nextDate != null) {
           const days = (nextDate - date) / 86400000;
@@ -504,23 +519,18 @@ async function _fixFMPDividends(fmpDividends, symbolID) {
           }
         } else {
           // Continue previous frequency when there is no next dividend
-            dividend.f = previousFrequency;
+          dividend.f = previousFrequency;
         }
 
+        // Filter duplicate
+        // TODO: Improve later by including more cases
+        if (dividend.f != previousFrequency && previousAmount == dividend.a) {
+          console.error(`Duplicate dividend for ${symbolID}: ${fmpDividends.stringify()}`);
+          return null;
+        }
+
+        previousAmount = dividend.a;
         previousFrequency = dividend.f;
-
-        if (fmpDividend.dividend != null) {
-          dividend.a = BSON.Double(fmpDividend.dividend);
-
-        } else if (fmpDividend.adjDividend != null) {
-          // Workaround, some records doesn't have `dividend` and it looks like `adjDividend` may be used if there were no splits.
-          // We can improve this later using splits info but just using `adjDividend` as is for now.
-          dividend.a = BSON.Double(fmpDividend.adjDividend);
-
-        } else {
-          console.error(`No amount for dividend ${symbolID}: ${fmpDividend.stringify()}`)
-          return null
-        }
     
         return dividend;
       })
