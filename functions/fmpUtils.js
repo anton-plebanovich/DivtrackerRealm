@@ -499,9 +499,7 @@ async function _fixFMPDividends(fmpDividends, symbolID) {
         // TODO: Improve later by including more cases
         if (nextDate != null) {
           const days = (nextDate - date) / 86400000;
-          if (days <= 1) {
-            dividend.f = 'u';
-          } else if (days <= 11) {
+          if (days <= 11) {
             dividend.f = 'w';
           } else if (days <= 45) {
             dividend.f = 'q';
@@ -530,7 +528,7 @@ async function _fixFMPDividends(fmpDividends, symbolID) {
         }
         
         const nextDividend = arr[i + 1];
-        if (dividend.f != nextDividend.f && dividend.a == nextDividend.a) {
+        if (dividend.f !== nextDividend.f && dividend.f === 'w' && dividend.a === nextDividend.a) {
           console.error(`Duplicate dividend for ${symbolID}: ${fmpDividends.stringify()}`);
           return false;
         } else {
