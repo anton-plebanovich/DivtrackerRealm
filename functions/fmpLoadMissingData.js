@@ -86,7 +86,7 @@ async function loadMissingDividends(shortSymbols, symbolIDs) {
 
   const bulk = collection.initializeUnorderedBulkOp();
   for (const dividend of dividends) {
-    const query = {}
+    const query = {};
     if (dividend.e != null) {
       query.e = dividend.e;
     } else {

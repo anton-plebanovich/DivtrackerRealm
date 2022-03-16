@@ -488,7 +488,7 @@ async function _fixFMPDividends(fmpDividends, symbolID) {
 
         // TODO: Improve later by including more cases
         if (nextDate != null) {
-          const days = (nextDate - date) / 86400;
+          const days = (nextDate - date) / 86400000;
           if (days <= 1) {
             dividend.f = 'u';
           } else if (days <= 11) {
