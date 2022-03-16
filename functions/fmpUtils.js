@@ -245,20 +245,7 @@ async function _fmpFetchAndMapFlatArray(api, tickers, queryParameters, idByTicke
 async function _fmpFetchBatchAndMapArray(api, tickers, queryParameters, maxBatchSize, limit, groupingKey, dataKey, idByTicker, mapFunction) {
   return await _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, groupingKey)
     .then(async datas => {
-      if (tickers.length === 1) {
-        const data = datas;
-        const ticker = tickers[0];
-        let tickerData = data[dataKey];
-        if (tickerData != null) {
-          if (limit != null) {
-            tickerData = tickerData.slice(0, limit);
-          }
-          return await mapFunction(tickerData, idByTicker[ticker]);
-        } else {
-          return [];
-        }
-
-      } else if (datas[groupingKey] != null) {
+      if (datas[groupingKey] != null) {
         const dataByTicker = datas[groupingKey].toDictionary('symbol');
         const fixedDataPromises = tickers
           .map(async ticker => {
