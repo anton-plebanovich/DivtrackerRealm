@@ -458,7 +458,7 @@ async function _fixFMPDividends(fmpDividends, symbolID) {
         }
 
         let nextDividend;
-        if (i >= arr.length - 1) {
+        if (i + 1 >= arr.length) {
           nextDividend = null;
           nextDate = null;
         } else {
@@ -510,15 +510,17 @@ async function _fixFMPDividends(fmpDividends, symbolID) {
       // Filter duplicate
       // TODO: Improve later by including more cases
       .filter((dividend, i, arr) => {
-        if (i >= arr.length - 1) {
+        if (i + 1 >= arr.length) {
+          console.log(`MAX`);
           return true
         }
         
         const nextDividend = arr[i + 1];
         if (dividend.f !== nextDividend.f && dividend.f === 'w' && dividend.a === nextDividend.a) {
-          console.error(`Duplicate dividend for ${symbolID}: ${fmpDividends.stringify()}`);
+          console.error(`Duplicate dividend for ${dividend.s}: ${dividend.stringify()}`);
           return false;
         } else {
+          console.log(`ALLOW`);
           return true;
         }
       });
