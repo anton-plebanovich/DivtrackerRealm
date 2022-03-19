@@ -37,7 +37,11 @@
         "private": true
     },
     {
-        "name": "updateDividendsV2",
+        "name": "updateDividendsFuture",
+        "private": true
+    },
+    {
+        "name": "updateDividendsPast",
         "private": true
     },
     {
