@@ -168,7 +168,7 @@ function fixDividends(dividends, existingDividendsBySymbolID) {
     const deduplicatedExistingDividends = existingDividends
       .filter(existingDividend => 
         dividends.find(dividend => 
-          existingDividend.a == dividend.a && existingDividend.e == dividend.e
+          existingDividend.a == dividend.a && compareOptionalDates(fixedDividend.e, dividend.e)
         ) == null
       );
 
@@ -184,21 +184,28 @@ function fixDividends(dividends, existingDividendsBySymbolID) {
       .filter(fixedDividend => 
         existingDividends.find(dividend => 
           fixedDividend.a == dividend.a && 
-          fixedDividend.d == dividend.d && 
-          fixedDividend.e == dividend.e && 
           fixedDividend.f == dividend.f && 
-          fixedDividend.p == dividend.p
+          compareOptionalDates(fixedDividend.d, dividend.d) && 
+          compareOptionalDates(fixedDividend.e, dividend.e) && 
+          compareOptionalDates(fixedDividend.p, dividend.p)
         ) == null
       );
-
-    // Set update date
-    for (const fixedDividends of _fixedDividends) {
-      fixedDividends.$currentDate = { u: true };
-    }
 
     // Push result to others
     fixedDividends.push(..._fixedDividends);
   }
 
   return fixedDividends;
+}
+
+function compareOptionalDates(left, right) {
+  if (left == null && right == null) {
+    return true;
+  } else if (left == null && right != null) {
+    return false;
+  } else if (left != null && right == null) {
+    return false;
+  } else if (left != null && right != null) {
+    return left.getTime() == right.getTime();
+  }
 }
