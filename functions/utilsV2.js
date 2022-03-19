@@ -928,22 +928,42 @@ async function _getInUseShortSymbols() {
   // Meanwhile transactions may contain not yet fetched symbols or have less symbols than we already should be updating (transactions may be deleted).
   // So by combining we have all current + all future symbols. Idealy.
   const companiesCollection = db.collection("companies");
+  const transactionsCollection = db.collection("transactions");
   const [companyIDs, distinctTransactionSymbolIDs] = await Promise.all([
     companiesCollection.distinct("_id", {}),
-    _getDistinctTransactionSymbolIDs()
+    transactionsCollection.distinct("s", {}),
   ]);
 
   console.log(`Unique companies IDs (${companyIDs.length})`);
   console.logData(`Unique companies IDs (${companyIDs.length})`, companyIDs);
+  
+  console.log(`Distinct symbol IDs for transactions (${distinctTransactionSymbolIDs.length})`);
+  console.logData(`Distinct symbol IDs for transactions (${distinctTransactionSymbolIDs.length})`, distinctTransactionSymbolIDs);
 
+  const objectIDByID = companyIDs.toDictionary(x => x.toString());
+  const additionalIDs = distinctTransactionSymbolIDs.filter(x => objectIDByID[x.toString()] == null);
+  
+  console.log(`Additional symbol IDs (${additionalIDs.length})`);
+  console.logData(`Additional symbol IDs (${additionalIDs.length})`, additionalIDs);
+  
   // Compute distinct symbol IDs using both sources
-  let symbolIDs = [...new Set(companyIDs.concat(distinctTransactionSymbolIDs))];
+  let symbolIDs = companyIDs.concat(additionalIDs);
+  
+  console.log(`Unique symbol IDs (${symbolIDs.length})`);
+  console.logData(`Unique symbol IDs (${symbolIDs.length})`, symbolIDs);
 
   const symbolsCollection = db.collection("symbols");
   const disabledSymbolIDs = await symbolsCollection.distinct("_id", { e: false });
+  
+  console.log(`Disabled symbol IDs (${disabledSymbolIDs.length})`);
+  console.logData(`Disabled symbol IDs (${disabledSymbolIDs.length})`, disabledSymbolIDs);
 
   // Remove disabled symbols
-  symbolIDs = symbolIDs.filter(x => !disabledSymbolIDs.includesObject(x));
+  const disabledSymbolIdBySymbolID = disabledSymbolIDs.toDictionary(x => x.toString());
+  symbolIDs = symbolIDs.filter(x => disabledSymbolIdBySymbolID[x.toString()] == null);
+  
+  console.log(`Unique symbol IDs (${symbolIDs.length})`);
+  console.logData(`Unique symbol IDs (${symbolIDs.length})`, symbolIDs);
 
   return await _getShortSymbols(symbolIDs);
 };
@@ -972,22 +992,6 @@ async function _getShortSymbols(symbolIDs) {
 };
 
 getShortSymbols = _getShortSymbols;
-
-/** 
- * @returns {Promise<[ObjectId]>} Array of unique transaction IDs
-*/
-async function _getDistinctTransactionSymbolIDs() {
-  const transactionsCollection = db.collection("transactions");
-  const distinctTransactionSymbolIDs = await transactionsCollection.distinct("s");
-  distinctTransactionSymbolIDs.sort();
-
-  console.log(`Distinct symbol IDs for transactions (${distinctTransactionSymbolIDs.length})`);
-  console.logData(`Distinct symbol IDs for transactions (${distinctTransactionSymbolIDs.length})`, distinctTransactionSymbolIDs);
-
-  return distinctTransactionSymbolIDs;
-}
-
-getDistinctTransactionSymbolIDs = _getDistinctTransactionSymbolIDs;
 
 /** 
  * @returns {Promise<[ObjectId]>} Array of existing enabled symbol IDs, e.g. [ObjectId("61b102c0048b84e9c13e454d")]
