@@ -13,7 +13,8 @@
   // TODO: Make it more complex and move to separate test case
   await Promise.all([
     context.functions.execute("updateCompaniesV2"),
-    context.functions.execute("updateDividendsV2"),
+    context.functions.execute("updateDividendsFuture"),
+    context.functions.execute("updateDividendsPast"),
     context.functions.execute("updatePricesV2"),
     context.functions.execute("updateQuotesV2"),
     context.functions.execute("updateSplitsV2"),
