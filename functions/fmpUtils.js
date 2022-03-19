@@ -535,20 +535,34 @@ updateDividendsFrequency = _updateDividendsFrequency;
 
 // TODO: Improve later by including more cases
 function _removeDuplicateDividends(dividends) {
-    return dividends
-      .filter((dividend, i, arr) => {
-        if (i + 1 >= arr.length) {
-          return true
-        }
-        
-        const nextDividend = arr[i + 1];
-        if (dividend.f !== nextDividend.f && dividend.f === 'w' && dividend.a.valueOf() === nextDividend.a.valueOf()) {
-          console.error(`Duplicate dividend for ${dividend.s}: ${dividend.stringify()}`);
-          return false;
-        } else {
-          return true;
-        }
-      });
+  const originalLength = dividends.length;
+  const newDividends = dividends
+    .filter((dividend, i, arr) => {
+      if (i + 1 >= arr.length) {
+        return true
+      }
+      
+      const nextDividend = arr[i + 1];
+
+      // 0.012623 and 0.01262335 for MSNG.ME
+      const lhsAmount = dividend.a.valueOf();
+      const rhsAmount = nextDividend.a.valueOf();
+      const amountEqual = Math.abs(rhsAmount - lhsAmount) <= 0.000001
+
+      if (dividend.f !== nextDividend.f && dividend.f === 'w' && amountEqual) {
+        console.error(`Duplicate dividend for ${dividend.s}: ${dividend.stringify()}`);
+        return false;
+      } else {
+        return true;
+      }
+    });
+
+  if (newDividends.length === originalLength) {
+    return newDividends;
+  } else {
+    // We might have triplicates so several passes is required
+    return _removeDuplicateDividends(newDividends);
+  }
 }
 
 removeDuplicateDividends = _removeDuplicateDividends;
