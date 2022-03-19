@@ -76,27 +76,16 @@ exports = async function() {
       console.logVerbose(`Checking future dividend '${futureDividend.s}' for '${futureDividend.e}' ex date; lower - ${lowerExDate}; upper - ${upperExDate}`);
 
       const updateOne = { $set: futureDividend, $currentDate: { u: true } };
-      const lowerAmount = futureDividend.a * 0.9;
-      const upperAmount = futureDividend.a * 1.1;
-
-      // Amount might be 0 with empty string currency for declared dividends so we need to fix that
       bulk.find({ 
+          a: futureDividend.a,
           s: futureDividend.s,
-          // Ex date might change a little bit.
-          e: { $gte: lowerExDate, $lte: upperExDate }, 
-          $and: [
-            // We might have different frequency dividends on same or close date.
-            { f: futureDividend.f },
-            // Amount might be 0.0 for future dividends.
-            // GSK, TTE. Amount might change a little bit.
-            { $or: [{ a: { $gte: lowerAmount, $lte: upperAmount } }, { a: 0.0 }] }
-          ]
+          e: { $gte: lowerExDate, $lte: upperExDate }
         })
         .upsert()
         .updateOne(updateOne);
     }
 
-    await bulk.execute();
+    await bulk.safeExecute();
     console.log(`Inserted missed future dividends`);
 
   } else {
@@ -118,27 +107,16 @@ exports = async function() {
       console.logVerbose(`Checking past dividend '${pastDividend.s}' for '${pastDividend.e}' ex date; lower - ${lowerExDate}; upper - ${upperExDate}`);
       
       const updateOne = { $set: pastDividend, $currentDate: { u: true } };
-      const lowerAmount = pastDividend.a * 0.9;
-      const upperAmount = pastDividend.a * 1.1;
-
-      // Amount might be 0 with empty string currency for declared dividends so we need to fix that
       bulk.find({ 
+          a: pastDividend.a,
           s: pastDividend.s,
-          // Ex date might change a little bit.
-          e: { $gte: lowerExDate, $lte: upperExDate }, 
-          $and: [
-            // We might have different frequency dividends on same or close date.
-            { f: pastDividend.f },
-            // Amount might be 0.0 for future dividends.
-            // GSK, TTE. Amount might change a little bit.
-            { $or: [{ a: { $gte: lowerAmount, $lte: upperAmount } }, { a: 0.0 }] }
-          ]
+          e: { $gte: lowerExDate, $lte: upperExDate }
         })
         .upsert()
         .updateOne(updateOne);
     }
 
-    await bulk.execute();
+    await bulk.safeExecute();
     console.log(`Inserted missed past dividends`);
 
     console.log(`SUCCESS`);
@@ -168,7 +146,7 @@ function fixDividends(dividends, existingDividendsBySymbolID) {
     const deduplicatedExistingDividends = existingDividends
       .filter(existingDividend => 
         dividends.find(dividend => 
-          existingDividend.a == dividend.a && compareOptionalDates(fixedDividend.e, dividend.e)
+          existingDividend.a == dividend.a && compareOptionalDates(existingDividend.e, dividend.e)
         ) == null
       );
 
