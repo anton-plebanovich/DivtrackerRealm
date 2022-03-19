@@ -467,24 +467,8 @@ async function _fixFMPDividends(fmpDividends, symbolID) {
       })
       .filterNull()
     
-    updateDividendsFrequency(dividends);
-    
-    // Filter duplicate
-    // TODO: Improve later by including more cases
-    dividends = dividends
-      .filter((dividend, i, arr) => {
-        if (i + 1 >= arr.length) {
-          return true
-        }
-        
-        const nextDividend = arr[i + 1];
-        if (dividend.f !== nextDividend.f && dividend.f === 'w' && dividend.a.valueOf() === nextDividend.a.valueOf()) {
-          console.error(`Duplicate dividend for ${dividend.s}: ${dividend.stringify()}`);
-          return false;
-        } else {
-          return true;
-        }
-      });
+    dividends = _updateDividendsFrequency(dividends);
+    dividends = _removeDuplicateDividends(dividends);
 
     return dividends;
 
@@ -510,6 +494,8 @@ function _getFmpDividendAmount(fmpDividend) {
 
 // TODO: Improve later by including more cases
 function _updateDividendsFrequency(dividends) {
+  dividends = dividends.map(x => Object.assign({}, x))
+
   let previousFrequency = 'u';
   for (const [i, dividend] of dividends.entries()) {
     let nextDate;
@@ -539,9 +525,31 @@ function _updateDividendsFrequency(dividends) {
 
     previousFrequency = dividend.f;
   }
+
+  return dividends;
 }
 
 updateDividendsFrequency = _updateDividendsFrequency;
+
+// TODO: Improve later by including more cases
+function _removeDuplicateDividends(dividends) {
+    return dividends
+      .filter((dividend, i, arr) => {
+        if (i + 1 >= arr.length) {
+          return true
+        }
+        
+        const nextDividend = arr[i + 1];
+        if (dividend.f !== nextDividend.f && dividend.f === 'w' && dividend.a.valueOf() === nextDividend.a.valueOf()) {
+          console.error(`Duplicate dividend for ${dividend.s}: ${dividend.stringify()}`);
+          return false;
+        } else {
+          return true;
+        }
+      });
+}
+
+removeDuplicateDividends = _removeDuplicateDividends;
 
 /**
  * Fixes historical prices object so it can be added to MongoDB.

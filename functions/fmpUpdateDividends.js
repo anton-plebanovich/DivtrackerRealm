@@ -39,8 +39,12 @@ exports = async function() {
         dividends: {
           $push: {
             a: '$a',
+            c: '$c',
+            d: "$d",
             e: '$e',
-            f: "$f"
+            f: "$f",
+            p: "$p",
+            s: "$s",
           }
         }
       }
@@ -48,7 +52,7 @@ exports = async function() {
     .toArray()
     .then(x => 
       x.reduce((dictionary, value) => {
-        return Object.assign(dictionary, { [value._id.toString()]: value.dividends })
+        return Object.assign(dictionary, { [value._id.toString()]: value.dividends });
       }, {})
     );
 
@@ -148,36 +152,53 @@ exports = async function() {
 
 function fixDividends(dividends, existingDividendsBySymbolID) {
   const dividendsBySymbolID = dividends.toBuckets(x => x.s.toString());
-  const flatFixedDividends = [];
+  const fixedDividends = [];
 
   for (const [symbolID, dividends] of Object.entries(dividendsBySymbolID)) {
-    let existingDividends = existingDividendsBySymbolID[symbolID];
+    const existingDividends = existingDividendsBySymbolID[symbolID];
 
     // Check if there is nothing to fix
     if (existingDividends == null) {
       console.error(`Missing existing dividends for: ${symbolID}`);
-      flatFixedDividends.concat(dividends);
+      fixedDividends.concat(dividends);
       continue;
     }
 
     // We remove new dividends from existing to allow update in case something was changed
-    existingDividends = existingDividends
+    const deduplicatedExistingDividends = existingDividends
       .filter(existingDividend => 
         dividends.find(dividend => 
-          dividend.a === existingDividend.a && dividend.e == existingDividend.e
+          existingDividend.a == dividend.a && existingDividend.e == dividend.e
         ) == null
       );
 
     // Frequency fix using all known dividends
-    const allDividends = existingDividends
+    let _fixedDividends = deduplicatedExistingDividends
       .concat(dividends)
       .sort((l, r) => l.e - r.e);
     
-    updateDividendsFrequency(allDividends);
+    _fixedDividends = updateDividendsFrequency(_fixedDividends);
+    _fixedDividends = removeDuplicateDividends(_fixedDividends);
 
-    // Concat result to others
-    flatFixedDividends.concat(dividends);
+    _fixedDividends = _fixedDividends
+      .filter(fixedDividend => 
+        existingDividends.find(dividend => 
+          fixedDividend.a == dividend.a && 
+          fixedDividend.d == dividend.d && 
+          fixedDividend.e == dividend.e && 
+          fixedDividend.f == dividend.f && 
+          fixedDividend.p == dividend.p
+        ) == null
+      );
+
+    // Set update date
+    for (const fixedDividends of _fixedDividends) {
+      fixedDividends.$currentDate = { u: true };
+    }
+
+    // Push result to others
+    fixedDividends.push(..._fixedDividends);
   }
 
-  return flatFixedDividends;
+  return fixedDividends;
 }
