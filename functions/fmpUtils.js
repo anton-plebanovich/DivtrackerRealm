@@ -510,6 +510,8 @@ function _updateDividendsFrequency(dividends) {
       if (days <= 11) {
         dividend.f = 'w';
       } else if (days <= 45) {
+        dividend.f = 'm';
+      } else if (days <= 135) {
         dividend.f = 'q';
       } else if (days <= 270) {
         dividend.f = 's';
