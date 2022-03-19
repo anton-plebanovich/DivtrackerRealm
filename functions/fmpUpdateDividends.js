@@ -32,14 +32,35 @@ exports = async function() {
     return;
   }
 
+  const existingDividendsBySymbolID = await collection
+    .aggregate([{
+      $group: {
+        _id: '$s',
+        dividends: {
+          $push: {
+            a: '$a',
+            e: '$e',
+            f: "$f"
+          }
+        }
+      }
+    }])
+    .toArray()
+    .then(x => 
+      x.map(y => { return { [y._id.toString()]: y.dividends } })
+    );
+
   // Future dividends update.
   // We remove symbols that already have future dividends and update only those that don't.
   const upToDateSymbolIDs = await collection.distinct("s", { "e" : { $gte : new Date() }});
   const shortSymbolsToUpdate = shortSymbols.filter(x => !upToDateSymbolIDs.includes(x.s));
   console.log(`Updating future dividends (${shortSymbolsToUpdate.length}) for '${shortSymbolsToUpdate.stringify()}' IDs`);
 
-  const futureDividends = await fetchDividendsCalendar(shortSymbolsToUpdate);
+  let futureDividends = await fetchDividendsCalendar(shortSymbolsToUpdate);
   if (futureDividends.length) {
+    console.log(`Fixing future dividends (${futureDividends.length})`);
+    futureDividends = fixDividends(futureDividends, existingDividendsBySymbolID);
+
     console.log(`Inserting missed future dividends (${futureDividends.length})`);
     const bulk = collection.initializeUnorderedBulkOp();
     for (const futureDividend of futureDividends) {
@@ -77,8 +98,11 @@ exports = async function() {
 
   // Past dividends update. Just in case they weren't added for the future or were updated.
   console.log(`Fetching 1 last dividend for each symbol`);
-  const pastDividends = await fetchDividends(shortSymbols, 1);
+  let pastDividends = await fetchDividends(shortSymbols, 1);
   if (pastDividends.length) {
+    console.log(`Fixing past dividends (${pastDividends.length})`);
+    pastDividends = fixDividends(pastDividends, existingDividendsBySymbolID);
+
     console.log(`Inserting missed past dividends (${pastDividends.length})`);
     const bulk = collection.initializeUnorderedBulkOp();
     for (const pastDividend of pastDividends) {
@@ -118,3 +142,31 @@ exports = async function() {
 
   await setUpdateDate("dividends");
 };
+
+function fixDividends(dividends, existingDividendsBySymbolID) {
+  const dividendsBySymbolID = dividends.toBuckets(x => x.s.toString());
+  const flatFixedDividends = [];
+
+  for (const [symbolID, dividends] of Object.entries(dividendsBySymbolID)) {
+    const existingDividends = existingDividendsBySymbolID[symbolID]
+      // We remove new dividends from existing to allow update in case something was changed
+      .filter(existingDividend => 
+        dividends.find(dividend => 
+          dividend.a === existingDividend.a
+          && dividend.e == existingDividend.e
+        ) == null
+      )
+
+    // Frequency fix using all known dividends
+    const allDividends = existingDividends
+      .concat(dividends)
+      .sort((l, r) => l.e - r.e);
+    
+    updateDividendsFrequency(allDividends);
+
+    // Concat result to others
+    flatFixedDividends.concat(dividends);
+  }
+
+  return flatFixedDividends;
+}

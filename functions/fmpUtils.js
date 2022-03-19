@@ -392,8 +392,8 @@ async function _fmpFetch(api, queryParameters) {
  */
 function _fixFMPCompany(fmpCompany, symbolID) {
   try {
-    throwIfUndefinedOrNull(fmpCompany, `fixCompany company`);
-    throwIfUndefinedOrNull(symbolID, `fixCompany symbolID`);
+    throwIfUndefinedOrNull(fmpCompany, `_fixFMPCompany company`);
+    throwIfUndefinedOrNull(symbolID, `_fixFMPCompany symbolID`);
   
     console.logVerbose(`Company data fix start`);
     const company = {};
@@ -427,8 +427,8 @@ function _fixFMPCompany(fmpCompany, symbolID) {
  */
 async function _fixFMPDividends(fmpDividends, symbolID) {
   try {
-    throwIfNotArray(fmpDividends, `fixDividends fmpDividends`);
-    throwIfUndefinedOrNull(symbolID, `fixDividends uniqueID`);
+    throwIfNotArray(fmpDividends, `_fixFMPDividends fmpDividends`);
+    throwIfUndefinedOrNull(symbolID, `_fixFMPDividends uniqueID`);
     if (!fmpDividends.length) { 
       console.logVerbose(`FMP dividends are empty for ${symbolID}. Nothing to fix.`);
       return []; 
@@ -441,34 +441,15 @@ async function _fixFMPDividends(fmpDividends, symbolID) {
         { c: 1 }
       )
       .then(x => x.c);
-
-    let previousFrequency = 'u';
-    let nextDate = null;
   
     console.logVerbose(`Fixing dividends for ${symbolID}`);
-    return fmpDividends
+    let dividends = fmpDividends
       .filterNull()
       .sort((l, r) => l.date.localeCompare(r.date))
-      .map((fmpDividend, i, arr) => {
-        let date;
-        if (nextDate == null) {
-          date = _getOpenDate(fmpDividend.date)
-        } else {
-          date = nextDate;
-        }
-
-        let nextDividend;
-        if (i + 1 >= arr.length) {
-          nextDividend = null;
-          nextDate = null;
-        } else {
-          nextDividend = arr[i + 1];
-          nextDate = _getOpenDate(nextDividend.date);
-        }
-
+      .map(fmpDividend => {
         const dividend = {};
         dividend.c = currency;
-        dividend.e = date;
+        dividend.e = _getOpenDate(fmpDividend.date);
         dividend.d = _getOpenDate(fmpDividend.declarationDate);
         dividend.p = _getOpenDate(fmpDividend.paymentDate);
         dividend.s = symbolID;
@@ -481,34 +462,16 @@ async function _fixFMPDividends(fmpDividends, symbolID) {
         } else {
           dividend.a = amount;
         }
-
-        // Frequency computation
-        // TODO: Improve later by including more cases
-        if (nextDate != null) {
-          const days = (nextDate - date) / 86400000;
-          if (days <= 11) {
-            dividend.f = 'w';
-          } else if (days <= 45) {
-            dividend.f = 'q';
-          } else if (days <= 270) {
-            dividend.f = 's';
-          } else if (days <= 540) {
-            dividend.f = 'a';
-          } else {
-            dividend.f = 'u';
-          }
-        } else {
-          // Continue previous frequency when there is no next dividend
-          dividend.f = previousFrequency;
-        }
-
-        previousFrequency = dividend.f;
     
         return dividend;
       })
       .filterNull()
-      // Filter duplicate
-      // TODO: Improve later by including more cases
+    
+    updateDividendsFrequency(dividends);
+    
+    // Filter duplicate
+    // TODO: Improve later by including more cases
+    dividends = dividends
       .filter((dividend, i, arr) => {
         if (i + 1 >= arr.length) {
           return true
@@ -522,6 +485,8 @@ async function _fixFMPDividends(fmpDividends, symbolID) {
           return true;
         }
       });
+
+    return dividends;
 
   } catch(error) {
     console.error(`Unable to fix dividends ${fmpDividends.stringify()}: ${error}`);
@@ -543,6 +508,41 @@ function _getFmpDividendAmount(fmpDividend) {
   }
 }
 
+// TODO: Improve later by including more cases
+function _updateDividendsFrequency(dividends) {
+  let previousFrequency = 'u';
+  for (const [i, dividend] of dividends.entries()) {
+    let nextDate;
+    if (i + 1 >= dividends.length) {
+      nextDate = null;
+    } else {
+      nextDate = dividends[i + 1].e;
+    }
+    
+    if (nextDate != null) {
+      const days = (nextDate - dividend.e) / 86400000;
+      if (days <= 11) {
+        dividend.f = 'w';
+      } else if (days <= 45) {
+        dividend.f = 'q';
+      } else if (days <= 270) {
+        dividend.f = 's';
+      } else if (days <= 540) {
+        dividend.f = 'a';
+      } else {
+        dividend.f = 'u';
+      }
+    } else {
+      // Continue previous frequency when there is no next dividend
+      dividend.f = previousFrequency;
+    }
+
+    previousFrequency = dividend.f;
+  }
+}
+
+updateDividendsFrequency = _updateDividendsFrequency;
+
 /**
  * Fixes historical prices object so it can be added to MongoDB.
  * @param {[FMPHistoricalPrices]} fmpHistoricalPrices Historical prices object.
@@ -551,8 +551,8 @@ function _getFmpDividendAmount(fmpDividend) {
  */
 function _fixFMPHistoricalPrices(fmpHistoricalPrices, symbolID) {
   try {
-    throwIfNotArray(fmpHistoricalPrices, `fixHistoricalPrices fmpHistoricalPrices`);
-    throwIfUndefinedOrNull(symbolID, `fixHistoricalPrices uniqueID`);
+    throwIfNotArray(fmpHistoricalPrices, `_fixFMPHistoricalPrices fmpHistoricalPrices`);
+    throwIfUndefinedOrNull(symbolID, `_fixFMPHistoricalPrices uniqueID`);
     if (!fmpHistoricalPrices.length) { 
       console.logVerbose(`Historical prices are empty for ${symbolID}. Nothing to fix.`);
       return []; 
@@ -605,8 +605,8 @@ function _fixFMPHistoricalPrices(fmpHistoricalPrices, symbolID) {
  */
 function _fixFMPQuote(fmpQuote, symbolID) {
   try {
-    throwIfUndefinedOrNull(fmpQuote, `fixQuote quote`);
-    throwIfUndefinedOrNull(symbolID, `fixQuote symbolID`);
+    throwIfUndefinedOrNull(fmpQuote, `_fixFMPQuote quote`);
+    throwIfUndefinedOrNull(symbolID, `_fixFMPQuote symbolID`);
   
     console.logVerbose(`Previous day price data fix start`);
     const quote = {};
@@ -633,8 +633,8 @@ function _fixFMPQuote(fmpQuote, symbolID) {
  */
 function _fixFMPSplits(fmpSplits, symbolID) {
   try {
-    throwIfNotArray(fmpSplits, `fixSplits splits`);
-    throwIfUndefinedOrNull(symbolID, `fixSplits symbolID`);
+    throwIfNotArray(fmpSplits, `_fixFMPSplits splits`);
+    throwIfUndefinedOrNull(symbolID, `_fixFMPSplits symbolID`);
     if (!fmpSplits.length) { 
       console.logVerbose(`Splits are empty for ${symbolID}. Nothing to fix.`);
       return []; 
