@@ -47,14 +47,17 @@ exports = async function() {
     }])
     .toArray()
     .then(x => 
-      x.map(y => { return { [y._id.toString()]: y.dividends } })
+      x.reduce((dictionary, value) => {
+        return Object.assign(dictionary, { [value._id.toString()]: value.dividends })
+      }, {})
     );
 
   // Future dividends update.
   // We remove symbols that already have future dividends and update only those that don't.
   const upToDateSymbolIDs = await collection.distinct("s", { "e" : { $gte : new Date() }});
   const shortSymbolsToUpdate = shortSymbols.filter(x => !upToDateSymbolIDs.includes(x.s));
-  console.log(`Updating future dividends (${shortSymbolsToUpdate.length}) for '${shortSymbolsToUpdate.stringify()}' IDs`);
+  const tickers = shortSymbolsToUpdate.map(x => x.t);
+  console.log(`Updating future dividends (${tickers.length}) for '${tickers.stringify()}' IDs`);
 
   let futureDividends = await fetchDividendsCalendar(shortSymbolsToUpdate);
   if (futureDividends.length) {
@@ -93,7 +96,7 @@ exports = async function() {
     console.log(`Inserted missed future dividends`);
 
   } else {
-    console.log(`Future dividends are empty for IDs '${shortSymbolsToUpdate.stringify()}'`);
+    console.log(`Future dividends are empty for IDs '${tickers.stringify()}'`);
   }
 
   // Past dividends update. Just in case they weren't added for the future or were updated.
@@ -137,7 +140,7 @@ exports = async function() {
     console.log(`SUCCESS`);
 
   } else {
-    console.log(`Past dividends are empty for IDs '${shortSymbols}'`);
+    console.log(`Past dividends are empty for IDs '${shortSymbols.map(x => x.t)}'`);
   }
 
   await setUpdateDate("dividends");
@@ -148,14 +151,22 @@ function fixDividends(dividends, existingDividendsBySymbolID) {
   const flatFixedDividends = [];
 
   for (const [symbolID, dividends] of Object.entries(dividendsBySymbolID)) {
-    const existingDividends = existingDividendsBySymbolID[symbolID]
-      // We remove new dividends from existing to allow update in case something was changed
+    let existingDividends = existingDividendsBySymbolID[symbolID];
+
+    // Check if there is nothing to fix
+    if (existingDividends == null) {
+      console.error(`Missing existing dividends for: ${symbolID}`);
+      flatFixedDividends.concat(dividends);
+      continue;
+    }
+
+    // We remove new dividends from existing to allow update in case something was changed
+    existingDividends = existingDividends
       .filter(existingDividend => 
         dividends.find(dividend => 
-          dividend.a === existingDividend.a
-          && dividend.e == existingDividend.e
+          dividend.a === existingDividend.a && dividend.e == existingDividend.e
         ) == null
-      )
+      );
 
     // Frequency fix using all known dividends
     const allDividends = existingDividends
