@@ -544,10 +544,10 @@ function _removeDuplicateDividends(dividends) {
       
       const nextDividend = arr[i + 1];
 
-      // 0.012623 and 0.01262335 for MSNG.ME
+      // 80.2744 and 80.27435 for NNSB.ME
       const lhsAmount = dividend.a.valueOf();
       const rhsAmount = nextDividend.a.valueOf();
-      const amountEqual = Math.abs(rhsAmount - lhsAmount) <= 0.000001
+      const amountEqual = Math.abs(rhsAmount - lhsAmount) <= 0.0001
 
       if (dividend.f !== nextDividend.f && dividend.f === 'w' && amountEqual) {
         console.error(`Duplicate dividend for ${dividend.s}: ${dividend.stringify()}`);
