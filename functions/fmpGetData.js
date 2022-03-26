@@ -1,7 +1,7 @@
 
 // fmpGetData.js
 
-exports = async function(date) {
+exports = async function(date, collections) {
   context.functions.execute("fmpUtils");
 
   if (date != null) {
@@ -22,14 +22,16 @@ exports = async function(date) {
     ];
   }
 
-  const collections = [
-    'companies',
-    'dividends',
-    'historical-prices',
-    'quotes',
-    'splits',
-    'symbols',
-  ];
+  if (collections == null) {
+    collections = [
+      'companies',
+      'dividends',
+      'historical-prices',
+      'quotes',
+      'splits',
+      'symbols',
+    ];
+  }
 
   const operations = collections.map(async collection => {
     const objects = await fmp.collection(collection).find(find).toArray();

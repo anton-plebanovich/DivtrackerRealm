@@ -8,6 +8,9 @@
         },
         "c": {
             "bsonType": "double"
+        },
+        "x": {
+            "bsonType": "bool"
         }
     },
     "required": [

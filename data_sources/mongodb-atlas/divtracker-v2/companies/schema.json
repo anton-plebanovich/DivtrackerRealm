@@ -17,6 +17,9 @@
         },
         "t": {
             "bsonType": "string"
+        },
+        "x": {
+            "bsonType": "bool"
         }
     },
     "required": [
