@@ -11,9 +11,6 @@
         },
         "p": {
             "bsonType": "double"
-        },
-        "x": {
-            "bsonType": "bool"
         }
     },
     "required": [
