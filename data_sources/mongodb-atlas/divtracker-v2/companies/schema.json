@@ -6,6 +6,9 @@
         "_": {
             "bsonType": "string"
         },
+        "c": {
+            "bsonType": "string"
+        },
         "n": {
             "bsonType": "string"
         },

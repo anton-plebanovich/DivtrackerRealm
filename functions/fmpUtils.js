@@ -425,7 +425,7 @@ function _fixFMPCompany(fmpCompany, symbolID) {
  * @param {ObjectId} symbolID Symbol object ID.
  * @returns {[Dividend]} Returns fixed objects or an empty array if fix wasn't possible.
  */
-async function _fixFMPDividends(fmpDividends, symbolID) {
+function _fixFMPDividends(fmpDividends, symbolID) {
   try {
     throwIfNotArray(fmpDividends, `_fixFMPDividends fmpDividends`);
     throwIfUndefinedOrNull(symbolID, `_fixFMPDividends uniqueID`);
@@ -433,14 +433,6 @@ async function _fixFMPDividends(fmpDividends, symbolID) {
       console.logVerbose(`FMP dividends are empty for ${symbolID}. Nothing to fix.`);
       return []; 
     }
-
-    // Get currency from company
-    const currency = await fmp.collection("companies")
-      .findOne(
-        { _id: symbolID },
-        { c: 1 }
-      )
-      .then(x => x.c);
   
     console.logVerbose(`Fixing dividends for ${symbolID}`);
     let dividends = fmpDividends
@@ -448,7 +440,6 @@ async function _fixFMPDividends(fmpDividends, symbolID) {
       .sort((l, r) => l.date.localeCompare(r.date))
       .map(fmpDividend => {
         const dividend = {};
-        dividend.c = currency;
         dividend.e = _getOpenDate(fmpDividend.date);
         dividend.d = _getOpenDate(fmpDividend.declarationDate);
         dividend.p = _getOpenDate(fmpDividend.paymentDate);
