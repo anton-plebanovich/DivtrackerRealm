@@ -13,7 +13,7 @@ exports = async function(date, collections, symbols) {
   }
 
   if (collections != null) {
-    _throwIfEmptyArray(
+    throwIfEmptyArray(
       symbols, 
       `Please pass collections array as the second argument. It may be null but must not be empty.`, 
       UserError
@@ -21,7 +21,7 @@ exports = async function(date, collections, symbols) {
   }
 
   if (symbols != null) {
-    _throwIfEmptyArray(
+    throwIfEmptyArray(
       symbols, 
       `Please pass symbols array as the third argument. It may be null but must not be empty.`, 
       UserError
