@@ -1,13 +1,29 @@
 
 // fmpGetData.js
 
-exports = async function(date, collections) {
+exports = async function(date, collections, symbols) {
   context.functions.execute("fmpUtils");
 
   if (date != null) {
     throwIfNotDate(
       date, 
       `Please pass date as the first argument.`, 
+      UserError
+    );
+  }
+
+  if (collections != null) {
+    _throwIfEmptyArray(
+      symbols, 
+      `Please pass collections array as the second argument. It may be null but must not be empty.`, 
+      UserError
+    );
+  }
+
+  if (symbols != null) {
+    _throwIfEmptyArray(
+      symbols, 
+      `Please pass symbols array as the third argument. It may be null but must not be empty.`, 
       UserError
     );
   }
@@ -33,8 +49,23 @@ exports = async function(date, collections) {
     ];
   }
 
+  const singularSymbolCollections = [
+    'companies',
+    'quotes',
+    'symbols',
+  ]
+
   const operations = collections.map(async collection => {
-    const objects = await fmp.collection(collection).find(find).toArray();
+    const _find = Object.assign({}, find);
+    if (symbols != null) {
+      if (singularSymbolCollections.includes(collection)) {
+        _find._id = { $in: symbols }
+      } else {
+        _find.s = { $in: symbols }
+      }
+    }
+
+    const objects = await fmp.collection(collection).find(_find).toArray();
     return { [collection]: objects };
   });
 
