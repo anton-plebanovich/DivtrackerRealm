@@ -26,6 +26,12 @@ exports = async function(date, collections, symbols) {
       `Please pass symbols array as the third argument. It may be null but must not be empty.`, 
       UserError
     );
+
+    throwIfNotObjectId(
+      symbols[0], 
+      `Please pass symbols array as the third argument.`, 
+      UserError
+    )
   }
 
   const find = {};
