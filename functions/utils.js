@@ -16,13 +16,33 @@ Object.prototype.safeExecute = async function() {
   }
 };
 
-Object.prototype.safeUpsertMany = async function(newObjects, field) {
-  _throwIfEmptyArray(newObjects, `Please pass non-empty new objects array as the first argument. safeUpsertMany`);
+Object.prototype.safeInsertMissing = async function(newObjects, fields) {
+  _throwIfEmptyArray(newObjects, `Please pass non-empty new objects array as the first argument. safeInsertMissing`);
 
-  if (newObjects.length === 0) {
-    console.error(`New objects are empty. Skipping update.`);
-    return;
+  if (fields == null) {
+    fields = ["_id"];
+  } else if (Object.prototype.toString.call(fields) !== '[object Array]') {
+    fields = [fields];
   }
+  _throwIfEmptyArray(fields, `Please pass non-empty fields array as the second argument. safeInsertMissing`);
+  
+  const bulk = this.initializeUnorderedBulkOp();
+  for (const newObject of newObjects) {
+    const find = fields.reduce((find, field) => {
+      return Object.assign(find, { [field]: newObject[field] })
+    }, {});
+
+    bulk
+      .find(find)
+      .upsert()
+      .updateOne({ $setOnInsert: newObject });
+  }
+
+  return await bulk.safeExecute();
+}
+
+Object.prototype.safeUpsertMany = async function(newObjects, field, setUpdateDate) {
+  _throwIfEmptyArray(newObjects, `Please pass non-empty new objects array as the first argument. safeUpsertMany`);
 
   if (field == null) {
     field = "_id";
@@ -30,10 +50,16 @@ Object.prototype.safeUpsertMany = async function(newObjects, field) {
 
   const bulk = this.initializeUnorderedBulkOp();
   for (const newObject of newObjects) {
+    // https://docs.mongodb.com/manual/reference/operator/update/currentDate/
+    const update = { $set: newObject };
+    if (setUpdateDate == true) {
+      update.$currentDate = { u: true };
+    }
+
     bulk
       .find({ [field]: newObject[field] })
       .upsert()
-      .updateOne({ $set: newObject });
+      .updateOne(update);
   }
 
   return await bulk.safeExecute();
@@ -42,27 +68,34 @@ Object.prototype.safeUpsertMany = async function(newObjects, field) {
 /**
  * Safely computes and executes update operation from old to new objects on a collection.
  */
-Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, field) {
+Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, field, setUpdateDate) {
   _throwIfEmptyArray(newObjects, `Please pass non-empty new objects array as the first argument. safeUpdateMany`);
-
-  if (newObjects.length === 0) {
-    console.error(`New objects are empty. Skipping update.`);
-    return;
-  }
 
   if (field == null) {
     field = "_id";
   }
 
+  const newObjectsLength = newObjects.length;
+  const validNewObjectsLength = newObjects.filter(x => x[field] != null).length
+  if (newObjectsLength != validNewObjectsLength) {
+    return await _logAndReject(`${newObjectsLength - validNewObjectsLength} of ${newObjectsLength} new objects do not contain required '${field}' field`);
+  }
+
   if (typeof oldObjects === 'undefined') {
+    // No need to fetch '_id' for old objects if we do not compare objects by it.
+    const projection = {};
+    if (field !== "_id") {
+      projection._id = 0;
+    }
+
     if (newObjects.length < 1000) {
       console.log(`Old objects are undefined. Fetching them by '${field}'.`);
       const fileds = newObjects.map(x => x[field]);
-      oldObjects = await this.find({ [field]: { $in: fileds } }).toArray();
+      oldObjects = await this.find({ [field]: { $in: fileds } }, projection).toArray();
 
     } else {
       console.log(`Old objects are undefined. Fetching them by requesting all existing objects.`);
-      oldObjects = await this.find().toArray();
+      oldObjects = await this.find({}, projection).toArray();
     }
   }
 
@@ -74,7 +107,7 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, field) 
   const bulk = this.initializeUnorderedBulkOp();
   for (const newObject of newObjects) {
     const existingObject = oldObjects.find(x => x[field].isEqual(newObject[field]));
-    bulk.findAndUpdateOrInsertIfNeeded(newObject, existingObject, field);
+    bulk.findAndUpdateOrInsertIfNeeded(newObject, existingObject, field, setUpdateDate);
   }
 
   return await bulk.safeExecute();
@@ -84,7 +117,7 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, field) 
  * Executes find by field and update or insert for a new object from an old object.
  * Uses `_id` field by default.
  */
-Object.prototype.findAndUpdateOrInsertIfNeeded = function(newObject, oldObject, field) {
+Object.prototype.findAndUpdateOrInsertIfNeeded = function(newObject, oldObject, field, setUpdateDate) {
   if (newObject == null) {
     throw new _SystemError(`New object should not be null for insert or update`);
     
@@ -94,7 +127,7 @@ Object.prototype.findAndUpdateOrInsertIfNeeded = function(newObject, oldObject, 
     return this.insert(newObject);
 
   } else {
-    return this.findAndUpdateIfNeeded(newObject, oldObject, field);
+    return this.findAndUpdateIfNeeded(newObject, oldObject, field, setUpdateDate);
   }
 };
 
@@ -102,7 +135,7 @@ Object.prototype.findAndUpdateOrInsertIfNeeded = function(newObject, oldObject, 
  * Executes find by field and update for a new object from an old object if needed.
  * Uses `_id` field by default.
  */
-Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, field) {
+Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, field, setUpdateDate) {
   if (field == null) {
     field = '_id';
   }
@@ -119,7 +152,7 @@ Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, field) {
     throw new _SystemError(`New object '${field}' field should not be null for update`);
 
   } else {
-    const update = newObject.updateFrom(oldObject);
+    const update = newObject.updateFrom(oldObject, setUpdateDate);
     if (update == null) {
       // Update is not needed
       return;
@@ -138,15 +171,18 @@ Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, field) {
  * Only non-equal fields are added to `$set` and missing fields
  * are added to `$unset`.
  */
-Object.prototype.updateFrom = function(object) {
-  if (this.isEqual(object)) {
-    return null;
-  }
+Object.prototype.updateFrom = function(object, setUpdateDate) {
+  object = Object.assign({}, object);
+  delete object['_id'];
+  delete object['u'];
 
   const set = Object.assign({}, this);
-
-  // Skip '_id' set
   delete set['_id'];
+  delete set['u'];
+
+  if (set.isEqual(object)) {
+    return null;
+  }
   
   const unset = {};
 
@@ -162,11 +198,6 @@ Object.prototype.updateFrom = function(object) {
   let hasUnsets = false;
   const oldEntries = Object.entries(object);
   for (const [key, oldValue] of oldEntries) {
-    // Just skip '_id'
-    if (key === '_id') {
-      continue;
-    }
-
     const newValue = set[key];
     if (newValue == null) {
       unset[key] = "";
@@ -182,6 +213,10 @@ Object.prototype.updateFrom = function(object) {
     update = { $set: set, $unset: unset };
   } else {
     update = { $set: set };
+  }
+
+  if (setUpdateDate == true) {
+    update.$currentDate = { u: true };
   }
 
   console.logData(`Updating`, update);
@@ -337,28 +372,43 @@ Array.prototype.includesObject = function(object) {
  * @returns {Date} Yesterday day start date in UTC.
  */
 Date.yesterday = function() {
-  const yesterday = new Date();
-  yesterday.setUTCDate(yesterday.getUTCDate() - 1);
-  yesterday.setUTCHours(0);
-  yesterday.setUTCMinutes(0);
-  yesterday.setUTCSeconds(0);
-  yesterday.setUTCMilliseconds(0);
+  const date = new Date();
+  date.setUTCDate(date.getUTCDate() - 1);
+  date.setUTCHours(0);
+  date.setUTCMinutes(0);
+  date.setUTCSeconds(0);
+  date.setUTCMilliseconds(0);
 
-  return yesterday;
+  return date;
 };
 
 /**
  * @returns {Date} Month day start date in UTC.
  */
 Date.monthStart = function() {
-  const yesterday = new Date();
-  yesterday.setUTCDate(1);
-  yesterday.setUTCHours(0);
-  yesterday.setUTCMinutes(0);
-  yesterday.setUTCSeconds(0);
-  yesterday.setUTCMilliseconds(0);
+  const date = new Date();
+  date.setUTCDate(1);
+  date.setUTCHours(0);
+  date.setUTCMinutes(0);
+  date.setUTCSeconds(0);
+  date.setUTCMilliseconds(0);
 
-  return yesterday;
+  return date;
+};
+
+/**
+ * @returns {Date} Previous month day start date in UTC.
+ */
+Date.previousMonthStart = function() {
+  const date = new Date();
+  date.setUTCMonth(date.getUTCMonth() - 1);
+  date.setUTCDate(1);
+  date.setUTCHours(0);
+  date.setUTCMinutes(0);
+  date.setUTCSeconds(0);
+  date.setUTCMilliseconds(0);
+
+  return date;
 };
 
 /**
@@ -530,6 +580,7 @@ class _NetworkResponse {
         const alwaysRetryableStatusCodes = [
           403, // Forbidden
           429, // Too Many Requests
+          500, // Internal Server Error
           502, // Bad Gateway
         ];
 
@@ -763,6 +814,21 @@ function extendRuntime() {
     );
   };
 
+  /**
+   * This function returns an ObjectId embedded with a given datetime
+   * Accepts both Date object and string input
+   */
+  BSON.ObjectId.fromDate = function(date) {
+    /* Convert string date to Date object (otherwise assume timestamp is a date) */
+    if (typeof date === 'string') {
+        date = new Date(date);
+    }
+
+    const hexSeconds = Math.floor(date/1000).toString(16);
+
+    return new BSON.ObjectId(hexSeconds + "0000000000000000");
+  };
+
   runtimeExtended = true;
 }
 
@@ -776,6 +842,9 @@ function _logAndThrow(message) {
 
 logAndThrow = _logAndThrow;
 
+/**
+ * @note Do not forget to use `return`!
+ */
 function _logAndReject(message, data) {
   _throwIfUndefinedOrNull(message, `_logAndReject message`);
 
@@ -850,6 +919,32 @@ function _throwIfNotArray(object, message, ErrorType) {
 
 throwIfNotArray = _throwIfNotArray;
 
+function _throwIfNotDate(object, message, ErrorType) {
+  _throwIfUndefinedOrNull(object, message, ErrorType)
+
+  const type = Object.prototype.toString.call(object);
+  if (type === '[object Date]') { return object; }
+  if (ErrorType == null) { ErrorType = _SystemError; }
+  if (message == null) { message = ""; }
+  
+  throw new ErrorType(`Argument should be of the Date type. Instead, received '${type}'. ${message}`);
+}
+
+throwIfNotDate = _throwIfNotDate;
+
+function _throwIfNotObjectId(object, message, ErrorType) {
+  _throwIfUndefinedOrNull(object, message, ErrorType)
+
+  const type = Object.prototype.toString.call(object);
+  if (type === '[object ObjectId]') { return object; }
+  if (ErrorType == null) { ErrorType = _SystemError; }
+  if (message == null) { message = ""; }
+  
+  throw new ErrorType(`Argument should be of the ObjectId type. Instead, received '${type}'. ${message}`);
+}
+
+throwIfNotObjectId = _throwIfNotObjectId;
+
 /**
  * Throws error with optional `message` if `object` is `undefined` or `null`.
  * @param {object} object Object to check.
@@ -903,8 +998,8 @@ async function _fetch(baseURL, api, queryParameters) {
 
   let response = await _get(baseURL, api, queryParameters);
 
-  // Retry 5 times on retryable errors
-  for (let step = 0; step < 5 && response.retryable; step++) {
+  // Retry several times on retryable errors
+  for (let step = 0; step < 10 && response.retryable; step++) {
     const delay = (step + 1) * (500 + Math.random() * 1000);
     console.log(`Received '${response.statusCode}' error with text '${response.string}'. Trying to retry after a '${delay}' delay.`);
     await new Promise(r => setTimeout(r, delay));
@@ -988,6 +1083,28 @@ function _getURL(baseURL, api, queryParameters) {
 
 getTickersAndIDByTicker = _getTickersAndIDByTicker;
 
+/** 
+ * @returns {Promise<[ObjectId]>} Array of existing enabled symbol IDs from both IEX and FMP databases, e.g. [ObjectId("61b102c0048b84e9c13e454d")]
+*/
+async function _getSupportedSymbolIDs() {
+  const iexSymbolsCollection = db.collection("symbols");
+  const fmpSymbolsCollection = atlas.db("fmp").collection("symbols");
+  const [iexSupportedSymbolIDs, fmpSupportedSymbolIDs] = await Promise.all([
+    iexSymbolsCollection.distinct("_id", { e: null }),
+    fmpSymbolsCollection.distinct("_id", { e: null }),
+  ]);
+
+  const supportedSymbolIDs = iexSupportedSymbolIDs.concat(fmpSupportedSymbolIDs)
+  console.log(`Supported symbols (${supportedSymbolIDs.length})`);
+  console.logData(`Supported symbols (${supportedSymbolIDs.length})`, supportedSymbolIDs);
+
+  return supportedSymbolIDs;
+};
+
+getSupportedSymbolIDs = _getSupportedSymbolIDs;
+
+///////////////////////////////////////////////////////////////////////////////// fetch.js
+
 // EUR examples
 // http://api.exchangeratesapi.io/v1/latest?access_key=3e5abac4ea1a6d6a306fee11759de63e
 // http://data.fixer.io/api/latest?access_key=47e966a176f1449a35309057baac8f29
@@ -1006,8 +1123,8 @@ getTickersAndIDByTicker = _getTickersAndIDByTicker;
   console.log(`Exchange rates request with URL: ${url}`);
   var response = await context.http.get({ url: url });
 
-  // Retry 5 times on retryable errors
-  for (let step = 0; step < 5 && (response.status === '??????'); step++) {
+  // Retry several times on retryable errors
+  for (let step = 0; step < 10 && (response.status === '??????'); step++) {
     const delay = (step + 1) * (500 + Math.random() * 1000);
     console.log(`Received '${response.status}' error with text '${response.body.text()}'. Trying to retry after a '${delay}' delay.`);
     await new Promise(r => setTimeout(r, delay));
@@ -1032,8 +1149,11 @@ getTickersAndIDByTicker = _getTickersAndIDByTicker;
     const exchangeRate = {};
     exchangeRate._id = currency;
 
-    if (rate != null) {
+    if (rate != null && rate >= 0.0) {
       exchangeRate.r = BSON.Double(rate);
+    } else {
+      // Skip invalid exchange rates and presume previous valid.
+      continue;
     }
 
     const currencySymbol = getCurrencySymbol(currency);

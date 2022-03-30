@@ -17,6 +17,11 @@
         "private": true
     },
     {
+        "name": "fmpGetData",
+        "private": false,
+        "run_as_system": true
+    },
+    {
         "name": "fmpLoadMissingData",
         "private": true
     },
@@ -26,6 +31,18 @@
     },
     {
         "name": "fmpUpdateDividends",
+        "private": true
+    },
+    {
+        "name": "fmpUpdatePrices",
+        "private": true
+    },
+    {
+        "name": "fmpUpdateQuotes",
+        "private": true
+    },
+    {
+        "name": "fmpUpdateSplits",
         "private": true
     },
     {
@@ -61,7 +78,11 @@
         "private": true
     },
     {
-        "name": "updateDividendsV2",
+        "name": "updateDividendsFuture",
+        "private": true
+    },
+    {
+        "name": "updateDividendsPast",
         "private": true
     },
     {

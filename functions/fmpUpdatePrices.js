@@ -1,14 +1,13 @@
 
-// fmpUpdateCompanies.js
+// fmpUpdatePrices.js
 
 // https://docs.mongodb.com/manual/reference/method/js-collection/
 // https://docs.mongodb.com/manual/reference/method/js-bulk/
 // https://docs.mongodb.com/manual/reference/method/db.collection.initializeUnorderedBulkOp/
 // https://docs.mongodb.com/realm/mongodb/
 // https://docs.mongodb.com/realm/mongodb/actions/collection.bulkWrite/#std-label-mongodb-service-collection-bulk-write
-// https://docs.mongodb.com/realm/mongodb/actions/collection.find/
 
-exports = async function() {
+ exports = async function() {
   context.functions.execute("fmpUtils");
 
   const shortSymbols = await getShortSymbols();
@@ -17,11 +16,10 @@ exports = async function() {
     return;
   }
 
-  const companiesCollection = fmp.collection("companies");
-  const companies = await fetchCompanies(shortSymbols);
-  await companiesCollection.safeUpdateMany(companies, undefined, '_id', true);
-
-  await setUpdateDate("fmp-companies");
-
-  console.log(`SUCCESS`);
+  const previousMonthStart = Date.previousMonthStart().dayString();
+  const historicalPrices = await fetchHistoricalPrices(shortSymbols, { from: previousMonthStart });
+  const collection = fmp.collection('historical-prices');
+  collection.safeInsertMissing(historicalPrices, ['s', 'd']);
+  
+  await setUpdateDate("fmp-prices");
 };

@@ -21,7 +21,6 @@ exports = async function loadMissingData() {
     loadMissingCompanies(shortSymbols, symbolIDs).mapErrorToSystem(),
     loadMissingDividends(shortSymbols, symbolIDs).mapErrorToSystem(),
     loadMissingHistoricalPrices(shortSymbols, symbolIDs).mapErrorToSystem(),
-    loadMissingPreviousDayPrices(shortSymbols, symbolIDs).mapErrorToSystem(),
     loadMissingQuotes(shortSymbols, symbolIDs).mapErrorToSystem(),
     loadMissingSplits(shortSymbols, symbolIDs).mapErrorToSystem()
   ]);
@@ -51,7 +50,7 @@ async function loadMissingCompanies(shortSymbols, symbolIDs) {
   const operations = [];
   for (const company of companies) {
     const filter = { _id: company._id };
-    const update = { $setOnInsert: company };
+    const update = { $setOnInsert: company, $currentDate: { "u": true } };
     const updateOne = { filter: filter, update: update, upsert: true };
     const operation = { updateOne: updateOne };
     operations.push(operation);
@@ -87,7 +86,7 @@ async function loadMissingDividends(shortSymbols, symbolIDs) {
 
   const bulk = collection.initializeUnorderedBulkOp();
   for (const dividend of dividends) {
-    const query = {}
+    const query = {};
     if (dividend.e != null) {
       query.e = dividend.e;
     } else {
@@ -157,39 +156,6 @@ async function loadMissingHistoricalPrices(shortSymbols, symbolIDs) {
   console.log(`Performed ${historicalPrices.length} update operations for historical prices.`);
 }
 
-//////////////////////////////////////////////////////////////////// Previous Day Prices
-
-/**
- * @param {[ShortSymbol]} shortSymbols
- */
-async function loadMissingPreviousDayPrices(shortSymbols, symbolIDs) {
-  const collection = fmp.collection('previous-day-prices');
-  const missingShortSymbols = await getMissingShortSymbols(collection, '_id', shortSymbols, symbolIDs);
-  if (missingShortSymbols.length) {
-    console.log(`Found missing previous day prices for tickers: ${missingShortSymbols.map(x => x.t)}`);
-  } else {
-    console.log(`No missing previous day prices. Skipping loading.`);
-    return;
-  }
-  
-  const previousDayPrices = await fetchPreviousDayPrices(missingShortSymbols);
-  if (!previousDayPrices.length) {
-    console.log(`No previous day prices. Skipping insert.`);
-    return;
-  }
-
-  const bulk = collection.initializeUnorderedBulkOp();
-  for (const previousDayPrice of previousDayPrices) {
-    const query = { _id: previousDayPrice._id };
-    const update = { $setOnInsert: previousDayPrice };
-    bulk.find(query).upsert().updateOne(update);
-  }
-
-  console.log(`Performing ${previousDayPrices.length} update operations for previous day prices.`);
-  await bulk.execute();
-  console.log(`Performed ${previousDayPrices.length} update operations for previous day prices.`);
-}
-
 //////////////////////////////////////////////////////////////////// Quote
 
 /**
@@ -214,7 +180,7 @@ async function loadMissingQuotes(shortSymbols, symbolIDs) {
   const bulk = collection.initializeUnorderedBulkOp();
   for (const quote of quotes) {
     const query = { _id: quote._id };
-    const update = { $setOnInsert: quote };
+    const update = { $setOnInsert: quote, $currentDate: { "u": true } };
     bulk.find(query).upsert().updateOne(update);
   }
 

@@ -1,5 +1,5 @@
 
-// fmpUpdateCompanies.js
+// fmpUpdateQuotes.js
 
 // https://docs.mongodb.com/manual/reference/method/js-collection/
 // https://docs.mongodb.com/manual/reference/method/js-bulk/
@@ -17,11 +17,12 @@ exports = async function() {
     return;
   }
 
-  const companiesCollection = fmp.collection("companies");
-  const companies = await fetchCompanies(shortSymbols);
-  await companiesCollection.safeUpdateMany(companies, undefined, '_id', true);
+  // TODO: We might insert after each batch fetch
+  const quotes = await fetchQuotes(shortSymbols);
+  const quotesCollection = fmp.collection("quotes");
+  await quotesCollection.safeUpsertMany(quotes, '_id', true);
 
-  await setUpdateDate("fmp-companies");
+  await setUpdateDate("fmp-quotes");
 
   console.log(`SUCCESS`);
 };
