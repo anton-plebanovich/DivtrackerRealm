@@ -10,7 +10,9 @@ Object.prototype.safeExecute = async function() {
   try {
     return await this.execute();
   } catch(error) {
-    if (error.message !== 'Failed to execute bulk writes: no operations specified') {
+    if (error.message === 'Failed to execute bulk writes: no operations specified') {
+      console.log("No bulk operations to execute");
+    } else {
       throw new _SystemError(error);
     }
   }
