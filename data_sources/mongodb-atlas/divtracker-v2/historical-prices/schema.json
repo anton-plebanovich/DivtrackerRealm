@@ -14,6 +14,9 @@
         },
         "s": {
             "bsonType": "objectId"
+        },
+        "x": {
+            "bsonType": "bool"
         }
     },
     "required": [

@@ -3,7 +3,7 @@
     "name": "updateSplitsDailyV2",
     "type": "SCHEDULED",
     "config": {
-        "schedule": "3 9 * * *"
+        "schedule": "5 9 * * *"
     },
     "disabled": false,
     "event_processors": {

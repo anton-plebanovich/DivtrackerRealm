@@ -1,15 +1,15 @@
 {
-    "id": "6185ffbd6db886ed8f037b61",
-    "name": "updateDividendsDailyV2",
+    "id": "6185ffbd6db886ed8f037b22",
+    "name": "fmpLoadMissingDataDaily",
     "type": "SCHEDULED",
     "config": {
-        "schedule": "1 9 * * *"
+        "schedule": "3 23 * * *"
     },
     "disabled": false,
     "event_processors": {
         "FUNCTION": {
             "config": {
-                "function_name": "updateDividendsV2"
+                "function_name": "fmpLoadMissingData"
             }
         }
     }

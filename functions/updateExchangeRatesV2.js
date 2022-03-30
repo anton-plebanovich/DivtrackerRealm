@@ -7,7 +7,7 @@
  * Fetches today's exchange rates and updates database.
  */
 exports = async function() {
-  context.functions.execute("utilsV2");
+  context.functions.execute("iexUtils");
   
   const exchangeRates = await fetchExchangeRates();
   const collection = db.collection("exchange-rates");

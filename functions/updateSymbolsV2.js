@@ -34,7 +34,7 @@
  * @note IEX update happens at 8am, 9am, 12pm, 1pm UTC
  */
 exports = async function() {
-  context.functions.execute("utilsV2");
+  context.functions.execute("iexUtils");
 
   await updateIEXSymbols();
   await updateDivtrackerSymbols();
@@ -47,7 +47,7 @@ async function updateIEXSymbols() {
   console.log(`Updating IEX symbols`);
 
   // https://sandbox.iexapis.com/stable/ref-data/symbols?token=Tpk_581685f711114d9f9ab06d77506fdd49
-  const newSymbols = await fetch("/ref-data/symbols");
+  const newSymbols = await iexFetch("/ref-data/symbols");
 
   // We remove date field to prevent excessive updates each day
   newSymbols.forEach(x => delete x.date);
