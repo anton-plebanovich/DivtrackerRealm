@@ -491,20 +491,20 @@ function _updateDividendsFrequency(dividends) {
     if (i - 1 < 0) {
       prevDate = null;
     } else {
-      prevDate = dividends[i - 1].e;
+      prevDate = nonDeletedDividends[i - 1].e;
     }
 
     let nextDate;
-    if (i + 1 >= dividends.length) {
+    if (i + 1 >= nonDeletedDividends.length) {
       nextDate = null;
     } else {
-      nextDate = dividends[i + 1].e;
+      nextDate = nonDeletedDividends[i + 1].e;
     }
     
     if (prevDate != null && nextDate != null) {
       dividend.f = getFrequencyForMillis((nextDate - prevDate) / 2);
     } else if (prevDate != null) {
-      dividend.f = dividends[i - 1].f; // Keep previous
+      dividend.f = nonDeletedDividends[i - 1].f; // Keep previous
     } else if (nextDate != null) {
       dividend.f = getFrequencyForMillis(nextDate - dividend.e);
     } else {
