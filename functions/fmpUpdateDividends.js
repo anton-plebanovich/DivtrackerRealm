@@ -151,7 +151,7 @@ function fixDividends(dividends, existingDividendsBySymbolID) {
         existingDividend.a == dividend.a && compareOptionalDates(existingDividend.e, dividend.e)
       );
       
-      if (matchedDividendIndex == null) {
+      if (matchedDividendIndex === -1) {
         // No match, add existing
         deduplicatedExistingDividends.push(existingDividend);
 
