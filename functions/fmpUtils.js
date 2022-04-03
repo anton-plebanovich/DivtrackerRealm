@@ -489,6 +489,7 @@ function _updateDividendsFrequency(dividends) {
 
   let previousFrequency = 'u';
   for (const [i, dividend] of dividends.entries()) {
+
     let nextDate;
     if (i + 1 >= dividends.length) {
       nextDate = null;

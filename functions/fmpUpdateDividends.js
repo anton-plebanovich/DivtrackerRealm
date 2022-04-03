@@ -45,6 +45,7 @@ exports = async function() {
             f: "$f",
             p: "$p",
             s: "$s",
+            x: "$x",
           }
         }
       }
@@ -142,13 +143,26 @@ function fixDividends(dividends, existingDividendsBySymbolID) {
       continue;
     }
 
-    // We remove new dividends from existing to allow update in case something was changed
-    const deduplicatedExistingDividends = existingDividends
-      .filter(existingDividend => 
-        dividends.find(dividend => 
-          existingDividend.a == dividend.a && compareOptionalDates(existingDividend.e, dividend.e)
-        ) == null
+    // We remove new dividends from existing to allow update in case something was changed.
+    // We leave deleted dividends.
+    const deduplicatedExistingDividends = [];
+    for (const existingDividend of existingDividends) {
+      const matchedDividendIndex = dividends.findIndex(dividend => 
+        existingDividend.a == dividend.a && compareOptionalDates(existingDividend.e, dividend.e)
       );
+      
+      if (matchedDividendIndex == null) {
+        // No match, add existing
+        deduplicatedExistingDividends.push(existingDividend);
+
+      } else if (existingDividend.x == true) {
+        // Deleted dividend match, exclude from new
+        dividends.splice(matchedDividendIndex, 1);
+
+      } else {
+        // Match, will be added later
+      }
+    }
 
     // Frequency fix using all known dividends
     let _fixedDividends = deduplicatedExistingDividends
