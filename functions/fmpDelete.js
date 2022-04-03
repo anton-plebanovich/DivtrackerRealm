@@ -30,11 +30,11 @@ exports = async function(ticker, dayStrings) {
   
   const collection = fmp.collection("dividends");
   const existingDividends = await collection
-    .find({ s: symbolID })
+    .find({ s: symbolID, x: { $ne: true } })
     .sort({ e: 1 })
     .toArray();
   
-  let modifiedDivideds = existingDividends.map(x => Object.assign({}, x));
+  const modifiedDivideds = existingDividends.map(x => Object.assign({}, x));
   for (const date of dates) {
     const existingDividend = modifiedDivideds.find(x => compareOptionalDates(x.e, date));
     if (existingDividend == null) {
@@ -44,7 +44,7 @@ exports = async function(ticker, dayStrings) {
     existingDividend.x = true;
   }
   
-  modifiedDivideds = updateDividendsFrequency(modifiedDivideds);
+  updateDividendsFrequency(modifiedDivideds);
   
   collection.safeUpdateMany(modifiedDivideds, existingDividends, '_id', true);
 };

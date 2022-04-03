@@ -485,9 +485,8 @@ function _getFmpDividendAmount(fmpDividend) {
 
 // TODO: Improve later by including more cases
 function _updateDividendsFrequency(dividends) {
-  dividends = dividends.map(x => Object.assign({}, x))
-
-  for (const [i, dividend] of dividends.entries()) {
+  const nonDeletedDividends = dividends.filter(x => x.x != true);
+  for (const [i, dividend] of nonDeletedDividends.entries()) {
     let prevDate;
     if (i - 1 < 0) {
       prevDate = null;
