@@ -152,8 +152,10 @@ function fixDividends(dividends, existingDividendsBySymbolID) {
       );
       
       if (matchedDividendIndex === -1) {
-        // No match, add existing
-        deduplicatedExistingDividends.push(existingDividend);
+        // No match, add existing if not deleted
+        if (existingDividend.x != true) {
+          deduplicatedExistingDividends.push(existingDividend);
+        }
 
       } else if (existingDividend.x == true) {
         // Deleted dividend match, exclude from new
