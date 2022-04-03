@@ -1,5 +1,6 @@
 
 // fmpDelete.js
+// exports('SBER.ME', ['2020-07-15', '2020-05-13'])
 
 exports = async function(ticker, dayStrings) {
   context.functions.execute("fmpUtils");
@@ -10,11 +11,16 @@ exports = async function(ticker, dayStrings) {
     UserError,
   );
 
-  throwIfEmptyArray(
-    dayStrings, 
-    `Please pass non-empty days array as the second argument. Each day should be in the 'yyyy-mm-dd' format, e.g. 2020-12-30.`, 
-    UserError,
-  );
+  if (Object.prototype.toString.call(dayStrings) === '[object Array]') {
+    // ok
+  } else if (typeof dayStrings === 'string') {
+    dayStrings = dayStrings.split(",").map(x => x.trim());
+  } else {
+    _logAndThrow(
+      `Please pass non-empty days array as the second argument. Each day should be in the 'yyyy-mm-dd' format, e.g. 2020-12-30.`, 
+      UserError,
+    );
+  }
 
   const symbolID = await fmp.collection("symbols")
     .findOne({ t: ticker })
