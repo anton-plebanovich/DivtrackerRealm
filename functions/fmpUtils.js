@@ -503,7 +503,7 @@ function _updateDividendsFrequency(dividends) {
     }
     
     if (prevDate != null && nextDate != null) {
-      dividend.f = getFrequencyForMillis((nextDate.e - prevDate.e) / 2);
+      dividend.f = getFrequencyForMillis((nextDate - prevDate) / 2);
     } else if (prevDate != null) {
       dividend.f = getFrequencyForMillis(dividend.e - prevDate);
     } else if (nextDate != null) {
