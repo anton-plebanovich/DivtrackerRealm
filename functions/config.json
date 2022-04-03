@@ -17,6 +17,10 @@
         "private": true
     },
     {
+        "name": "fmpDelete",
+        "private": true
+    },
+    {
         "name": "fmpGetData",
         "private": false,
         "run_as_system": true
