@@ -169,8 +169,8 @@ function fixDividends(dividends, existingDividendsBySymbolID) {
       .concat(dividends)
       .sort((l, r) => l.e - r.e);
     
-    _fixedDividends = updateDividendsFrequency(_fixedDividends);
     _fixedDividends = removeDuplicateDividends(_fixedDividends);
+    _fixedDividends = updateDividendsFrequency(_fixedDividends);
 
     _fixedDividends = _fixedDividends
       .filter(fixedDividend => 
