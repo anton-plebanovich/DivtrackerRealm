@@ -487,8 +487,13 @@ function _getFmpDividendAmount(fmpDividend) {
 function _updateDividendsFrequency(dividends) {
   dividends = dividends.map(x => Object.assign({}, x))
 
-  let previousFrequency = 'u';
   for (const [i, dividend] of dividends.entries()) {
+    let prevDate;
+    if (i - 1 < 0) {
+      prevDate = null;
+    } else {
+      prevDate = dividends[i - 1].e;
+    }
 
     let nextDate;
     if (i + 1 >= dividends.length) {
@@ -497,30 +502,35 @@ function _updateDividendsFrequency(dividends) {
       nextDate = dividends[i + 1].e;
     }
     
-    if (nextDate != null) {
-      const days = (nextDate - dividend.e) / 86400000;
-      if (days <= 11) {
-        dividend.f = 'w';
-      } else if (days <= 45) {
-        dividend.f = 'm';
-      } else if (days <= 135) {
-        dividend.f = 'q';
-      } else if (days <= 270) {
-        dividend.f = 's';
-      } else if (days <= 540) {
-        dividend.f = 'a';
-      } else {
-        dividend.f = 'u';
-      }
+    if (prevDate != null && nextDate != null) {
+      dividend.f = getFrequencyForMillis((nextDate.e - prevDate.e) / 2);
+    } else if (prevDate != null) {
+      dividend.f = getFrequencyForMillis(dividend.e - prevDate);
+    } else if (nextDate != null) {
+      dividend.f = getFrequencyForMillis(nextDate - dividend.e);
     } else {
-      // Continue previous frequency when there is no next dividend
-      dividend.f = previousFrequency;
+      dividend.f = 'u'; // The only record
     }
-
-    previousFrequency = dividend.f;
   }
 
   return dividends;
+}
+
+function getFrequencyForMillis(millis) {
+  const days = Math.abs(millis) / 86400000;
+  if (days <= 11) {
+    return 'w';
+  } else if (days <= 45) {
+    return 'm';
+  } else if (days <= 135) {
+    return 'q';
+  } else if (days <= 270) {
+    return 's';
+  } else if (days <= 540) {
+    return 'a';
+  } else {
+    return 'u';
+  }
 }
 
 updateDividendsFrequency = _updateDividendsFrequency;

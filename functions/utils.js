@@ -510,6 +510,22 @@ String.prototype.isEqual = function(string) {
   return this === string;
 };
 
+///////////////////////////////////////////////////////////////////////////////// FUNCTIONS
+
+function _compareOptionalDates(left, right) {
+  if (left == null && right == null) {
+    return true;
+  } else if (left == null && right != null) {
+    return false;
+  } else if (left != null && right == null) {
+    return false;
+  } else if (left != null && right != null) {
+    return left.getTime() == right.getTime();
+  }
+}
+
+compareOptionalDates = _compareOptionalDates;
+
 ///////////////////////////////////////////////////////////////////////////////// CLASSES
 
 class _LazyString {

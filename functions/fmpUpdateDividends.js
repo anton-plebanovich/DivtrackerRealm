@@ -189,15 +189,3 @@ function fixDividends(dividends, existingDividendsBySymbolID) {
 
   return fixedDividends;
 }
-
-function compareOptionalDates(left, right) {
-  if (left == null && right == null) {
-    return true;
-  } else if (left == null && right != null) {
-    return false;
-  } else if (left != null && right == null) {
-    return false;
-  } else if (left != null && right != null) {
-    return left.getTime() == right.getTime();
-  }
-}
