@@ -10,7 +10,9 @@ Object.prototype.safeExecute = async function() {
   try {
     return await this.execute();
   } catch(error) {
-    if (error.message !== 'Failed to execute bulk writes: no operations specified') {
+    if (error.message === 'Failed to execute bulk writes: no operations specified') {
+      console.log("No bulk operations to execute");
+    } else {
       throw new _SystemError(error);
     }
   }
@@ -508,6 +510,22 @@ String.prototype.isEqual = function(string) {
   return this === string;
 };
 
+///////////////////////////////////////////////////////////////////////////////// FUNCTIONS
+
+function _compareOptionalDates(left, right) {
+  if (left == null && right == null) {
+    return true;
+  } else if (left == null && right != null) {
+    return false;
+  } else if (left != null && right == null) {
+    return false;
+  } else if (left != null && right != null) {
+    return left.getTime() == right.getTime();
+  }
+}
+
+compareOptionalDates = _compareOptionalDates;
+
 ///////////////////////////////////////////////////////////////////////////////// CLASSES
 
 class _LazyString {
@@ -834,10 +852,12 @@ function extendRuntime() {
 
 ///////////////////////////////////////////////////////////////////////////////// FUNCTIONS
 
-function _logAndThrow(message) {
-  _throwIfUndefinedOrNull(message, `logAndThrow message`);
+function _logAndThrow(message, ErrorType) {
+  if (ErrorType == null) { ErrorType = _SystemError; }
+  _throwIfUndefinedOrNull(message, `logAndThrow message`, ErrorType);
   console.error(message);
-  throw message;
+  
+  throw new ErrorType(message);
 }
 
 logAndThrow = _logAndThrow;
@@ -949,16 +969,18 @@ throwIfNotObjectId = _throwIfNotObjectId;
  * Throws error with optional `message` if `object` is `undefined` or `null`.
  * @param {object} object Object to check.
  * @param {string} message Optional additional error message.
+ * @param {Error} ErrorType Optional error type. `SystemError` by default.
  * @returns {object} Passed object if it's defined and not `null`.
  */
-function _throwIfUndefinedOrNull(object, message) {
+function _throwIfUndefinedOrNull(object, message, ErrorType) {
+  if (ErrorType == null) { ErrorType = _SystemError; }
   if (typeof object === 'undefined') {
     if (message == null) { message = ""; }
-    _logAndThrow(`Argument is undefined. ${message}`);
+    _logAndThrow(`Argument is undefined. ${message}`, ErrorType);
     
   } else if (object === null) {
     if (message == null) { message = ""; }
-    _logAndThrow(`Argument is null. ${message}`);
+    _logAndThrow(`Argument is null. ${message}`, ErrorType);
     
   } else {
     return object;

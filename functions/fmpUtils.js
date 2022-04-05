@@ -458,8 +458,8 @@ function _fixFMPDividends(fmpDividends, symbolID) {
       })
       .filterNull()
     
-    dividends = _updateDividendsFrequency(dividends);
     dividends = _removeDuplicateDividends(dividends);
+    dividends = _updateDividendsFrequency(dividends);
 
     return dividends;
 
@@ -485,41 +485,51 @@ function _getFmpDividendAmount(fmpDividend) {
 
 // TODO: Improve later by including more cases
 function _updateDividendsFrequency(dividends) {
-  dividends = dividends.map(x => Object.assign({}, x))
+  const nonDeletedDividends = dividends.filter(x => x.x != true);
+  for (const [i, dividend] of nonDeletedDividends.entries()) {
+    let prevDate;
+    if (i - 1 < 0) {
+      prevDate = null;
+    } else {
+      prevDate = nonDeletedDividends[i - 1].e;
+    }
 
-  let previousFrequency = 'u';
-  for (const [i, dividend] of dividends.entries()) {
     let nextDate;
-    if (i + 1 >= dividends.length) {
+    if (i + 1 >= nonDeletedDividends.length) {
       nextDate = null;
     } else {
-      nextDate = dividends[i + 1].e;
+      nextDate = nonDeletedDividends[i + 1].e;
     }
     
-    if (nextDate != null) {
-      const days = (nextDate - dividend.e) / 86400000;
-      if (days <= 11) {
-        dividend.f = 'w';
-      } else if (days <= 45) {
-        dividend.f = 'm';
-      } else if (days <= 135) {
-        dividend.f = 'q';
-      } else if (days <= 270) {
-        dividend.f = 's';
-      } else if (days <= 540) {
-        dividend.f = 'a';
-      } else {
-        dividend.f = 'u';
-      }
+    if (prevDate != null && nextDate != null) {
+      dividend.f = getFrequencyForMillis((nextDate - prevDate) / 2);
+    } else if (prevDate != null) {
+      dividend.f = nonDeletedDividends[i - 1].f; // Keep previous
+    } else if (nextDate != null) {
+      dividend.f = getFrequencyForMillis(nextDate - dividend.e);
     } else {
-      // Continue previous frequency when there is no next dividend
-      dividend.f = previousFrequency;
+      dividend.f = 'u'; // The only record
     }
-
-    previousFrequency = dividend.f;
   }
 
   return dividends;
+}
+
+function getFrequencyForMillis(millis) {
+  const days = Math.abs(millis) / 86400000;
+  if (days <= 11) {
+    return 'w';
+  } else if (days <= 45) {
+    return 'm';
+  } else if (days <= 135) {
+    return 'q';
+  } else if (days <= 270) {
+    return 's';
+  } else if (days <= 540) {
+    return 'a';
+  } else {
+    return 'u';
+  }
 }
 
 updateDividendsFrequency = _updateDividendsFrequency;
@@ -529,18 +539,21 @@ function _removeDuplicateDividends(dividends) {
   const originalLength = dividends.length;
   const newDividends = dividends
     .filter((dividend, i, arr) => {
-      if (i + 1 >= arr.length) {
+      if (i + 2 >= arr.length) {
         return true
       }
       
       const nextDividend = arr[i + 1];
+      const nextNextDividend = arr[i + 2];
 
       // 80.2744 and 80.27435 for NNSB.ME
       const lhsAmount = dividend.a.valueOf();
       const rhsAmount = nextDividend.a.valueOf();
       const amountEqual = Math.abs(rhsAmount - lhsAmount) <= 0.0001
+      const frequency = getFrequencyForMillis(nextDividend.e - dividend.e);
+      const nextFrequency = getFrequencyForMillis(nextNextDividend.e - nextDividend.e);
 
-      if (dividend.f !== nextDividend.f && dividend.f === 'w' && amountEqual) {
+      if (frequency !== nextFrequency && frequency === 'w' && amountEqual) {
         console.error(`Duplicate dividend for ${dividend.s}: ${dividend.stringify()}`);
         return false;
       } else {
