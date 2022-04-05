@@ -1,5 +1,5 @@
 
-// updateCompaniesV2.js
+// fmpUpdateQuotes.js
 
 // https://docs.mongodb.com/manual/reference/method/js-collection/
 // https://docs.mongodb.com/manual/reference/method/js-bulk/
@@ -8,24 +8,21 @@
 // https://docs.mongodb.com/realm/mongodb/actions/collection.bulkWrite/#std-label-mongodb-service-collection-bulk-write
 // https://docs.mongodb.com/realm/mongodb/actions/collection.find/
 
-/**
- * @note IEX update happens at 4am and 5am UTC every day
- */
 exports = async function() {
-  context.functions.execute("iexUtils");
-  const shortSymbols = await getInUseShortSymbols();
+  context.functions.execute("fmpUtils");
 
+  const shortSymbols = await getShortSymbols();
   if (shortSymbols.length <= 0) {
     console.log(`No symbols. Skipping update.`);
     return;
   }
 
-  const companiesCollection = db.collection("companies");
-  const companies = await fetchCompanies(shortSymbols);
-  const existingCompanies = await companiesCollection.find().toArray();
-  await companiesCollection.safeUpdateMany(companies, existingCompanies);
+  // TODO: We might insert after each batch fetch
+  const quotes = await fetchQuotes(shortSymbols);
+  const quotesCollection = fmp.collection("quotes");
+  await quotesCollection.safeUpsertMany(quotes, '_id', true);
 
-  await setUpdateDate("companies");
+  await setUpdateDate("fmp-quotes");
 
   console.log(`SUCCESS`);
 };

@@ -10,7 +10,7 @@
 // https://docs.mongodb.com/manual/reference/method/Bulk.insert/
 
 exports = async function() {
-  context.functions.execute("utilsV2");
+  context.functions.execute("utils");
 
   try {
     positiveCommissionsMigration();

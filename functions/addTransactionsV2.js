@@ -11,7 +11,7 @@
    exports([{"a":1.1,"d":"2021-12-08T21:00:00.000+00:00","p":320.1,"s":new BSON.ObjectId("61b102c0048b84e9c13e4564")}]);
  */
 exports = async function(transactions, replace) {
-  context.functions.execute("utilsV2");
+  context.functions.execute("iexUtils");
 
   throwIfEmptyArray(
     transactions, 

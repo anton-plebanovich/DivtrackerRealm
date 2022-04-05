@@ -1,0 +1,16 @@
+{
+    "id": "6185ffbd6db886ed8f037b29",
+    "name": "fmpUpdateSymbolsDaily",
+    "type": "SCHEDULED",
+    "config": {
+        "schedule": "1 23 * * *"
+    },
+    "disabled": false,
+    "event_processors": {
+        "FUNCTION": {
+            "config": {
+                "function_name": "fmpUpdateSymbols"
+            }
+        }
+    }
+}
