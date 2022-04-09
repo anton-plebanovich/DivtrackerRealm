@@ -78,11 +78,13 @@ exports = async function(date, collections, symbols, fullSymbolsCollections) {
         UserError
       )
   
-      const excessiveCollections = collections.filter(x => !allCollections.includes(x));
+      const excessiveCollections = fullSymbolsCollections.filter(x => !allCollections.includes(x));
       if (excessiveCollections.length) {
         _logAndThrow(`Invalid full symbol collections array as the fourth argument: ${excessiveCollections}. Valid full symbol collections are: ${allCollections}.`);
       }
     }
+  } else {
+    fullSymbolsCollections = [];
   }
 
   const singularSymbolCollections = [
