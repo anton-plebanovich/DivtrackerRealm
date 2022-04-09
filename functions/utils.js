@@ -904,7 +904,7 @@ function _throwIfNotString(object, message, ErrorType) {
   _throwIfUndefinedOrNull(object, message, ErrorType)
 
   const type = Object.prototype.toString.call(object);
-  if (type === 'string') { return object; }
+  if (type === 'string' || type === '[object String]') { return object; }
   if (ErrorType == null) { ErrorType = _SystemError; }
   if (message == null) { message = ""; }
   
