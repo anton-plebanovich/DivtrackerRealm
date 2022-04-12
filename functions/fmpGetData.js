@@ -1,23 +1,53 @@
 
 // fmpGetData.js
 
-exports = async function(date, collections, symbols) {
+exports = async function(date, collections, symbols, fullSymbolsCollections) {
   context.functions.execute("fmpUtils");
 
+  const find = {};
   if (date != null) {
     throwIfNotDate(
       date, 
       `Please pass date as the first argument.`, 
       UserError
     );
+
+    // TODO: We might need to use date - 5 mins to prevent race conditions. I am not 100% sure because I don't know if MongoDB handles it properly.
+    find.$or = [
+      { _id: { $gte: BSON.ObjectId.fromDate(date) } },
+      { u: { $gte: date } }
+    ];
   }
+
+  const allCollections = [
+    'companies',
+    'dividends',
+    'historical-prices',
+    'quotes',
+    'splits',
+    'symbols',
+  ];
 
   if (collections != null) {
     throwIfEmptyArray(
-      symbols, 
-      `Please pass collections array as the second argument. It may be null but must not be empty.`, 
+      collections, 
+      `Please pass collections array as the second argument. It may be null but must not be empty. Valid collections are: ${allCollections}.`, 
       UserError
     );
+
+    throwIfNotString(
+      collections[0], 
+      `Please pass collections array as the second argument. Valid collections are: ${allCollections}.`, 
+      UserError
+    )
+
+    const excessiveCollections = collections.filter(x => !allCollections.includes(x));
+    if (excessiveCollections.length) {
+      _logAndThrow(`Invalid collections array as the second argument: ${excessiveCollections}. Valid collections are: ${allCollections}.`);
+    }
+    
+  } else {
+    collections = allCollections;
   }
 
   if (symbols != null) {
@@ -34,25 +64,27 @@ exports = async function(date, collections, symbols) {
     )
   }
 
-  const find = {};
-  if (date != null) {
-    // TODO: We might need to use date - 5 mins to prevent race conditions. I am not 100% sure because I don't know if MongoDB handles it properly.
+  if (fullSymbolsCollections != null) {
+    throwIfNotArray(
+      fullSymbolsCollections, 
+      `Please pass full symbol collections array as the fourth argument. It may be null. Valid collections are: ${allCollections}.`, 
+      UserError
+    );
 
-    find.$or = [
-      { _id: { $gte: BSON.ObjectId.fromDate(date) } },
-      { u: { $gte: date } }
-    ];
-  }
-
-  if (collections == null) {
-    collections = [
-      'companies',
-      'dividends',
-      'historical-prices',
-      'quotes',
-      'splits',
-      'symbols',
-    ];
+    if (fullSymbolsCollections.length) {
+      throwIfNotString(
+        fullSymbolsCollections[0], 
+        `Please pass full symbol collections array as the fourth argument. Valid collections are: ${allCollections}.`, 
+        UserError
+      )
+  
+      const excessiveCollections = fullSymbolsCollections.filter(x => !allCollections.includes(x));
+      if (excessiveCollections.length) {
+        _logAndThrow(`Invalid full symbol collections array as the fourth argument: ${excessiveCollections}. Valid full symbol collections are: ${allCollections}.`);
+      }
+    }
+  } else {
+    fullSymbolsCollections = [];
   }
 
   const singularSymbolCollections = [
@@ -63,7 +95,7 @@ exports = async function(date, collections, symbols) {
 
   const operations = collections.map(async collection => {
     const _find = Object.assign({}, find);
-    if (symbols != null) {
+    if (symbols != null && !fullSymbolsCollections.includes(collection)) {
       if (singularSymbolCollections.includes(collection)) {
         _find._id = { $in: symbols }
       } else {
