@@ -900,6 +900,19 @@ checkExecutionTimeout = function checkExecutionTimeout(limit) {
   }
 };
 
+function _throwIfNotString(object, message, ErrorType) {
+  _throwIfUndefinedOrNull(object, message, ErrorType)
+
+  const type = Object.prototype.toString.call(object);
+  if (type === 'string' || type === '[object String]') { return object; }
+  if (ErrorType == null) { ErrorType = _SystemError; }
+  if (message == null) { message = ""; }
+  
+  throw new ErrorType(`Argument should be of the 'string' type. Instead, received '${type}'. ${message}`);
+}
+
+throwIfNotString = _throwIfNotString;
+
 /**
  * Throws error with optional `message` if `object` is not an `Array`.
  * @param {object} object Object to check.
