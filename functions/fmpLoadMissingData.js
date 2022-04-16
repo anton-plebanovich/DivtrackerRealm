@@ -17,11 +17,13 @@ exports = async function loadMissingData() {
 
   const symbolIDs = shortSymbols.map(x => x._id);
 
+  // Fetch huge requests separately
+  await loadMissingCompanies(shortSymbols, symbolIDs).mapErrorToSystem();
+  await loadMissingQuotes(shortSymbols, symbolIDs).mapErrorToSystem();
+
   await Promise.safeAllAndUnwrap([
-    loadMissingCompanies(shortSymbols, symbolIDs).mapErrorToSystem(),
     loadMissingDividends(shortSymbols, symbolIDs).mapErrorToSystem(),
     loadMissingHistoricalPrices(shortSymbols, symbolIDs).mapErrorToSystem(),
-    loadMissingQuotes(shortSymbols, symbolIDs).mapErrorToSystem(),
     loadMissingSplits(shortSymbols, symbolIDs).mapErrorToSystem()
   ]);
 };
