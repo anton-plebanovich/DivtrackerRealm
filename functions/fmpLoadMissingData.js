@@ -17,6 +17,8 @@ exports = async function loadMissingData() {
 
   const symbolIDs = shortSymbols.map(x => x._id);
 
+  // NOTE: We might need to store fetched tickers in the database to prevent duplicate fetches for tickers without data.
+
   // Fetch huge requests first
   await loadMissingCompanies(shortSymbols, symbolIDs).mapErrorToSystem();
   await loadMissingQuotes(shortSymbols, symbolIDs).mapErrorToSystem();

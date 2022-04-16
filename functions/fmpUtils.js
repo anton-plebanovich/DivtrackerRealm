@@ -735,7 +735,13 @@ function _fixFMPQuote(fmpQuote, symbolID) {
     console.logVerbose(`Previous day price data fix start`);
     const quote = {};
     quote._id = symbolID;
-    quote.l = fmpQuote.price;
+
+    if (fmpQuote.price != null) {
+      quote.l = fmpQuote.price;
+    } else {
+      console.error(`No quote price for '${symbolID}': ${fmpQuote.stringify()}`)
+      return null
+    }
 
     if (fmpQuote.pe != null) {
       quote.p = BSON.Double(fmpQuote.pe);
