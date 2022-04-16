@@ -618,7 +618,7 @@ class _NetworkResponse {
 
         const alwaysRetryableStatusCodes = [
           403, // Forbidden
-          // 429, // Too Many Requests
+          429, // Too Many Requests
           500, // Internal Server Error
           502, // Bad Gateway
         ];
@@ -639,6 +639,21 @@ class _NetworkResponse {
 
         retryable = false;
         return retryable;
+      }
+    });
+
+    let retryDelay;
+    Object.defineProperty(this, "retryDelay", {
+      get: function() {
+        if (typeof retryDelay !== 'undefined') {
+          return retryDelay;
+        }
+
+        if (this.statusCode === 429) {
+          retryDelay = json['X-Rate-Limit-Retry-After-Milliseconds']
+        } else {
+          retryDelay = null;
+        }
       }
     });
   }
@@ -1035,7 +1050,13 @@ async function _fetch(baseURL, api, queryParameters) {
 
   // Retry several times on retryable errors
   for (let step = 0; step < 10 && response.retryable; step++) {
-    const delay = (step + 1) * (500 + Math.random() * 1000);
+    let delay;
+    if (response.retryDelay != null) {
+      delay = response.retryDelay;
+    } else {
+      delay = (step + 1) * (500 + Math.random() * 1000);
+    }
+
     console.log(`Received '${response.statusCode}' error with text '${response.string}'. Trying to retry after a '${delay}' delay.`);
     await new Promise(r => setTimeout(r, delay));
     response = await _httpGET(baseURL, api, queryParameters);
