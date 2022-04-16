@@ -1,6 +1,8 @@
 
 // fmpUtils.js
 
+// 'Value is not an object: undefined' error is thrown when 'undefined' value is called as a function.
+
 ///////////////////////////////////////////////////////////////////////////////// EXTENSIONS
 
 String.prototype.removeSensitiveData = function() {
@@ -279,7 +281,12 @@ async function _fmpFetchBatchAndMapArray(api, tickers, queryParameters, maxBatch
     }
   };
 
-  const _mapAndCallback = async (datas) => { await callback(_map(datas)); };
+  let _mapAndCallback;
+  if (callback != null) {
+    _mapAndCallback = async (datas) => { await callback(_map(datas)); };
+  } else {
+    _mapAndCallback = undefined;
+  }
 
   return await _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, groupingKey, _mapAndCallback)
     .then(_map);
@@ -310,7 +317,12 @@ async function _fmpFetchBatchAndMapArray(api, tickers, queryParameters, maxBatch
       });
   };
 
-  const _mapAndCallback = async (datas) => { await callback(_map(datas)); };
+  let _mapAndCallback;
+  if (callback != null) {
+    _mapAndCallback = async (datas) => { await callback(_map(datas)); };
+  } else {
+    _mapAndCallback = undefined;
+  }
   
   return await _fmpFetchChunked(api, tickers, queryParameters, maxFetchSize, _mapAndCallback)
     .then(_map);
@@ -462,8 +474,6 @@ async function _fmpFetch(api, queryParameters) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////// DATA FIX
-
-// 'Value is not an object: undefined' error is thrown when object with 'undefined' value for a key is adding to database.
 
 /**
  * Fixes company object so it can be added to MongoDB.

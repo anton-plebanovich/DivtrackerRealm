@@ -1089,8 +1089,8 @@ async function _fetch(baseURL, api, queryParameters) {
 fetch = _fetch;
 
 async function _httpGET(baseURL, api, queryParameters) {
-  _throwIfUndefinedOrNull(baseURL, `_get baseURL`);
-  _throwIfUndefinedOrNull(api, `_get api`);
+  _throwIfUndefinedOrNull(baseURL, `_httpGET baseURL`);
+  _throwIfUndefinedOrNull(api, `_httpGET api`);
 
   const url = _getURL(baseURL, api, queryParameters);
   console.log(`Request with URL: ${url}`);
