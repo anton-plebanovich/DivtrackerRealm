@@ -76,7 +76,7 @@ fetchCompanies = async function fetchCompanies(shortSymbols) {
  * @param {Int} Limit Per ticker limit.
  * @returns {[Dividend]} Array of requested objects.
  */
-fetchDividends = async function fetchDividends(shortSymbols, limit) {
+fetchDividends = async function fetchDividends(shortSymbols, limit, callback) {
   throwIfEmptyArray(shortSymbols, `fetchDividends shortSymbols`);
 
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
@@ -92,7 +92,8 @@ fetchDividends = async function fetchDividends(shortSymbols, limit) {
     'historicalStockList',
     'historical',
     idByTicker,
-    _fixFMPDividends
+    _fixFMPDividends,
+    callback
   );
 };
 
@@ -120,7 +121,7 @@ fetchDividendsCalendar = async function fetchDividendsCalendar(shortSymbols) {
  * @param {[ShortSymbol]} shortSymbols Short symbol models for which to fetch.
  * @returns {[HistoricalPrice]} Array of requested objects.
  */
-fetchHistoricalPrices = async function fetchHistoricalPrices(shortSymbols, queryParameters) {
+fetchHistoricalPrices = async function fetchHistoricalPrices(shortSymbols, queryParameters, callback) {
   throwIfEmptyArray(shortSymbols, `fetchHistoricalPrices shortSymbols`);
 
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
@@ -141,7 +142,8 @@ fetchHistoricalPrices = async function fetchHistoricalPrices(shortSymbols, query
     'historicalStockList',
     'historical',
     idByTicker,
-    _fixFMPHistoricalPrices
+    _fixFMPHistoricalPrices,
+    callback
   );
 };
 
@@ -172,7 +174,7 @@ fetchQuotes = async function fetchQuotes(shortSymbols) {
  * @param {[ShortSymbol]} shortSymbols Short symbol models for which to fetch.
  * @returns {[Split]} Array of requested objects.
  */
-fetchSplits = async function fetchSplits(shortSymbols) {
+fetchSplits = async function fetchSplits(shortSymbols, callback) {
   throwIfEmptyArray(shortSymbols, `fetchSplits shortSymbols`);
 
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
@@ -187,7 +189,8 @@ fetchSplits = async function fetchSplits(shortSymbols) {
     'historicalStockList',
     'historical',
     idByTicker,
-    _fixFMPSplits
+    _fixFMPSplits,
+    callback
   );
 };
 
@@ -242,33 +245,37 @@ async function _fmpFetchAndMapFlatArray(api, tickers, queryParameters, idByTicke
  * @param {function} mapFunction Function to map data to our format.
  * @returns {Promise<[Object]>} Flat array of entities.
  */
-async function _fmpFetchBatchAndMapArray(api, tickers, queryParameters, maxBatchSize, limit, groupingKey, dataKey, idByTicker, mapFunction) {
-  return await _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, groupingKey)
-    .then(async datas => {
-      if (datas[groupingKey] != null) {
-        const dataByTicker = datas[groupingKey].toDictionary('symbol');
-        const fixedDataPromises = tickers
-          .map(async ticker => {
-            const data = dataByTicker[ticker];
-            if (data != null && data[dataKey] != null) {
-              let tickerData = data[dataKey];
-              if (limit != null) {
-                tickerData = tickerData.slice(0, limit);
-              }
-
-              return await mapFunction(tickerData, idByTicker[ticker]);
-            } else {
-              return [];
+async function _fmpFetchBatchAndMapArray(api, tickers, queryParameters, maxBatchSize, limit, groupingKey, dataKey, idByTicker, mapFunction, callback) {
+  const _map = async (datas) => {
+    if (datas[groupingKey] != null) {
+      const dataByTicker = datas[groupingKey].toDictionary('symbol');
+      const fixedDataPromises = tickers
+        .map(async ticker => {
+          const data = dataByTicker[ticker];
+          if (data != null && data[dataKey] != null) {
+            let tickerData = data[dataKey];
+            if (limit != null) {
+              tickerData = tickerData.slice(0, limit);
             }
-          })
-          
-        return await Promise.allLmited(fixedDataPromises, 100)
-          .then(x => x.flat())
 
-      } else {
-        throw `Unexpected response format for ${api}`
-      }
-    });
+            return await mapFunction(tickerData, idByTicker[ticker]);
+          } else {
+            return [];
+          }
+        })
+        
+      return await Promise.allLmited(fixedDataPromises, 100)
+        .then(x => x.flat())
+
+    } else {
+      throw `Unexpected response format for ${api}`
+    }
+  };
+
+  const _mapAndCallback = (datas) => { callback(_map(datas)) };
+
+  return await _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, groupingKey, _mapAndCallback)
+    .then(_map);
 }
 
 /**
@@ -281,21 +288,25 @@ async function _fmpFetchBatchAndMapArray(api, tickers, queryParameters, maxBatch
  * @param {function} mapFunction Function to map data to our format.
  * @returns {Promise<[Object]>} Flat array of entities.
  */
-async function _fmpFetchAndMapObjects(api, tickers, queryParameters, idByTicker, mapFunction) {
-  return await _fmpFetch(api, queryParameters)
-    .then(datas => {
-      const dataByTicker = datas.toDictionary('symbol');
+async function _fmpFetchAndMapObjects(api, tickers, queryParameters, idByTicker, mapFunction, callback) {
+  const _map = (datas) => {
+    const dataByTicker = datas.toDictionary('symbol');
 
-      return tickers
-        .compactMap(ticker => {
-          const tickerData = dataByTicker[ticker];
-          if (tickerData != null) {
-            return mapFunction(tickerData, idByTicker[ticker]);
-          } else {
-            return null;
-          }
-        })
-    });
+    return tickers
+      .compactMap(ticker => {
+        const tickerData = dataByTicker[ticker];
+        if (tickerData != null) {
+          return mapFunction(tickerData, idByTicker[ticker]);
+        } else {
+          return null;
+        }
+      })
+  };
+
+  const _mapAndCallback = (datas) => { callback(_map(datas)) };
+
+  return await _fmpFetch(api, queryParameters, _mapAndCallback)
+    .then(_map);
 }
 
 //////////////////////////////////// Base Fetch
@@ -306,10 +317,11 @@ async function _fmpFetchAndMapObjects(api, tickers, queryParameters, idByTicker,
  * @param {Object} queryParameters Additional query parameters.
  * @param {Int} maxBatchSize Max allowed batch size.
  * @param {string} groupingKey Batch grouping key, e.g. 'historicalStockList'.
+ * @param {function} callbackfn TODO.
  * @returns {Promise<{string: {string: Object|[Object]}}>} Parsed EJSON object. Composed from several responses if max symbols count was exceeded. 
  * The first object keys are symbols. The next inner object keys are types. And the next inner object is an array of type objects.
  */
-async function _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, groupingKey) {
+async function _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, groupingKey, callbackfn) {
   throwIfUndefinedOrNull(api, `_fmpFetchBatch api`);
   throwIfEmptyArray(tickers, `_fmpFetchBatch tickers`);
 
@@ -346,6 +358,10 @@ async function _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, group
     if (chunkedSymbols.length == 1) {
       if (Object.entries(response).length > 0) {
         result[groupingKey].push(response);
+        if (callbackfn != null) {
+          callbackfn({ [groupingKey]: [response] });
+        }
+
       } else {
         console.logVerbose(`No data for ticker: ${tickersString}`);
       }
@@ -353,6 +369,9 @@ async function _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, group
     } else if (response[groupingKey] != null) {
       throwIfNotArray(response[groupingKey], `_fmpFetchBatch response[groupingKey]`);
       result[groupingKey] = result[groupingKey].concat(response[groupingKey]);
+      if (callbackfn != null) {
+        callbackfn({ [groupingKey]: response[groupingKey] });
+      }
 
     } else {
       console.logVerbose(`No data for tickers: ${tickersString}`);

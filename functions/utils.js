@@ -1031,14 +1031,14 @@ async function _fetch(baseURL, api, queryParameters) {
   _throwIfUndefinedOrNull(baseURL, `_fetch baseURL`);
   _throwIfUndefinedOrNull(api, `_fetch api`);
 
-  let response = await _get(baseURL, api, queryParameters);
+  let response = await _httpGET(baseURL, api, queryParameters);
 
   // Retry several times on retryable errors
   for (let step = 0; step < 10 && response.retryable; step++) {
     const delay = (step + 1) * (500 + Math.random() * 1000);
     console.log(`Received '${response.statusCode}' error with text '${response.string}'. Trying to retry after a '${delay}' delay.`);
     await new Promise(r => setTimeout(r, delay));
-    response = await _get(baseURL, api, queryParameters);
+    response = await _httpGET(baseURL, api, queryParameters);
   }
   
   if (response.statusCode === 200) {
@@ -1065,7 +1065,7 @@ async function _fetch(baseURL, api, queryParameters) {
 
 fetch = _fetch;
 
-async function _get(baseURL, api, queryParameters) {
+async function _httpGET(baseURL, api, queryParameters) {
   _throwIfUndefinedOrNull(baseURL, `_get baseURL`);
   _throwIfUndefinedOrNull(api, `_get api`);
 

@@ -76,49 +76,50 @@ async function loadMissingDividends(shortSymbols, symbolIDs) {
     return;
   }
 
-  const futureDividends = await fetchDividendsCalendar(missingShortSymbols);
-  const pastDividends = await fetchDividends(missingShortSymbols);
-  const dividends = futureDividends.concat(pastDividends);
-  if (!dividends.length) {
-    console.log(`No dividends. Skipping insert.`);
-    return;
-  }
-
-  const bulk = collection.initializeUnorderedBulkOp();
-  for (const dividend of dividends) {
-    const query = {};
-    if (dividend.e != null) {
-      query.e = dividend.e;
-    } else {
-      console.error(`Invalid ex date: ${dividend.stringify()}`);
+  const callback = (dividends) => {
+    if (!dividends.length) {
+      console.log(`No dividends. Skipping insert.`);
+      return;
     }
-
-    if (dividend.a != null) {
-      query.a = dividend.a;
-    } else {
-      console.error(`Invalid amount: ${dividend.stringify()}`);
+  
+    const bulk = collection.initializeUnorderedBulkOp();
+    for (const dividend of dividends) {
+      const query = {};
+      if (dividend.e != null) {
+        query.e = dividend.e;
+      } else {
+        console.error(`Invalid ex date: ${dividend.stringify()}`);
+      }
+  
+      if (dividend.a != null) {
+        query.a = dividend.a;
+      } else {
+        console.error(`Invalid amount: ${dividend.stringify()}`);
+      }
+  
+      if (dividend.f != null) {
+        query.f = dividend.f;
+      } else {
+        console.error(`Invalid frequency: ${dividend.stringify()}`);
+      }
+  
+      if (dividend.s != null) {
+        query.s = dividend.s;
+      } else {
+        console.error(`Invalid symbol: ${dividend.stringify()}`);
+      }
+  
+      const update = { $setOnInsert: dividend };
+      bulk.find(query).upsert().updateOne(update);
     }
+  
+    await bulk.execute();
+  };
 
-    if (dividend.f != null) {
-      query.f = dividend.f;
-    } else {
-      console.error(`Invalid frequency: ${dividend.stringify()}`);
-    }
-
-    if (dividend.s != null) {
-      query.s = dividend.s;
-    } else {
-      console.error(`Invalid symbol: ${dividend.stringify()}`);
-    }
-
-    const update = { $setOnInsert: dividend };
-    bulk.find(query).upsert().updateOne(update);
-  }
-
-  // ~2s for Sergey portfolio on tests environment, 1680 entities
-  console.log(`Performing ${dividends.length} update operations for dividends.`);
-  await bulk.execute();
-  console.log(`Performed ${dividends.length} update operations for dividends.`);
+  await Promise.all([
+    fetchDividendsCalendar(missingShortSymbols, callback),
+    fetchDividends(missingShortSymbols, null, callback)
+  ]);
 }
 
 //////////////////////////////////////////////////////////////////// Historical Prices
@@ -136,24 +137,21 @@ async function loadMissingHistoricalPrices(shortSymbols, symbolIDs) {
     return;
   }
   
-  const historicalPrices = await fetchHistoricalPrices(missingShortSymbols);
-  if (!historicalPrices.length) {
-    console.log(`No historical prices. Skipping insert.`);
-    return;
-  }
-
-  const bulk = collection.initializeUnorderedBulkOp();
-  for (const historicalPrice of historicalPrices) {
-    const query = { d: historicalPrice.d, s: historicalPrice.s };
-    const update = { $setOnInsert: historicalPrice };
-    bulk.find(query).upsert().updateOne(update);
-  }
-
-  // TODO: Next target for optimization
-  // ~9s for Sergey portfolio on tests environment, 4622 entities
-  console.log(`Performing ${historicalPrices.length} update operations for historical prices.`);
-  await bulk.execute();
-  console.log(`Performed ${historicalPrices.length} update operations for historical prices.`);
+  await fetchHistoricalPrices(missingShortSymbols, null, (historicalPrices) => {
+    if (!historicalPrices.length) {
+      console.log(`No historical prices. Skipping insert.`);
+      return;
+    }
+  
+    const bulk = collection.initializeUnorderedBulkOp();
+    for (const historicalPrice of historicalPrices) {
+      const query = { d: historicalPrice.d, s: historicalPrice.s };
+      const update = { $setOnInsert: historicalPrice };
+      bulk.find(query).upsert().updateOne(update);
+    }
+  
+    await bulk.execute();
+  });
 }
 
 //////////////////////////////////////////////////////////////////// Quote
@@ -204,22 +202,21 @@ async function loadMissingSplits(shortSymbols, symbolIDs) {
     return;
   }
   
-  const splits = await fetchSplits(missingShortSymbols);
-  if (!splits.length) {
-    console.log(`No splits. Skipping insert.`);
-    return;
-  }
-
-  const bulk = collection.initializeUnorderedBulkOp();
-  for (const split of splits) {
-    const query = { e: split.e, s: split.s };
-    const update = { $setOnInsert: split };
-    bulk.find(query).upsert().updateOne(update);
-  }
-
-  console.log(`Performing ${splits.length} update operations for splits.`);
-  await bulk.execute();
-  console.log(`Performed ${splits.length} update operations for splits.`);
+  await fetchSplits(missingShortSymbols, (splits) => {
+    if (!splits.length) {
+      console.log(`No splits. Skipping insert.`);
+      return;
+    }
+  
+    const bulk = collection.initializeUnorderedBulkOp();
+    for (const split of splits) {
+      const query = { e: split.e, s: split.s };
+      const update = { $setOnInsert: split };
+      bulk.find(query).upsert().updateOne(update);
+    }
+  
+    await bulk.execute();
+  });
 }
 
 //////////////////////////////////////////////////////////////////// Helpers
