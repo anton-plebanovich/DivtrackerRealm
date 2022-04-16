@@ -338,8 +338,7 @@ async function _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, group
     chunkedSymbolsArray = tickers.chunked(maxBatchSize);
   }
 
-  var result = { [groupingKey]: [] };
-  for (const chunkedSymbols of chunkedSymbolsArray) {
+  const fetchPromises = chunkedSymbolsArray.map(async chunkedSymbols => {
     const tickersString = chunkedSymbols.join(",");
     const batchAPI = `${api}/${tickersString}`;
     console.log(`Fetching batch for symbols (${chunkedSymbols.length}) with query '${queryParameters.stringify()}': ${tickersString}`);
@@ -355,6 +354,7 @@ async function _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, group
       }
     }
 
+    const result = { [groupingKey]: [] };
     if (chunkedSymbols.length == 1) {
       if (Object.entries(response).length > 0) {
         result[groupingKey].push(response);
@@ -376,9 +376,18 @@ async function _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, group
     } else {
       console.logVerbose(`No data for tickers: ${tickersString}`);
     }
-  }
 
-  return result;
+    return result;
+  })
+
+  return await Promise.allLmited(fetchPromises, 10)
+    .then(results => {
+      const datas = results
+        .map(result => result.groupingKey)
+        .flat();
+
+      return { [groupingKey]: datas };
+    })
 };
 
 /**
