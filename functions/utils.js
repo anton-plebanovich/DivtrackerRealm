@@ -369,15 +369,26 @@ Array.prototype.includesObject = function(object) {
   return this.find(x => object.isEqual(x)) != null;
 };
 
-Array.prototype.mapToPromise = function(fn) {
-  return new Promise((resolve, reject) => {
-    try {
-      const result = await fn();
-      resolve(result);
-    } catch(error) {
-      reject(error);
+Array.prototype.asyncMap = async function(limit, callback) {
+  let index = 0;
+  const results = [];
+
+  // Run a pseudo-thread
+  const execThread = async () => {
+    while (index < this.length) {
+      const curIndex = index++;
+      // Use of `curIndex` is important because `index` may change after await is resolved
+      results[curIndex] = await callback(this[curIndex]);
     }
-  });
+  };
+
+  // Start threads
+  const threads = [];
+  for (let thread = 0; thread < limit; thread++) {
+    threads.push(execThread());
+  }
+  await Promise.all(threads);
+  return results;
 };
 
 /**
@@ -757,29 +768,8 @@ CompositeError = _CompositeError;
 var runtimeExtended = false;
 function extendRuntime() {
   if (runtimeExtended) { return; }
-
-  Promise.allLmited = async (promises, limit) => {
-    let index = 0;
-    const results = [];
   
-    // Run a pseudo-thread
-    const execThread = async () => {
-      while (index < promises.length) {
-        const curIndex = index++;
-        // Use of `curIndex` is important because `index` may change after await is resolved
-        results[curIndex] = await promises[curIndex];
-      }
-    };
-  
-    // Start threads
-    const threads = [];
-    for (let thread = 0; thread < limit; thread++) {
-      threads.push(execThread());
-    }
-    await Promise.all(threads);
-    return results;
-  };
-  
+  // TODO: allSettled
   Promise.safeAllAndUnwrap = function(promises) {
     return Promise.safeAll(promises)
       .then(results => new Promise((resolve, reject) => {
