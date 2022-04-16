@@ -54,7 +54,7 @@ getShortSymbols = _getShortSymbols;
 const defaultMaxFetchSize = 33;
 
 /// Each batch or chunked request will have concurrent fetches limited by this parameter.
-const maxConcurrentFetchesPerRequest = 1;
+const maxConcurrentFetchesPerRequest = 3;
 
 /**
  * Fetches companies in batch for short symbols.
