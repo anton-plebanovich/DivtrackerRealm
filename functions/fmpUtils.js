@@ -288,25 +288,21 @@ async function _fmpFetchBatchAndMapArray(api, tickers, queryParameters, maxBatch
  * @param {function} mapFunction Function to map data to our format.
  * @returns {Promise<[Object]>} Flat array of entities.
  */
-async function _fmpFetchAndMapObjects(api, tickers, queryParameters, idByTicker, mapFunction, callback) {
-  const _map = async (datas) => {
-    const dataByTicker = datas.toDictionary('symbol');
+ async function _fmpFetchAndMapObjects(api, tickers, queryParameters, idByTicker, mapFunction) {
+  return await _fmpFetch(api, queryParameters)
+    .then(datas => {
+      const dataByTicker = datas.toDictionary('symbol');
 
-    return tickers
-      .compactMap(ticker => {
-        const tickerData = dataByTicker[ticker];
-        if (tickerData != null) {
-          return mapFunction(tickerData, idByTicker[ticker]);
-        } else {
-          return null;
-        }
-      })
-  };
-
-  const _mapAndCallback = async (datas) => { await callback(await _map(datas)) };
-
-  return await _fmpFetch(api, queryParameters, _mapAndCallback)
-    .then(_map);
+      return tickers
+        .compactMap(ticker => {
+          const tickerData = dataByTicker[ticker];
+          if (tickerData != null) {
+            return mapFunction(tickerData, idByTicker[ticker]);
+          } else {
+            return null;
+          }
+        })
+    });
 }
 
 //////////////////////////////////// Base Fetch
