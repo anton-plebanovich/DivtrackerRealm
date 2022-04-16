@@ -354,13 +354,13 @@ async function _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, group
       }
     }
 
-    const result = { [groupingKey]: [] };
     if (chunkedSymbols.length == 1) {
       if (Object.entries(response).length > 0) {
-        result[groupingKey].push(response);
+        const result = { [groupingKey]: [response] };
         if (callbackfn != null) {
-          await callbackfn({ [groupingKey]: [response] });
+          await callbackfn(result);
         }
+        return result;
 
       } else {
         console.logVerbose(`No data for ticker: ${tickersString}`);
@@ -368,22 +368,21 @@ async function _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, group
 
     } else if (response[groupingKey] != null) {
       throwIfNotArray(response[groupingKey], `_fmpFetchBatch response[groupingKey]`);
-      result[groupingKey] = result[groupingKey].concat(response[groupingKey]);
       if (callbackfn != null) {
-        await callbackfn({ [groupingKey]: response[groupingKey] });
+        await callbackfn(response);
       }
+      return response;
 
     } else {
       console.logVerbose(`No data for tickers: ${tickersString}`);
     }
-
-    return result;
   })
 
   return await Promise.allLmited(fetchPromises, 10)
     .then(results => {
       const datas = results
         .map(result => result.groupingKey)
+        .filterNull()
         .flat();
 
       return { [groupingKey]: datas };

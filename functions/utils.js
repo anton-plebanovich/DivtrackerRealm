@@ -301,11 +301,10 @@ Array.prototype.chunked = function(size) {
 };
 
 /**
- * Filters `null` elements.
- * @param {*} callbackfn Mapping to perform. Null values are filtered.
+ * Filters `null` and `undefined` elements.
  */
 Array.prototype.filterNull = function() {
-   return this.filter(x => x !== null);
+   return this.filter(x => x != null);
 };
 
 /**

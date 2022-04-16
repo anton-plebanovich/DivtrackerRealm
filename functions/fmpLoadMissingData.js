@@ -17,11 +17,11 @@ exports = async function loadMissingData() {
 
   const symbolIDs = shortSymbols.map(x => x._id);
   
-  await loadMissingCompanies(shortSymbols, symbolIDs).mapErrorToSystem()
-  await loadMissingQuotes(shortSymbols, symbolIDs).mapErrorToSystem()
-  await loadMissingSplits(shortSymbols, symbolIDs).mapErrorToSystem()
-  await loadMissingDividends(shortSymbols, symbolIDs).mapErrorToSystem()
-  await loadMissingHistoricalPrices(shortSymbols, symbolIDs).mapErrorToSystem()
+  await loadMissingCompanies(shortSymbols, symbolIDs).mapErrorToSystem();
+  await loadMissingQuotes(shortSymbols, symbolIDs).mapErrorToSystem();
+  await loadMissingSplits(shortSymbols, symbolIDs).mapErrorToSystem();
+  await loadMissingDividends(shortSymbols, symbolIDs).mapErrorToSystem();
+  await loadMissingHistoricalPrices(shortSymbols, symbolIDs).mapErrorToSystem();
 };
 
 //////////////////////////////////////////////////////////////////// Companies
