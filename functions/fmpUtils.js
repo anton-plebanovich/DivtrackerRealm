@@ -333,7 +333,7 @@ async function _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, group
   }
 
   return await chunkedSymbolsArray
-  .asyncMap(10, async chunkedSymbols => {
+  .asyncMap(100, async chunkedSymbols => {
     const tickersString = chunkedSymbols.join(",");
     const batchAPI = `${api}/${tickersString}`;
     console.log(`Fetching batch for symbols (${chunkedSymbols.length}) with query '${queryParameters.stringify()}': ${tickersString}`);
