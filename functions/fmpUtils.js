@@ -359,7 +359,7 @@ async function _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, group
       if (Object.entries(response).length > 0) {
         result[groupingKey].push(response);
         if (callbackfn != null) {
-          await callbackfn({ [groupingKey]: [response] });
+          callbackfn({ [groupingKey]: [response] });
         }
 
       } else {
@@ -370,7 +370,7 @@ async function _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, group
       throwIfNotArray(response[groupingKey], `_fmpFetchBatch response[groupingKey]`);
       result[groupingKey] = result[groupingKey].concat(response[groupingKey]);
       if (callbackfn != null) {
-        await callbackfn({ [groupingKey]: response[groupingKey] });
+        callbackfn({ [groupingKey]: response[groupingKey] });
       }
 
     } else {
