@@ -51,7 +51,7 @@ getShortSymbols = _getShortSymbols;
 //////////////////////////////////// Predefined Fetches
 
 /// To prevent `414 Request-URI Too Large` error we need to split our requests by some value.
-const defaultMaxFetchSize = 33;
+const defaultMaxFetchSize = 100;
 
 /// Each batch or chunked request will have concurrent fetches limited by this parameter.
 const maxConcurrentFetchesPerRequest = 3;
