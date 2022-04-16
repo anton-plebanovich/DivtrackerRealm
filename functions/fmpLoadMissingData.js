@@ -43,7 +43,7 @@ async function loadMissingCompanies(shortSymbols, symbolIDs) {
     return;
   }
   
-  await fetchCompanies(missingShortSymbols, (companies) => {
+  await fetchCompanies(missingShortSymbols, async (companies) => {
     if (!companies.length) {
       console.log(`No companies. Skipping insert.`);
       return;
@@ -170,7 +170,7 @@ async function loadMissingQuotes(shortSymbols, symbolIDs) {
     return;
   }
   
-  await fetchQuotes(missingShortSymbols, (quotes) => {
+  await fetchQuotes(missingShortSymbols, async (quotes) => {
     if (!quotes.length) {
       console.log(`No quotes. Skipping insert.`);
       return;
