@@ -16,7 +16,7 @@ exports = async function loadMissingData() {
   console.log(`Loading missing data for tickers (${tickers.length}): ${tickers}`);
 
   const symbolIDs = shortSymbols.map(x => x._id);
-  
+
   await Promise.safeAllAndUnwrap([
     loadMissingCompanies(shortSymbols, symbolIDs).mapErrorToSystem(),
     loadMissingDividends(shortSymbols, symbolIDs).mapErrorToSystem(),

@@ -729,8 +729,8 @@ function _fixFMPSymbols(fmpSymbols) {
     console.logVerbose(`Fixing symbols`);
     return fmpSymbols
       .filterNullAndUndefined()
-      // We only support 'MCX' at the moment
-      .filter(fmpSymbol => fmpSymbol.exchangeShortName === "MCX")
+      // We only support 'MCX' and funds ATM
+      .filter(fmpSymbol => fmpSymbol.exchangeShortName === "MCX" || fmpSymbol.type === "fund")
       .map(fmpSymbol => {
         const symbol = {};
         symbol.n = fmpSymbol.name;
