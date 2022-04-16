@@ -381,7 +381,7 @@ async function _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, group
   return await Promise.allLmited(fetchPromises, 10)
     .then(results => {
       const datas = results
-        .filterNull()
+        .filterNullAndUndefined()
         .map(result => result[groupingKey])
         .flat();
 
@@ -463,7 +463,7 @@ function _fixFMPDividends(fmpDividends, symbolID) {
   
     console.logVerbose(`Fixing dividends for ${symbolID}`);
     let dividends = fmpDividends
-      .filterNull()
+      .filterNullAndUndefined()
       .sort((l, r) => l.date.localeCompare(r.date))
       .map(fmpDividend => {
         const dividend = {};
@@ -483,7 +483,7 @@ function _fixFMPDividends(fmpDividends, symbolID) {
     
         return dividend;
       })
-      .filterNull()
+      .filterNullAndUndefined()
     
     dividends = _removeDuplicateDividends(dividends);
     dividends = _updateDividendsFrequency(dividends);
@@ -697,7 +697,7 @@ function _fixFMPSplits(fmpSplits, symbolID) {
   
     console.logVerbose(`Fixing splits for ${symbolID}`);
     return fmpSplits
-      .filterNull()
+      .filterNullAndUndefined()
       .map(fmpSplit => {
         const split = {};
         split.e = _getOpenDate(fmpSplit.date);
@@ -712,7 +712,7 @@ function _fixFMPSplits(fmpSplits, symbolID) {
 
         return split;
       })
-      .filterNull();
+      .filterNullAndUndefined();
 
   } catch (error) {
     console.error(`Unable to fix splits ${fmpSplits.stringify()}: ${error}`);
@@ -735,7 +735,7 @@ function _fixFMPSymbols(fmpSymbols) {
   
     console.logVerbose(`Fixing symbols`);
     return fmpSymbols
-      .filterNull()
+      .filterNullAndUndefined()
       // We only support 'MCX' at the moment
       .filter(fmpSymbol => fmpSymbol.exchangeShortName === "MCX")
       .map(fmpSymbol => {
