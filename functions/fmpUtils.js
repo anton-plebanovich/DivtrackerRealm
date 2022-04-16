@@ -463,6 +463,8 @@ async function _fmpFetch(api, queryParameters) {
 
 ///////////////////////////////////////////////////////////////////////////////// DATA FIX
 
+// 'Value is not an object: undefined' error is thrown when object with 'undefined' value for a key is adding to database.
+
 /**
  * Fixes company object so it can be added to MongoDB.
  * @param {FMPCompany} fmpCompany FMP Company object.

@@ -17,15 +17,18 @@ exports = async function loadMissingData() {
 
   const symbolIDs = shortSymbols.map(x => x._id);
 
-  // Fetch huge requests separately
+  // Fetch huge requests first
   await loadMissingCompanies(shortSymbols, symbolIDs).mapErrorToSystem();
   await loadMissingQuotes(shortSymbols, symbolIDs).mapErrorToSystem();
 
-  await Promise.safeAllAndUnwrap([
-    loadMissingDividends(shortSymbols, symbolIDs).mapErrorToSystem(),
-    loadMissingHistoricalPrices(shortSymbols, symbolIDs).mapErrorToSystem(),
-    loadMissingSplits(shortSymbols, symbolIDs).mapErrorToSystem()
-  ]);
+  // Fetch huge but rarely missing data
+  await loadMissingHistoricalPrices(shortSymbols, symbolIDs).mapErrorToSystem();
+
+  // Dividends are averagely missing
+  await loadMissingDividends(shortSymbols, symbolIDs).mapErrorToSystem();
+
+  // Splits are frequently missing
+  await loadMissingSplits(shortSymbols, symbolIDs).mapErrorToSystem();
 };
 
 //////////////////////////////////////////////////////////////////// Companies
