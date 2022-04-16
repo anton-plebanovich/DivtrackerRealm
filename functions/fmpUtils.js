@@ -279,7 +279,7 @@ async function _fmpFetchBatchAndMapArray(api, tickers, queryParameters, maxBatch
     }
   };
 
-  const _mapAndCallback = async (datas) => { await callback(_map(datas)) };
+  const _mapAndCallback = async (datas) => { await callback(_map(datas)); };
 
   return await _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, groupingKey, _mapAndCallback)
     .then(_map);
@@ -307,10 +307,10 @@ async function _fmpFetchBatchAndMapArray(api, tickers, queryParameters, maxBatch
         } else {
           return null;
         }
-      })
-  }
+      });
+  };
 
-  const _mapAndCallback = async (datas) => { await callback(_map(datas)) };
+  const _mapAndCallback = async (datas) => { await callback(_map(datas)); };
   
   return await _fmpFetchChunked(api, tickers, queryParameters, maxFetchSize, _mapAndCallback)
     .then(_map);
@@ -361,7 +361,7 @@ async function _fmpFetchChunked(api, tickers, queryParameters, maxFetchSize, cal
   .then(x => 
     x.filterNullAndUndefined()
     .flat()
-  )
+  );
 }
 
 /**
@@ -477,9 +477,27 @@ function _fixFMPCompany(fmpCompany, symbolID) {
     console.logVerbose(`Company data fix start`);
     const company = {};
     company._id = symbolID;
-    company.c = fmpCompany.currency;
-    company.i = fmpCompany.industry;
-    company.n = fmpCompany.companyName;
+
+    if (fmpCompany.currency) {
+      company.c = fmpCompany.currency;
+    } else {
+      console.error(`No currency '${symbolID}': ${fmpCompany.stringify()}`)
+      return null; // TODO:
+    }
+
+    if (fmpCompany.industry) {
+      company.i = fmpCompany.industry;
+    } else {
+      console.error(`No industry name '${symbolID}': ${fmpCompany.stringify()}`)
+      return null; // TODO:
+    }
+
+    if (fmpCompany.companyName) {
+      company.n = fmpCompany.companyName;
+    } else {
+      console.error(`No company name '${symbolID}': ${fmpCompany.stringify()}`)
+      return null; // TODO:
+    }
 
     if (fmpCompany.isAdr == true) {
       company.t = "ad";

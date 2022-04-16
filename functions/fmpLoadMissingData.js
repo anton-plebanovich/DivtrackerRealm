@@ -43,24 +43,23 @@ async function loadMissingCompanies(shortSymbols, symbolIDs) {
     return;
   }
   
-  const companies = await fetchCompanies(missingShortSymbols);
-  if (!companies.length) {
-    console.log(`No companies. Skipping insert.`);
-    return;
-  }
-
-  const operations = [];
-  for (const company of companies) {
-    const filter = { _id: company._id };
-    const update = { $setOnInsert: company, $currentDate: { "u": true } };
-    const updateOne = { filter: filter, update: update, upsert: true };
-    const operation = { updateOne: updateOne };
-    operations.push(operation);
-  }
-
-  console.log(`Performing ${companies.length} update operations for companies.`);
-  await collection.bulkWrite(operations);
-  console.log(`Performed ${companies.length} update operations for companies.`);
+  await fetchCompanies(missingShortSymbols, (companies) => {
+    if (!companies.length) {
+      console.log(`No companies. Skipping insert.`);
+      return;
+    }
+  
+    const operations = [];
+    for (const company of companies) {
+      const filter = { _id: company._id };
+      const update = { $setOnInsert: company, $currentDate: { "u": true } };
+      const updateOne = { filter: filter, update: update, upsert: true };
+      const operation = { updateOne: updateOne };
+      operations.push(operation);
+    }
+  
+    await collection.bulkWrite(operations);
+  });
 }
 
 //////////////////////////////////////////////////////////////////// Dividends
@@ -171,22 +170,21 @@ async function loadMissingQuotes(shortSymbols, symbolIDs) {
     return;
   }
   
-  const quotes = await fetchQuotes(missingShortSymbols);
-  if (!quotes.length) {
-    console.log(`No quotes. Skipping insert.`);
-    return;
-  }
-
-  const bulk = collection.initializeUnorderedBulkOp();
-  for (const quote of quotes) {
-    const query = { _id: quote._id };
-    const update = { $setOnInsert: quote, $currentDate: { "u": true } };
-    bulk.find(query).upsert().updateOne(update);
-  }
-
-  console.log(`Performing ${quotes.length} update operations for quotes.`);
-  await bulk.execute();
-  console.log(`Performed ${quotes.length} update operations for quotes.`);
+  await fetchQuotes(missingShortSymbols, (quotes) => {
+    if (!quotes.length) {
+      console.log(`No quotes. Skipping insert.`);
+      return;
+    }
+    
+    const bulk = collection.initializeUnorderedBulkOp();
+    for (const quote of quotes) {
+      const query = { _id: quote._id };
+      const update = { $setOnInsert: quote, $currentDate: { "u": true } };
+      bulk.find(query).upsert().updateOne(update);
+    }
+    
+    await bulk.execute();
+  })
 }
 
 //////////////////////////////////////////////////////////////////// Splits
