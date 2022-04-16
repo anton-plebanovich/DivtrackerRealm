@@ -381,8 +381,8 @@ async function _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, group
   return await Promise.allLmited(fetchPromises, 10)
     .then(results => {
       const datas = results
-        .map(result => result.groupingKey)
         .filterNull()
+        .map(result => result[groupingKey])
         .flat();
 
       return { [groupingKey]: datas };
