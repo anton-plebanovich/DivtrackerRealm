@@ -618,7 +618,7 @@ class _NetworkResponse {
 
         const alwaysRetryableStatusCodes = [
           403, // Forbidden
-          429, // Too Many Requests
+          // 429, // Too Many Requests
           500, // Internal Server Error
           502, // Bad Gateway
         ];
