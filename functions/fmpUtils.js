@@ -246,11 +246,11 @@ async function _fmpFetchAndMapFlatArray(api, tickers, queryParameters, idByTicke
  * @returns {Promise<[Object]>} Flat array of entities.
  */
 async function _fmpFetchBatchAndMapArray(api, tickers, queryParameters, maxBatchSize, limit, groupingKey, dataKey, idByTicker, mapFunction, callback) {
-  const _map = async (datas) => {
+  const _map = (datas) => {
     if (datas[groupingKey] != null) {
       const dataByTicker = datas[groupingKey].toDictionary('symbol');
-      const fixedDataPromises = tickers
-        .map(async ticker => {
+      return tickers
+        .map(ticker => {
           const data = dataByTicker[ticker];
           if (data != null && data[dataKey] != null) {
             let tickerData = data[dataKey];
@@ -258,21 +258,18 @@ async function _fmpFetchBatchAndMapArray(api, tickers, queryParameters, maxBatch
               tickerData = tickerData.slice(0, limit);
             }
 
-            return await mapFunction(tickerData, idByTicker[ticker]);
+            return mapFunction(tickerData, idByTicker[ticker]);
           } else {
             return [];
           }
         })
-        
-      return await Promise.allLmited(fixedDataPromises, 100)
-        .then(x => x.flat())
 
     } else {
       throw `Unexpected response format for ${api}`
     }
   };
 
-  const _mapAndCallback = async (datas) => { await callback(await _map(datas)) };
+  const _mapAndCallback = async (datas) => { await callback(_map(datas)) };
 
   return await _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, groupingKey, _mapAndCallback)
     .then(_map);
@@ -313,11 +310,11 @@ async function _fmpFetchBatchAndMapArray(api, tickers, queryParameters, maxBatch
  * @param {Object} queryParameters Additional query parameters.
  * @param {Int} maxBatchSize Max allowed batch size.
  * @param {string} groupingKey Batch grouping key, e.g. 'historicalStockList'.
- * @param {function} callbackfn TODO.
+ * @param {function} callback TODO.
  * @returns {Promise<{string: {string: Object|[Object]}}>} Parsed EJSON object. Composed from several responses if max symbols count was exceeded. 
  * The first object keys are symbols. The next inner object keys are types. And the next inner object is an array of type objects.
  */
-async function _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, groupingKey, callbackfn) {
+async function _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, groupingKey, callback) {
   throwIfUndefinedOrNull(api, `_fmpFetchBatch api`);
   throwIfEmptyArray(tickers, `_fmpFetchBatch tickers`);
 
@@ -353,8 +350,8 @@ async function _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, group
     if (chunkedSymbols.length == 1) {
       if (Object.entries(response).length > 0) {
         const result = { [groupingKey]: [response] };
-        if (callbackfn != null) {
-          await callbackfn(result);
+        if (callback != null) {
+          await callback(result);
         }
         return result;
 
@@ -364,8 +361,8 @@ async function _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, group
 
     } else if (response[groupingKey] != null) {
       throwIfNotArray(response[groupingKey], `_fmpFetchBatch response[groupingKey]`);
-      if (callbackfn != null) {
-        await callbackfn(response);
+      if (callback != null) {
+        await callback(response);
       }
       return response;
 
