@@ -650,10 +650,12 @@ class _NetworkResponse {
         }
 
         if (this.statusCode === 429) {
-          retryDelay = this.json['X-Rate-Limit-Retry-After-Milliseconds']
+          retryDelay = this.json['X-Rate-Limit-Retry-After-Milliseconds'];
         } else {
           retryDelay = null;
         }
+
+        return retryDelay;
       }
     });
   }
@@ -1058,8 +1060,6 @@ async function _fetch(baseURL, api, queryParameters) {
     }
 
     console.log(`Received '${response.statusCode}' error with text '${response.string}'. Trying to retry after a '${delay}' delay.`);
-    console.log(`JSON: ${response.json.stringify()}`)
-    console.log(`Millis: ${response.json['X-Rate-Limit-Retry-After-Milliseconds']}`)
     await new Promise(r => setTimeout(r, delay));
     response = await _httpGET(baseURL, api, queryParameters);
   }
