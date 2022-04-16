@@ -369,6 +369,17 @@ Array.prototype.includesObject = function(object) {
   return this.find(x => object.isEqual(x)) != null;
 };
 
+Array.prototype.mapToPromise = function(fn) {
+  return new Promise((resolve, reject) => {
+    try {
+      const result = await fn();
+      resolve(result);
+    } catch(error) {
+      reject(error);
+    }
+  });
+};
+
 /**
  * @returns {Date} Yesterday day start date in UTC.
  */
