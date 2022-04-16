@@ -1065,7 +1065,7 @@ async function _fetch(baseURL, api, queryParameters) {
   }
   
   if (response.statusCode === 200) {
-    // console.log(`Response for URL: ${response.url}`);
+    console.log(`Response for URL: ${response.url}`);
   } else {
     console.error(`Response status error '${response.statusCode}' : '${response.string}'`);
     throw response.toNetworkError();
@@ -1093,7 +1093,7 @@ async function _httpGET(baseURL, api, queryParameters) {
   _throwIfUndefinedOrNull(api, `_get api`);
 
   const url = _getURL(baseURL, api, queryParameters);
-  // console.log(`Request with URL: ${url}`);
+  console.log(`Request with URL: ${url}`);
 
   const response = await context.http.get({ url: url });
 
