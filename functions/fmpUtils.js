@@ -487,8 +487,6 @@ function _fixFMPCompany(fmpCompany, symbolID) {
 
     if (fmpCompany.industry) {
       company.i = fmpCompany.industry;
-    } else {
-      console.error(`No industry name '${symbolID}': ${fmpCompany.stringify()}`)
     }
 
     if (fmpCompany.companyName) {
