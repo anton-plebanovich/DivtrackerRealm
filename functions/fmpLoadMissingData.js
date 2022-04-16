@@ -76,7 +76,7 @@ async function loadMissingDividends(shortSymbols, symbolIDs) {
     return;
   }
 
-  const callback = (dividends) => {
+  const callback = async (dividends) => {
     if (!dividends.length) {
       console.log(`No dividends. Skipping insert.`);
       return;
@@ -137,7 +137,7 @@ async function loadMissingHistoricalPrices(shortSymbols, symbolIDs) {
     return;
   }
   
-  await fetchHistoricalPrices(missingShortSymbols, null, (historicalPrices) => {
+  await fetchHistoricalPrices(missingShortSymbols, null, async (historicalPrices) => {
     if (!historicalPrices.length) {
       console.log(`No historical prices. Skipping insert.`);
       return;
@@ -202,7 +202,7 @@ async function loadMissingSplits(shortSymbols, symbolIDs) {
     return;
   }
   
-  await fetchSplits(missingShortSymbols, (splits) => {
+  await fetchSplits(missingShortSymbols, async (splits) => {
     if (!splits.length) {
       console.log(`No splits. Skipping insert.`);
       return;

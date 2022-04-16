@@ -272,7 +272,7 @@ async function _fmpFetchBatchAndMapArray(api, tickers, queryParameters, maxBatch
     }
   };
 
-  const _mapAndCallback = (datas) => { callback(_map(datas)) };
+  const _mapAndCallback = async (datas) => { await callback(await _map(datas)) };
 
   return await _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, groupingKey, _mapAndCallback)
     .then(_map);
@@ -289,7 +289,7 @@ async function _fmpFetchBatchAndMapArray(api, tickers, queryParameters, maxBatch
  * @returns {Promise<[Object]>} Flat array of entities.
  */
 async function _fmpFetchAndMapObjects(api, tickers, queryParameters, idByTicker, mapFunction, callback) {
-  const _map = (datas) => {
+  const _map = async (datas) => {
     const dataByTicker = datas.toDictionary('symbol');
 
     return tickers
@@ -303,7 +303,7 @@ async function _fmpFetchAndMapObjects(api, tickers, queryParameters, idByTicker,
       })
   };
 
-  const _mapAndCallback = (datas) => { callback(_map(datas)) };
+  const _mapAndCallback = async (datas) => { await callback(await _map(datas)) };
 
   return await _fmpFetch(api, queryParameters, _mapAndCallback)
     .then(_map);
@@ -359,7 +359,7 @@ async function _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, group
       if (Object.entries(response).length > 0) {
         result[groupingKey].push(response);
         if (callbackfn != null) {
-          callbackfn({ [groupingKey]: [response] });
+          await callbackfn({ [groupingKey]: [response] });
         }
 
       } else {
@@ -370,7 +370,7 @@ async function _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, group
       throwIfNotArray(response[groupingKey], `_fmpFetchBatch response[groupingKey]`);
       result[groupingKey] = result[groupingKey].concat(response[groupingKey]);
       if (callbackfn != null) {
-        callbackfn({ [groupingKey]: response[groupingKey] });
+        await callbackfn({ [groupingKey]: response[groupingKey] });
       }
 
     } else {
