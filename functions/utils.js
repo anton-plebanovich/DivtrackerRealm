@@ -650,7 +650,7 @@ class _NetworkResponse {
         }
 
         if (this.statusCode === 429) {
-          retryDelay = json['X-Rate-Limit-Retry-After-Milliseconds']
+          retryDelay = this.json['X-Rate-Limit-Retry-After-Milliseconds']
         } else {
           retryDelay = null;
         }
