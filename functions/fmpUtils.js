@@ -263,6 +263,7 @@ async function _fmpFetchBatchAndMapArray(api, tickers, queryParameters, maxBatch
             return [];
           }
         })
+        .flat();
 
     } else {
       throw `Unexpected response format for ${api}`
