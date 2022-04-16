@@ -482,21 +482,20 @@ function _fixFMPCompany(fmpCompany, symbolID) {
       company.c = fmpCompany.currency;
     } else {
       console.error(`No currency '${symbolID}': ${fmpCompany.stringify()}`)
-      return null; // TODO:
+      return null;
     }
 
     if (fmpCompany.industry) {
       company.i = fmpCompany.industry;
     } else {
       console.error(`No industry name '${symbolID}': ${fmpCompany.stringify()}`)
-      return null; // TODO:
     }
 
     if (fmpCompany.companyName) {
       company.n = fmpCompany.companyName;
     } else {
       console.error(`No company name '${symbolID}': ${fmpCompany.stringify()}`)
-      return null; // TODO:
+      return null;
     }
 
     if (fmpCompany.isAdr == true) {
