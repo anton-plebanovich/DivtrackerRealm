@@ -48,25 +48,32 @@ getShortSymbols = _getShortSymbols;
 
 //////////////////////////////////// Predefined Fetches
 
+/// To prevent `414 Request-URI Too Large` error we need to split our requests by some value.
+const defaultMaxFetchSize = 100;
+
+/// Each batch or chunked request will have concurrent fetches limited by this parameter.
+const maxConcurrentFetchesPerRequest = 10;
+
 /**
  * Fetches companies in batch for short symbols.
  * @param {[ShortSymbol]} shortSymbols Short symbol models for which to fetch.
  * @returns {[Company]} Array of requested objects.
  */
-fetchCompanies = async function fetchCompanies(shortSymbols) {
+fetchCompanies = async function fetchCompanies(shortSymbols, callback) {
   throwIfEmptyArray(shortSymbols, `fetchCompanies shortSymbols`);
 
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
-  const tickersString = tickers.join(",");
-  const api = `/v3/profile/${tickersString}`;
+  const api = `/v3/profile`;
 
   // https://financialmodelingprep.com/api/v3/profile/AAPL,AAP?apikey=969387165d69a8607f9726e8bb52b901
   return await _fmpFetchAndMapObjects(
     api,
     tickers,
     null,
+    defaultMaxFetchSize,
     idByTicker,
-    _fixFMPCompany
+    _fixFMPCompany, 
+    callback
   );
 };
 
@@ -152,20 +159,21 @@ fetchHistoricalPrices = async function fetchHistoricalPrices(shortSymbols, query
  * @param {[ShortSymbol]} shortSymbols Short symbol models for which to fetch.
  * @returns {[Quote]} Array of requested objects.
  */
-fetchQuotes = async function fetchQuotes(shortSymbols) {
+fetchQuotes = async function fetchQuotes(shortSymbols, callback) {
   throwIfEmptyArray(shortSymbols, `fetchQuotes shortSymbols`);
 
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
-  const tickersString = tickers.join(",");
-  const api = `/v3/quote/${tickersString}`;
+  const api = `/v3/quote`;
 
   // https://financialmodelingprep.com/api/v3/quote/GOOG,AAPL,FB?apikey=969387165d69a8607f9726e8bb52b901
   return await _fmpFetchAndMapObjects(
     api,
     tickers,
     null,
+    defaultMaxFetchSize,
     idByTicker,
-    _fixFMPQuote
+    _fixFMPQuote,
+    callback
   );
 };
 
@@ -249,7 +257,8 @@ async function _fmpFetchBatchAndMapArray(api, tickers, queryParameters, maxBatch
   const _map = (datas) => {
     if (datas[groupingKey] != null) {
       const dataByTicker = datas[groupingKey].toDictionary('symbol');
-      return tickers
+      const existingTickers = Object.keys(dataByTicker).filter(x => tickers.includes(x));
+      return existingTickers
         .map(ticker => {
           const data = dataByTicker[ticker];
           if (data != null && data[dataKey] != null) {
@@ -286,24 +295,74 @@ async function _fmpFetchBatchAndMapArray(api, tickers, queryParameters, maxBatch
  * @param {function} mapFunction Function to map data to our format.
  * @returns {Promise<[Object]>} Flat array of entities.
  */
- async function _fmpFetchAndMapObjects(api, tickers, queryParameters, idByTicker, mapFunction) {
-  return await _fmpFetch(api, queryParameters)
-    .then(datas => {
-      const dataByTicker = datas.toDictionary('symbol');
+ async function _fmpFetchAndMapObjects(api, tickers, queryParameters, maxFetchSize, idByTicker, mapFunction, callback) {
+  const _map = (datas) => {
+    const dataByTicker = datas.toDictionary('symbol');
+    const existingTickers = Object.keys(dataByTicker).filter(x => tickers.includes(x));
+    return existingTickers
+      .compactMap(ticker => {
+        const tickerData = dataByTicker[ticker];
+        if (tickerData != null) {
+          return mapFunction(tickerData, idByTicker[ticker]);
+        } else {
+          return null;
+        }
+      })
+  }
 
-      return tickers
-        .compactMap(ticker => {
-          const tickerData = dataByTicker[ticker];
-          if (tickerData != null) {
-            return mapFunction(tickerData, idByTicker[ticker]);
-          } else {
-            return null;
-          }
-        })
-    });
+  const _mapAndCallback = async (datas) => { await callback(_map(datas)) };
+  
+  return await _fmpFetchChunked(api, tickers, queryParameters, maxFetchSize, _mapAndCallback)
+    .then(_map);
 }
 
 //////////////////////////////////// Base Fetch
+
+async function _fmpFetchChunked(api, tickers, queryParameters, maxFetchSize, callback) {
+  throwIfUndefinedOrNull(api, `_fmpFetchBatch api`);
+  throwIfEmptyArray(tickers, `_fmpFetchBatch tickers`);
+
+  if (queryParameters == null) {
+    queryParameters = {};
+  } else {
+    queryParameters = Object.assign({}, queryParameters);
+  }
+
+  let chunkedSymbolsArray;
+  if (maxFetchSize == null) {
+    chunkedSymbolsArray = [tickers];
+  } else {
+    chunkedSymbolsArray = tickers.chunked(maxFetchSize);
+  }
+
+  return await chunkedSymbolsArray
+  .asyncMap(maxConcurrentFetchesPerRequest, async chunkedSymbols => {
+    const tickersString = chunkedSymbols.join(",");
+    const batchAPI = `${api}/${tickersString}`;
+    console.log(`Fetching chunk for ${chunkedSymbols.length} symbols with query '${queryParameters.stringify()}': ${tickersString}`);
+    
+    let response
+    try {
+      response = await _fmpFetch(batchAPI, queryParameters);
+    } catch(error) {
+      if (error.statusCode == 404) {
+        response = null;
+      } else {
+        throw error;
+      }
+    }
+
+    if (callback != null && response != null && response.length) {
+      await callback(response);
+    }
+    
+    return response;
+  })
+  .then(x => 
+    x.filterNullAndUndefined()
+    .flat()
+  )
+}
 
 /**
  * @param {string} api API to call.
@@ -333,10 +392,10 @@ async function _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, group
   }
 
   return await chunkedSymbolsArray
-  .asyncMap(10, async chunkedSymbols => {
+  .asyncMap(maxConcurrentFetchesPerRequest, async chunkedSymbols => {
     const tickersString = chunkedSymbols.join(",");
     const batchAPI = `${api}/${tickersString}`;
-    console.log(`Fetching batch for symbols (${chunkedSymbols.length}) with query '${queryParameters.stringify()}': ${tickersString}`);
+    console.log(`Fetching batch for ${chunkedSymbols.length} symbols with query '${queryParameters.stringify()}': ${tickersString}`);
     
     let response
     try {
