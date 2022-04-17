@@ -414,7 +414,7 @@ async function _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, group
       response = await _fmpFetch(batchAPI, queryParameters);
     } catch(error) {
       if (error.statusCode == 404) {
-        response = {};
+        response = { [groupingKey]: [] };
       } else {
         throw error;
       }
