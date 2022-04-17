@@ -403,6 +403,9 @@ async function _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, group
     chunkedTickersArray = tickers.chunked(maxBatchSize);
   }
 
+  // Always map to the same format
+  const emptyResponse = { [groupingKey]: [] };
+
   return await chunkedTickersArray
   .asyncMap(maxConcurrentFetchesPerRequest, async chunkedTickers => {
     const tickersString = chunkedTickers.join(",");
@@ -414,14 +417,21 @@ async function _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, group
       response = await _fmpFetch(batchAPI, queryParameters);
     } catch(error) {
       if (error.statusCode == 404) {
-        response = { [groupingKey]: [] };
+        // Fix not found responses
+        response = emptyResponse;
       } else {
         throw error;
       }
     }
 
+    // Fix singular responses
     if (chunkedTickers.length == 1) {
       response = { [groupingKey]: [response] };
+    }
+    
+    // Fix empty responses
+    if (Object.entries(response).length == 0) {
+      response = emptyResponse;
     }
     
     if (response[groupingKey] != null) {
