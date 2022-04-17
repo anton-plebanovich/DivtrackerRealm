@@ -283,7 +283,7 @@ async function _fmpFetchBatchAndMapArray(api, tickers, queryParameters, maxBatch
 
   let _mapAndCallback;
   if (callback != null) {
-    _mapAndCallback = async (datas) => { await callback(_map(datas)); };
+    _mapAndCallback = async (datas, tickers) => await callback(_map(datas), tickers.map(ticker => idByTicker[ticker]));
   } else {
     _mapAndCallback = undefined;
   }
@@ -319,7 +319,7 @@ async function _fmpFetchBatchAndMapArray(api, tickers, queryParameters, maxBatch
 
   let _mapAndCallback;
   if (callback != null) {
-    _mapAndCallback = async (datas) => { await callback(_map(datas)); };
+    _mapAndCallback = async (datas, tickers) => await callback(_map(datas), tickers.map(ticker => idByTicker[ticker]));
   } else {
     _mapAndCallback = undefined;
   }
@@ -340,32 +340,32 @@ async function _fmpFetchChunked(api, tickers, queryParameters, maxFetchSize, cal
     queryParameters = Object.assign({}, queryParameters);
   }
 
-  let chunkedSymbolsArray;
+  let chunkedTickersArray;
   if (maxFetchSize == null) {
-    chunkedSymbolsArray = [tickers];
+    chunkedTickersArray = [tickers];
   } else {
-    chunkedSymbolsArray = tickers.chunked(maxFetchSize);
+    chunkedTickersArray = tickers.chunked(maxFetchSize);
   }
 
-  return await chunkedSymbolsArray
-  .asyncMap(maxConcurrentFetchesPerRequest, async chunkedSymbols => {
-    const tickersString = chunkedSymbols.join(",");
+  return await chunkedTickersArray
+  .asyncMap(maxConcurrentFetchesPerRequest, async chunkedTickers => {
+    const tickersString = chunkedTickers.join(",");
     const batchAPI = `${api}/${tickersString}`;
-    console.log(`Fetching chunk for ${chunkedSymbols.length} symbols with query '${queryParameters.stringify()}': ${tickersString}`);
+    console.log(`Fetching chunk for ${chunkedTickers.length} symbols with query '${queryParameters.stringify()}': ${tickersString}`);
     
     let response
     try {
       response = await _fmpFetch(batchAPI, queryParameters);
     } catch(error) {
       if (error.statusCode == 404) {
-        response = null;
+        response = [];
       } else {
         throw error;
       }
     }
 
-    if (callback != null && response != null && response.length) {
-      await callback(response);
+    if (callback != null) {
+      await callback(response, chunkedTickers);
     }
     
     return response;
@@ -396,18 +396,18 @@ async function _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, group
     queryParameters = Object.assign({}, queryParameters);
   }
 
-  let chunkedSymbolsArray;
+  let chunkedTickersArray;
   if (maxBatchSize == null) {
-    chunkedSymbolsArray = [tickers];
+    chunkedTickersArray = [tickers];
   } else {
-    chunkedSymbolsArray = tickers.chunked(maxBatchSize);
+    chunkedTickersArray = tickers.chunked(maxBatchSize);
   }
 
-  return await chunkedSymbolsArray
-  .asyncMap(maxConcurrentFetchesPerRequest, async chunkedSymbols => {
-    const tickersString = chunkedSymbols.join(",");
+  return await chunkedTickersArray
+  .asyncMap(maxConcurrentFetchesPerRequest, async chunkedTickers => {
+    const tickersString = chunkedTickers.join(",");
     const batchAPI = `${api}/${tickersString}`;
-    console.log(`Fetching batch for ${chunkedSymbols.length} symbols with query '${queryParameters.stringify()}': ${tickersString}`);
+    console.log(`Fetching batch for ${chunkedTickers.length} symbols with query '${queryParameters.stringify()}': ${tickersString}`);
     
     let response
     try {
@@ -420,33 +420,28 @@ async function _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, group
       }
     }
 
-    if (chunkedSymbols.length == 1) {
-      if (Object.entries(response).length > 0) {
-        const result = { [groupingKey]: [response] };
-        if (callback != null) {
-          await callback(result);
-        }
-        return result;
-
-      } else {
-        console.logVerbose(`No data for ticker: ${tickersString}`);
-      }
-
-    } else if (response[groupingKey] != null) {
-      throwIfNotArray(response[groupingKey], `_fmpFetchBatch response[groupingKey]`);
-      if (callback != null) {
-        await callback(response);
-      }
-      return response;
-
-    } else {
-      console.logVerbose(`No data for tickers: ${tickersString}`);
+    if (chunkedTickers.length == 1) {
+      response = { [groupingKey]: [response] };
     }
+    
+    if (response[groupingKey] != null) {
+      throwIfNotArray(response[groupingKey], `_fmpFetchBatch response[groupingKey]`);
+
+      if (response[groupingKey].length == 0) {
+        console.logVerbose(`No data for tickers: ${tickersString}`);
+      }
+    }
+
+    if (callback != null) {
+      await callback(response, chunkedTickers);
+    }
+
+    return response;
   })
   .then(results => {
     const datas = results
-      .filterNullAndUndefined()
       .map(result => result[groupingKey])
+      .filterNullAndUndefined()
       .flat();
 
     return { [groupingKey]: datas };
