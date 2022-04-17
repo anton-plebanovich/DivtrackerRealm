@@ -8,8 +8,13 @@
  * @example
  * exports();
  */
-exports = async function loadMissingData() {
+exports = async function(database) {
   context.functions.execute("fmpUtils");
+
+  if (database != null) {
+    throwIfNotString(database);
+    fmp = atlas.db(database);
+  }
   
   const shortSymbols = await getShortSymbols();
   const tickers = shortSymbols.map(x => x.t);
