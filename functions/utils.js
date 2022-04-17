@@ -599,9 +599,17 @@ class _NetworkResponse {
       get: function() {
         if (typeof json !== 'undefined') {
           return json;
+
         } else if (this.string != null) {
-          json = EJSON.parse(this.string);
-          return json;
+          try {
+            json = EJSON.parse(this.string);
+            return json;
+          } catch(error) {
+            console.error(`Unable to map JSON from response: ${this.string}`)
+            json = null;
+            return json;
+          }
+
         } else {
           json = null;
           return json;
