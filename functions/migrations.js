@@ -12,28 +12,6 @@
 exports = async function() {
   context.functions.execute("utils");
 
-  try {
-    positiveCommissionsMigration();
-  } catch(error) {
-    console.error(error);
-  }
+  // We will need to prefetch all data first and only after that allow access to add tickers for that data
+  // More likely create a copy, fetch data and then exchange with the old database somehow.
 };
-
-async function positiveCommissionsMigration() {
-  const transactionsCollection = db.collection("transactions");
-  const oldTransactions = await transactionsCollection.find({ c: { $lt: 0 } }).toArray();
-  const newTransactions = [];
-  for (const oldTransaction of oldTransactions) {
-    console.log(`Fixing: ${oldTransaction.stringify()}`);
-    const newTransaction = Object.assign({}, oldTransaction);
-    newTransaction.c = newTransaction.c * -1;
-    console.log(`Fixed: ${newTransaction.stringify()}`);
-    newTransactions.push(newTransaction);
-  }
-
-  if (newTransactions.length) {
-    await transactionsCollection.safeUpdateMany(newTransactions, oldTransactions);
-  } else {
-    console.log("Noting to migrate");
-  }
-}

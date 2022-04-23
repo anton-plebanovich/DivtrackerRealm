@@ -18,8 +18,7 @@
     },
     {
         "name": "fmpDelete",
-        "private": true,
-        "run_as_system": true
+        "private": true
     },
     {
         "name": "fmpGetData",

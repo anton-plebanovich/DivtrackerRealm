@@ -301,11 +301,10 @@ Array.prototype.chunked = function(size) {
 };
 
 /**
- * Filters `null` elements.
- * @param {*} callbackfn Mapping to perform. Null values are filtered.
+ * Filters `null` and `undefined` elements.
  */
-Array.prototype.filterNull = function() {
-   return this.filter(x => x !== null);
+Array.prototype.filterNullAndUndefined = function() {
+   return this.filter(x => x != null);
 };
 
 /**
@@ -313,7 +312,7 @@ Array.prototype.filterNull = function() {
  * @param {*} callbackfn Mapping to perform. Null values are filtered.
  */
 Array.prototype.compactMap = function(callbackfn) {
-   return this.map(callbackfn).filterNull();
+   return this.map(callbackfn).filterNullAndUndefined();
 };
 
 /**
@@ -368,6 +367,28 @@ Array.prototype.toBuckets = function(arg) {
 Array.prototype.includesObject = function(object) {
   if (object == null) { return false; }
   return this.find(x => object.isEqual(x)) != null;
+};
+
+Array.prototype.asyncMap = async function(limit, callback) {
+  let index = 0;
+  const results = [];
+
+  // Run a pseudo-thread
+  const execThread = async () => {
+    while (index < this.length) {
+      const curIndex = index++;
+      // Use of `curIndex` is important because `index` may change after await is resolved
+      results[curIndex] = await callback(this[curIndex]);
+    }
+  };
+
+  // Start threads
+  const threads = [];
+  for (let thread = 0; thread < limit; thread++) {
+    threads.push(execThread());
+  }
+  await Promise.all(threads);
+  return results;
 };
 
 /**
@@ -578,9 +599,17 @@ class _NetworkResponse {
       get: function() {
         if (typeof json !== 'undefined') {
           return json;
+
         } else if (this.string != null) {
-          json = EJSON.parse(this.string);
-          return json;
+          try {
+            json = EJSON.parse(this.string);
+            return json;
+          } catch(error) {
+            console.error(`Unable to map JSON from response: ${this.string}`)
+            json = null;
+            return json;
+          }
+
         } else {
           json = null;
           return json;
@@ -618,6 +647,23 @@ class _NetworkResponse {
 
         retryable = false;
         return retryable;
+      }
+    });
+
+    let retryDelay;
+    Object.defineProperty(this, "retryDelay", {
+      get: function() {
+        if (typeof retryDelay !== 'undefined') {
+          return retryDelay;
+        }
+
+        if (this.statusCode === 429) {
+          retryDelay = this.json['X-Rate-Limit-Retry-After-Milliseconds'];
+        } else {
+          retryDelay = null;
+        }
+
+        return retryDelay;
       }
     });
   }
@@ -747,29 +793,8 @@ CompositeError = _CompositeError;
 var runtimeExtended = false;
 function extendRuntime() {
   if (runtimeExtended) { return; }
-
-  Promise.allLmited = async (promises, limit) => {
-    let index = 0;
-    const results = [];
   
-    // Run a pseudo-thread
-    const execThread = async () => {
-      while (index < promises.length) {
-        const curIndex = index++;
-        // Use of `curIndex` is important because `index` may change after await is resolved
-        results[curIndex] = await promises[curIndex];
-      }
-    };
-  
-    // Start threads
-    const threads = [];
-    for (let thread = 0; thread < limit; thread++) {
-      threads.push(execThread());
-    }
-    await Promise.all(threads);
-    return results;
-  };
-  
+  // TODO: allSettled
   Promise.safeAllAndUnwrap = function(promises) {
     return Promise.safeAll(promises)
       .then(results => new Promise((resolve, reject) => {
@@ -1031,14 +1056,20 @@ async function _fetch(baseURL, api, queryParameters) {
   _throwIfUndefinedOrNull(baseURL, `_fetch baseURL`);
   _throwIfUndefinedOrNull(api, `_fetch api`);
 
-  let response = await _get(baseURL, api, queryParameters);
+  let response = await _httpGET(baseURL, api, queryParameters);
 
   // Retry several times on retryable errors
   for (let step = 0; step < 10 && response.retryable; step++) {
-    const delay = (step + 1) * (500 + Math.random() * 1000);
+    let delay;
+    if (response.retryDelay != null) {
+      delay = response.retryDelay;
+    } else {
+      delay = (step + 1) * (500 + Math.random() * 1000);
+    }
+
     console.log(`Received '${response.statusCode}' error with text '${response.string}'. Trying to retry after a '${delay}' delay.`);
     await new Promise(r => setTimeout(r, delay));
-    response = await _get(baseURL, api, queryParameters);
+    response = await _httpGET(baseURL, api, queryParameters);
   }
   
   if (response.statusCode === 200) {
@@ -1065,9 +1096,9 @@ async function _fetch(baseURL, api, queryParameters) {
 
 fetch = _fetch;
 
-async function _get(baseURL, api, queryParameters) {
-  _throwIfUndefinedOrNull(baseURL, `_get baseURL`);
-  _throwIfUndefinedOrNull(api, `_get api`);
+async function _httpGET(baseURL, api, queryParameters) {
+  _throwIfUndefinedOrNull(baseURL, `_httpGET baseURL`);
+  _throwIfUndefinedOrNull(api, `_httpGET api`);
 
   const url = _getURL(baseURL, api, queryParameters);
   console.log(`Request with URL: ${url}`);

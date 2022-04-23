@@ -20,11 +20,21 @@
 }
  */
 
-exports = async function() {
+exports = async function(database) {
   context.functions.execute("fmpUtils");
 
+  if (database != null) {
+    throwIfNotString(database);
+    fmp = atlas.db(database);
+  }
+  
   await updateFMPSymbols();
-  await setUpdateDate("fmp-symbols");
+
+  if (database != null) {
+    await setUpdateDate(`${database}-symbols`);
+  } else {
+    await setUpdateDate(`fmp-symbols`);
+  }
   
   console.log(`SUCCESS`);
 };
