@@ -1,8 +1,8 @@
 
-// fmpGetData.js
+// getData.js
 
 exports = async function(date, collections, symbols, fullSymbolsCollections) {
-  context.functions.execute("fmpUtils");
+  context.functions.execute("utils");
 
   const find = {};
   if (date != null) {
@@ -93,6 +93,8 @@ exports = async function(date, collections, symbols, fullSymbolsCollections) {
     'symbols',
   ];
 
+  const fmp = atlas.db("fmp");
+  const iex = atlas.db("iex");
   const operations = collections.map(async collection => {
     const _find = Object.assign({}, find);
     if (symbols != null && !fullSymbolsCollections.includes(collection)) {
@@ -103,8 +105,12 @@ exports = async function(date, collections, symbols, fullSymbolsCollections) {
       }
     }
 
-    const objects = await fmp.collection(collection).find(_find).toArray();
-    return { [collection]: objects };
+    const [fmpObjects, iexObjects] = await Promise.all([
+      fmp.collection(collection).find(_find).toArray(),
+      iex.collection(collection).find(_find).toArray(),
+    ]);
+    
+    return { [collection]: fmpObjects.concat(iexObjects) };
   });
 
   const operationResults = await Promise

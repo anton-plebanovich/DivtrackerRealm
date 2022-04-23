@@ -46,7 +46,7 @@ exports = async function() {
 async function updateIEXSymbols() {
   console.log(`Updating IEX symbols`);
 
-  const newSymbols = await fetchSymbols()
+  const newSymbols = await fetchSymbols();
 
   // We remove date field to prevent excessive updates each day
   newSymbols.forEach(x => delete x.date);
