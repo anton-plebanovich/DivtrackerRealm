@@ -12,28 +12,12 @@
 exports = async function() {
   context.functions.execute("utils");
 
-  try {
-    positiveCommissionsMigration();
-  } catch(error) {
-    console.error(error);
-  }
+  // Release new server
+  // dtcheck backup --environment production --database fmp
+  // dtcheck restore --environment production --database fmp --to-database fmp-tmp
+  // dtcheck call-realm-function --environment production --function fmpUpdateSymbols --argument fmp-tmp
+  // dtcheck call-realm-function --environment production --function fmpLoadMissingData --argument fmp-tmp --retry-on-error 'execution time limit exceeded'
+  // dtcheck backup --environment production --database fmp-tmp
+  // dtcheck restore --environment production --database fmp-tmp --to-database fmp
+  // dtcheck call-realm-function --environment production --function checkTransactionsV2
 };
-
-async function positiveCommissionsMigration() {
-  const transactionsCollection = db.collection("transactions");
-  const oldTransactions = await transactionsCollection.find({ c: { $lt: 0 } }).toArray();
-  const newTransactions = [];
-  for (const oldTransaction of oldTransactions) {
-    console.log(`Fixing: ${oldTransaction.stringify()}`);
-    const newTransaction = Object.assign({}, oldTransaction);
-    newTransaction.c = newTransaction.c * -1;
-    console.log(`Fixed: ${newTransaction.stringify()}`);
-    newTransactions.push(newTransaction);
-  }
-
-  if (newTransactions.length) {
-    await transactionsCollection.safeUpdateMany(newTransactions, oldTransactions);
-  } else {
-    console.log("Noting to migrate");
-  }
-}

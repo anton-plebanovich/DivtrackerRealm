@@ -8,6 +8,27 @@
 
 exports = function() {};
 
+////////////////////////////////////////////////////// 23-01-2022 Positive commission
+
+async function positiveCommissionsMigration() {
+  const transactionsCollection = db.collection("transactions");
+  const oldTransactions = await transactionsCollection.find({ c: { $lt: 0 } }).toArray();
+  const newTransactions = [];
+  for (const oldTransaction of oldTransactions) {
+    console.log(`Fixing: ${oldTransaction.stringify()}`);
+    const newTransaction = Object.assign({}, oldTransaction);
+    newTransaction.c = newTransaction.c * -1;
+    console.log(`Fixed: ${newTransaction.stringify()}`);
+    newTransactions.push(newTransaction);
+  }
+
+  if (newTransactions.length) {
+    await transactionsCollection.safeUpdateMany(newTransactions, oldTransactions);
+  } else {
+    console.log("Noting to migrate");
+  }
+}
+
 ////////////////////////////////////////////////////// 03-01-2022 Partition key migration
 
 async function partitionKeyMigration() {
