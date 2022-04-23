@@ -12,6 +12,12 @@
 exports = async function() {
   context.functions.execute("utils");
 
-  // We will need to prefetch all data first and only after that allow access to add tickers for that data
-  // More likely create a copy, fetch data and then exchange with the old database somehow.
+  // Release new server
+  // dtcheck backup --environment production --database fmp
+  // dtcheck restore --environment production --database fmp --to-database fmp-tmp
+  // dtcheck call-realm-function --environment production --function fmpUpdateSymbols --argument fmp-tmp
+  // dtcheck call-realm-function --environment production --function fmpLoadMissingData --argument fmp-tmp --retry-on-error 'execution time limit exceeded'
+  // dtcheck backup --environment production --database fmp-tmp
+  // dtcheck restore --environment production --database fmp-tmp --to-database fmp
+  // dtcheck call-realm-function --environment production --function checkTransactionsV2
 };
