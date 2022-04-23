@@ -22,6 +22,7 @@ exports = async function(date, collections, symbols, fullSymbolsCollections) {
   const allCollections = [
     'companies',
     'dividends',
+    'exchange-rates',
     'historical-prices',
     'quotes',
     'splits',
@@ -85,6 +86,11 @@ exports = async function(date, collections, symbols, fullSymbolsCollections) {
     }
   } else {
     fullSymbolsCollections = [];
+  }
+
+  // exchange-rates are always ignoring symbols when requested
+  if (!fullSymbolsCollections.includes('exchange-rates')) {
+    fullSymbolsCollections.push('exchange-rates');
   }
 
   const singularSymbolCollections = [

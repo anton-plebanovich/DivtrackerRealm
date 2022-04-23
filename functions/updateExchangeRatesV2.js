@@ -16,7 +16,7 @@ exports = async function() {
   const operations = [];
   for (const exchangeRate of exchangeRates) {
     const filter = { _id: exchangeRate._id };
-    const update = { $set: exchangeRate };
+    const update = { $set: exchangeRate, $currentDate: { u: true } };
     const updateOne = { filter: filter, update: update, upsert: true };
     const operation = { updateOne: updateOne };
     operations.push(operation);

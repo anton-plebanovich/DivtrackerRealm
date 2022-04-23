@@ -97,7 +97,7 @@ async function updateIEXSymbols() {
     console.log(`Disabling IEX symbols: ${symbolsIDsToDisable}`);
     await iexCollection.updateMany(
       { symbol: { $in: symbolsIDsToDisable } },
-      { $set: { isEnabled: false } }
+      { $set: { isEnabled: false }, $currentDate: { u: true } }
     );
   }
 }
@@ -126,7 +126,7 @@ function update(field, bulk, oldSymbolByTicker, oldSymbols, newSymbol) {
     return true
 
   } else {
-    bulk.findAndUpdateIfNeeded(newSymbol, oldSymbol, field);
+    bulk.findAndUpdateIfNeeded(newSymbol, oldSymbol, field, true);
     return true;
   }
 }
@@ -170,7 +170,7 @@ async function updateDivtrackerSymbols() {
   const bulk = divtrackerCollection.initializeUnorderedBulkOp();
   for (const newSymbol of newSymbols) {
     const oldSymbol = oldSymbolsDictionary[newSymbol._id];
-    bulk.findAndUpdateOrInsertIfNeeded(newSymbol, oldSymbol);
+    bulk.findAndUpdateOrInsertIfNeeded(newSymbol, oldSymbol, '_id', true);
   }
 
   await bulk.safeExecute();

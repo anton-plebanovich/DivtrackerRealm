@@ -53,10 +53,10 @@ exports = async function() {
       if (currency == null) {
         // We might have empty string for future dividends and we need to unset it if 
         // the currency was changed to USD and so the field is absent.
-        updateOne = { $set: pastDividend, $unset: { c: "" } };
+        updateOne = { $set: pastDividend, $unset: { c: "" }, $currentDate: { u: true } };
 
       } else {
-        updateOne = { $set: pastDividend };
+        updateOne = { $set: pastDividend, $currentDate: { u: true } };
       }
 
       const lowerAmount = pastDividend.a * 0.9;
