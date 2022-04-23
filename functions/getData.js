@@ -123,7 +123,7 @@ exports = async function(date, collections, symbols, fullSymbolsCollections) {
         .map(x => x.t);
 
       const filteredIEXObjects = iexObjects.filter(x => !enabledFMPTickers.includes(x.t));
-      if (fmpObjects.length != filteredIEXObjects.length) {
+      if (iexObjects.length != filteredIEXObjects.length) {
         const duplicates = iexObjects
           .filter(x => enabledFMPTickers.includes(x.t))
           .map(x => x.t);
