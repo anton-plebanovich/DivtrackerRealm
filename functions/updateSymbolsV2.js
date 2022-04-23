@@ -46,8 +46,7 @@ exports = async function() {
 async function updateIEXSymbols() {
   console.log(`Updating IEX symbols`);
 
-  // https://sandbox.iexapis.com/stable/ref-data/symbols?token=Tpk_581685f711114d9f9ab06d77506fdd49
-  const newSymbols = await iexFetch("/ref-data/symbols");
+  const newSymbols = await fetchSymbols()
 
   // We remove date field to prevent excessive updates each day
   newSymbols.forEach(x => delete x.date);
