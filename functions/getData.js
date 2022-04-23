@@ -122,7 +122,15 @@ exports = async function(date, collections, symbols, fullSymbolsCollections) {
         .filter(x => x.e != false)
         .map(x => x.t);
 
-      const filteredIEXObjects = iexObjects.filter(x => !enabledFMPTickers.includes(x.t))
+      const filteredIEXObjects = iexObjects.filter(x => !enabledFMPTickers.includes(x.t));
+      if (fmpObjects.length != filteredIEXObjects.length) {
+        const duplicates = iexObjects
+          .filter(x => enabledFMPTickers.includes(x.t))
+          .map(x => x.t);
+          
+        console.log(`Found duplicated tickers: ${duplicates}`)
+      }
+
       return { [collection]: fmpObjects.concat(filteredIEXObjects) };
       
     } else {
