@@ -116,7 +116,18 @@ exports = async function(date, collections, symbols, fullSymbolsCollections) {
       iex.collection(collection).find(_find).toArray(),
     ]);
     
-    return { [collection]: fmpObjects.concat(iexObjects) };
+    if (symbols == null && collection === 'symbols') {
+      // Dedupe symbols when full data is returned to prevent collision.
+      const enabledFMPTickers = fmpObjects
+        .filter(x => x.e != false)
+        .map(x => x.t);
+
+      const filteredIEXObjects = iexObjects.filter(x => !enabledFMPTickers.includes(x.t))
+      return { [collection]: fmpObjects.concat(filteredIEXObjects) };
+      
+    } else {
+      return { [collection]: fmpObjects.concat(iexObjects) };
+    }
   });
 
   const operationResults = await Promise
