@@ -60,7 +60,7 @@ async function loadMissingCompanies(shortSymbols) {
     const operations = [];
     for (const company of companies) {
       const filter = { _id: company._id };
-      const update = { $setOnInsert: company, $currentDate: { "u": true } };
+      const update = { $setOnInsert: company };
       const updateOne = { filter: filter, update: update, upsert: true };
       const operation = { updateOne: updateOne };
       operations.push(operation);
@@ -196,7 +196,7 @@ async function loadMissingQuotes(shortSymbols) {
     const bulk = collection.initializeUnorderedBulkOp();
     for (const quote of quotes) {
       const query = { _id: quote._id };
-      const update = { $setOnInsert: quote, $currentDate: { "u": true } };
+      const update = { $setOnInsert: quote };
       bulk.find(query).upsert().updateOne(update);
     }
     
