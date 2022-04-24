@@ -490,7 +490,7 @@ function _fixDividends(iexDividends, symbolID) {
     
         // We do not add `USD` frequencies to the database.
         if (iexDividend.currency != null && iexDividend.currency !== "USD") {
-          dividend.c = iexDividend.currency;
+          dividend.c = iexDividend.currency.toUpperCase();
         }
     
         return dividend;

@@ -1225,7 +1225,7 @@ getSupportedSymbolIDs = _getSupportedSymbolIDs;
   const exchangeRates = [];
   for (const [currency, rate] of entries) {
     const exchangeRate = {};
-    exchangeRate._id = currency;
+    exchangeRate._id = currency.toUpperCase();
 
     if (rate != null && rate >= 0.0) {
       exchangeRate.r = BSON.Double(rate);
