@@ -471,7 +471,7 @@ function _fixDividends(iexDividends, symbolID) {
   
     console.logVerbose(`Fixing dividends for ${symbolID}`);
     return iexDividends
-      .filterNull()
+      .filterNullAndUndefined()
       .map(iexDividend => {
         const dividend = {};
         dividend.d = _getOpenDate(iexDividend.declaredDate);
@@ -552,7 +552,7 @@ function _fixHistoricalPrices(iexHistoricalPrices, symbolID) {
   
     console.logVerbose(`Fixing historical prices for ${symbolID}`);
     return iexHistoricalPrices
-      .filterNull()
+      .filterNullAndUndefined()
       .map(iexHistoricalPrice => {
         const historicalPrice = {};
         historicalPrice.d = _getCloseDate(iexHistoricalPrice.date);
@@ -620,7 +620,7 @@ function _fixSplits(iexSplits, symbolID) {
   
     console.logVerbose(`Fixing splits for ${symbolID}`);
     return iexSplits
-      .filterNull()
+      .filterNullAndUndefined()
       .map(iexSplit => {
         const split = {};
         split.e = _getOpenDate(iexSplit.exDate);
