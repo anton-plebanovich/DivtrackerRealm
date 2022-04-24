@@ -658,8 +658,17 @@ class _NetworkResponse {
     Object.defineProperty(this, "retryDelay", {
       get: function() {
         if (typeof retryDelay === 'undefined') {
-          if (this.statusCode === 429 && this.json != null) {
-            retryDelay = this.json['X-Rate-Limit-Retry-After-Milliseconds'];
+          if (this.statusCode === 429 && this.string != null) {
+            try {
+              const json = EJSON.parse(this.string);
+              if (json != null) {
+                retryDelay = this.json['X-Rate-Limit-Retry-After-Milliseconds'];
+              } else {
+                retryDelay = null;
+              }
+            } catch(error) {
+              retryDelay = null;
+            }
           } else {
             retryDelay = null;
           }
@@ -1089,6 +1098,7 @@ async function _fetch(baseURL, api, queryParameters) {
 
   if (json.length && json.length > 1) {
     console.logVerbose(`Parse end. Objects count: ${json.length}`);
+    console.logData(`Parse end. Objects: ${json}`);
   } else {
     console.logVerbose(`Parse end. Object: ${response.string}`);
   }
