@@ -1098,7 +1098,7 @@ async function _fetch(baseURL, api, queryParameters) {
 
   if (json.length && json.length > 1) {
     console.logVerbose(`Parse end. Objects count: ${json.length}`);
-    console.logData(`Parse end. Objects: ${json}`);
+    console.logData(`Response`, json);
   } else {
     console.logVerbose(`Parse end. Object: ${response.string}`);
   }
