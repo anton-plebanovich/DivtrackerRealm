@@ -496,7 +496,7 @@ function _fixFMPCompany(fmpCompany, symbolID) {
     company._id = symbolID;
 
     if (fmpCompany.currency) {
-      company.c = fmpCompany.currency;
+      company.c = fmpCompany.currency.toUpperCase();
     } else {
       console.error(`No currency '${symbolID}': ${fmpCompany.stringify()}`)
       return null;

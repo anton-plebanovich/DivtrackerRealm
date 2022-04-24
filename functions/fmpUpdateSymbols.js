@@ -23,14 +23,14 @@
 exports = async function(database) {
   context.functions.execute("fmpUtils");
 
-  if (database != null) {
+  if (database != null && database !== 'Hello world!') {
     throwIfNotString(database);
     fmp = atlas.db(database);
   }
   
   await updateFMPSymbols();
 
-  if (database != null) {
+  if (database != null && database !== 'Hello world!') {
     await setUpdateDate(`${database}-symbols`);
   } else {
     await setUpdateDate(`fmp-symbols`);
