@@ -447,6 +447,7 @@ function _fixCompany(iexCompany, symbolID) {
   
     return company;
   } catch(error) {
+    console.logVerbose(`Unable to map company: ${error}`);
     return null;
   }
 };
@@ -496,6 +497,7 @@ function _fixDividends(iexDividends, symbolID) {
       });
 
   } catch(error) {
+    console.logVerbose(`Unable to map dividends: ${error}`);
     return [];
   }
 }
@@ -526,6 +528,7 @@ function _fixPreviousDayPrice(iexPreviousDayPrice, symbolID) {
   } catch(error) {
     // {"AQNU":{"previous":null}}
     // {"AACOU":{"previous":null}}
+    console.logVerbose(`Unable to map previous day price: ${error}`);
     return null;
   }
 };
@@ -563,6 +566,7 @@ function _fixHistoricalPrices(iexHistoricalPrices, symbolID) {
       });
 
   } catch (error) {
+    console.logVerbose(`Unable to map historical prices: ${error}`);
     return [];
   }
 };
@@ -592,6 +596,7 @@ function _fixQuote(iexQuote, symbolID) {
     return quote;
 
   } catch(error) {
+    console.logVerbose(`Unable to map quote: ${error}`);
     return null;
   }
 };
@@ -629,6 +634,7 @@ function _fixSplits(iexSplits, symbolID) {
       });
 
   } catch (error) {
+    console.logVerbose(`Unable to map splits: ${error}`);
     return [];
   }
 };
