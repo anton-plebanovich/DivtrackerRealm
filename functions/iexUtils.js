@@ -135,6 +135,19 @@ getShortSymbols = _getShortSymbols;
  */
 const defaultRange = '6y';
 
+fetchSymbols = async function fetchSymbols() {
+  // https://cloud.iexapis.com/stable/ref-data/symbols?token=pk_9f1d7a2688f24e26bb24335710eae053
+  // https://cloud.iexapis.com/stable/ref-data/mutual-funds/symbols?token=pk_9f1d7a2688f24e26bb24335710eae053
+  // https://sandbox.iexapis.com/stable/ref-data/symbols?token=Tpk_581685f711114d9f9ab06d77506fdd49
+  // https://sandbox.iexapis.com/stable/ref-data/mutual-funds/symbols?token=Tpk_581685f711114d9f9ab06d77506fdd49
+  
+  return await Promise.all([
+    iexFetch("/ref-data/symbols"),
+    iexFetch("/ref-data/mutual-funds/symbols"),
+  ])
+  .then(results => results.flat());
+};
+
 /**
  * Fetches companies in batch for short symbols.
  * @param {[ShortSymbol]} shortSymbols Short symbol models for which to fetch.

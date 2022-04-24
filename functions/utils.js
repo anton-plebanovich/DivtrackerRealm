@@ -582,38 +582,42 @@ class _NetworkResponse {
     let string;
     Object.defineProperty(this, "string", {
       get: function() {
-        if (typeof string !== 'undefined') {
-          return string;
-        } else if (this.rawBody != null) {
-          string = this.rawBody.text();
-          return string;
-        } else {
-          string = null;
-          return string;
+        if (typeof string === 'undefined') {
+          if (this.rawBody != null) {
+            string = this.rawBody.text();
+          } else {
+            string = null;
+          }
         }
+
+        return string;
       }
     });
 
     let json;
     Object.defineProperty(this, "json", {
       get: function() {
-        if (typeof json !== 'undefined') {
-          return json;
+        if (typeof json === 'undefined') {
+          if (this.string != null) {
+            try {
+              const result = EJSON.parse(this.string);
+              if (result != null) {
+                json = result;
+              } else {
+                json = null;
+              }
 
-        } else if (this.string != null) {
-          try {
-            json = EJSON.parse(this.string);
-            return json;
-          } catch(error) {
-            console.error(`Unable to map JSON from response: ${this.string}`)
+            } catch(error) {
+              console.error(`Unable to map JSON from response: ${this.string}`)
+              json = null;
+            }
+  
+          } else {
             json = null;
-            return json;
           }
-
-        } else {
-          json = null;
-          return json;
         }
+
+        return json;
       }
     });
 
@@ -653,14 +657,12 @@ class _NetworkResponse {
     let retryDelay;
     Object.defineProperty(this, "retryDelay", {
       get: function() {
-        if (typeof retryDelay !== 'undefined') {
-          return retryDelay;
-        }
-
-        if (this.statusCode === 429) {
-          retryDelay = this.json['X-Rate-Limit-Retry-After-Milliseconds'];
-        } else {
-          retryDelay = null;
+        if (typeof retryDelay === 'undefined') {
+          if (this.statusCode === 429 && this.json != null) {
+            retryDelay = this.json['X-Rate-Limit-Retry-After-Milliseconds'];
+          } else {
+            retryDelay = null;
+          }
         }
 
         return retryDelay;

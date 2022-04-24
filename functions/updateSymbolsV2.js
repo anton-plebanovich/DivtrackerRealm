@@ -46,8 +46,7 @@ exports = async function() {
 async function updateIEXSymbols() {
   console.log(`Updating IEX symbols`);
 
-  // https://sandbox.iexapis.com/stable/ref-data/symbols?token=Tpk_581685f711114d9f9ab06d77506fdd49
-  const newSymbols = await iexFetch("/ref-data/symbols");
+  const newSymbols = await fetchSymbols();
 
   // We remove date field to prevent excessive updates each day
   newSymbols.forEach(x => delete x.date);
@@ -98,7 +97,7 @@ async function updateIEXSymbols() {
     console.log(`Disabling IEX symbols: ${symbolsIDsToDisable}`);
     await iexCollection.updateMany(
       { symbol: { $in: symbolsIDsToDisable } },
-      { $set: { isEnabled: false } }
+      { $set: { isEnabled: false }, $currentDate: { u: true } }
     );
   }
 }
@@ -127,7 +126,7 @@ function update(field, bulk, oldSymbolByTicker, oldSymbols, newSymbol) {
     return true
 
   } else {
-    bulk.findAndUpdateIfNeeded(newSymbol, oldSymbol, field);
+    bulk.findAndUpdateIfNeeded(newSymbol, oldSymbol, field, true);
     return true;
   }
 }
@@ -171,7 +170,7 @@ async function updateDivtrackerSymbols() {
   const bulk = divtrackerCollection.initializeUnorderedBulkOp();
   for (const newSymbol of newSymbols) {
     const oldSymbol = oldSymbolsDictionary[newSymbol._id];
-    bulk.findAndUpdateOrInsertIfNeeded(newSymbol, oldSymbol);
+    bulk.findAndUpdateOrInsertIfNeeded(newSymbol, oldSymbol, '_id', true);
   }
 
   await bulk.safeExecute();

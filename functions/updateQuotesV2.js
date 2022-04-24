@@ -32,7 +32,7 @@ exports = async function() {
   // TODO: We might insert after each batch fetch
   const quotes = await fetchQuotes(shortSymbols);
   const quotesCollection = db.collection("quotes");
-  await quotesCollection.safeUpsertMany(quotes);
+  await quotesCollection.safeUpsertMany(quotes, '_id', true);
 
   // IEX quotes are 15 minutes late prices so applying a fix
   const date = new Date();

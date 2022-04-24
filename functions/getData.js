@@ -1,8 +1,8 @@
 
-// fmpGetData.js
+// getData.js
 
 exports = async function(date, collections, symbols, fullSymbolsCollections) {
-  context.functions.execute("fmpUtils");
+  context.functions.execute("utils");
 
   const find = {};
   if (date != null) {
@@ -22,6 +22,7 @@ exports = async function(date, collections, symbols, fullSymbolsCollections) {
   const allCollections = [
     'companies',
     'dividends',
+    'exchange-rates',
     'historical-prices',
     'quotes',
     'splits',
@@ -87,12 +88,19 @@ exports = async function(date, collections, symbols, fullSymbolsCollections) {
     fullSymbolsCollections = [];
   }
 
+  // exchange-rates are always ignoring symbols when requested
+  if (!fullSymbolsCollections.includes('exchange-rates')) {
+    fullSymbolsCollections.push('exchange-rates');
+  }
+
   const singularSymbolCollections = [
     'companies',
     'quotes',
     'symbols',
   ];
 
+  const fmp = atlas.db("fmp");
+  const iex = atlas.db("divtracker-v2");
   const operations = collections.map(async collection => {
     const _find = Object.assign({}, find);
     if (symbols != null && !fullSymbolsCollections.includes(collection)) {
@@ -103,8 +111,31 @@ exports = async function(date, collections, symbols, fullSymbolsCollections) {
       }
     }
 
-    const objects = await fmp.collection(collection).find(_find).toArray();
-    return { [collection]: objects };
+    const [fmpObjects, iexObjects] = await Promise.all([
+      fmp.collection(collection).find(_find).toArray(),
+      iex.collection(collection).find(_find).toArray(),
+    ]);
+    
+    if (symbols == null && collection === 'symbols') {
+      // Dedupe symbols when full data is returned to prevent collision.
+      const enabledFMPTickers = fmpObjects
+        .filter(x => x.e != false)
+        .map(x => x.t);
+
+      const filteredIEXObjects = iexObjects.filter(x => !enabledFMPTickers.includes(x.t));
+      if (iexObjects.length != filteredIEXObjects.length) {
+        const duplicates = iexObjects
+          .filter(x => enabledFMPTickers.includes(x.t))
+          .map(x => x.t);
+          
+        console.log(`Found duplicated tickers: ${duplicates}`)
+      }
+
+      return { [collection]: fmpObjects.concat(filteredIEXObjects) };
+      
+    } else {
+      return { [collection]: fmpObjects.concat(iexObjects) };
+    }
   });
 
   const operationResults = await Promise
