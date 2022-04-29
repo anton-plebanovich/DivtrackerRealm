@@ -3,7 +3,8 @@
     "name": "updateQuotesHourlyV2",
     "type": "SCHEDULED",
     "config": {
-        "schedule": "2 14-22 * * 1-5"
+        "schedule": "2 14-22 * * 1-5",
+        "skip_catchup_events": true
     },
     "disabled": false,
     "event_processors": {

@@ -31,7 +31,7 @@ Object.prototype.safeInsertMissing = async function(newObjects, fields) {
   const bulk = this.initializeUnorderedBulkOp();
   for (const newObject of newObjects) {
     const find = fields.reduce((find, field) => {
-      return Object.assign(find, { [field]: newObject[field] })
+      return Object.assign(find, { [field]: newObject[field] });
     }, {});
 
     bulk
@@ -41,7 +41,7 @@ Object.prototype.safeInsertMissing = async function(newObjects, fields) {
   }
 
   return await bulk.safeExecute();
-}
+};
 
 Object.prototype.safeUpsertMany = async function(newObjects, field, setUpdateDate) {
   _throwIfEmptyArray(newObjects, `Please pass non-empty new objects array as the first argument. safeUpsertMany`);
@@ -65,7 +65,7 @@ Object.prototype.safeUpsertMany = async function(newObjects, field, setUpdateDat
   }
 
   return await bulk.safeExecute();
-}
+};
 
 /**
  * Safely computes and executes update operation from old to new objects on a collection.
@@ -78,7 +78,7 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, field, 
   }
 
   const newObjectsLength = newObjects.length;
-  const validNewObjectsLength = newObjects.filter(x => x[field] != null).length
+  const validNewObjectsLength = newObjects.filter(x => x[field] != null).length;
   if (newObjectsLength != validNewObjectsLength) {
     return await _logAndReject(`${newObjectsLength - validNewObjectsLength} of ${newObjectsLength} new objects do not contain required '${field}' field`);
   }
@@ -175,12 +175,12 @@ Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, field, s
  */
 Object.prototype.updateFrom = function(object, setUpdateDate) {
   object = Object.assign({}, object);
-  delete object['_id'];
-  delete object['u'];
+  delete object._id;
+  delete object.u;
 
   const set = Object.assign({}, this);
-  delete set['_id'];
-  delete set['u'];
+  delete set._id;
+  delete set.u;
 
   if (set.isEqual(object)) {
     return null;
@@ -320,7 +320,7 @@ Array.prototype.compactMap = function(callbackfn) {
  * @param {function|string} arg Key map function or key.
  */
 Array.prototype.toDictionary = function(arg) {
-  let getKey
+  let getKey;
   if (typeof arg === 'string' || arg instanceof String) {
     getKey = (value) => value[arg];
   } else if (arg == null) {
@@ -331,7 +331,7 @@ Array.prototype.toDictionary = function(arg) {
 
   return this.reduce((dictionary, value) => {
     const key = getKey(value);
-    return Object.assign(dictionary, { [key]: value })
+    return Object.assign(dictionary, { [key]: value });
   }, {});
 };
 
@@ -340,7 +340,7 @@ Array.prototype.toDictionary = function(arg) {
  * @param {function|string} arg Key map function or key.
  */
 Array.prototype.toBuckets = function(arg) {
-  let getKey
+  let getKey;
   if (typeof arg === 'string' || arg instanceof String) {
     getKey = (value) => value[arg];
   } else if (arg == null) {
@@ -357,7 +357,7 @@ Array.prototype.toBuckets = function(arg) {
     } else {
       dictionaryValue.push(value);
     }
-    return dictionary
+    return dictionary;
   }, {});
 };
 
@@ -608,7 +608,7 @@ class _NetworkResponse {
               }
 
             } catch(error) {
-              console.error(`Unable to map JSON from response: ${this.string}`)
+              console.error(`Unable to map JSON from response: ${this.string}`);
               json = null;
             }
   
@@ -741,7 +741,7 @@ class _SystemError {
   }
 }
 
-SystemError = _SystemError
+SystemError = _SystemError;
 
 class _CompositeError {
   constructor(errors) {
@@ -937,7 +937,7 @@ checkExecutionTimeout = function checkExecutionTimeout(limit) {
 };
 
 function _throwIfNotString(object, message, ErrorType) {
-  _throwIfUndefinedOrNull(object, message, ErrorType)
+  _throwIfUndefinedOrNull(object, message, ErrorType);
 
   const type = Object.prototype.toString.call(object);
   if (type === 'string' || type === '[object String]') { return object; }
@@ -957,7 +957,7 @@ throwIfNotString = _throwIfNotString;
  * @returns {object} Passed object if it's an `Array`.
  */
 function _throwIfEmptyArray(object, message, ErrorType) {
-  _throwIfNotArray(object, message, ErrorType)
+  _throwIfNotArray(object, message, ErrorType);
 
   if (object.length > 0) { return object; }
   if (ErrorType == null) { ErrorType = _SystemError; }
@@ -976,7 +976,7 @@ throwIfEmptyArray = _throwIfEmptyArray;
  * @returns {object} Passed object if it's an `Array`.
  */
 function _throwIfNotArray(object, message, ErrorType) {
-  _throwIfUndefinedOrNull(object, message, ErrorType)
+  _throwIfUndefinedOrNull(object, message, ErrorType);
 
   const type = Object.prototype.toString.call(object);
   if (type === '[object Array]') { return object; }
@@ -989,7 +989,7 @@ function _throwIfNotArray(object, message, ErrorType) {
 throwIfNotArray = _throwIfNotArray;
 
 function _throwIfNotDate(object, message, ErrorType) {
-  _throwIfUndefinedOrNull(object, message, ErrorType)
+  _throwIfUndefinedOrNull(object, message, ErrorType);
 
   const type = Object.prototype.toString.call(object);
   if (type === '[object Date]') { return object; }
@@ -1002,7 +1002,7 @@ function _throwIfNotDate(object, message, ErrorType) {
 throwIfNotDate = _throwIfNotDate;
 
 function _throwIfNotObjectId(object, message, ErrorType) {
-  _throwIfUndefinedOrNull(object, message, ErrorType)
+  _throwIfUndefinedOrNull(object, message, ErrorType);
 
   const type = Object.prototype.toString.call(object);
   if (type === '[object ObjectId]') { return object; }
@@ -1172,12 +1172,12 @@ async function _getSupportedSymbolIDs() {
     fmpSymbolsCollection.distinct("_id", { e: null }),
   ]);
 
-  const supportedSymbolIDs = iexSupportedSymbolIDs.concat(fmpSupportedSymbolIDs)
+  const supportedSymbolIDs = iexSupportedSymbolIDs.concat(fmpSupportedSymbolIDs);
   console.log(`Supported symbols (${supportedSymbolIDs.length})`);
   console.logData(`Supported symbols (${supportedSymbolIDs.length})`, supportedSymbolIDs);
 
   return supportedSymbolIDs;
-};
+}
 
 getSupportedSymbolIDs = _getSupportedSymbolIDs;
 
@@ -1243,7 +1243,7 @@ getSupportedSymbolIDs = _getSupportedSymbolIDs;
   }
 
   return exchangeRates;
-};
+}
 
 fetchExchangeRates = _fetchExchangeRates;
 
@@ -1275,9 +1275,9 @@ async function _setUpdateDate(_id, date) {
     { $set: { d: date } }, 
     { "upsert": true }
   )
-}
+};
 
-setUpdateDate = _setUpdateDate
+setUpdateDate = _setUpdateDate;
 
 ///////////////////////////////////////////////////////////////////////////////// INITIALIZATION
 
