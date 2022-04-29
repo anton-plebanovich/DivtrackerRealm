@@ -3,7 +3,7 @@
     "name": "fmpUpdateSymbolsDaily",
     "type": "SCHEDULED",
     "config": {
-        "schedule": "*/5 * * * *",
+        "schedule": "1 23 * * *",
         "skip_catchup_events": true
     },
     "disabled": false,
