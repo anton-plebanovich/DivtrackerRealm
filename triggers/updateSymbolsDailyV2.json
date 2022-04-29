@@ -3,7 +3,8 @@
     "name": "updateSymbolsDailyV2",
     "type": "SCHEDULED",
     "config": {
-        "schedule": "1 13 * * *"
+        "schedule": "1 13 * * *",
+        "skip_catchup_events": true
     },
     "disabled": false,
     "event_processors": {
