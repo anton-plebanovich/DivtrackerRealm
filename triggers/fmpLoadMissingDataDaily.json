@@ -3,7 +3,8 @@
     "name": "fmpLoadMissingDataDaily",
     "type": "SCHEDULED",
     "config": {
-        "schedule": "3 23 * * *"
+        "schedule": "3 23 * * *",
+        "skip_catchup_events": true
     },
     "disabled": false,
     "event_processors": {
