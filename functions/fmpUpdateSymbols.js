@@ -25,7 +25,6 @@ exports = async function(database) {
 
   if (Object.prototype.toString.call(database) === '[object Object]') {
     // Trigger object, just erase
-    console.log(database.stringify());
     database = null;
   }
 
