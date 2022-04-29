@@ -23,6 +23,12 @@
 exports = async function(database) {
   context.functions.execute("fmpUtils");
 
+  if (typeof database === '[object ObjectId]') {
+    // Trigger object, just erase
+    console.log(database.stringify());
+    database = null;
+  }
+
   if (database != null && database !== 'Hello world!') {
     throwIfNotString(database);
     fmp = atlas.db(database);
