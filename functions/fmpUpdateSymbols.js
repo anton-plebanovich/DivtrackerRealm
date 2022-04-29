@@ -23,7 +23,7 @@
 exports = async function(database) {
   context.functions.execute("fmpUtils");
 
-  if (typeof database === '[object Object]') {
+  if (Object.prototype.toString.call(database) === '[object Object]') {
     // Trigger object, just erase
     console.log(database.stringify());
     database = null;
