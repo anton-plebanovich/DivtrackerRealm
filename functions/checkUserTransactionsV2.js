@@ -36,7 +36,7 @@
   ];
 
   const supportedSymbolIDs = await getSupportedSymbolIDs();
-  const sybmolIDBySymbolID = Object.assign({}, ...supportedSymbolIDs.map(x => ({ [x]: x })))
+  const symbolIDBySymbolID = Object.assign({}, ...supportedSymbolIDs.map(x => ({ [x]: x })));
   const transactionsCollection = db.collection("transactions");
   // Check transactions
   for (const transaction of transactions) {
@@ -67,7 +67,7 @@
       return logAndReject(`Transaction symbol ID format is invalid. It should be 24 characters ObjectId`, transaction.stringify());
     }
   
-    if (sybmolIDBySymbolID[transaction.s] == null) {
+    if (symbolIDBySymbolID[transaction.s] == null) {
       return logAndReject(`Unknown transaction symbol`, transaction.stringify());
     }
 
