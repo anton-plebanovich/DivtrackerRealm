@@ -1164,6 +1164,26 @@ getTickersAndIDByTicker = _getTickersAndIDByTicker;
 /** 
  * @returns {Promise<[ObjectId]>} Array of existing enabled symbol IDs from both IEX and FMP databases, e.g. [ObjectId("61b102c0048b84e9c13e454d")]
 */
+async function _getExistingSymbolIDs() {
+  const iexSymbolsCollection = db.collection("symbols");
+  const fmpSymbolsCollection = atlas.db("fmp").collection("symbols");
+  const [iexSupportedSymbolIDs, fmpSupportedSymbolIDs] = await Promise.all([
+    iexSymbolsCollection.distinct("_id", {}),
+    fmpSymbolsCollection.distinct("_id", {}),
+  ]);
+
+  const supportedSymbolIDs = iexSupportedSymbolIDs.concat(fmpSupportedSymbolIDs)
+  console.log(`Existing symbols (${supportedSymbolIDs.length})`);
+  console.logData(`Existing symbols (${supportedSymbolIDs.length})`, supportedSymbolIDs);
+
+  return supportedSymbolIDs;
+};
+
+getExistingSymbolIDs = _getExistingSymbolIDs;
+
+/** 
+ * @returns {Promise<[ObjectId]>} Array of existing enabled symbol IDs from both IEX and FMP databases, e.g. [ObjectId("61b102c0048b84e9c13e454d")]
+*/
 async function _getSupportedSymbolIDs() {
   const iexSymbolsCollection = db.collection("symbols");
   const fmpSymbolsCollection = atlas.db("fmp").collection("symbols");
