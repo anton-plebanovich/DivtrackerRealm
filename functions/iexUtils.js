@@ -143,7 +143,7 @@ fetchSymbols = async function fetchSymbols() {
   
   return await Promise.all([
     iexFetch("/ref-data/symbols"),
-    iexFetch("/ref-data/mutual-funds/symbols"),
+    // iexFetch("/ref-data/mutual-funds/symbols"),
   ])
   .then(results => results.flat());
 };
