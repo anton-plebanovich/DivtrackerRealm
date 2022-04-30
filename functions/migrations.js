@@ -17,6 +17,7 @@ exports = async function() {
   // dtcheck restore --environment production --database fmp --to-database fmp-tmp
   // dtcheck call-realm-function --environment production --function fmpUpdateSymbols --argument fmp-tmp
   // dtcheck call-realm-function --environment production --function fmpLoadMissingData --argument fmp-tmp --retry-on-error 'execution time limit exceeded'
+  // dtcheck backup --environment production --database fmp-tmp # just in case something goes wrong
   await adjustSymbolIDs();
   // dtcheck backup --environment production --database fmp-tmp
   // dtcheck restore --environment production --database fmp-tmp --to-database fmp
@@ -36,9 +37,9 @@ async function adjustSymbolIDs() {
   const newSymbols = await symbolsCollection.find({ _id: { $gte: objectID } }).toArray();
   const newObjectIDs = newSymbols.map(x => x._id);
 
-  // 5 mins in the future
+  // 10 mins in the future so we have time to release an update
   const newDate = new Date();
-  newDate.setUTCMinutes(newDate.getUTCMinutes() + 5);
+  newDate.setUTCMinutes(newDate.getUTCMinutes() + 10);
 
   // Delete old
   const bulk = symbolsCollection.initializeUnorderedBulkOp();
