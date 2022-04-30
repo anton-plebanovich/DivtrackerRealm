@@ -49,8 +49,7 @@ async function adjustSymbolIDs() {
   // Modify and insert new
   const hexSeconds = Math.floor(newDate/1000).toString(16);
   for (const newSymbol of newSymbols) {
-    const id = newSymbol._id.toString();
-    const hex = id.hex();
+    const hex = newSymbol._id.hex();
     const newID = BSON.ObjectId.fromDate(newDate, hex);
     newSymbol._id = newID;
     bulk.insert(newSymbol);
