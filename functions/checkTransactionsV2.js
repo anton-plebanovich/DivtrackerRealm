@@ -7,30 +7,44 @@
  exports = async function() {
   context.functions.execute("iexUtils");
   const transactionsCollection = db.collection("transactions");
-  const transactions = await transactionsCollection.find({}).toArray();
-  if (!transactions.length) {
-    console.log(`Nothing to verify. Transactions are empty.`);
-    return;
-  }
 
-  // Check transactions
-  const symbolIDs = await db.collection("symbols").distinct("_id");
-  const symbolIDBySymbolID = symbolIDs.toDictionary(x => x.toString());
-  const errors = [];
-  for (const transaction of transactions) {
-    try {
-      checkTransaction(transaction, symbolIDBySymbolID);
-    } catch(error) {
-      errors.push(error);
+  let transactions;
+  const pageSize = 50000;
+  do {
+    let find;
+    if (transactions != null) {
+      find = { _id: { $gt: transactions[transactions.length - 1]._id } };
+    } else {
+      find = {};
     }
-  }
 
-  if (errors.length) {
-    throw(errors);
-
-  } else {
-    console.log(`All trasactions are valid!`);
-  }
+    transactions = await transactionsCollection.find(find).sort({ _id: 1 }).limit(pageSize).toArray();
+    if (!transactions.length) {
+      console.log(`Nothing to verify. Transactions are empty.`);
+      return;
+    } else {
+      console.log(`Checking transactions with filter: ${find.stringify()}`);
+    }
+  
+    // Check transactions
+    const supportedSymbolIDs = await getSupportedSymbolIDs();
+    const symbolIDBySymbolID = Object.assign({}, ...supportedSymbolIDs.map(x => ({ [x]: x })));
+    const errors = [];
+    for (const transaction of transactions) {
+      try {
+        checkTransaction(transaction, symbolIDBySymbolID);
+      } catch(error) {
+        errors.push(error);
+      }
+    }
+  
+    if (errors.length) {
+      throw(errors);
+  
+    } else {
+      console.log(`All trasactions are valid!`);
+    }
+  } while (transactions.length >= pageSize)
 };
 
 const requiredTransactionKeys = [
