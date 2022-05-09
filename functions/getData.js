@@ -4,21 +4,6 @@
 exports = async function(date, collections, symbols, fullSymbolsCollections) {
   context.functions.execute("utils");
 
-  const find = {};
-  if (date != null) {
-    throwIfNotDate(
-      date, 
-      `Please pass date as the first argument.`, 
-      UserError
-    );
-
-    // TODO: We might need to use date - 5 mins to prevent race conditions. I am not 100% sure because I don't know if MongoDB handles it properly.
-    find.$or = [
-      { _id: { $gte: BSON.ObjectId.fromDate(date) } },
-      { u: { $gte: date } }
-    ];
-  }
-
   const allCollections = [
     'companies',
     'dividends',
@@ -27,7 +12,28 @@ exports = async function(date, collections, symbols, fullSymbolsCollections) {
     'quotes',
     'splits',
     'symbols',
+    'updates',
   ];
+
+  const singularSymbolCollections = [
+    'companies',
+    'quotes',
+    'symbols',
+  ];
+
+  // Collections that have objects with non-searchable ID, e.g. 'USD' for 'exchange-rates'
+  const nonSearchableIDCollections = [
+    'exchange-rates',
+    'updates',
+  ];
+
+  if (date != null) {
+    throwIfNotDate(
+      date, 
+      `Please pass date as the first argument.`, 
+      UserError
+    );
+  }
 
   if (collections != null) {
     throwIfEmptyArray(
@@ -93,27 +99,41 @@ exports = async function(date, collections, symbols, fullSymbolsCollections) {
     fullSymbolsCollections.push('exchange-rates');
   }
 
-  const singularSymbolCollections = [
-    'companies',
-    'quotes',
-    'symbols',
-  ];
+  // updates are always ignoring symbols when requested
+  if (!fullSymbolsCollections.includes('updates')) {
+    fullSymbolsCollections.push('updates');
+  }
 
   const fmp = atlas.db("fmp");
   const iex = atlas.db("divtracker-v2");
+  const projection = { u: false };
   const operations = collections.map(async collection => {
-    const _find = Object.assign({}, find);
+    const find = {};
+
+    if (date != null) {
+      // TODO: We might need to use date - 5 mins to prevent race conditions. I am not 100% sure because I don't know if MongoDB handles it properly.
+      if (nonSearchableIDCollections.includes(collection)) {
+        find.u = { $gte: date };
+
+      } else {
+        find.$or = [
+          { _id: { $gte: BSON.ObjectId.fromDate(date) } },
+          { u: { $gte: date } }
+        ];
+      }
+    }
+
     if (symbols != null && !fullSymbolsCollections.includes(collection)) {
       if (singularSymbolCollections.includes(collection)) {
-        _find._id = { $in: symbols };
+        find._id = { $in: symbols };
       } else {
-        _find.s = { $in: symbols };
+        find.s = { $in: symbols };
       }
     }
 
     const [fmpObjects, iexObjects] = await Promise.all([
-      fmp.collection(collection).find(_find).toArray(),
-      iex.collection(collection).find(_find).toArray(),
+      fmp.collection(collection).find(find, projection).toArray(),
+      iex.collection(collection).find(find, projection).toArray(),
     ]);
     
     if (symbols == null && collection === 'symbols') {
