@@ -1292,7 +1292,7 @@ async function _setUpdateDate(_id, date) {
   const collection = db.collection("updates");
   return await collection.updateOne(
     { _id: _id }, 
-    { $set: { d: date } }, 
+    { $set: { d: date }, $currentDate: { u: true } }, 
     { "upsert": true }
   )
 };

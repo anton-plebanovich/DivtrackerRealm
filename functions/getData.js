@@ -27,6 +27,7 @@ exports = async function(date, collections, symbols, fullSymbolsCollections) {
     'quotes',
     'splits',
     'symbols',
+    'updates',
   ];
 
   if (collections != null) {
@@ -91,6 +92,11 @@ exports = async function(date, collections, symbols, fullSymbolsCollections) {
   // exchange-rates are always ignoring symbols when requested
   if (!fullSymbolsCollections.includes('exchange-rates')) {
     fullSymbolsCollections.push('exchange-rates');
+  }
+
+  // updates are always ignoring symbols when requested
+  if (!fullSymbolsCollections.includes('updates')) {
+    fullSymbolsCollections.push('updates');
   }
 
   const singularSymbolCollections = [
