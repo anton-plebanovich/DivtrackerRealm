@@ -101,6 +101,7 @@ exports = async function(date, collections, symbols, fullSymbolsCollections) {
 
   const fmp = atlas.db("fmp");
   const iex = atlas.db("divtracker-v2");
+  const projection = { u: false };
   const operations = collections.map(async collection => {
     const _find = Object.assign({}, find);
     if (symbols != null && !fullSymbolsCollections.includes(collection)) {
@@ -112,8 +113,8 @@ exports = async function(date, collections, symbols, fullSymbolsCollections) {
     }
 
     const [fmpObjects, iexObjects] = await Promise.all([
-      fmp.collection(collection).find(_find).toArray(),
-      iex.collection(collection).find(_find).toArray(),
+      fmp.collection(collection).find(_find, projection).toArray(),
+      iex.collection(collection).find(_find, projection).toArray(),
     ]);
     
     if (symbols == null && collection === 'symbols') {
