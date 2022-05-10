@@ -12,7 +12,7 @@
 exports = async function() {
   context.functions.execute("utils");
 
-  // Release new server
+  // Release new server with disabled FMP symbols update
   // dtcheck backup --environment production --database fmp
   // dtcheck restore --environment production --database fmp --to-database fmp-tmp
   // dtcheck call-realm-function --environment production --function fmpUpdateSymbols --argument fmp-tmp
@@ -22,6 +22,7 @@ exports = async function() {
   // dtcheck backup --environment production --database fmp-tmp
   // dtcheck restore --environment production --database fmp-tmp --to-database fmp
   // dtcheck call-realm-function --environment production --function checkTransactionsV2
+  // Enable FMP symbols update
 };
 
 async function adjustSymbolIDs() {
