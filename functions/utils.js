@@ -872,16 +872,34 @@ function extendRuntime() {
    * This function returns an ObjectId embedded with a given datetime
    * Accepts both Date object and string input
    */
-  BSON.ObjectId.fromDate = function(date) {
+  BSON.ObjectId.fromDate = function(date, hex) {
     /* Convert string date to Date object (otherwise assume timestamp is a date) */
     if (typeof date === 'string') {
         date = new Date(date);
     }
 
+    if (hex == null) {
+      hex = "0000000000000000"
+    }
+
+    if (hex.length != 16) {
+      _logAndThrow(`Hex part of ObjectID should have 16 characters length, instead received '${hex}' with ${hex.length} length`)
+    }
+
     const hexSeconds = Math.floor(date/1000).toString(16);
 
-    return new BSON.ObjectId(hexSeconds + "0000000000000000");
+    // 62649eca 6e72da17e710cd18
+    // --time-- ------hex-------
+    // ---8---- ------16--------
+    return new BSON.ObjectId(hexSeconds + hex);
   };
+
+  /**
+   * Returns HEX part from `BSON.ObjectId`.
+   */
+  BSON.ObjectId.prototype.hex = function() {
+    return this.toString().substring(8);
+  }
 
   runtimeExtended = true;
 }
