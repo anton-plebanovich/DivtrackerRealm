@@ -135,6 +135,19 @@ getShortSymbols = _getShortSymbols;
  */
 const defaultRange = '6y';
 
+fetchSymbols = async function fetchSymbols() {
+  // https://cloud.iexapis.com/stable/ref-data/symbols?token=pk_9f1d7a2688f24e26bb24335710eae053
+  // https://cloud.iexapis.com/stable/ref-data/mutual-funds/symbols?token=pk_9f1d7a2688f24e26bb24335710eae053
+  // https://sandbox.iexapis.com/stable/ref-data/symbols?token=Tpk_581685f711114d9f9ab06d77506fdd49
+  // https://sandbox.iexapis.com/stable/ref-data/mutual-funds/symbols?token=Tpk_581685f711114d9f9ab06d77506fdd49
+  
+  return await Promise.all([
+    iexFetch("/ref-data/symbols"),
+    // iexFetch("/ref-data/mutual-funds/symbols"),
+  ])
+  .then(results => results.flat());
+};
+
 /**
  * Fetches companies in batch for short symbols.
  * @param {[ShortSymbol]} shortSymbols Short symbol models for which to fetch.
@@ -434,6 +447,7 @@ function _fixCompany(iexCompany, symbolID) {
   
     return company;
   } catch(error) {
+    console.logVerbose(`Unable to map company: ${error}`);
     return null;
   }
 };
@@ -457,7 +471,7 @@ function _fixDividends(iexDividends, symbolID) {
   
     console.logVerbose(`Fixing dividends for ${symbolID}`);
     return iexDividends
-      .filterNull()
+      .filterNullAndUndefined()
       .map(iexDividend => {
         const dividend = {};
         dividend.d = _getOpenDate(iexDividend.declaredDate);
@@ -476,13 +490,14 @@ function _fixDividends(iexDividends, symbolID) {
     
         // We do not add `USD` frequencies to the database.
         if (iexDividend.currency != null && iexDividend.currency !== "USD") {
-          dividend.c = iexDividend.currency;
+          dividend.c = iexDividend.currency.toUpperCase();
         }
     
         return dividend;
       });
 
   } catch(error) {
+    console.logVerbose(`Unable to map dividends: ${error}`);
     return [];
   }
 }
@@ -513,6 +528,7 @@ function _fixPreviousDayPrice(iexPreviousDayPrice, symbolID) {
   } catch(error) {
     // {"AQNU":{"previous":null}}
     // {"AACOU":{"previous":null}}
+    console.logVerbose(`Unable to map previous day price: ${error}`);
     return null;
   }
 };
@@ -536,7 +552,7 @@ function _fixHistoricalPrices(iexHistoricalPrices, symbolID) {
   
     console.logVerbose(`Fixing historical prices for ${symbolID}`);
     return iexHistoricalPrices
-      .filterNull()
+      .filterNullAndUndefined()
       .map(iexHistoricalPrice => {
         const historicalPrice = {};
         historicalPrice.d = _getCloseDate(iexHistoricalPrice.date);
@@ -550,6 +566,7 @@ function _fixHistoricalPrices(iexHistoricalPrices, symbolID) {
       });
 
   } catch (error) {
+    console.logVerbose(`Unable to map historical prices: ${error}`);
     return [];
   }
 };
@@ -579,6 +596,7 @@ function _fixQuote(iexQuote, symbolID) {
     return quote;
 
   } catch(error) {
+    console.logVerbose(`Unable to map quote: ${error}`);
     return null;
   }
 };
@@ -602,7 +620,7 @@ function _fixSplits(iexSplits, symbolID) {
   
     console.logVerbose(`Fixing splits for ${symbolID}`);
     return iexSplits
-      .filterNull()
+      .filterNullAndUndefined()
       .map(iexSplit => {
         const split = {};
         split.e = _getOpenDate(iexSplit.exDate);
@@ -616,6 +634,7 @@ function _fixSplits(iexSplits, symbolID) {
       });
 
   } catch (error) {
+    console.logVerbose(`Unable to map splits: ${error}`);
     return [];
   }
 };

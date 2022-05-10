@@ -4,6 +4,9 @@
 exports = function() {
   context.functions.execute("utils");
   console.log(`Erasing data`);
+
+  // FMP Switch
+  // const db = atlas.db("fmp");
   
   /// Delete ALL
   // db.collection('exchange-rates').deleteMany( { } );
@@ -22,6 +25,7 @@ exports = function() {
   /// Delete for symbol
   // const symbol = new BSON.ObjectId("61c42676a2660ba02db3bb68");
   // db.collection('companies').deleteMany( { _id: symbol } );
+  // db.collection('data-status').deleteMany( { _id: symbol } );
   // db.collection('dividends').deleteMany( { s: symbol } );
   // db.collection('historical-prices').deleteMany( { s: symbol } );
   // db.collection('previous-day-prices').deleteMany( { _id: symbol } );

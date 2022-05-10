@@ -1,6 +1,8 @@
 
 // fmpUtils.js
 
+// 'Value is not an object: undefined' error is thrown when 'undefined' value is called as a function.
+
 ///////////////////////////////////////////////////////////////////////////////// EXTENSIONS
 
 String.prototype.removeSensitiveData = function() {
@@ -48,25 +50,32 @@ getShortSymbols = _getShortSymbols;
 
 //////////////////////////////////// Predefined Fetches
 
+/// To prevent `414 Request-URI Too Large` error we need to split our requests by some value.
+const defaultMaxFetchSize = 100;
+
+/// Each batch or chunked request will have concurrent fetches limited by this parameter.
+const maxConcurrentFetchesPerRequest = 3;
+
 /**
  * Fetches companies in batch for short symbols.
  * @param {[ShortSymbol]} shortSymbols Short symbol models for which to fetch.
  * @returns {[Company]} Array of requested objects.
  */
-fetchCompanies = async function fetchCompanies(shortSymbols) {
+fetchCompanies = async function fetchCompanies(shortSymbols, callback) {
   throwIfEmptyArray(shortSymbols, `fetchCompanies shortSymbols`);
 
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
-  const tickersString = tickers.join(",");
-  const api = `/v3/profile/${tickersString}`;
+  const api = `/v3/profile`;
 
   // https://financialmodelingprep.com/api/v3/profile/AAPL,AAP?apikey=969387165d69a8607f9726e8bb52b901
   return await _fmpFetchAndMapObjects(
     api,
     tickers,
     null,
+    defaultMaxFetchSize,
     idByTicker,
-    _fixFMPCompany
+    _fixFMPCompany, 
+    callback
   );
 };
 
@@ -76,7 +85,7 @@ fetchCompanies = async function fetchCompanies(shortSymbols) {
  * @param {Int} Limit Per ticker limit.
  * @returns {[Dividend]} Array of requested objects.
  */
-fetchDividends = async function fetchDividends(shortSymbols, limit) {
+fetchDividends = async function fetchDividends(shortSymbols, limit, callback) {
   throwIfEmptyArray(shortSymbols, `fetchDividends shortSymbols`);
 
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
@@ -92,7 +101,8 @@ fetchDividends = async function fetchDividends(shortSymbols, limit) {
     'historicalStockList',
     'historical',
     idByTicker,
-    _fixFMPDividends
+    _fixFMPDividends,
+    callback
   );
 };
 
@@ -120,7 +130,7 @@ fetchDividendsCalendar = async function fetchDividendsCalendar(shortSymbols) {
  * @param {[ShortSymbol]} shortSymbols Short symbol models for which to fetch.
  * @returns {[HistoricalPrice]} Array of requested objects.
  */
-fetchHistoricalPrices = async function fetchHistoricalPrices(shortSymbols, queryParameters) {
+fetchHistoricalPrices = async function fetchHistoricalPrices(shortSymbols, queryParameters, callback) {
   throwIfEmptyArray(shortSymbols, `fetchHistoricalPrices shortSymbols`);
 
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
@@ -141,7 +151,8 @@ fetchHistoricalPrices = async function fetchHistoricalPrices(shortSymbols, query
     'historicalStockList',
     'historical',
     idByTicker,
-    _fixFMPHistoricalPrices
+    _fixFMPHistoricalPrices,
+    callback
   );
 };
 
@@ -150,20 +161,21 @@ fetchHistoricalPrices = async function fetchHistoricalPrices(shortSymbols, query
  * @param {[ShortSymbol]} shortSymbols Short symbol models for which to fetch.
  * @returns {[Quote]} Array of requested objects.
  */
-fetchQuotes = async function fetchQuotes(shortSymbols) {
+fetchQuotes = async function fetchQuotes(shortSymbols, callback) {
   throwIfEmptyArray(shortSymbols, `fetchQuotes shortSymbols`);
 
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
-  const tickersString = tickers.join(",");
-  const api = `/v3/quote/${tickersString}`;
+  const api = `/v3/quote`;
 
   // https://financialmodelingprep.com/api/v3/quote/GOOG,AAPL,FB?apikey=969387165d69a8607f9726e8bb52b901
   return await _fmpFetchAndMapObjects(
     api,
     tickers,
     null,
+    defaultMaxFetchSize,
     idByTicker,
-    _fixFMPQuote
+    _fixFMPQuote,
+    callback
   );
 };
 
@@ -172,7 +184,7 @@ fetchQuotes = async function fetchQuotes(shortSymbols) {
  * @param {[ShortSymbol]} shortSymbols Short symbol models for which to fetch.
  * @returns {[Split]} Array of requested objects.
  */
-fetchSplits = async function fetchSplits(shortSymbols) {
+fetchSplits = async function fetchSplits(shortSymbols, callback) {
   throwIfEmptyArray(shortSymbols, `fetchSplits shortSymbols`);
 
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
@@ -187,7 +199,8 @@ fetchSplits = async function fetchSplits(shortSymbols) {
     'historicalStockList',
     'historical',
     idByTicker,
-    _fixFMPSplits
+    _fixFMPSplits,
+    callback
   );
 };
 
@@ -242,33 +255,41 @@ async function _fmpFetchAndMapFlatArray(api, tickers, queryParameters, idByTicke
  * @param {function} mapFunction Function to map data to our format.
  * @returns {Promise<[Object]>} Flat array of entities.
  */
-async function _fmpFetchBatchAndMapArray(api, tickers, queryParameters, maxBatchSize, limit, groupingKey, dataKey, idByTicker, mapFunction) {
-  return await _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, groupingKey)
-    .then(async datas => {
-      if (datas[groupingKey] != null) {
-        const dataByTicker = datas[groupingKey].toDictionary('symbol');
-        const fixedDataPromises = tickers
-          .map(async ticker => {
-            const data = dataByTicker[ticker];
-            if (data != null && data[dataKey] != null) {
-              let tickerData = data[dataKey];
-              if (limit != null) {
-                tickerData = tickerData.slice(0, limit);
-              }
-
-              return await mapFunction(tickerData, idByTicker[ticker]);
-            } else {
-              return [];
+async function _fmpFetchBatchAndMapArray(api, tickers, queryParameters, maxBatchSize, limit, groupingKey, dataKey, idByTicker, mapFunction, callback) {
+  const _map = (datas) => {
+    if (datas[groupingKey] != null) {
+      const dataByTicker = datas[groupingKey].toDictionary('symbol');
+      const existingTickers = Object.keys(dataByTicker).filter(x => tickers.includes(x));
+      return existingTickers
+        .map(ticker => {
+          const data = dataByTicker[ticker];
+          if (data != null && data[dataKey] != null) {
+            let tickerData = data[dataKey];
+            if (limit != null) {
+              tickerData = tickerData.slice(0, limit);
             }
-          })
-          
-        return await Promise.allLmited(fixedDataPromises, 100)
-          .then(x => x.flat())
 
-      } else {
-        throw `Unexpected response format for ${api}`
-      }
-    });
+            return mapFunction(tickerData, idByTicker[ticker]);
+          } else {
+            return [];
+          }
+        })
+        .flat();
+
+    } else {
+      throw `Unexpected response format for ${api}`
+    }
+  };
+
+  let _mapAndCallback;
+  if (callback != null) {
+    _mapAndCallback = async (datas, tickers) => await callback(_map(datas), tickers.map(ticker => idByTicker[ticker]));
+  } else {
+    _mapAndCallback = undefined;
+  }
+
+  return await _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, groupingKey, _mapAndCallback)
+    .then(_map);
 }
 
 /**
@@ -281,35 +302,35 @@ async function _fmpFetchBatchAndMapArray(api, tickers, queryParameters, maxBatch
  * @param {function} mapFunction Function to map data to our format.
  * @returns {Promise<[Object]>} Flat array of entities.
  */
-async function _fmpFetchAndMapObjects(api, tickers, queryParameters, idByTicker, mapFunction) {
-  return await _fmpFetch(api, queryParameters)
-    .then(datas => {
-      const dataByTicker = datas.toDictionary('symbol');
+ async function _fmpFetchAndMapObjects(api, tickers, queryParameters, maxFetchSize, idByTicker, mapFunction, callback) {
+  const _map = (datas) => {
+    const dataByTicker = datas.toDictionary('symbol');
+    const existingTickers = Object.keys(dataByTicker).filter(x => tickers.includes(x));
+    return existingTickers
+      .compactMap(ticker => {
+        const tickerData = dataByTicker[ticker];
+        if (tickerData != null) {
+          return mapFunction(tickerData, idByTicker[ticker]);
+        } else {
+          return null;
+        }
+      });
+  };
 
-      return tickers
-        .compactMap(ticker => {
-          const tickerData = dataByTicker[ticker];
-          if (tickerData != null) {
-            return mapFunction(tickerData, idByTicker[ticker]);
-          } else {
-            return null;
-          }
-        })
-    });
+  let _mapAndCallback;
+  if (callback != null) {
+    _mapAndCallback = async (datas, tickers) => await callback(_map(datas), tickers.map(ticker => idByTicker[ticker]));
+  } else {
+    _mapAndCallback = undefined;
+  }
+  
+  return await _fmpFetchChunked(api, tickers, queryParameters, maxFetchSize, _mapAndCallback)
+    .then(_map);
 }
 
 //////////////////////////////////// Base Fetch
 
-/**
- * @param {string} api API to call.
- * @param {[string]} tickers Ticker Symbols to fetch, e.g. ['AAP','AAPL','PBA'].
- * @param {Object} queryParameters Additional query parameters.
- * @param {Int} maxBatchSize Max allowed batch size.
- * @param {string} groupingKey Batch grouping key, e.g. 'historicalStockList'.
- * @returns {Promise<{string: {string: Object|[Object]}}>} Parsed EJSON object. Composed from several responses if max symbols count was exceeded. 
- * The first object keys are symbols. The next inner object keys are types. And the next inner object is an array of type objects.
- */
-async function _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, groupingKey) {
+async function _fmpFetchChunked(api, tickers, queryParameters, maxFetchSize, callback) {
   throwIfUndefinedOrNull(api, `_fmpFetchBatch api`);
   throwIfEmptyArray(tickers, `_fmpFetchBatch tickers`);
 
@@ -319,47 +340,122 @@ async function _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, group
     queryParameters = Object.assign({}, queryParameters);
   }
 
-  let chunkedSymbolsArray;
-  if (maxBatchSize == null) {
-    chunkedSymbolsArray = [tickers];
+  let chunkedTickersArray;
+  if (maxFetchSize == null) {
+    chunkedTickersArray = [tickers];
   } else {
-    chunkedSymbolsArray = tickers.chunked(maxBatchSize);
+    chunkedTickersArray = tickers.chunked(maxFetchSize);
   }
 
-  var result = { [groupingKey]: [] };
-  for (const chunkedSymbols of chunkedSymbolsArray) {
-    const tickersString = chunkedSymbols.join(",");
+  return await chunkedTickersArray
+  .asyncMap(maxConcurrentFetchesPerRequest, async chunkedTickers => {
+    const tickersString = chunkedTickers.join(",");
     const batchAPI = `${api}/${tickersString}`;
-    console.log(`Fetching batch for symbols (${chunkedSymbols.length}) with query '${queryParameters.stringify()}': ${tickersString}`);
+    console.log(`Fetching chunk for ${chunkedTickers.length} symbols with query '${queryParameters.stringify()}': ${tickersString}`);
     
     let response
     try {
       response = await _fmpFetch(batchAPI, queryParameters);
     } catch(error) {
       if (error.statusCode == 404) {
-        response = {};
+        response = [];
       } else {
         throw error;
       }
     }
 
-    if (chunkedSymbols.length == 1) {
-      if (Object.entries(response).length > 0) {
-        result[groupingKey].push(response);
-      } else {
-        console.logVerbose(`No data for ticker: ${tickersString}`);
-      }
-
-    } else if (response[groupingKey] != null) {
-      throwIfNotArray(response[groupingKey], `_fmpFetchBatch response[groupingKey]`);
-      result[groupingKey] = result[groupingKey].concat(response[groupingKey]);
-
-    } else {
-      console.logVerbose(`No data for tickers: ${tickersString}`);
+    if (callback != null) {
+      await callback(response, chunkedTickers);
     }
+    
+    return response;
+  })
+  .then(x => 
+    x.filterNullAndUndefined()
+    .flat()
+  );
+}
+
+/**
+ * @param {string} api API to call.
+ * @param {[string]} tickers Ticker Symbols to fetch, e.g. ['AAP','AAPL','PBA'].
+ * @param {Object} queryParameters Additional query parameters.
+ * @param {Int} maxBatchSize Max allowed batch size.
+ * @param {string} groupingKey Batch grouping key, e.g. 'historicalStockList'.
+ * @param {function} callback TODO.
+ * @returns {Promise<{string: {string: Object|[Object]}}>} Parsed EJSON object. Composed from several responses if max symbols count was exceeded. 
+ * The first object keys are symbols. The next inner object keys are types. And the next inner object is an array of type objects.
+ */
+async function _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, groupingKey, callback) {
+  throwIfUndefinedOrNull(api, `_fmpFetchBatch api`);
+  throwIfEmptyArray(tickers, `_fmpFetchBatch tickers`);
+
+  if (queryParameters == null) {
+    queryParameters = {};
+  } else {
+    queryParameters = Object.assign({}, queryParameters);
   }
 
-  return result;
+  let chunkedTickersArray;
+  if (maxBatchSize == null) {
+    chunkedTickersArray = [tickers];
+  } else {
+    chunkedTickersArray = tickers.chunked(maxBatchSize);
+  }
+
+  // Always map to the same format
+  const emptyResponse = { [groupingKey]: [] };
+
+  return await chunkedTickersArray
+  .asyncMap(maxConcurrentFetchesPerRequest, async chunkedTickers => {
+    const tickersString = chunkedTickers.join(",");
+    const batchAPI = `${api}/${tickersString}`;
+    console.log(`Fetching batch for ${chunkedTickers.length} symbols with query '${queryParameters.stringify()}': ${tickersString}`);
+    
+    let response
+    try {
+      response = await _fmpFetch(batchAPI, queryParameters);
+    } catch(error) {
+      if (error.statusCode == 404) {
+        // Fix not found responses
+        response = emptyResponse;
+      } else {
+        throw error;
+      }
+    }
+
+    // Fix singular responses
+    if (chunkedTickers.length == 1) {
+      response = { [groupingKey]: [response] };
+    }
+    
+    // Fix empty responses
+    if (Object.entries(response).length == 0) {
+      response = emptyResponse;
+    }
+    
+    if (response[groupingKey] != null) {
+      throwIfNotArray(response[groupingKey], `_fmpFetchBatch response[groupingKey]`);
+
+      if (response[groupingKey].length == 0) {
+        console.logVerbose(`No data for tickers: ${tickersString}`);
+      }
+    }
+
+    if (callback != null) {
+      await callback(response, chunkedTickers);
+    }
+
+    return response;
+  })
+  .then(results => {
+    const datas = results
+      .map(result => result[groupingKey])
+      .filterNullAndUndefined()
+      .flat();
+
+    return { [groupingKey]: datas };
+  })
 };
 
 /**
@@ -398,9 +494,24 @@ function _fixFMPCompany(fmpCompany, symbolID) {
     console.logVerbose(`Company data fix start`);
     const company = {};
     company._id = symbolID;
-    company.c = fmpCompany.currency;
-    company.i = fmpCompany.industry;
-    company.n = fmpCompany.companyName;
+
+    if (fmpCompany.currency) {
+      company.c = fmpCompany.currency.toUpperCase();
+    } else {
+      console.error(`No currency '${symbolID}': ${fmpCompany.stringify()}`)
+      return null;
+    }
+
+    if (fmpCompany.industry) {
+      company.i = fmpCompany.industry;
+    }
+
+    if (fmpCompany.companyName) {
+      company.n = fmpCompany.companyName;
+    } else {
+      console.error(`No company name '${symbolID}': ${fmpCompany.stringify()}`)
+      return null;
+    }
 
     if (fmpCompany.isAdr == true) {
       company.t = "ad";
@@ -436,7 +547,7 @@ function _fixFMPDividends(fmpDividends, symbolID) {
   
     console.logVerbose(`Fixing dividends for ${symbolID}`);
     let dividends = fmpDividends
-      .filterNull()
+      .filterNullAndUndefined()
       .sort((l, r) => l.date.localeCompare(r.date))
       .map(fmpDividend => {
         const dividend = {};
@@ -456,7 +567,7 @@ function _fixFMPDividends(fmpDividends, symbolID) {
     
         return dividend;
       })
-      .filterNull()
+      .filterNullAndUndefined()
     
     dividends = _removeDuplicateDividends(dividends);
     dividends = _updateDividendsFrequency(dividends);
@@ -639,7 +750,13 @@ function _fixFMPQuote(fmpQuote, symbolID) {
     console.logVerbose(`Previous day price data fix start`);
     const quote = {};
     quote._id = symbolID;
-    quote.l = fmpQuote.price;
+
+    if (fmpQuote.price != null) {
+      quote.l = fmpQuote.price;
+    } else {
+      console.error(`No quote price for '${symbolID}': ${fmpQuote.stringify()}`)
+      return null
+    }
 
     if (fmpQuote.pe != null) {
       quote.p = BSON.Double(fmpQuote.pe);
@@ -670,7 +787,7 @@ function _fixFMPSplits(fmpSplits, symbolID) {
   
     console.logVerbose(`Fixing splits for ${symbolID}`);
     return fmpSplits
-      .filterNull()
+      .filterNullAndUndefined()
       .map(fmpSplit => {
         const split = {};
         split.e = _getOpenDate(fmpSplit.date);
@@ -685,7 +802,7 @@ function _fixFMPSplits(fmpSplits, symbolID) {
 
         return split;
       })
-      .filterNull();
+      .filterNullAndUndefined();
 
   } catch (error) {
     console.error(`Unable to fix splits ${fmpSplits.stringify()}: ${error}`);
@@ -708,9 +825,9 @@ function _fixFMPSymbols(fmpSymbols) {
   
     console.logVerbose(`Fixing symbols`);
     return fmpSymbols
-      .filterNull()
-      // We only support 'MCX' at the moment
-      .filter(fmpSymbol => fmpSymbol.exchangeShortName === "MCX")
+      .filterNullAndUndefined()
+      // We only support 'MCX' and funds ATM
+      .filter(fmpSymbol => fmpSymbol.exchangeShortName === "MCX" || fmpSymbol.type === "fund")
       .map(fmpSymbol => {
         const symbol = {};
         symbol.n = fmpSymbol.name;

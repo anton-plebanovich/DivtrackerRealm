@@ -31,7 +31,7 @@
     console.logVerbose(`Updating previous day price for '${previousDayPrice._id}' with '${previousDayPrice.c}'`);
     previousDayPricesBulk.find({ _id: previousDayPrice._id })
       .upsert()
-      .updateOne({ $set: previousDayPrice });
+      .updateOne({ $set: previousDayPrice, $currentDate: { u: true } });
   }
   previousDayPricesBulk.safeExecute();
 
