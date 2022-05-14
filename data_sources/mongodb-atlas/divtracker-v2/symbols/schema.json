@@ -9,6 +9,9 @@
         "e": {
             "bsonType": "bool"
         },
+        "f": {
+            "bsonType": "bool"
+        },
         "n": {
             "bsonType": "string"
         },
