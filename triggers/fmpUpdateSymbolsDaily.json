@@ -3,9 +3,10 @@
     "name": "fmpUpdateSymbolsDaily",
     "type": "SCHEDULED",
     "config": {
-        "schedule": "1 23 * * *"
+        "schedule": "1 23 * * *",
+        "skip_catchup_events": true
     },
-    "disabled": false,
+    "disabled": true,
     "event_processors": {
         "FUNCTION": {
             "config": {

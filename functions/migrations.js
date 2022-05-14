@@ -12,28 +12,50 @@
 exports = async function() {
   context.functions.execute("utils");
 
-  try {
-    positiveCommissionsMigration();
-  } catch(error) {
-    console.error(error);
-  }
+  // Release new server with disabled FMP symbols update
+  // dtcheck backup --environment production --database fmp
+  // dtcheck restore --environment production --database fmp --to-database fmp-tmp
+  // dtcheck call-realm-function --environment production --function fmpUpdateSymbols --argument fmp-tmp
+  // dtcheck call-realm-function --environment production --function fmpLoadMissingData --argument fmp-tmp --retry-on-error 'execution time limit exceeded'
+  // dtcheck backup --environment production --database fmp-tmp # just in case something goes wrong
+  await adjustSymbolIDs();
+  // dtcheck backup --environment production --database fmp-tmp
+  // dtcheck restore --environment production --database fmp-tmp --to-database fmp
+  // dtcheck call-realm-function --environment production --function checkTransactionsV2
+  // Enable FMP symbols update
 };
 
-async function positiveCommissionsMigration() {
-  const transactionsCollection = db.collection("transactions");
-  const oldTransactions = await transactionsCollection.find({ c: { $lt: 0 } }).toArray();
-  const newTransactions = [];
-  for (const oldTransaction of oldTransactions) {
-    console.log(`Fixing: ${oldTransaction.stringify()}`);
-    const newTransaction = Object.assign({}, oldTransaction);
-    newTransaction.c = newTransaction.c * -1;
-    console.log(`Fixed: ${newTransaction.stringify()}`);
-    newTransactions.push(newTransaction);
-  }
+async function adjustSymbolIDs() {
+  const fmpTmp = atlas.db("fmp-tmp");
 
-  if (newTransactions.length) {
-    await transactionsCollection.safeUpdateMany(newTransactions, oldTransactions);
-  } else {
-    console.log("Noting to migrate");
+  // 5 hours ago, just in case fetch will take so much
+  const oldDate = new Date();
+  oldDate.setUTCHours(oldDate.getUTCHours() - 5);
+
+  const objectID = BSON.ObjectId.fromDate(oldDate);
+
+  const symbolsCollection = fmpTmp.collection('symbols');
+  const newSymbols = await symbolsCollection.find({ _id: { $gte: objectID } }).toArray();
+  const newObjectIDs = newSymbols.map(x => x._id);
+
+  // 10 mins in the future so we have time to release an update
+  const newDate = new Date();
+  newDate.setUTCMinutes(newDate.getUTCMinutes() + 10);
+
+  // Delete old
+  const bulk = symbolsCollection.initializeUnorderedBulkOp();
+  for (const newObjectID of newObjectIDs) {
+    bulk.find({ _id: newObjectID }).remove();
   }
+  
+  // Modify and insert new
+  const hexSeconds = Math.floor(newDate/1000).toString(16);
+  for (const newSymbol of newSymbols) {
+    const hex = newSymbol._id.hex();
+    const newID = BSON.ObjectId.fromDate(newDate, hex);
+    newSymbol._id = newID;
+    bulk.insert(newSymbol);
+  }
+  
+  await bulk.execute();
 }

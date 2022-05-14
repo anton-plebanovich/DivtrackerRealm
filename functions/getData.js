@@ -1,32 +1,39 @@
 
-// fmpGetData.js
+// getData.js
 
 exports = async function(date, collections, symbols, fullSymbolsCollections) {
-  context.functions.execute("fmpUtils");
+  context.functions.execute("utils");
 
-  const find = {};
+  const allCollections = [
+    'companies',
+    'dividends',
+    'exchange-rates',
+    'historical-prices',
+    'quotes',
+    'splits',
+    'symbols',
+    'updates',
+  ];
+
+  const singularSymbolCollections = [
+    'companies',
+    'quotes',
+    'symbols',
+  ];
+
+  // Collections that have objects with non-searchable ID, e.g. 'USD' for 'exchange-rates'
+  const nonSearchableIDCollections = [
+    'exchange-rates',
+    'updates',
+  ];
+
   if (date != null) {
     throwIfNotDate(
       date, 
       `Please pass date as the first argument.`, 
       UserError
     );
-
-    // TODO: We might need to use date - 5 mins to prevent race conditions. I am not 100% sure because I don't know if MongoDB handles it properly.
-    find.$or = [
-      { _id: { $gte: BSON.ObjectId.fromDate(date) } },
-      { u: { $gte: date } }
-    ];
   }
-
-  const allCollections = [
-    'companies',
-    'dividends',
-    'historical-prices',
-    'quotes',
-    'splits',
-    'symbols',
-  ];
 
   if (collections != null) {
     throwIfEmptyArray(
@@ -87,24 +94,68 @@ exports = async function(date, collections, symbols, fullSymbolsCollections) {
     fullSymbolsCollections = [];
   }
 
-  const singularSymbolCollections = [
-    'companies',
-    'quotes',
-    'symbols',
-  ];
+  // exchange-rates are always ignoring symbols when requested
+  if (!fullSymbolsCollections.includes('exchange-rates')) {
+    fullSymbolsCollections.push('exchange-rates');
+  }
 
+  // updates are always ignoring symbols when requested
+  if (!fullSymbolsCollections.includes('updates')) {
+    fullSymbolsCollections.push('updates');
+  }
+
+  const fmp = atlas.db("fmp");
+  const iex = atlas.db("divtracker-v2");
+  const projection = { u: false };
   const operations = collections.map(async collection => {
-    const _find = Object.assign({}, find);
-    if (symbols != null && !fullSymbolsCollections.includes(collection)) {
-      if (singularSymbolCollections.includes(collection)) {
-        _find._id = { $in: symbols };
+    const find = {};
+
+    if (date != null) {
+      // TODO: We might need to use date - 5 mins to prevent race conditions. I am not 100% sure because I don't know if MongoDB handles it properly.
+      if (nonSearchableIDCollections.includes(collection)) {
+        find.u = { $gte: date };
+
       } else {
-        _find.s = { $in: symbols };
+        find.$or = [
+          { _id: { $gte: BSON.ObjectId.fromDate(date) } },
+          { u: { $gte: date } }
+        ];
       }
     }
 
-    const objects = await fmp.collection(collection).find(_find).toArray();
-    return { [collection]: objects };
+    if (symbols != null && !fullSymbolsCollections.includes(collection)) {
+      if (singularSymbolCollections.includes(collection)) {
+        find._id = { $in: symbols };
+      } else {
+        find.s = { $in: symbols };
+      }
+    }
+
+    const [fmpObjects, iexObjects] = await Promise.all([
+      fmp.collection(collection).find(find, projection).toArray(),
+      iex.collection(collection).find(find, projection).toArray(),
+    ]);
+    
+    if (symbols == null && collection === 'symbols') {
+      // Dedupe symbols when full data is returned to prevent collision.
+      const enabledFMPTickers = fmpObjects
+        .filter(x => x.e != false)
+        .map(x => x.t);
+
+      const filteredIEXObjects = iexObjects.filter(x => !enabledFMPTickers.includes(x.t));
+      if (iexObjects.length != filteredIEXObjects.length) {
+        const duplicates = iexObjects
+          .filter(x => enabledFMPTickers.includes(x.t))
+          .map(x => x.t);
+          
+        console.log(`Found duplicated tickers: ${duplicates}`)
+      }
+
+      return { [collection]: fmpObjects.concat(filteredIEXObjects) };
+      
+    } else {
+      return { [collection]: fmpObjects.concat(iexObjects) };
+    }
   });
 
   const operationResults = await Promise

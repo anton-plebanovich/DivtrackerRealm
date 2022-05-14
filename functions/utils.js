@@ -31,7 +31,7 @@ Object.prototype.safeInsertMissing = async function(newObjects, fields) {
   const bulk = this.initializeUnorderedBulkOp();
   for (const newObject of newObjects) {
     const find = fields.reduce((find, field) => {
-      return Object.assign(find, { [field]: newObject[field] })
+      return Object.assign(find, { [field]: newObject[field] });
     }, {});
 
     bulk
@@ -41,7 +41,7 @@ Object.prototype.safeInsertMissing = async function(newObjects, fields) {
   }
 
   return await bulk.safeExecute();
-}
+};
 
 Object.prototype.safeUpsertMany = async function(newObjects, field, setUpdateDate) {
   _throwIfEmptyArray(newObjects, `Please pass non-empty new objects array as the first argument. safeUpsertMany`);
@@ -65,7 +65,7 @@ Object.prototype.safeUpsertMany = async function(newObjects, field, setUpdateDat
   }
 
   return await bulk.safeExecute();
-}
+};
 
 /**
  * Safely computes and executes update operation from old to new objects on a collection.
@@ -78,7 +78,7 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, field, 
   }
 
   const newObjectsLength = newObjects.length;
-  const validNewObjectsLength = newObjects.filter(x => x[field] != null).length
+  const validNewObjectsLength = newObjects.filter(x => x[field] != null).length;
   if (newObjectsLength != validNewObjectsLength) {
     return await _logAndReject(`${newObjectsLength - validNewObjectsLength} of ${newObjectsLength} new objects do not contain required '${field}' field`);
   }
@@ -175,12 +175,12 @@ Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, field, s
  */
 Object.prototype.updateFrom = function(object, setUpdateDate) {
   object = Object.assign({}, object);
-  delete object['_id'];
-  delete object['u'];
+  delete object._id;
+  delete object.u;
 
   const set = Object.assign({}, this);
-  delete set['_id'];
-  delete set['u'];
+  delete set._id;
+  delete set.u;
 
   if (set.isEqual(object)) {
     return null;
@@ -301,11 +301,10 @@ Array.prototype.chunked = function(size) {
 };
 
 /**
- * Filters `null` elements.
- * @param {*} callbackfn Mapping to perform. Null values are filtered.
+ * Filters `null` and `undefined` elements.
  */
-Array.prototype.filterNull = function() {
-   return this.filter(x => x !== null);
+Array.prototype.filterNullAndUndefined = function() {
+   return this.filter(x => x != null);
 };
 
 /**
@@ -313,7 +312,7 @@ Array.prototype.filterNull = function() {
  * @param {*} callbackfn Mapping to perform. Null values are filtered.
  */
 Array.prototype.compactMap = function(callbackfn) {
-   return this.map(callbackfn).filterNull();
+   return this.map(callbackfn).filterNullAndUndefined();
 };
 
 /**
@@ -321,7 +320,7 @@ Array.prototype.compactMap = function(callbackfn) {
  * @param {function|string} arg Key map function or key.
  */
 Array.prototype.toDictionary = function(arg) {
-  let getKey
+  let getKey;
   if (typeof arg === 'string' || arg instanceof String) {
     getKey = (value) => value[arg];
   } else if (arg == null) {
@@ -332,7 +331,7 @@ Array.prototype.toDictionary = function(arg) {
 
   return this.reduce((dictionary, value) => {
     const key = getKey(value);
-    return Object.assign(dictionary, { [key]: value })
+    return Object.assign(dictionary, { [key]: value });
   }, {});
 };
 
@@ -341,7 +340,7 @@ Array.prototype.toDictionary = function(arg) {
  * @param {function|string} arg Key map function or key.
  */
 Array.prototype.toBuckets = function(arg) {
-  let getKey
+  let getKey;
   if (typeof arg === 'string' || arg instanceof String) {
     getKey = (value) => value[arg];
   } else if (arg == null) {
@@ -358,7 +357,7 @@ Array.prototype.toBuckets = function(arg) {
     } else {
       dictionaryValue.push(value);
     }
-    return dictionary
+    return dictionary;
   }, {});
 };
 
@@ -368,6 +367,28 @@ Array.prototype.toBuckets = function(arg) {
 Array.prototype.includesObject = function(object) {
   if (object == null) { return false; }
   return this.find(x => object.isEqual(x)) != null;
+};
+
+Array.prototype.asyncMap = async function(limit, callback) {
+  let index = 0;
+  const results = [];
+
+  // Run a pseudo-thread
+  const execThread = async () => {
+    while (index < this.length) {
+      const curIndex = index++;
+      // Use of `curIndex` is important because `index` may change after await is resolved
+      results[curIndex] = await callback(this[curIndex]);
+    }
+  };
+
+  // Start threads
+  const threads = [];
+  for (let thread = 0; thread < limit; thread++) {
+    threads.push(execThread());
+  }
+  await Promise.all(threads);
+  return results;
 };
 
 /**
@@ -561,30 +582,42 @@ class _NetworkResponse {
     let string;
     Object.defineProperty(this, "string", {
       get: function() {
-        if (typeof string !== 'undefined') {
-          return string;
-        } else if (this.rawBody != null) {
-          string = this.rawBody.text();
-          return string;
-        } else {
-          string = null;
-          return string;
+        if (typeof string === 'undefined') {
+          if (this.rawBody != null) {
+            string = this.rawBody.text();
+          } else {
+            string = null;
+          }
         }
+
+        return string;
       }
     });
 
     let json;
     Object.defineProperty(this, "json", {
       get: function() {
-        if (typeof json !== 'undefined') {
-          return json;
-        } else if (this.string != null) {
-          json = EJSON.parse(this.string);
-          return json;
-        } else {
-          json = null;
-          return json;
+        if (typeof json === 'undefined') {
+          if (this.string != null) {
+            try {
+              const result = EJSON.parse(this.string);
+              if (result != null) {
+                json = result;
+              } else {
+                json = null;
+              }
+
+            } catch(error) {
+              console.error(`Unable to map JSON from response: ${this.string}`);
+              json = null;
+            }
+  
+          } else {
+            json = null;
+          }
         }
+
+        return json;
       }
     });
 
@@ -618,6 +651,30 @@ class _NetworkResponse {
 
         retryable = false;
         return retryable;
+      }
+    });
+
+    let retryDelay;
+    Object.defineProperty(this, "retryDelay", {
+      get: function() {
+        if (typeof retryDelay === 'undefined') {
+          if (this.statusCode === 429 && this.string != null) {
+            try {
+              const json = EJSON.parse(this.string);
+              if (json != null) {
+                retryDelay = this.json['X-Rate-Limit-Retry-After-Milliseconds'];
+              } else {
+                retryDelay = null;
+              }
+            } catch(error) {
+              retryDelay = null;
+            }
+          } else {
+            retryDelay = null;
+          }
+        }
+
+        return retryDelay;
       }
     });
   }
@@ -684,7 +741,7 @@ class _SystemError {
   }
 }
 
-SystemError = _SystemError
+SystemError = _SystemError;
 
 class _CompositeError {
   constructor(errors) {
@@ -747,29 +804,8 @@ CompositeError = _CompositeError;
 var runtimeExtended = false;
 function extendRuntime() {
   if (runtimeExtended) { return; }
-
-  Promise.allLmited = async (promises, limit) => {
-    let index = 0;
-    const results = [];
   
-    // Run a pseudo-thread
-    const execThread = async () => {
-      while (index < promises.length) {
-        const curIndex = index++;
-        // Use of `curIndex` is important because `index` may change after await is resolved
-        results[curIndex] = await promises[curIndex];
-      }
-    };
-  
-    // Start threads
-    const threads = [];
-    for (let thread = 0; thread < limit; thread++) {
-      threads.push(execThread());
-    }
-    await Promise.all(threads);
-    return results;
-  };
-  
+  // TODO: allSettled
   Promise.safeAllAndUnwrap = function(promises) {
     return Promise.safeAll(promises)
       .then(results => new Promise((resolve, reject) => {
@@ -836,16 +872,34 @@ function extendRuntime() {
    * This function returns an ObjectId embedded with a given datetime
    * Accepts both Date object and string input
    */
-  BSON.ObjectId.fromDate = function(date) {
+  BSON.ObjectId.fromDate = function(date, hex) {
     /* Convert string date to Date object (otherwise assume timestamp is a date) */
     if (typeof date === 'string') {
         date = new Date(date);
     }
 
+    if (hex == null) {
+      hex = "0000000000000000"
+    }
+
+    if (hex.length != 16) {
+      _logAndThrow(`Hex part of ObjectID should have 16 characters length, instead received '${hex}' with ${hex.length} length`)
+    }
+
     const hexSeconds = Math.floor(date/1000).toString(16);
 
-    return new BSON.ObjectId(hexSeconds + "0000000000000000");
+    // 62649eca 6e72da17e710cd18
+    // --time-- ------hex-------
+    // ---8---- ------16--------
+    return new BSON.ObjectId(hexSeconds + hex);
   };
+
+  /**
+   * Returns HEX part from `BSON.ObjectId`.
+   */
+  BSON.ObjectId.prototype.hex = function() {
+    return this.toString().substring(8);
+  }
 
   runtimeExtended = true;
 }
@@ -901,7 +955,7 @@ checkExecutionTimeout = function checkExecutionTimeout(limit) {
 };
 
 function _throwIfNotString(object, message, ErrorType) {
-  _throwIfUndefinedOrNull(object, message, ErrorType)
+  _throwIfUndefinedOrNull(object, message, ErrorType);
 
   const type = Object.prototype.toString.call(object);
   if (type === 'string' || type === '[object String]') { return object; }
@@ -921,7 +975,7 @@ throwIfNotString = _throwIfNotString;
  * @returns {object} Passed object if it's an `Array`.
  */
 function _throwIfEmptyArray(object, message, ErrorType) {
-  _throwIfNotArray(object, message, ErrorType)
+  _throwIfNotArray(object, message, ErrorType);
 
   if (object.length > 0) { return object; }
   if (ErrorType == null) { ErrorType = _SystemError; }
@@ -940,7 +994,7 @@ throwIfEmptyArray = _throwIfEmptyArray;
  * @returns {object} Passed object if it's an `Array`.
  */
 function _throwIfNotArray(object, message, ErrorType) {
-  _throwIfUndefinedOrNull(object, message, ErrorType)
+  _throwIfUndefinedOrNull(object, message, ErrorType);
 
   const type = Object.prototype.toString.call(object);
   if (type === '[object Array]') { return object; }
@@ -953,7 +1007,7 @@ function _throwIfNotArray(object, message, ErrorType) {
 throwIfNotArray = _throwIfNotArray;
 
 function _throwIfNotDate(object, message, ErrorType) {
-  _throwIfUndefinedOrNull(object, message, ErrorType)
+  _throwIfUndefinedOrNull(object, message, ErrorType);
 
   const type = Object.prototype.toString.call(object);
   if (type === '[object Date]') { return object; }
@@ -966,7 +1020,7 @@ function _throwIfNotDate(object, message, ErrorType) {
 throwIfNotDate = _throwIfNotDate;
 
 function _throwIfNotObjectId(object, message, ErrorType) {
-  _throwIfUndefinedOrNull(object, message, ErrorType)
+  _throwIfUndefinedOrNull(object, message, ErrorType);
 
   const type = Object.prototype.toString.call(object);
   if (type === '[object ObjectId]') { return object; }
@@ -1031,14 +1085,20 @@ async function _fetch(baseURL, api, queryParameters) {
   _throwIfUndefinedOrNull(baseURL, `_fetch baseURL`);
   _throwIfUndefinedOrNull(api, `_fetch api`);
 
-  let response = await _get(baseURL, api, queryParameters);
+  let response = await _httpGET(baseURL, api, queryParameters);
 
   // Retry several times on retryable errors
   for (let step = 0; step < 10 && response.retryable; step++) {
-    const delay = (step + 1) * (500 + Math.random() * 1000);
+    let delay;
+    if (response.retryDelay != null) {
+      delay = response.retryDelay;
+    } else {
+      delay = (step + 1) * (500 + Math.random() * 1000);
+    }
+
     console.log(`Received '${response.statusCode}' error with text '${response.string}'. Trying to retry after a '${delay}' delay.`);
     await new Promise(r => setTimeout(r, delay));
-    response = await _get(baseURL, api, queryParameters);
+    response = await _httpGET(baseURL, api, queryParameters);
   }
   
   if (response.statusCode === 200) {
@@ -1057,17 +1117,18 @@ async function _fetch(baseURL, api, queryParameters) {
   if (json.length && json.length > 1) {
     console.logVerbose(`Parse end. Objects count: ${json.length}`);
   } else {
-    console.logVerbose(`Parse end. Object: ${response.string}`);
+    console.logVerbose(`Parse end`);
   }
+  console.logData(`Response`, json);
   
   return json;
 }
 
 fetch = _fetch;
 
-async function _get(baseURL, api, queryParameters) {
-  _throwIfUndefinedOrNull(baseURL, `_get baseURL`);
-  _throwIfUndefinedOrNull(api, `_get api`);
+async function _httpGET(baseURL, api, queryParameters) {
+  _throwIfUndefinedOrNull(baseURL, `_httpGET baseURL`);
+  _throwIfUndefinedOrNull(api, `_httpGET api`);
 
   const url = _getURL(baseURL, api, queryParameters);
   console.log(`Request with URL: ${url}`);
@@ -1149,12 +1210,12 @@ async function _getSupportedSymbolIDs() {
     fmpSymbolsCollection.distinct("_id", { e: null }),
   ]);
 
-  const supportedSymbolIDs = iexSupportedSymbolIDs.concat(fmpSupportedSymbolIDs)
+  const supportedSymbolIDs = iexSupportedSymbolIDs.concat(fmpSupportedSymbolIDs);
   console.log(`Supported symbols (${supportedSymbolIDs.length})`);
   console.logData(`Supported symbols (${supportedSymbolIDs.length})`, supportedSymbolIDs);
 
   return supportedSymbolIDs;
-};
+}
 
 getSupportedSymbolIDs = _getSupportedSymbolIDs;
 
@@ -1202,7 +1263,7 @@ getSupportedSymbolIDs = _getSupportedSymbolIDs;
   const exchangeRates = [];
   for (const [currency, rate] of entries) {
     const exchangeRate = {};
-    exchangeRate._id = currency;
+    exchangeRate._id = currency.toUpperCase();
 
     if (rate != null && rate >= 0.0) {
       exchangeRate.r = BSON.Double(rate);
@@ -1220,7 +1281,7 @@ getSupportedSymbolIDs = _getSupportedSymbolIDs;
   }
 
   return exchangeRates;
-};
+}
 
 fetchExchangeRates = _fetchExchangeRates;
 
@@ -1249,12 +1310,12 @@ async function _setUpdateDate(_id, date) {
   const collection = db.collection("updates");
   return await collection.updateOne(
     { _id: _id }, 
-    { $set: { d: date } }, 
+    { $set: { d: date }, $currentDate: { u: true } }, 
     { "upsert": true }
   )
-}
+};
 
-setUpdateDate = _setUpdateDate
+setUpdateDate = _setUpdateDate;
 
 ///////////////////////////////////////////////////////////////////////////////// INITIALIZATION
 

@@ -3,7 +3,8 @@
     "name": "updateDividendsFutureDaily",
     "type": "SCHEDULED",
     "config": {
-        "schedule": "1 9 * * *"
+        "schedule": "1 9 * * *",
+        "skip_catchup_events": true
     },
     "disabled": false,
     "event_processors": {
