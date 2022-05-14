@@ -135,6 +135,11 @@ exports = async function(date, collections, symbols, fullSymbolsCollections) {
       fmp.collection(collection).find(find, projection).toArray(),
       iex.collection(collection).find(find, projection).toArray(),
     ]);
+
+    // Add `f` flag to FMP symbols
+    if (collection === 'symbols') {
+      fmpObjects.forEach(x => x.f = true);
+    }
     
     if (symbols == null && collection === 'symbols') {
       // Dedupe symbols when full data is returned to prevent collision.
