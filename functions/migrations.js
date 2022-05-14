@@ -14,14 +14,14 @@ exports = async function() {
 
   // Release new server with disabled FMP symbols update
   // dtcheck backup --environment production --database fmp
-  // dtcheck restore --environment production --database fmp --to-database fmp-tmp
+  // dtcheck restore --allow-production --environment production --database fmp --to-database fmp-tmp
   // dtcheck call-realm-function --environment production --function fmpUpdateSymbols --argument fmp-tmp
   // dtcheck call-realm-function --environment production --function fmpLoadMissingData --argument fmp-tmp --retry-on-error 'execution time limit exceeded'
   // dtcheck backup --environment production --database fmp-tmp # just in case something goes wrong
   // dtcheck call-realm-function --environment production --function migrations
   await adjustSymbolIDs();
   // dtcheck backup --environment production --database fmp-tmp
-  // dtcheck restore --environment production --database fmp-tmp --to-database fmp
+  // dtcheck restore --allow-production --environment production --database fmp-tmp --to-database fmp
   // dtcheck call-realm-function --environment production --function checkTransactionsV2
   // Enable FMP symbols update
 };
