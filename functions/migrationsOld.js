@@ -8,6 +8,55 @@
 
 exports = function() {};
 
+////////////////////////////////////////////////////// 15-05-2022 FMP Funds
+
+// Release new server with disabled FMP symbols update
+// dtcheck backup --environment production --database fmp
+// dtcheck restore --allow-production --environment production --database fmp --to-database fmp-tmp
+// dtcheck call-realm-function --environment production --function fmpUpdateSymbols --argument fmp-tmp
+// dtcheck call-realm-function --environment production --function fmpLoadMissingData --argument fmp-tmp --retry-on-error 'execution time limit exceeded'
+// dtcheck backup --environment production --database fmp-tmp # just in case something goes wrong
+// dtcheck call-realm-function --environment production --function migrations
+// dtcheck backup --environment production --database fmp-tmp
+// dtcheck restore --allow-production --environment production --database fmp-tmp --to-database fmp
+// dtcheck call-realm-function --environment production --function checkTransactionsV2
+// Enable FMP symbols update
+
+async function adjustSymbolIDs() {
+  const fmpTmp = atlas.db("fmp-tmp");
+
+  // 5 hours ago, just in case fetch will take so much
+  const oldDate = new Date();
+  oldDate.setUTCHours(oldDate.getUTCHours() - 5);
+
+  const objectID = BSON.ObjectId.fromDate(oldDate);
+
+  const symbolsCollection = fmpTmp.collection('symbols');
+  const newSymbols = await symbolsCollection.find({ _id: { $gte: objectID } }).toArray();
+  const newObjectIDs = newSymbols.map(x => x._id);
+
+  // 10 mins in the future so we have time to release an update
+  const newDate = new Date();
+  newDate.setUTCMinutes(newDate.getUTCMinutes() + 10);
+
+  // Delete old
+  const bulk = symbolsCollection.initializeUnorderedBulkOp();
+  for (const newObjectID of newObjectIDs) {
+    bulk.find({ _id: newObjectID }).remove();
+  }
+  
+  // Modify and insert new
+  const hexSeconds = Math.floor(newDate/1000).toString(16);
+  for (const newSymbol of newSymbols) {
+    const hex = newSymbol._id.hex();
+    const newID = BSON.ObjectId.fromDate(newDate, hex);
+    newSymbol._id = newID;
+    bulk.insert(newSymbol);
+  }
+  
+  await bulk.execute();
+}
+
 ////////////////////////////////////////////////////// 23-01-2022 Positive commission
 
 async function positiveCommissionsMigration() {
