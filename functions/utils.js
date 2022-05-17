@@ -322,15 +322,35 @@ Array.prototype.compactMap = function(callbackfn) {
 Array.prototype.toDictionary = function(arg) {
   let getKey;
   if (typeof arg === 'string' || arg instanceof String) {
-    getKey = (value) => value[arg];
+    getKey = (object) => object[arg];
   } else if (arg == null) {
-    getKey = (value) => value;
+    getKey = (object) => object;
   } else {
     getKey = arg;
   }
 
   return this.reduce((dictionary, value) => {
     const key = getKey(value);
+    return Object.assign(dictionary, { [key]: value });
+  }, {});
+};
+
+/**
+ * Creates dictionary from objects using provided `key` or function as source for values and object as key.
+ * @param {function|string} arg Key map function or key.
+ */
+Array.prototype.dictionaryMapValues = function(arg) {
+  let getValue;
+  if (typeof arg === 'string' || arg instanceof String) {
+    getValue = (object) => object[arg];
+  } else if (arg == null) {
+    getValue = (object) => object;
+  } else {
+    getValue = arg;
+  }
+
+  return this.reduce((dictionary, key) => {
+    const value = getValue(key);
     return Object.assign(dictionary, { [key]: value });
   }, {});
 };
