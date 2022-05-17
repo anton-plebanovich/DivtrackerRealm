@@ -44,11 +44,11 @@ exports = async function() {
   const futureDividends = await fetchDividends(shortSymbolsToUpdate, true);
   if (futureDividends.length) {
     console.log(`Inserting missed future dividends (${futureDividends.length})`);
-    const operations = [];
     const chunkedFutureDividends = futureDividends.chunked(100);
     for (const futureDividends of chunkedFutureDividends) {
       const bulk = collection.initializeUnorderedBulkOp();
 
+      console.log(`Composing chunk operation`);
       for (const futureDividend of futureDividends) {
         const lowerExDate = getLowerExDate(futureDividend);
         const upperExDate = getUpperExDate(futureDividend);
@@ -87,10 +87,11 @@ exports = async function() {
           .updateOne(updateOne);
       }
 
-      operations.push(bulk.execute());
+      console.log(`Performing chunk operation`);
+      await bulk.execute();
+      console.log(`Performed chunk operation`);
     }
 
-    await Promise.all(operations);
     console.log(`Inserted missed future dividends`);
 
   } else {
