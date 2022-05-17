@@ -8,7 +8,11 @@
  exports = async function() {
   context.functions.execute("testUtils");
 
-  // We do not cleanup since it's better to perform update in the non-empty environment
+  // Cleanup environment
+  await cleanup();
+
+  const transactions = await generateRandomTransactions();
+  await context.functions.execute("addTransactionsV2", transactions);
 
   // TODO: Make it more complex and move to separate test case
   await Promise.all([
