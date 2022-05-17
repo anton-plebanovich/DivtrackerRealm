@@ -24,4 +24,6 @@
     context.functions.execute("updateSplitsV2"),
     context.functions.execute("updateSymbolsV2"),
   ]);
+
+  await checkData(transactions);
 };
