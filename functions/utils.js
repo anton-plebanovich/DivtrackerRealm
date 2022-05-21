@@ -3,6 +3,33 @@
 
 ///////////////////////////////////////////////////////////////////////////////// EXTENSIONS
 
+function normalizeFields(fields) {
+  if (fields == null) {
+    fields = ["_id"];
+  } else if (Object.prototype.toString.call(fields) !== '[object Array]') {
+    fields = [fields];
+  }
+  _throwIfEmptyArray(fields, `Please pass non-empty fields array. normalizeFields`);
+
+  return fields;
+}
+
+function getFindOperation(objects, fields) {
+  if (Object.prototype.toString.call(objects) !== '[object Array]') {
+    objects = [objects];
+  }
+  _throwIfEmptyArray(objects, `Please pass non-empty objects array. getFindObject`);
+  _throwIfEmptyArray(fields, `Please pass non-empty fields array. getFindOperation`);
+  
+  const find = {};
+  for (const field of fields) {
+    const values = objects.map(x => x[field]);
+    find[field] = { $in: values };
+  }
+
+  return find;
+}
+
 /**
  * Safely executes Bulk operation by catching 'no operations' error.
  */
@@ -20,13 +47,7 @@ Object.prototype.safeExecute = async function() {
 
 Object.prototype.safeInsertMissing = async function(newObjects, fields) {
   _throwIfEmptyArray(newObjects, `Please pass non-empty new objects array as the first argument. safeInsertMissing`);
-
-  if (fields == null) {
-    fields = ["_id"];
-  } else if (Object.prototype.toString.call(fields) !== '[object Array]') {
-    fields = [fields];
-  }
-  _throwIfEmptyArray(fields, `Please pass non-empty fields array as the second argument. safeInsertMissing`);
+  fields = normalizeFields(fields);
   
   const bulk = this.initializeUnorderedBulkOp();
   for (const newObject of newObjects) {
@@ -70,34 +91,36 @@ Object.prototype.safeUpsertMany = async function(newObjects, field, setUpdateDat
 /**
  * Safely computes and executes update operation from old to new objects on a collection.
  */
-Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, field, setUpdateDate) {
+Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields, setUpdateDate) {
   _throwIfEmptyArray(newObjects, `Please pass non-empty new objects array as the first argument. safeUpdateMany`);
+  fields = normalizeFields(fields);
 
-  if (field == null) {
-    field = "_id";
-  }
+  const invalidObjectsLength = newObjects.filter(newObject => 
+    fields.contains((field) => newObject[field] == null)
+  ).length;
 
-  const newObjectsLength = newObjects.length;
-  const validNewObjectsLength = newObjects.filter(x => x[field] != null).length;
-  if (newObjectsLength != validNewObjectsLength) {
-    return await _logAndReject(`${newObjectsLength - validNewObjectsLength} of ${newObjectsLength} new objects do not contain required '${field}' field`);
+  if (invalidObjectsLength !== 0) {
+    return await _logAndReject(`${invalidObjectsLength} of ${newObjects.length} new objects do not contain required '${fields}' fields`);
   }
 
   if (typeof oldObjects === 'undefined') {
     // No need to fetch '_id' for old objects if we do not compare objects by it.
     const projection = {};
-    if (field !== "_id") {
+    if (!fields.includes("_id")) {
       projection._id = 0;
     }
 
     if (newObjects.length < 1000) {
-      console.log(`Old objects are undefined. Fetching them by '${field}'.`);
-      const fileds = newObjects.map(x => x[field]);
-      oldObjects = await this.find({ [field]: { $in: fileds } }, projection).toArray();
+      console.log(`Old objects are undefined. Fetching them by '${fields}'.`);
+      const find = getFindOperation(newObjects, fields)
+      oldObjects = await this.find(find, projection).toArray();
 
     } else {
       console.log(`Old objects are undefined. Fetching them by requesting all existing objects.`);
       oldObjects = await this.find({}, projection).toArray();
+      if (oldObjects.length >= 50000) {
+        throw `Old objects count '${oldObjects.length}' is huge. Pagination is not supported. Please update the query or logic.`;
+      }
     }
   }
 
@@ -108,8 +131,13 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, field, 
 
   const bulk = this.initializeUnorderedBulkOp();
   for (const newObject of newObjects) {
-    const existingObject = oldObjects.find(x => x[field].isEqual(newObject[field]));
-    bulk.findAndUpdateOrInsertIfNeeded(newObject, existingObject, field, setUpdateDate);
+    const existingObject = oldObjects.find(oldObject =>
+      fields.every(field =>
+        oldObject[field].isEqual(newObject[field])
+      )
+    );
+
+    bulk.findAndUpdateOrInsertIfNeeded(newObject, existingObject, fields, setUpdateDate);
   }
 
   return await bulk.safeExecute();
@@ -119,7 +147,7 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, field, 
  * Executes find by field and update or insert for a new object from an old object.
  * Uses `_id` field by default.
  */
-Object.prototype.findAndUpdateOrInsertIfNeeded = function(newObject, oldObject, field, setUpdateDate) {
+Object.prototype.findAndUpdateOrInsertIfNeeded = function(newObject, oldObject, fields, setUpdateDate) {
   if (newObject == null) {
     throw new _SystemError(`New object should not be null for insert or update`);
     
@@ -129,7 +157,7 @@ Object.prototype.findAndUpdateOrInsertIfNeeded = function(newObject, oldObject, 
     return this.insert(newObject);
 
   } else {
-    return this.findAndUpdateIfNeeded(newObject, oldObject, field, setUpdateDate);
+    return this.findAndUpdateIfNeeded(newObject, oldObject, fields, setUpdateDate);
   }
 };
 
@@ -137,21 +165,16 @@ Object.prototype.findAndUpdateOrInsertIfNeeded = function(newObject, oldObject, 
  * Executes find by field and update for a new object from an old object if needed.
  * Uses `_id` field by default.
  */
-Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, field, setUpdateDate) {
-  if (field == null) {
-    field = '_id';
-  }
-
-  const value = newObject[field];
-
+Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, fields, setUpdateDate) {
+  fields = normalizeFields(fields);
   if (newObject == null) {
     throw new _SystemError(`New object should not be null for update`);
     
   } else if (oldObject == null) {
     throw new _SystemError(`Old object should not be null for update`);
 
-  } else if (newObject[field] == null) {
-    throw new _SystemError(`New object '${field}' field should not be null for update`);
+  } else if (fields.contains(x => newObject[x] == null)) {
+    throw new _SystemError(`New object '${newObject.stringify()}' '${fields}' fields should not be null for update`);
 
   } else {
     const update = newObject.updateFrom(oldObject, setUpdateDate);
@@ -160,8 +183,9 @@ Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, field, s
       return;
 
     } else {
+      const find = getFindOperation(newObject, fields)
       return this
-        .find({ [field]: value })
+        .find(find)
         .updateOne(update);
     }
   }
@@ -387,6 +411,14 @@ Array.prototype.toBuckets = function(arg) {
 Array.prototype.includesObject = function(object) {
   if (object == null) { return false; }
   return this.find(x => object.isEqual(x)) != null;
+};
+
+/**
+ * Checks if element is contained in the array using passed function.
+ */
+Array.prototype.contains = function(func) {
+  _throwIfNotFunction(func, 'Array.prototype.contains')
+  return this.find(x => func(x)) != null;
 };
 
 Array.prototype.asyncMap = async function(limit, callback) {
@@ -973,6 +1005,19 @@ checkExecutionTimeout = function checkExecutionTimeout(limit) {
     console.logVerbose(`${limit - seconds} execution time left`);
   }
 };
+
+function _throwIfNotFunction(func, message, ErrorType) {
+  _throwIfUndefinedOrNull(func, message, ErrorType);
+
+  const type = typeof func;
+  if (type === 'function') { return func; }
+  if (ErrorType == null) { ErrorType = _SystemError; }
+  if (message == null) { message = ""; }
+  
+  throw new ErrorType(`Argument should be of the 'function' type. Instead, received '${type}'. ${message}`);
+}
+
+throwIfNotFunction = _throwIfNotFunction;
 
 function _throwIfNotString(object, message, ErrorType) {
   _throwIfUndefinedOrNull(object, message, ErrorType);
