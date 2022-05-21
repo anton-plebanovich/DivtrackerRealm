@@ -22,8 +22,10 @@ function getUpperExDate(dividend) {
   return date;
 }
 
-exports = async function() {
-  context.functions.execute("fmpUtils");
+exports = async function(database) {
+  context.functions.execute("fmpUtils", database);
+  database = getFMPDatabaseName(database);
+
   const shortSymbols = await getShortSymbols();
   const collection = fmp.collection("dividends");
 
@@ -126,7 +128,7 @@ exports = async function() {
     console.log(`Past dividends are empty for IDs '${shortSymbols.map(x => x.t)}'`);
   }
 
-  await setUpdateDate("dividends");
+  await setUpdateDate(`${database}-dividends`);
 };
 
 function fixDividends(dividends, existingDividendsBySymbolID) {
