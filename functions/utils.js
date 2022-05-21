@@ -17,16 +17,24 @@ function normalizeFields(fields) {
 }
 
 function getFindOperation(objects, fields) {
-  if (Object.prototype.toString.call(objects) !== '[object Array]') {
-    objects = [objects];
-  }
-  _throwIfEmptyArray(objects, `Please pass non-empty objects array. getFindObject`);
-  _throwIfEmptyArray(fields, `Please pass non-empty fields array. getFindOperation`);
+  fields = normalizeFields(fields);
   
   const find = {};
-  for (const field of fields) {
-    const values = objects.map(x => x[field]);
-    find[field] = { $in: values };
+  if (Object.prototype.toString.call(objects) === '[object Array]') {
+    _throwIfEmptyArray(objects, `Please pass non-empty objects array or singular object. getFindOperation`);
+    
+    for (const field of fields) {
+      const values = objects.map(x => x[field]);
+      find[field] = { $in: values };
+    }
+  
+  } else {
+    _throwIfUndefinedOrNull(objects, `Please pass non-empty objects array or singular object. getFindOperation`);
+    const object = objects;
+
+    for (const field of fields) {
+      find[field] = object[field];
+    }
   }
 
   console.logVerbose(`Find operation: ${find.stringify()}`);
@@ -199,9 +207,8 @@ Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, fields, 
       return;
 
     } else {
-      const find = getFindOperation(newObject, fields)
       return this
-        .find(find)
+        .find({ _id: oldObject._id })
         .updateOne(update);
     }
   }
