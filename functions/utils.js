@@ -29,6 +29,8 @@ function getFindOperation(objects, fields) {
     find[field] = { $in: values };
   }
 
+  console.logVerbose(`Find operation: ${find.stringify()}`);
+
   return find;
 }
 
@@ -259,7 +261,7 @@ Object.prototype.updateFrom = function(object, setUpdateDate) {
     update.$currentDate = { u: true };
   }
 
-  console.logData(`Updating`, update);
+  console.logData(`Updating`, { from: object, to: this, update: update });
 
   return update;
 };
