@@ -2,6 +2,8 @@
 // testExtensions.js
 
 exports = async function() {
+  setEnvironment();
+
   context.functions.execute("testUtils");
   const collection = db.collection("tmp");
   
@@ -10,13 +12,15 @@ exports = async function() {
   await test(collection, testKnownOldObjectsWithoutUpdateDate);
 };
 
-//////////////////////////// CONSTANTS
+//////////////////////////// ENVIRONMENT
 
-const _object = { _id: BSON.ObjectId(), id1: "id1", id2: "id2", a: "a", b: "b" };
-const _deletedObject1 = { _id: BSON.ObjectId(), id1: "id1", id2: "id2", a: "a", b: "b", x: true };
-const _deletedObject2 = { _id: BSON.ObjectId(), id1: "id1", id2: "id2", a: "a", b: "b", x: true };
-const _modifiedObject = { id1: "id1", id2: "id2", a: "A", c: "C" };
-const _newObject = { _id: BSON.ObjectId(), id1: "id11", id2: "id22", a: "a1", b: "b1" };
+function setEnvironment() {
+  _object = { _id: BSON.ObjectId(), id1: "id1", id2: "id2", a: "a", b: "b" };
+  _deletedObject1 = { _id: BSON.ObjectId(), id1: "id1", id2: "id2", a: "a", b: "b", x: true };
+  _deletedObject2 = { _id: BSON.ObjectId(), id1: "id1", id2: "id2", a: "a", b: "b", x: true };
+  _modifiedObject = { id1: "id1", id2: "id2", a: "A", c: "C" };
+  _newObject = { _id: BSON.ObjectId(), id1: "id11", id2: "id22", a: "a1", b: "b1" };
+}
 
 //////////////////////////// TESTS
 
