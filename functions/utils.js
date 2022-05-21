@@ -1,6 +1,8 @@
 
 // utils.js
 
+// https://www.mongodb.com/docs/manual/reference/method/cursor.sort/
+
 ///////////////////////////////////////////////////////////////////////////////// EXTENSIONS
 
 function normalizeFields(fields) {
@@ -15,17 +17,27 @@ function normalizeFields(fields) {
 }
 
 function getFindOperation(objects, fields) {
-  if (Object.prototype.toString.call(objects) !== '[object Array]') {
-    objects = [objects];
-  }
-  _throwIfEmptyArray(objects, `Please pass non-empty objects array. getFindObject`);
-  _throwIfEmptyArray(fields, `Please pass non-empty fields array. getFindOperation`);
+  fields = normalizeFields(fields);
   
   const find = {};
-  for (const field of fields) {
-    const values = objects.map(x => x[field]);
-    find[field] = { $in: values };
+  if (Object.prototype.toString.call(objects) === '[object Array]') {
+    _throwIfEmptyArray(objects, `Please pass non-empty objects array or singular object. getFindOperation`);
+    
+    for (const field of fields) {
+      const values = objects.map(x => x[field]);
+      find[field] = { $in: values };
+    }
+  
+  } else {
+    _throwIfUndefinedOrNull(objects, `Please pass non-empty objects array or singular object. getFindOperation`);
+    const object = objects;
+
+    for (const field of fields) {
+      find[field] = object[field];
+    }
   }
+
+  console.logVerbose(`Find operation: ${find.stringify()}`);
 
   return find;
 }
@@ -110,18 +122,30 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields,
       projection._id = 0;
     }
 
+    // Sort deleted to the end
+    const sort = { x: 1 };
+
     if (newObjects.length < 1000) {
       console.log(`Old objects are undefined. Fetching them by '${fields}'.`);
       const find = getFindOperation(newObjects, fields)
-      oldObjects = await this.find(find, projection).toArray();
+      oldObjects = await this
+        .find(find, projection)
+        .sort(sort)
+        .toArray();
 
     } else {
       console.log(`Old objects are undefined. Fetching them by requesting all existing objects.`);
-      oldObjects = await this.find({}, projection).toArray();
+      oldObjects = await this
+        .find({}, projection)
+        .sort(sort)
+        .toArray();
+
       if (oldObjects.length >= 50000) {
         throw `Old objects count '${oldObjects.length}' is huge. Pagination is not supported. Please update the query or logic.`;
       }
     }
+  } else {
+    oldObjects = oldObjects.sortedDeletedToTheEnd();
   }
 
   if (oldObjects == null || oldObjects === []) {
@@ -183,9 +207,8 @@ Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, fields, 
       return;
 
     } else {
-      const find = getFindOperation(newObject, fields)
       return this
-        .find(find)
+        .find(oldObject)
         .updateOne(update);
     }
   }
@@ -245,7 +268,7 @@ Object.prototype.updateFrom = function(object, setUpdateDate) {
     update.$currentDate = { u: true };
   }
 
-  console.logData(`Updating`, update);
+  console.logData(`Updating`, { from: object, to: this, update: update });
 
   return update;
 };
@@ -421,6 +444,30 @@ Array.prototype.contains = function(func) {
   return this.find(x => func(x)) != null;
 };
 
+/**
+ * Sorts objects with `x: true` field to the end and returns resulted array.
+ */
+Array.prototype.sortedDeletedToTheEnd = function() {
+  return this.sorted((l, r) => {
+    if (l.x === r.x) {
+      return 0;
+    } else if (l.x === true) {
+      return 1;
+    } else {
+      return -1;
+    }
+  });
+};
+
+/**
+ * Fixed sort. Sorts objects and return resulted array.
+ */
+Array.prototype.sorted = function(func) {
+  // We need to copy because sort on array returned from the MongoDB collection breaks all contained ObjectIDs.
+  const copy = [...this];
+  return copy.sort(func);
+};
+
 Array.prototype.asyncMap = async function(limit, callback) {
   let index = 0;
   const results = [];
@@ -541,7 +588,7 @@ Object.prototype.isEqual = function(rhs) {
   if (lhsEntries.length !== rhsEntries.length) {
     return false;
 
-  } else if (!lhsEntries.length) {
+  } else if (lhsEntries.length === 0) {
     return this.toString() === rhs.toString();
   }
 
