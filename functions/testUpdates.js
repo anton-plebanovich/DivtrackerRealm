@@ -23,6 +23,12 @@
     context.functions.execute("updateQuotesV2"),
     context.functions.execute("updateSplitsV2"),
     context.functions.execute("updateSymbolsV2"),
+    context.functions.execute("fmpUpdateCompanies"),
+    context.functions.execute("fmpUpdateDividends"),
+    context.functions.execute("fmpUpdatePrices"),
+    context.functions.execute("fmpUpdateQuotes"),
+    context.functions.execute("fmpUpdateSplits"),
+    context.functions.execute("fmpUpdateSymbols"),
   ]);
 
   await checkData(transactions);
