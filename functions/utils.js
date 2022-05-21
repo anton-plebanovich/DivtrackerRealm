@@ -349,7 +349,7 @@ Array.prototype.chunked = function(size) {
  * Filters `null` and `undefined` elements.
  */
 Array.prototype.filterNullAndUndefined = function() {
-   return this.filter(x => x != null);
+  return this.filter(x => x != null);
 };
 
 /**
@@ -357,7 +357,7 @@ Array.prototype.filterNullAndUndefined = function() {
  * @param {*} callbackfn Mapping to perform. Null values are filtered.
  */
 Array.prototype.compactMap = function(callbackfn) {
-   return this.map(callbackfn).filterNullAndUndefined();
+  return this.map(callbackfn).filterNullAndUndefined();
 };
 
 /**
