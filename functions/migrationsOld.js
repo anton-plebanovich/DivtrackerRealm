@@ -28,10 +28,9 @@ exports = function() {};
 // dt call-realm-function --environment production --function fmpUpdatePrices --argument fmp-tmp --verbose
 // dt call-realm-function --environment production --function fmpUpdateQuotes --argument fmp-tmp --verbose
 // dt call-realm-function --environment production --function fmpUpdateSplits --argument fmp-tmp --verbose
-// For some reason new dividends appeared - ???
-// For some reason new historical prices appeared - ???
 // Check data count
-// dt restore --allow-production --environment production --backup-source-environment local --database fmp-tmp --to-database fmp
+// dt backup --environment production --database fmp-tmp
+// dt restore --allow-production --environment production --database fmp-tmp --to-database fmp
 // dt call-realm-function --environment production --function checkTransactionsV2 --verbose
 // Enable FMP symbols update
 
