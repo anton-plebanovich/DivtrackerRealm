@@ -13,6 +13,8 @@ exports = async function() {
 //////////////////////////// CONSTANTS
 
 const _object = { id1: "id1", id2: "id2", a: "a", b: "b" };
+const _deletedObject1 = { id1: "id1", id2: "id2", a: "a", b: "b", x: true };
+const _deletedObject2 = { id1: "id1", id2: "id2", a: "a", b: "b", x: true };
 const _modifiedObject = { id1: "id1", id2: "id2", a: "A", c: "C" };
 const _newObject = { id1: "id11", id2: "id22", a: "a1", b: "b1" };
 
@@ -24,7 +26,9 @@ async function test(collection, testFunction) {
 }
 
 async function testKnownOldObjects(collection) {
+  await collection.insertOne(_deletedObject1);
   await collection.insertOne(_object);
+  await collection.insertOne(_deletedObject2);
   await collection.safeUpdateMany([_modifiedObject, _newObject], [_object], ['id1', 'id2'], true);
   await checkObjects(collection, true);
 }
@@ -49,7 +53,7 @@ async function checkObjects(collection, setUpdateDate) {
 }
 
 async function checkObject(collection, object, updated) {
-  const modifiedObject = await collection.findOne({ id1: object.id1, id2: object.id2 });
+  const modifiedObject = await collection.findOne({ id1: object.id1, id2: object.id2, x: { $ne: true } });
 
   if (updated) {
     if (modifiedObject.u == null) {
