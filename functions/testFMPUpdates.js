@@ -1,5 +1,5 @@
 
-// testUpdates.js
+// testFMPUpdates.js
 
 /**
  * @example
@@ -16,13 +16,6 @@
 
   // TODO: Make it more complex and move to separate test case
   await Promise.all([
-    context.functions.execute("updateCompaniesV2"),
-    context.functions.execute("updateDividendsFuture"),
-    context.functions.execute("updateDividendsPast"),
-    context.functions.execute("updatePricesV2"),
-    context.functions.execute("updateQuotesV2"),
-    context.functions.execute("updateSplitsV2"),
-    context.functions.execute("updateSymbolsV2"),
     context.functions.execute("fmpUpdateCompanies"),
     context.functions.execute("fmpUpdateDividends"),
     context.functions.execute("fmpUpdatePrices"),
