@@ -905,11 +905,12 @@ getOpenDate = _getOpenDate;
 
 ///////////////////////////////////////////////////////////////////////////////// INITIALIZATION
 
-exports = function() {
+exports = function(database) {
   context.functions.execute("utils");
 
   if (typeof fmp === 'undefined') {
-    fmp = atlas.db("fmp");
+    database = _getFMPDatabaseName(database);
+    fmp = atlas.db(database);
   }
 
   if (typeof apikey === 'undefined') {
@@ -918,3 +919,18 @@ exports = function() {
   
   console.log("Imported FMP utils");
 };
+
+function _getFMPDatabaseName(database) {
+  if (Object.prototype.toString.call(database) === '[object Object]') {
+    // Trigger object, just erase
+    database = null;
+  }
+
+  if (database != null && database !== 'Hello world!') {
+    return database;
+  } else {
+    return "fmp";
+  }
+}
+
+getFMPDatabaseName = _getFMPDatabaseName;

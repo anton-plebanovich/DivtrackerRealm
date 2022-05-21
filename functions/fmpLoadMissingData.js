@@ -9,17 +9,7 @@
  * exports();
  */
 exports = async function(database) {
-  context.functions.execute("fmpUtils");
-
-  if (Object.prototype.toString.call(database) === '[object Object]') {
-    // Trigger object, just erase
-    database = null;
-  }
-
-  if (database != null && database !== 'Hello world!') {
-    throwIfNotString(database);
-    fmp = atlas.db(database);
-  }
+  context.functions.execute("fmpUtils", database);
   
   const shortSymbols = await getShortSymbols();
   const tickers = shortSymbols.map(x => x.t);

@@ -21,25 +21,11 @@
  */
 
 exports = async function(database) {
-  context.functions.execute("fmpUtils");
-
-  if (Object.prototype.toString.call(database) === '[object Object]') {
-    // Trigger object, just erase
-    database = null;
-  }
-
-  if (database != null && database !== 'Hello world!') {
-    throwIfNotString(database);
-    fmp = atlas.db(database);
-  }
+  context.functions.execute("fmpUtils", database);
+  database = getFMPDatabaseName(database);
   
   await updateFMPSymbols();
-
-  if (database != null && database !== 'Hello world!') {
-    await setUpdateDate(`${database}-symbols`);
-  } else {
-    await setUpdateDate(`fmp-symbols`);
-  }
+  await setUpdateDate(`${database}-symbols`);
   
   console.log(`SUCCESS`);
 };

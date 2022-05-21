@@ -7,8 +7,9 @@
 // https://docs.mongodb.com/realm/mongodb/
 // https://docs.mongodb.com/realm/mongodb/actions/collection.bulkWrite/#std-label-mongodb-service-collection-bulk-write
 
- exports = async function() {
-  context.functions.execute("fmpUtils");
+ exports = async function(database) {
+  context.functions.execute("fmpUtils", database);
+  database = getFMPDatabaseName(database);
 
   const shortSymbols = await getShortSymbols();
   if (shortSymbols.length <= 0) {
@@ -21,5 +22,5 @@
   const collection = fmp.collection('historical-prices');
   collection.safeInsertMissing(historicalPrices, ['s', 'd']);
   
-  await setUpdateDate("fmp-prices");
+  await setUpdateDate(`${database}-prices`);
 };
