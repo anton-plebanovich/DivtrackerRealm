@@ -116,12 +116,6 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields,
   }
 
   if (typeof oldObjects === 'undefined') {
-    // No need to fetch '_id' for old objects if we do not compare objects by it.
-    const projection = {};
-    if (!fields.includes("_id")) {
-      projection._id = 0;
-    }
-
     // Sort deleted to the end
     const sort = { x: 1 };
 
@@ -129,14 +123,14 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields,
       console.log(`Old objects are undefined. Fetching them by '${fields}'.`);
       const find = getFindOperation(newObjects, fields)
       oldObjects = await this
-        .find(find, projection)
+        .find(find)
         .sort(sort)
         .toArray();
 
     } else {
       console.log(`Old objects are undefined. Fetching them by requesting all existing objects.`);
       oldObjects = await this
-        .find({}, projection)
+        .find({})
         .sort(sort)
         .toArray();
 
@@ -206,10 +200,14 @@ Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, fields, 
       // Update is not needed
       return;
 
-    } else {
-      return this
-        .find(oldObject)
-        .updateOne(update);
+    } else { 
+      if (oldObject._id == null) {
+        throw `Unable to find old object. '_id' field is missing: ${oldObject.stringify()}`;
+      } else {
+        return this
+          .find({ _id: oldObject._id })
+          .updateOne(update);
+      }
     }
   }
 };
