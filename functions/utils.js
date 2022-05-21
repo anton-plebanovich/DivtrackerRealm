@@ -208,7 +208,7 @@ Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, fields, 
 
     } else {
       return this
-        .find({ _id: oldObject._id })
+        .find(oldObject)
         .updateOne(update);
     }
   }
