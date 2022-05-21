@@ -130,7 +130,7 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields,
   }
 
   console.log(oldObjects.stringify());
-  oldObjects = oldObjects.sortDeletedToTheEnd();
+  oldObjects.sortDeletedToTheEnd();
   console.log(oldObjects.stringify());
 
   const bulk = this.initializeUnorderedBulkOp();
