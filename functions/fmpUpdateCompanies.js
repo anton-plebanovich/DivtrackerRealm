@@ -8,8 +8,9 @@
 // https://docs.mongodb.com/realm/mongodb/actions/collection.bulkWrite/#std-label-mongodb-service-collection-bulk-write
 // https://docs.mongodb.com/realm/mongodb/actions/collection.find/
 
-exports = async function() {
-  context.functions.execute("fmpUtils");
+exports = async function(database) {
+  context.functions.execute("fmpUtils", database);
+  database = getFMPDatabaseName(database);
 
   const shortSymbols = await getShortSymbols();
   if (shortSymbols.length <= 0) {
@@ -21,7 +22,7 @@ exports = async function() {
   const companies = await fetchCompanies(shortSymbols);
   await companiesCollection.safeUpdateMany(companies, undefined, '_id', true);
 
-  await setUpdateDate("fmp-companies");
+  await setUpdateDate(`${database}-companies`);
 
   console.log(`SUCCESS`);
 };
