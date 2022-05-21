@@ -129,6 +129,8 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields,
     return await this.insertMany(newObjects);
   }
 
+  oldObjects = oldObjects.sortDeletedToTheEnd();
+
   const bulk = this.initializeUnorderedBulkOp();
   for (const newObject of newObjects) {
     const existingObject = oldObjects.find(oldObject =>
@@ -419,6 +421,21 @@ Array.prototype.includesObject = function(object) {
 Array.prototype.contains = function(func) {
   _throwIfNotFunction(func, 'Array.prototype.contains')
   return this.find(x => func(x)) != null;
+};
+
+/**
+ * Sorts objects with `x: true` field to the end.
+ */
+Array.prototype.sortDeletedToTheEnd = function() {
+  return this.sort((l, r) => {
+    if (l.x === r.x) {
+      return 0;
+    } else if (l.x === true) {
+      return 1;
+    } else {
+      return -1;
+    }
+  });
 };
 
 Array.prototype.asyncMap = async function(limit, callback) {
