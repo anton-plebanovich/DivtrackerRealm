@@ -29,6 +29,8 @@ exports = function() {};
 // dtcheck call-realm-function --environment production --function fmpUpdateQuotes
 // dtcheck call-realm-function --environment production --function fmpUpdateSplits
 // Check data count
+// For some reason new dividends appeared - ???
+// For some reason new historical prices appeared - ???
 // Enable FMP symbols update
 
 async function adjustSymbolIDs() {
