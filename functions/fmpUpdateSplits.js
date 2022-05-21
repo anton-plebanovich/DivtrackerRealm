@@ -18,7 +18,7 @@ exports = async function() {
 
   const splits = await fetchSplits(shortSymbols);
   const collection = fmp.collection("splits");
-  await collection.safeUpdateMany(splits, undefined, 's', true);
+  await collection.safeUpdateMany(splits, undefined, ['s', 'e'], true);
 
   await setUpdateDate("fmp-splits");
 };

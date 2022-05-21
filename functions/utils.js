@@ -1,7 +1,46 @@
 
 // utils.js
 
+// https://www.mongodb.com/docs/manual/reference/method/cursor.sort/
+
 ///////////////////////////////////////////////////////////////////////////////// EXTENSIONS
+
+function normalizeFields(fields) {
+  if (fields == null) {
+    fields = ["_id"];
+  } else if (Object.prototype.toString.call(fields) !== '[object Array]') {
+    fields = [fields];
+  }
+  _throwIfEmptyArray(fields, `Please pass non-empty fields array. normalizeFields`);
+
+  return fields;
+}
+
+function getFindOperation(objects, fields) {
+  fields = normalizeFields(fields);
+  
+  const find = {};
+  if (Object.prototype.toString.call(objects) === '[object Array]') {
+    _throwIfEmptyArray(objects, `Please pass non-empty objects array or singular object. getFindOperation`);
+    
+    for (const field of fields) {
+      const values = objects.map(x => x[field]);
+      find[field] = { $in: values };
+    }
+  
+  } else {
+    _throwIfUndefinedOrNull(objects, `Please pass non-empty objects array or singular object. getFindOperation`);
+    const object = objects;
+
+    for (const field of fields) {
+      find[field] = object[field];
+    }
+  }
+
+  console.logVerbose(`Find operation: ${find.stringify()}`);
+
+  return find;
+}
 
 /**
  * Safely executes Bulk operation by catching 'no operations' error.
@@ -20,13 +59,7 @@ Object.prototype.safeExecute = async function() {
 
 Object.prototype.safeInsertMissing = async function(newObjects, fields) {
   _throwIfEmptyArray(newObjects, `Please pass non-empty new objects array as the first argument. safeInsertMissing`);
-
-  if (fields == null) {
-    fields = ["_id"];
-  } else if (Object.prototype.toString.call(fields) !== '[object Array]') {
-    fields = [fields];
-  }
-  _throwIfEmptyArray(fields, `Please pass non-empty fields array as the second argument. safeInsertMissing`);
+  fields = normalizeFields(fields);
   
   const bulk = this.initializeUnorderedBulkOp();
   for (const newObject of newObjects) {
@@ -70,35 +103,43 @@ Object.prototype.safeUpsertMany = async function(newObjects, field, setUpdateDat
 /**
  * Safely computes and executes update operation from old to new objects on a collection.
  */
-Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, field, setUpdateDate) {
+Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields, setUpdateDate) {
   _throwIfEmptyArray(newObjects, `Please pass non-empty new objects array as the first argument. safeUpdateMany`);
+  fields = normalizeFields(fields);
 
-  if (field == null) {
-    field = "_id";
-  }
+  const invalidObjectsLength = newObjects.filter(newObject => 
+    fields.contains((field) => newObject[field] == null)
+  ).length;
 
-  const newObjectsLength = newObjects.length;
-  const validNewObjectsLength = newObjects.filter(x => x[field] != null).length;
-  if (newObjectsLength != validNewObjectsLength) {
-    return await _logAndReject(`${newObjectsLength - validNewObjectsLength} of ${newObjectsLength} new objects do not contain required '${field}' field`);
+  if (invalidObjectsLength !== 0) {
+    return await _logAndReject(`${invalidObjectsLength} of ${newObjects.length} new objects do not contain required '${fields}' fields`);
   }
 
   if (typeof oldObjects === 'undefined') {
-    // No need to fetch '_id' for old objects if we do not compare objects by it.
-    const projection = {};
-    if (field !== "_id") {
-      projection._id = 0;
-    }
+    // Sort deleted to the end
+    const sort = { x: 1 };
 
     if (newObjects.length < 1000) {
-      console.log(`Old objects are undefined. Fetching them by '${field}'.`);
-      const fileds = newObjects.map(x => x[field]);
-      oldObjects = await this.find({ [field]: { $in: fileds } }, projection).toArray();
+      console.log(`Old objects are undefined. Fetching them by '${fields}'.`);
+      const find = getFindOperation(newObjects, fields)
+      oldObjects = await this
+        .find(find)
+        .sort(sort)
+        .toArray();
 
     } else {
       console.log(`Old objects are undefined. Fetching them by requesting all existing objects.`);
-      oldObjects = await this.find({}, projection).toArray();
+      oldObjects = await this
+        .find({})
+        .sort(sort)
+        .toArray();
+
+      if (oldObjects.length >= 50000) {
+        throw `Old objects count '${oldObjects.length}' is huge. Pagination is not supported. Please update the query or logic.`;
+      }
     }
+  } else {
+    oldObjects = oldObjects.sortedDeletedToTheEnd();
   }
 
   if (oldObjects == null || oldObjects === []) {
@@ -108,8 +149,13 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, field, 
 
   const bulk = this.initializeUnorderedBulkOp();
   for (const newObject of newObjects) {
-    const existingObject = oldObjects.find(x => x[field].isEqual(newObject[field]));
-    bulk.findAndUpdateOrInsertIfNeeded(newObject, existingObject, field, setUpdateDate);
+    const existingObject = oldObjects.find(oldObject =>
+      fields.every(field =>
+        oldObject[field].isEqual(newObject[field])
+      )
+    );
+
+    bulk.findAndUpdateOrInsertIfNeeded(newObject, existingObject, fields, setUpdateDate);
   }
 
   return await bulk.safeExecute();
@@ -119,7 +165,7 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, field, 
  * Executes find by field and update or insert for a new object from an old object.
  * Uses `_id` field by default.
  */
-Object.prototype.findAndUpdateOrInsertIfNeeded = function(newObject, oldObject, field, setUpdateDate) {
+Object.prototype.findAndUpdateOrInsertIfNeeded = function(newObject, oldObject, fields, setUpdateDate) {
   if (newObject == null) {
     throw new _SystemError(`New object should not be null for insert or update`);
     
@@ -129,7 +175,7 @@ Object.prototype.findAndUpdateOrInsertIfNeeded = function(newObject, oldObject, 
     return this.insert(newObject);
 
   } else {
-    return this.findAndUpdateIfNeeded(newObject, oldObject, field, setUpdateDate);
+    return this.findAndUpdateIfNeeded(newObject, oldObject, fields, setUpdateDate);
   }
 };
 
@@ -137,21 +183,16 @@ Object.prototype.findAndUpdateOrInsertIfNeeded = function(newObject, oldObject, 
  * Executes find by field and update for a new object from an old object if needed.
  * Uses `_id` field by default.
  */
-Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, field, setUpdateDate) {
-  if (field == null) {
-    field = '_id';
-  }
-
-  const value = newObject[field];
-
+Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, fields, setUpdateDate) {
+  fields = normalizeFields(fields);
   if (newObject == null) {
     throw new _SystemError(`New object should not be null for update`);
     
   } else if (oldObject == null) {
     throw new _SystemError(`Old object should not be null for update`);
 
-  } else if (newObject[field] == null) {
-    throw new _SystemError(`New object '${field}' field should not be null for update`);
+  } else if (fields.contains(x => newObject[x] == null)) {
+    throw new _SystemError(`New object '${newObject.stringify()}' '${fields}' fields should not be null for update`);
 
   } else {
     const update = newObject.updateFrom(oldObject, setUpdateDate);
@@ -159,10 +200,14 @@ Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, field, s
       // Update is not needed
       return;
 
-    } else {
-      return this
-        .find({ [field]: value })
-        .updateOne(update);
+    } else { 
+      if (oldObject._id == null) {
+        throw `Unable to find old object. '_id' field is missing: ${oldObject.stringify()}`;
+      } else {
+        return this
+          .find({ _id: oldObject._id })
+          .updateOne(update);
+      }
     }
   }
 };
@@ -221,7 +266,7 @@ Object.prototype.updateFrom = function(object, setUpdateDate) {
     update.$currentDate = { u: true };
   }
 
-  console.logData(`Updating`, update);
+  console.logData(`Updating`, { from: object, to: this, update: update });
 
   return update;
 };
@@ -301,10 +346,29 @@ Array.prototype.chunked = function(size) {
 };
 
 /**
+ * Returns `count` random elements from an array.
+ */
+Array.prototype.getRandomElements = function(count) {
+  const elements = [];
+  const copy = [...this];
+  for (var i = 0; i < count; i++) {
+    if (copy.length === 0) {
+      return elements;
+    }
+
+    let index = Math.floor(Math.random() * copy.length);
+    const element = copy.splice(index, 1)[0];
+    elements.push(element);
+  }
+
+  return elements;
+}
+
+/**
  * Filters `null` and `undefined` elements.
  */
 Array.prototype.filterNullAndUndefined = function() {
-   return this.filter(x => x != null);
+  return this.filter(x => x != null);
 };
 
 /**
@@ -312,7 +376,7 @@ Array.prototype.filterNullAndUndefined = function() {
  * @param {*} callbackfn Mapping to perform. Null values are filtered.
  */
 Array.prototype.compactMap = function(callbackfn) {
-   return this.map(callbackfn).filterNullAndUndefined();
+  return this.map(callbackfn).filterNullAndUndefined();
 };
 
 /**
@@ -387,6 +451,38 @@ Array.prototype.toBuckets = function(arg) {
 Array.prototype.includesObject = function(object) {
   if (object == null) { return false; }
   return this.find(x => object.isEqual(x)) != null;
+};
+
+/**
+ * Checks if element is contained in the array using passed function.
+ */
+Array.prototype.contains = function(func) {
+  _throwIfNotFunction(func, 'Array.prototype.contains')
+  return this.find(x => func(x)) != null;
+};
+
+/**
+ * Sorts objects with `x: true` field to the end and returns resulted array.
+ */
+Array.prototype.sortedDeletedToTheEnd = function() {
+  return this.sorted((l, r) => {
+    if (l.x === r.x) {
+      return 0;
+    } else if (l.x === true) {
+      return 1;
+    } else {
+      return -1;
+    }
+  });
+};
+
+/**
+ * Fixed sort. Sorts objects and return resulted array.
+ */
+Array.prototype.sorted = function(func) {
+  // We need to copy because sort on array returned from the MongoDB collection breaks all contained ObjectIDs.
+  const copy = [...this];
+  return copy.sort(func);
 };
 
 Array.prototype.asyncMap = async function(limit, callback) {
@@ -509,7 +605,7 @@ Object.prototype.isEqual = function(rhs) {
   if (lhsEntries.length !== rhsEntries.length) {
     return false;
 
-  } else if (!lhsEntries.length) {
+  } else if (lhsEntries.length === 0) {
     return this.toString() === rhs.toString();
   }
 
@@ -973,6 +1069,19 @@ checkExecutionTimeout = function checkExecutionTimeout(limit) {
     console.logVerbose(`${limit - seconds} execution time left`);
   }
 };
+
+function _throwIfNotFunction(func, message, ErrorType) {
+  _throwIfUndefinedOrNull(func, message, ErrorType);
+
+  const type = typeof func;
+  if (type === 'function') { return func; }
+  if (ErrorType == null) { ErrorType = _SystemError; }
+  if (message == null) { message = ""; }
+  
+  throw new ErrorType(`Argument should be of the 'function' type. Instead, received '${type}'. ${message}`);
+}
+
+throwIfNotFunction = _throwIfNotFunction;
 
 function _throwIfNotString(object, message, ErrorType) {
   _throwIfUndefinedOrNull(object, message, ErrorType);
