@@ -22,8 +22,7 @@ exports = async function() {
 
   const companiesCollection = db.collection("companies");
   const companies = await fetchCompanies(shortSymbols);
-  const existingCompanies = await companiesCollection.find().toArray();
-  await companiesCollection.safeUpdateMany(companies, existingCompanies, "_id", true);
+  await companiesCollection.safeUpdateMany(companies, undefined, "_id", true);
 
   await setUpdateDate("companies");
 

@@ -548,7 +548,7 @@ function _fixFMPDividends(fmpDividends, symbolID) {
     console.logVerbose(`Fixing dividends for ${symbolID}`);
     let dividends = fmpDividends
       .filterNullAndUndefined()
-      .sort((l, r) => l.date.localeCompare(r.date))
+      .sorted((l, r) => l.date.localeCompare(r.date))
       .map(fmpDividend => {
         const dividend = {};
         dividend.e = _getOpenDate(fmpDividend.date);
