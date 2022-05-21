@@ -1,6 +1,8 @@
 
 // utils.js
 
+// https://www.mongodb.com/docs/manual/reference/method/cursor.sort/
+
 ///////////////////////////////////////////////////////////////////////////////// EXTENSIONS
 
 function normalizeFields(fields) {
@@ -110,28 +112,36 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields,
       projection._id = 0;
     }
 
+    // Sort deleted to the end
+    const sort = { x: 1 };
+
     if (newObjects.length < 1000) {
       console.log(`Old objects are undefined. Fetching them by '${fields}'.`);
       const find = getFindOperation(newObjects, fields)
-      oldObjects = await this.find(find, projection).toArray();
+      oldObjects = await this
+        .find(find, projection)
+        .sort(sort)
+        .toArray();
 
     } else {
       console.log(`Old objects are undefined. Fetching them by requesting all existing objects.`);
-      oldObjects = await this.find({}, projection).toArray();
+      oldObjects = await this
+        .find({}, projection)
+        .sort(sort)
+        .toArray();
+
       if (oldObjects.length >= 50000) {
         throw `Old objects count '${oldObjects.length}' is huge. Pagination is not supported. Please update the query or logic.`;
       }
     }
+  } else {
+    oldObjects = oldObjects.sortedDeletedToTheEnd();
   }
 
   if (oldObjects == null || oldObjects === []) {
     console.log(`No old objects. Just inserting new objects.`);
     return await this.insertMany(newObjects);
   }
-
-  console.log(oldObjects.stringify());
-  oldObjects.sortDeletedToTheEnd();
-  console.log(oldObjects.stringify());
 
   const bulk = this.initializeUnorderedBulkOp();
   for (const newObject of newObjects) {
@@ -426,10 +436,10 @@ Array.prototype.contains = function(func) {
 };
 
 /**
- * Sorts objects with `x: true` field to the end.
+ * Sorts objects with `x: true` field to the end and returns resulted array.
  */
-Array.prototype.sortDeletedToTheEnd = function() {
-  return this.sort((l, r) => {
+Array.prototype.sortedDeletedToTheEnd = function() {
+  return this.sorted((l, r) => {
     if (l.x === r.x) {
       return 0;
     } else if (l.x === true) {
@@ -438,6 +448,15 @@ Array.prototype.sortDeletedToTheEnd = function() {
       return -1;
     }
   });
+};
+
+/**
+ * Fixed sort. Sorts objects and return resulted array.
+ */
+Array.prototype.sorted = function(func) {
+  // We need to copy because sort on array returned from the MongoDB collection breaks all contained ObjectIDs.
+  const copy = [...this];
+  return copy.sort(func);
 };
 
 Array.prototype.asyncMap = async function(limit, callback) {
@@ -560,7 +579,7 @@ Object.prototype.isEqual = function(rhs) {
   if (lhsEntries.length !== rhsEntries.length) {
     return false;
 
-  } else if (!lhsEntries.length) {
+  } else if (lhsEntries.length === 0) {
     return this.toString() === rhs.toString();
   }
 
