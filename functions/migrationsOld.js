@@ -20,6 +20,17 @@ exports = function() {};
 // dtcheck backup --environment production --database fmp-tmp
 // dtcheck restore --allow-production --environment production --database fmp-tmp --to-database fmp
 // dtcheck call-realm-function --environment production --function checkTransactionsV2
+// Check data count
+// dtcheck call-realm-function --environment production --function fmpLoadMissingData
+// dtcheck call-realm-function --environment production --function fmpUpdateSymbols
+// dtcheck call-realm-function --environment production --function fmpUpdateCompanies
+// dtcheck call-realm-function --environment production --function fmpUpdateDividends
+// dtcheck call-realm-function --environment production --function fmpUpdatePrices
+// dtcheck call-realm-function --environment production --function fmpUpdateQuotes
+// dtcheck call-realm-function --environment production --function fmpUpdateSplits
+// Check data count
+// For some reason new dividends appeared - ???
+// For some reason new historical prices appeared - ???
 // Enable FMP symbols update
 
 async function adjustSymbolIDs() {

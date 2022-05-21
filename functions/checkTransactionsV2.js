@@ -44,7 +44,7 @@
     } else {
       console.log(`All trasactions are valid!`);
     }
-  } while (transactions.length >= pageSize)
+  } while (transactions.length >= pageSize);
 };
 
 const requiredTransactionKeys = [
