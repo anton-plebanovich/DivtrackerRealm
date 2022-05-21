@@ -4,6 +4,7 @@
 exports = async function() {
   context.functions.execute("testUtils");
   const collection = db.collection("tmp");
+
   await test(collection, testKnownOldObjects);
   await test(collection, testUnknownOldObjects);
   await test(collection, testKnownOldObjectsWithoutUpdateDate);
@@ -52,7 +53,7 @@ async function checkObjects(collection, setUpdateDate) {
 }
 
 async function checkObject(collection, object, updated) {
-  const modifiedObject = await collection.findOne({ id1: object.id1, id2: object.id2 });
+  let modifiedObject = await collection.findOne({ id1: object.id1, id2: object.id2 });
 
   if (updated) {
     if (modifiedObject.u == null) {
