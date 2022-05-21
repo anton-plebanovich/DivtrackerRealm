@@ -12,11 +12,11 @@ exports = async function() {
 
 //////////////////////////// CONSTANTS
 
-const _object = { id1: "id1", id2: "id2", a: "a", b: "b" };
-const _deletedObject1 = { id1: "id1", id2: "id2", a: "a", b: "b", x: true };
-const _deletedObject2 = { id1: "id1", id2: "id2", a: "a", b: "b", x: true };
+const _object = { _id: BSON.ObjectId(), id1: "id1", id2: "id2", a: "a", b: "b" };
+const _deletedObject1 = { _id: BSON.ObjectId(), id1: "id1", id2: "id2", a: "a", b: "b", x: true };
+const _deletedObject2 = { _id: BSON.ObjectId(), id1: "id1", id2: "id2", a: "a", b: "b", x: true };
 const _modifiedObject = { id1: "id1", id2: "id2", a: "A", c: "C" };
-const _newObject = { id1: "id11", id2: "id22", a: "a1", b: "b1" };
+const _newObject = { _id: BSON.ObjectId(), id1: "id11", id2: "id22", a: "a1", b: "b1" };
 
 //////////////////////////// TESTS
 
