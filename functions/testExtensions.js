@@ -13,18 +13,14 @@ exports = async function() {
 //////////////////////////// CONSTANTS
 
 const _object = { id1: "id1", id2: "id2", a: "a", b: "b" };
-
-const _modifiedObject = Object.assign({}, _object);
-_modifiedObject.a = "A";
-_modifiedObject.c = "C";
-
+const _modifiedObject = { id1: "id1", id2: "id2", a: "A", c: "C" };
 const _newObject = { id1: "id11", id2: "id22", a: "a1", b: "b1" };
 
 //////////////////////////// TESTS
 
 async function test(collection, testFunction) {
   await collection.drop();
-  await testFunction(collection)
+  await testFunction(collection);
 }
 
 async function testKnownOldObjects(collection) {
