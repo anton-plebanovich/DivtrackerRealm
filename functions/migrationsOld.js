@@ -13,24 +13,26 @@ exports = function() {};
 // Release new server with disabled FMP symbols update
 // dt backup --environment production --database fmp
 // dt restore --allow-production --environment production --database fmp --to-database fmp-tmp
-// dt call-realm-function --environment production --function fmpUpdateSymbols --argument fmp-tmp
+// dt call-realm-function --environment production --function fmpUpdateSymbols --argument fmp-tmp --verbose
 // dt call-realm-function --environment production --function fmpLoadMissingData --argument fmp-tmp --retry-on-error 'execution time limit exceeded'
-// dt backup --environment production --database fmp-tmp # just in case something goes wrong
-// dt call-realm-function --environment production --function migrations
 // dt backup --environment production --database fmp-tmp
-// dt restore --allow-production --environment production --database fmp-tmp --to-database fmp
-// dt call-realm-function --environment production --function checkTransactionsV2
+// dt restore --environment local --backup-source-environment production --database fmp-tmp
+// Execute symbols migration
+// dt backup --environment local --database fmp-tmp
+// dt restore --allow-production --environment production --backup-source-environment local --database fmp-tmp
 // Check data count
-// dt call-realm-function --environment production --function fmpLoadMissingData
-// dt call-realm-function --environment production --function fmpUpdateSymbols
-// dt call-realm-function --environment production --function fmpUpdateCompanies
-// dt call-realm-function --environment production --function fmpUpdateDividends
-// dt call-realm-function --environment production --function fmpUpdatePrices
-// dt call-realm-function --environment production --function fmpUpdateQuotes
-// dt call-realm-function --environment production --function fmpUpdateSplits
-// Check data count
+// dt call-realm-function --environment production --function fmpLoadMissingData --argument fmp-tmp --verbose
+// dt call-realm-function --environment production --function fmpUpdateSymbols --argument fmp-tmp --verbose
+// dt call-realm-function --environment production --function fmpUpdateCompanies --argument fmp-tmp --verbose
+// dt call-realm-function --environment production --function fmpUpdateDividends --argument fmp-tmp --verbose
+// dt call-realm-function --environment production --function fmpUpdatePrices --argument fmp-tmp --verbose
+// dt call-realm-function --environment production --function fmpUpdateQuotes --argument fmp-tmp --verbose
+// dt call-realm-function --environment production --function fmpUpdateSplits --argument fmp-tmp --verbose
 // For some reason new dividends appeared - ???
 // For some reason new historical prices appeared - ???
+// Check data count
+// dt restore --allow-production --environment production --backup-source-environment local --database fmp-tmp --to-database fmp
+// dt call-realm-function --environment production --function checkTransactionsV2 --verbose
 // Enable FMP symbols update
 
 async function adjustSymbolIDs() {
