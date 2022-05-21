@@ -24,7 +24,7 @@ function getFindOperation(objects, fields) {
   const find = {};
   for (const field of fields) {
     const values = objects.map(x => x[field]);
-    find.field = { $in: values };
+    find[field] = { $in: values };
   }
 
   return find;
