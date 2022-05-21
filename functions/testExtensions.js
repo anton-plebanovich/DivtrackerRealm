@@ -19,7 +19,7 @@ const _newObject = { id1: "id11", id2: "id22", a: "a1", b: "b1" };
 //////////////////////////// TESTS
 
 async function test(collection, testFunction) {
-  await collection.drop();
+  await collection.deleteMany({});
   await testFunction(collection);
 }
 
