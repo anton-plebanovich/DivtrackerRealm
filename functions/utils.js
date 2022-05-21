@@ -98,6 +98,9 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, field, 
     } else {
       console.log(`Old objects are undefined. Fetching them by requesting all existing objects.`);
       oldObjects = await this.find({}, projection).toArray();
+      if (oldObjects.length >= 50000) {
+        throw `Old objects count '${oldObjects.length}' is huge. Pagination is not supported. Please update the query or logic.`;
+      }
     }
   }
 
