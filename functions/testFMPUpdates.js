@@ -39,6 +39,7 @@ async function test() {
     context.functions.execute("fmpUpdatePrices"),
     context.functions.execute("fmpUpdateQuotes"),
     context.functions.execute("fmpUpdateSplits"),
-    context.functions.execute("fmpUpdateSymbols"),
   ]);
+
+  await context.functions.execute("fmpUpdateSymbols");
 }
