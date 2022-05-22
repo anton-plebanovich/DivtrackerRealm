@@ -3,7 +3,7 @@
 
 //////////////////////////////////////////////////////////////////// Constants
 
-const defaultTransactionsCount = 200;
+const defaultTransactionsCount = 100;
 const averagePrice = 109.02;
 
 const _defaultAsyncOperations = 15;
