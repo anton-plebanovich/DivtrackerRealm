@@ -61,9 +61,7 @@ async function updateIEXSymbols() {
 
   const newSymbolIDs = newSymbols.map(x => x.symbol);
 
-  // We drop `_id` field so we can compare old and new objects.
-  // All updates are done through other fields anyway.
-  const oldSymbols = await iexCollection.find({}, { "_id": 0 }).toArray();
+  const oldSymbols = await iexCollection.find({}).toArray();
   if (oldSymbols.length >= 50000) {
     throw `Old IEX symbols count '${oldSymbols.length}' is huge. Pagination is not supported. Please update the query or logic.`;
   }
