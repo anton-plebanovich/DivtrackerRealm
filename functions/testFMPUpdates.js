@@ -8,6 +8,15 @@
  exports = async function() {
   context.functions.execute("fmpUtils");
 
+  try {
+    await test();
+  } catch(error) {
+    console.log(error);
+    throw error;
+  }
+};
+
+async function test() {
   // Cleanup FMP environment
   await Promise.all([
     fmp.collection('companies').deleteMany({}),
@@ -32,4 +41,4 @@
     context.functions.execute("fmpUpdateSplits"),
     context.functions.execute("fmpUpdateSymbols"),
   ]);
-};
+}

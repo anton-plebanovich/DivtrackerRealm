@@ -7,9 +7,14 @@ exports = async function() {
   context.functions.execute("testUtils");
   const collection = db.collection("tmp");
   
-  await test(collection, testKnownOldObjects);
-  await test(collection, testUnknownOldObjects);
-  await test(collection, testKnownOldObjectsWithoutUpdateDate);
+  try {
+    await test(collection, testKnownOldObjects);
+    await test(collection, testUnknownOldObjects);
+    await test(collection, testKnownOldObjectsWithoutUpdateDate);
+  } catch(error) {
+    console.log(error);
+    throw error;
+  }
 };
 
 //////////////////////////// ENVIRONMENT

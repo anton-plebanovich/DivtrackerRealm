@@ -13,6 +13,15 @@ function randomDate(start, end) {
  exports = async function() {
   context.functions.execute("testUtils");
 
+  try {
+    await test();
+  } catch(error) {
+    console.log(error);
+    throw error;
+  }
+};
+
+async function test() {
   // Cleanup environment
   await cleanup();
 
@@ -30,4 +39,4 @@ function randomDate(start, end) {
 
   // Check
   await checkData(transactionsToCheck);
-};
+}

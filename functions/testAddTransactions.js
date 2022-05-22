@@ -7,6 +7,15 @@
  exports = async function() {
   context.functions.execute("testUtils");
 
+  try {
+    await test();
+  } catch(error) {
+    console.log(error);
+    throw error;
+  }
+};
+
+async function test() {
   // Cleanup environment
   await cleanup();
 
@@ -14,4 +23,4 @@
   await context.functions.execute("addTransactionsV2", transactions);
 
   await checkData(transactions);
-};
+}
