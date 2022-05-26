@@ -1430,12 +1430,16 @@ fetchExchangeRates = _fetchExchangeRates;
 
 function getCurrencySymbol(currency) {
   // TODO: Add more later
+  // https://www.eurochange.co.uk/travel-money/world-currency-abbreviations-symbols-and-codes-travel-money
   switch(currency) {
+    case "AUD": return "$";
     case "CAD": return "$";
-    case "CHF": return "¤";
+    case "CHF": return "CHF";
     case "EUR": return "€";
     case "GBP": return "£";
     case "ILS": return "₪";
+    case "INR": return "₹";
+    case "JPY": return "¥";
     case "NOK": return "kr";
     case "USD": return "$";
     default: return null;
