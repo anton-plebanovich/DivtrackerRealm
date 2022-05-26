@@ -125,7 +125,7 @@ function update(field, bulk, oldSymbolByTicker, oldSymbols, newSymbol) {
 
   } else if (isIEXSandbox && newSymbol.isEnabled === oldSymbol.isEnabled) {
     // It takes too much time to update every symbol on sandbox so we just skip update if enabled field didn't change
-    return true
+    return true;
 
   } else {
     bulk.findAndUpdateIfNeeded(newSymbol, oldSymbol, field, true);
