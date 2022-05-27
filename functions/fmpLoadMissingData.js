@@ -103,12 +103,8 @@ async function loadMissingDividends(shortSymbols) {
       } else {
         console.error(`Invalid amount: ${dividend.stringify()}`);
       }
-  
-      if (dividend.f != null) {
-        query.f = dividend.f;
-      } else {
-        console.error(`Invalid frequency: ${dividend.stringify()}`);
-      }
+
+      // We do not check frequency because it might be changed when we delete dividends and recompute it for all of them
   
       if (dividend.s != null) {
         query.s = dividend.s;
