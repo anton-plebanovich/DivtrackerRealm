@@ -569,7 +569,7 @@ function _fixFMPDividends(fmpDividends, symbolID) {
       })
       .filterNullAndUndefined()
     
-    dividends = _removeDuplicateDividends(dividends);
+    dividends = _removeDuplicatedDividends(dividends);
     dividends = _updateDividendsFrequency(dividends);
 
     return dividends;
@@ -646,7 +646,7 @@ function getFrequencyForMillis(millis) {
 updateDividendsFrequency = _updateDividendsFrequency;
 
 // TODO: Improve later by including more cases
-function _removeDuplicateDividends(dividends) {
+function _removeDuplicatedDividends(dividends) {
   const originalLength = dividends.length;
   const newDividends = dividends
     .filter((dividend, i, arr) => {
@@ -676,11 +676,11 @@ function _removeDuplicateDividends(dividends) {
     return newDividends;
   } else {
     // We might have triplicates so several passes is required
-    return _removeDuplicateDividends(newDividends);
+    return _removeDuplicatedDividends(newDividends);
   }
 }
 
-removeDuplicateDividends = _removeDuplicateDividends;
+removeDuplicatedDividends = _removeDuplicatedDividends;
 
 /**
  * Fixes historical prices object so it can be added to MongoDB.
