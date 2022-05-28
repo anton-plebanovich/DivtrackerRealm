@@ -469,9 +469,12 @@ function _fixDividends(iexDividends, symbolID) {
       return []; 
     }
   
-    console.logVerbose(`Fixing dividends for ${symbolID}`);
-    return iexDividends
-      .filterNullAndUndefined()
+    console.logVerbose(`Removing duplicates from '${iexDividends.length}' IEX dividends for ${symbolID}`);
+    let dividends = iexDividends.filterNullAndUndefined();
+    dividends = _removeDuplicatedIEXDividends(dividends);
+
+    console.logVerbose(`Mapping '${iexDividends.length}' IEX dividends for ${symbolID}`);
+    dividends = dividends
       .map(iexDividend => {
         const dividend = {};
         dividend.d = _getOpenDate(iexDividend.declaredDate);
@@ -496,6 +499,12 @@ function _fixDividends(iexDividends, symbolID) {
         return dividend;
       });
 
+    console.logVerbose(`Removing duplicates from '${dividends.length}' dividends for ${symbolID}`);
+    dividends = _removeDuplicatedDividends(dividends);
+
+    console.logVerbose(`Returning '${dividends.length}' dividends for ${symbolID}`);
+    return dividends;
+
   } catch(error) {
     console.logVerbose(`Unable to map dividends: ${error}`);
     return [];
@@ -503,6 +512,106 @@ function _fixDividends(iexDividends, symbolID) {
 }
 
 fixDividends = _fixDividends;
+
+function _removeDuplicatedIEXDividends(iexDividends) {
+  const buckets = iexDividends.toBuckets('refid');
+  const result = [];
+  for (const bucket of Object.values(buckets)) {
+    // Prefer the one without payment date and later ones.
+    const sortedBucket = bucket.sorted((l, r) => {
+      if (l.paymentDate == null || l.paymentDate == "0000-00-00") {
+        return true;
+      } else if (r.paymentDate == null || r.paymentDate == "0000-00-00") {
+        return false;
+      } else {
+        return l.exDate >= r.exDate;
+      }
+    });
+
+    if (sortedBucket.length > 1) {
+      const duplicate = sortedBucket[0];
+      console.error(`Duplicate dividend for ${duplicate.symbol}: ${duplicate.stringify()}`);
+    }
+
+    result.push(sortedBucket[sortedBucket.length - 1]);
+  }
+
+  return result;
+}
+
+// TODO: Improve later by including more cases
+function _removeDuplicatedDividends(dividends) {
+  // Sort, so we can compare closest ones
+  const sortedDividends = [...dividends].sorted((l, r) => {
+    if (compareOptionalDates(l.e, r.e)) {
+      return l.a <= r.a;
+    } else {
+      return l.e <= r.e;
+    }
+  })
+  
+  // Mark duplicates as deleted
+  const maxIndex = sortedDividends.length - 1;
+  for (let i = 0; i < maxIndex; i++) {
+    const dividend = sortedDividends[i];
+    const nextDividend = sortedDividends[i + 1];
+    if (_isDuplicateDividend(dividend, nextDividend)) {
+      // Mark as deleted. Prefer the one without payment date and later ones.
+      let dividendToDelete
+      if (nextDividend.p == null) {
+        dividendToDelete = nextDividend;
+      } else if (dividend.p == null) {
+        dividendToDelete = dividend;
+      } else {
+        dividendToDelete = nextDividend;
+      }
+
+      dividendToDelete.x = true;
+      console.error(`Duplicate dividend for ${dividendToDelete.s}: ${dividendToDelete.stringify()}`);
+    }
+  }
+  
+  // Filter deleted
+  return sortedDividends.filter(dividend => dividend.x != true);
+}
+
+// 6 days time interval: 6 * 24 * 3600 * 1000
+const duplicateTimeInterval = 518400000;
+
+/**
+ * Checks if `dividend` is 100% duplicated so we can filter it out.
+ */
+function _isDuplicateDividend(dividend, otherDividend) {
+  const lhsAmount = dividend.a.valueOf();
+  const rhsAmount = otherDividend.a.valueOf();
+  const amountEqual = Math.abs(rhsAmount - lhsAmount) <= 0.0001
+
+  const frequency = dividend.f;
+  const otherFrequency = otherDividend.f;
+  const frequencyEqual = frequency === otherFrequency;
+
+  // It looks like ex date might be moved to the next day for duplicated dividend
+  // and if the next day is weekend or holyday it will be moved even further.
+  const exDatesEqual = compareOptionalDates(dividend.e, otherDividend.e);
+  const exDatesTimeInterval = Math.abs(dividend.e.getTime() - otherDividend.e.getTime())
+  const possiblyDuplicate = frequency != "w" && exDatesTimeInterval <= duplicateTimeInterval
+
+  const noPaymentDate = dividend.p == null || otherDividend.p == null;
+  const paymentDatesEqual = compareOptionalDates(dividend.p, otherDividend.p);
+  const paymentDatesPossiblyEqual = noPaymentDate || paymentDatesEqual
+
+  // If frequeincies, amounts and ex dates are equal - we do not care about payment date
+  if (frequencyEqual && amountEqual && exDatesEqual) {
+    return true;
+
+    // For possible duplicates we need payment dates to be possibly equal
+  } else if (frequencyEqual && amountEqual && possiblyDuplicate && paymentDatesPossiblyEqual) {
+    return true;
+
+  } else {
+    return false;
+  }
+}
 
 /**
  * Fixes previous day price object so it can be added to MongoDB.

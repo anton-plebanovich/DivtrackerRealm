@@ -319,6 +319,16 @@ Array.prototype.distinct = function(arg) {
   return result;
 };
 
+Array.prototype.uniqueUnordered = function(key) {
+  if (key != null) {
+    const dictionary = this.toDictionary(key);
+    return Object.values(dictionary);
+  } else {
+    const dictionary = this.toDictionary(x => x.toString());
+    return Object.values(dictionary);
+  }
+};
+
 /**
  * Removes all occurencies of an object from the array.
  * @param {*} arg Object to remove.
@@ -663,6 +673,9 @@ String.prototype.isEqual = function(string) {
 
 ///////////////////////////////////////////////////////////////////////////////// FUNCTIONS
 
+/**
+ * Returns `true` if dates are equal or both `null`.
+ */
 function _compareOptionalDates(left, right) {
   if (left == null && right == null) {
     return true;
