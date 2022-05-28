@@ -58,7 +58,12 @@ Object.prototype.safeExecute = async function() {
 };
 
 Object.prototype.safeInsertMissing = async function(newObjects, fields) {
-  _throwIfEmptyArray(newObjects, `Please pass non-empty new objects array as the first argument. safeInsertMissing`);
+  _throwIfNotArray(newObjects, `Please pass new objects array as the first argument. safeInsertMissing`);
+  if (newObjects.length === 0) {
+    console.log(`New objects array is empty. Nothing to insert.`);
+    return;
+  }
+
   fields = normalizeFields(fields);
   
   const bulk = this.initializeUnorderedBulkOp();
@@ -77,7 +82,11 @@ Object.prototype.safeInsertMissing = async function(newObjects, fields) {
 };
 
 Object.prototype.safeUpsertMany = async function(newObjects, field, setUpdateDate) {
-  _throwIfEmptyArray(newObjects, `Please pass non-empty new objects array as the first argument. safeUpsertMany`);
+  _throwIfNotArray(newObjects, `Please pass new objects array as the first argument. safeUpsertMany`);
+  if (newObjects.length === 0) {
+    console.log(`New objects array is empty. Nothing to upsert.`);
+    return;
+  }
 
   if (field == null) {
     field = "_id";
@@ -104,7 +113,12 @@ Object.prototype.safeUpsertMany = async function(newObjects, field, setUpdateDat
  * Safely computes and executes update operation from old to new objects on a collection.
  */
 Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields, setUpdateDate) {
-  _throwIfEmptyArray(newObjects, `Please pass non-empty new objects array as the first argument. safeUpdateMany`);
+  _throwIfNotArray(newObjects, `Please pass new objects array as the first argument. safeUpdateMany`);
+  if (newObjects.length === 0) {
+    console.log(`New objects array is empty. Nothing to update.`);
+    return;
+  }
+
   fields = normalizeFields(fields);
 
   const invalidObjectsLength = newObjects.filter(newObject => 
@@ -1416,12 +1430,16 @@ fetchExchangeRates = _fetchExchangeRates;
 
 function getCurrencySymbol(currency) {
   // TODO: Add more later
+  // https://www.eurochange.co.uk/travel-money/world-currency-abbreviations-symbols-and-codes-travel-money
   switch(currency) {
+    case "AUD": return "$";
     case "CAD": return "$";
-    case "CHF": return "¤";
+    case "CHF": return "CHF";
     case "EUR": return "€";
     case "GBP": return "£";
     case "ILS": return "₪";
+    case "INR": return "₹";
+    case "JPY": return "¥";
     case "NOK": return "kr";
     case "USD": return "$";
     default: return null;
