@@ -528,6 +528,11 @@ function _removeDuplicatedIEXDividends(iexDividends) {
       }
     });
 
+    if (sortedBucket.length > 1) {
+      const duplicate = sortedBucket[0];
+      console.error(`Duplicate dividend for ${duplicate.symbol}: ${duplicate.stringify()}`);
+    }
+
     result.push(sortedBucket[sortedBucket.length - 1]);
   }
 
