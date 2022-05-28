@@ -541,7 +541,7 @@ function _removeDuplicatedDividends(dividends) {
     if (compareOptionalDates(l.e, r.e)) {
       return l.a <= r.a;
     } else {
-      return l.e.localeCompare(r.e);
+      return l.e <= r.e;
     }
   })
   
