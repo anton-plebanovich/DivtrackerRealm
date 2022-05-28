@@ -474,7 +474,7 @@ function _fixDividends(iexDividends, symbolID) {
     dividends = _removeDuplicatedIEXDividends(dividends);
 
     console.logVerbose(`Mapping '${iexDividends.length}' IEX dividends for ${symbolID}`);
-    dividends
+    dividends = dividends
       .map(iexDividend => {
         const dividend = {};
         dividend.d = _getOpenDate(iexDividend.declaredDate);
@@ -577,8 +577,6 @@ const duplicateTimeInterval = 518400000;
  * Checks if `dividend` is 100% duplicated so we can filter it out.
  */
 function _isDuplicateDividend(dividend, otherDividend) {
-  console.logVerbose(`dividend: ${dividend.stringify()}`);
-  console.logVerbose(`otherDividend: ${otherDividend.stringify()}`);
   const lhsAmount = dividend.a.valueOf();
   const rhsAmount = otherDividend.a.valueOf();
   const amountEqual = Math.abs(rhsAmount - lhsAmount) <= 0.0001
