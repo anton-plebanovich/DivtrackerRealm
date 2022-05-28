@@ -537,7 +537,7 @@ function _removeDuplicatedIEXDividends(iexDividends) {
 // TODO: Improve later by including more cases
 function _removeDuplicatedDividends(dividends) {
   // Sort, so we can compare closest ones
-  const sortedDividends = dividends.sorted((l, r) => {
+  const sortedDividends = [...dividends].sorted((l, r) => {
     if (compareOptionalDates(l.e, r.e)) {
       return l.a <= r.a;
     } else {
