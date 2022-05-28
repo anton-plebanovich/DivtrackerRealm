@@ -469,11 +469,11 @@ function _fixDividends(iexDividends, symbolID) {
       return []; 
     }
   
-    console.logVerbose(`Fixing dividends for ${symbolID}`);
-
+    console.logVerbose(`Removing duplicates from '${iexDividends.length}' IEX dividends for ${symbolID}`);
     let dividends = iexDividends.filterNullAndUndefined();
     dividends = _removeDuplicatedIEXDividends(dividends);
 
+    console.logVerbose(`Mapping '${iexDividends.length}' IEX dividends for ${symbolID}`);
     dividends
       .map(iexDividend => {
         const dividend = {};
@@ -499,8 +499,10 @@ function _fixDividends(iexDividends, symbolID) {
         return dividend;
       });
 
+    console.logVerbose(`Removing duplicates from '${dividends.length}' dividends for ${symbolID}`);
     dividends = _removeDuplicatedDividends(dividends);
 
+    console.logVerbose(`Returning '${dividends.length}' dividends for ${symbolID}`);
     return dividends;
 
   } catch(error) {
@@ -526,10 +528,10 @@ function _removeDuplicatedIEXDividends(iexDividends) {
       }
     });
 
-    result.push(bucket[bucket.length - 1]);
+    result.push(sortedBucket[sortedBucket.length - 1]);
   }
 
-  return result
+  return result;
 }
 
 // TODO: Improve later by including more cases
