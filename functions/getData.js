@@ -4,6 +4,8 @@
 exports = async function(date, collections, symbols, fullSymbolsCollections) {
   context.functions.execute("utils");
 
+  const maxSymbolsCount = 1000;
+
   const allCollections = [
     'companies',
     'dividends',
@@ -20,19 +22,31 @@ exports = async function(date, collections, symbols, fullSymbolsCollections) {
     'quotes',
     'symbols',
   ];
-
+  
+  const allowedFullSymbolsCollections = [
+    "exchange-rates", 
+    "symbols", 
+    "updates"
+  ];
+  
   // Collections that have objects with non-searchable ID, e.g. 'USD' for 'exchange-rates'
   const nonSearchableIDCollections = [
     'exchange-rates',
     'updates',
   ];
-
+  
   if (date != null) {
     throwIfNotDate(
       date, 
       `Please pass date as the first argument.`, 
       UserError
     );
+    
+    // TODO: We might need to compute device vs server delta to fix device time.
+    const currentDate = new Date();
+    if (date > currentDate) {
+      logAndThrow(`Invalid last update date parameter. Passed date '${date} (${date.getTime()})' is higher than the current date: ${currentDate} (${date.getTime()})`);
+    }
   }
 
   if (collections != null) {
@@ -50,13 +64,13 @@ exports = async function(date, collections, symbols, fullSymbolsCollections) {
 
     const excessiveCollections = collections.filter(x => !allCollections.includes(x));
     if (excessiveCollections.length) {
-      _logAndThrow(`Invalid collections array as the second argument: ${excessiveCollections}. Valid collections are: ${allCollections}.`);
+      logAndThrow(`Invalid collections array as the second argument: ${excessiveCollections}. Valid collections are: ${allCollections}.`);
     }
     
   } else {
     collections = allCollections;
   }
-
+  
   if (symbols != null) {
     throwIfEmptyArray(
       symbols, 
@@ -69,6 +83,10 @@ exports = async function(date, collections, symbols, fullSymbolsCollections) {
       `Please pass symbols array as the third argument.`, 
       UserError
     );
+  
+    if (symbols.length > maxSymbolsCount) {
+      logAndThrow(`Max collections count '${maxSymbolsCount}' is exceeded. Please make sure there are less than 1000 unique symbols in the portfolio.`);
+    }
   }
 
   if (fullSymbolsCollections != null) {
@@ -85,9 +103,10 @@ exports = async function(date, collections, symbols, fullSymbolsCollections) {
         UserError
       );
   
-      const excessiveCollections = fullSymbolsCollections.filter(x => !allCollections.includes(x));
-      if (excessiveCollections.length) {
-        _logAndThrow(`Invalid full symbol collections array as the fourth argument: ${excessiveCollections}. Valid full symbol collections are: ${allCollections}.`);
+      // Check that there are no unexpected all symbols collections
+      const excessiveFullSymbolsCollections = fullSymbolsCollections.filter(x => !allowedFullSymbolsCollections.includes(x));
+      if (excessiveFullSymbolsCollections.length) {
+        logAndThrow(`Invalid full symbol collections array as the fourth argument: ${excessiveFullSymbolsCollections}. Valid full symbol collections are: ${allowedFullSymbolsCollections}.`);
       }
     }
   } else {
@@ -102,6 +121,14 @@ exports = async function(date, collections, symbols, fullSymbolsCollections) {
   // updates are always ignoring symbols when requested
   if (!fullSymbolsCollections.includes('updates')) {
     fullSymbolsCollections.push('updates');
+  }
+
+  // Check that we do not request all data for collections that do not support it
+  if (symbols == null || symbols.length === 0) {
+    const excessiveCollections = collections.filter(x => !allowedFullSymbolsCollections.includes(x));
+    if (excessiveCollections.length >= 0) {
+      logAndThrow(`Invalid collections array as the second argument: ${collections}. Full data is not supported for: ${excessiveCollections}. Full data fetch allowed collections: ${allowedFullSymbolsCollections}. Please provide concrete symbols to fetch or remove not supported collections.`);
+    }
   }
 
   const fmp = atlas.db("fmp");
