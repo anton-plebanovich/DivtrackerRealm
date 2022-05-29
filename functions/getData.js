@@ -4,6 +4,8 @@
 exports = async function(date, collections, symbols, fullSymbolsCollections) {
   context.functions.execute("utils");
 
+  const maxSymbolsCount = 1000;
+
   const allCollections = [
     'companies',
     'dividends',
@@ -20,19 +22,35 @@ exports = async function(date, collections, symbols, fullSymbolsCollections) {
     'quotes',
     'symbols',
   ];
-
+  
+  const allowedFullSymbolsCollections = [
+    "exchange-rates", 
+    "symbols", 
+    "updates"
+  ];
+  
+  if (symbols.length > maxSymbolsCount) {
+    _logAndThrow(`Max collections count '${maxSymbolsCount}' is exceeded. Please make sure there are less than 1000 unique symbols in the portfolio.`);
+  }
+  
   // Collections that have objects with non-searchable ID, e.g. 'USD' for 'exchange-rates'
   const nonSearchableIDCollections = [
     'exchange-rates',
     'updates',
   ];
-
+  
   if (date != null) {
     throwIfNotDate(
       date, 
       `Please pass date as the first argument.`, 
       UserError
     );
+    
+    // TODO: We might need to compute device vs server delta to fix device time.
+    const currentDate = new Date();
+    if (date > currentDate) {
+      _logAndThrow(`Invalid last update date parameter. Passed date '${date}' is higher than the current date: ${currentDate}`);
+    }
   }
 
   if (collections != null) {
@@ -56,7 +74,7 @@ exports = async function(date, collections, symbols, fullSymbolsCollections) {
   } else {
     collections = allCollections;
   }
-
+  
   if (symbols != null) {
     throwIfEmptyArray(
       symbols, 
@@ -102,6 +120,20 @@ exports = async function(date, collections, symbols, fullSymbolsCollections) {
   // updates are always ignoring symbols when requested
   if (!fullSymbolsCollections.includes('updates')) {
     fullSymbolsCollections.push('updates');
+  }
+
+  // Check that there are no unexpected all symbols collections
+  const excessiveFullSymbolsCollections = fullSymbolsCollections.filter(x => !allowedFullSymbolsCollections.includes(x));
+  if (excessiveFullSymbolsCollections.length) {
+    _logAndThrow(`Invalid full symbols fetch collections array as the fourth argument: ${excessiveFullSymbolsCollections}. Allowed collections are: ${allowedFullSymbolsCollections}.`);
+  }
+
+  // Check that we do not request all data for collections that do not support it
+  if (symbols == null || symbols.length === 0) {
+    const excessiveCollections = collections.filter(x => !allowedFullSymbolsCollections.includes(x));
+    if (excessiveCollections.length >= 0) {
+      _logAndThrow(`Invalid collections array as the second argument: ${collections}. Full data is not supported for: ${excessiveCollections}. Full data fetch allowed collections: ${allowedFullSymbolsCollections}. Please provide concrete symbols to fetch or remove not supported collections.`);
+    }
   }
 
   const fmp = atlas.db("fmp");
