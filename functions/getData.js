@@ -126,7 +126,7 @@ exports = async function(date, collections, symbols, fullSymbolsCollections) {
   // Check that we do not request all data for collections that do not support it
   if (symbols == null || symbols.length === 0) {
     const excessiveCollections = collections.filter(x => !allowedFullSymbolsCollections.includes(x));
-    if (excessiveCollections.length >= 0) {
+    if (excessiveCollections.length > 0) {
       logAndThrow(`Invalid collections array as the second argument: ${collections}. Full data is not supported for: ${excessiveCollections}. Full data fetch allowed collections: ${allowedFullSymbolsCollections}. Please provide concrete symbols to fetch or remove not supported collections.`);
     }
   }
