@@ -103,9 +103,10 @@ exports = async function(date, collections, symbols, fullSymbolsCollections) {
         UserError
       );
   
-      const excessiveCollections = fullSymbolsCollections.filter(x => !allCollections.includes(x));
-      if (excessiveCollections.length) {
-        logAndThrow(`Invalid full symbol collections array as the fourth argument: ${excessiveCollections}. Valid full symbol collections are: ${allCollections}.`);
+      // Check that there are no unexpected all symbols collections
+      const excessiveFullSymbolsCollections = fullSymbolsCollections.filter(x => !allowedFullSymbolsCollections.includes(x));
+      if (excessiveFullSymbolsCollections.length) {
+        logAndThrow(`Invalid full symbol collections array as the fourth argument: ${excessiveFullSymbolsCollections}. Valid full symbol collections are: ${allowedFullSymbolsCollections}.`);
       }
     }
   } else {
@@ -120,12 +121,6 @@ exports = async function(date, collections, symbols, fullSymbolsCollections) {
   // updates are always ignoring symbols when requested
   if (!fullSymbolsCollections.includes('updates')) {
     fullSymbolsCollections.push('updates');
-  }
-
-  // Check that there are no unexpected all symbols collections
-  const excessiveFullSymbolsCollections = fullSymbolsCollections.filter(x => !allowedFullSymbolsCollections.includes(x));
-  if (excessiveFullSymbolsCollections.length) {
-    logAndThrow(`Invalid full symbols fetch collections array as the fourth argument: ${excessiveFullSymbolsCollections}. Allowed collections are: ${allowedFullSymbolsCollections}.`);
   }
 
   // Check that we do not request all data for collections that do not support it
