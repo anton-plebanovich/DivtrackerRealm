@@ -45,7 +45,7 @@ exports = async function(date, collections, symbols, fullSymbolsCollections) {
     // TODO: We might need to compute device vs server delta to fix device time.
     const currentDate = new Date();
     if (date > currentDate) {
-      _logAndThrow(`Invalid last update date parameter. Passed date '${date}' is higher than the current date: ${currentDate}`);
+      logAndThrow(`Invalid last update date parameter. Passed date '${date}' is higher than the current date: ${currentDate}`);
     }
   }
 
@@ -64,7 +64,7 @@ exports = async function(date, collections, symbols, fullSymbolsCollections) {
 
     const excessiveCollections = collections.filter(x => !allCollections.includes(x));
     if (excessiveCollections.length) {
-      _logAndThrow(`Invalid collections array as the second argument: ${excessiveCollections}. Valid collections are: ${allCollections}.`);
+      logAndThrow(`Invalid collections array as the second argument: ${excessiveCollections}. Valid collections are: ${allCollections}.`);
     }
     
   } else {
@@ -85,7 +85,7 @@ exports = async function(date, collections, symbols, fullSymbolsCollections) {
     );
   
     if (symbols.length > maxSymbolsCount) {
-      _logAndThrow(`Max collections count '${maxSymbolsCount}' is exceeded. Please make sure there are less than 1000 unique symbols in the portfolio.`);
+      logAndThrow(`Max collections count '${maxSymbolsCount}' is exceeded. Please make sure there are less than 1000 unique symbols in the portfolio.`);
     }
   }
 
@@ -105,7 +105,7 @@ exports = async function(date, collections, symbols, fullSymbolsCollections) {
   
       const excessiveCollections = fullSymbolsCollections.filter(x => !allCollections.includes(x));
       if (excessiveCollections.length) {
-        _logAndThrow(`Invalid full symbol collections array as the fourth argument: ${excessiveCollections}. Valid full symbol collections are: ${allCollections}.`);
+        logAndThrow(`Invalid full symbol collections array as the fourth argument: ${excessiveCollections}. Valid full symbol collections are: ${allCollections}.`);
       }
     }
   } else {
@@ -125,14 +125,14 @@ exports = async function(date, collections, symbols, fullSymbolsCollections) {
   // Check that there are no unexpected all symbols collections
   const excessiveFullSymbolsCollections = fullSymbolsCollections.filter(x => !allowedFullSymbolsCollections.includes(x));
   if (excessiveFullSymbolsCollections.length) {
-    _logAndThrow(`Invalid full symbols fetch collections array as the fourth argument: ${excessiveFullSymbolsCollections}. Allowed collections are: ${allowedFullSymbolsCollections}.`);
+    logAndThrow(`Invalid full symbols fetch collections array as the fourth argument: ${excessiveFullSymbolsCollections}. Allowed collections are: ${allowedFullSymbolsCollections}.`);
   }
 
   // Check that we do not request all data for collections that do not support it
   if (symbols == null || symbols.length === 0) {
     const excessiveCollections = collections.filter(x => !allowedFullSymbolsCollections.includes(x));
     if (excessiveCollections.length >= 0) {
-      _logAndThrow(`Invalid collections array as the second argument: ${collections}. Full data is not supported for: ${excessiveCollections}. Full data fetch allowed collections: ${allowedFullSymbolsCollections}. Please provide concrete symbols to fetch or remove not supported collections.`);
+      logAndThrow(`Invalid collections array as the second argument: ${collections}. Full data is not supported for: ${excessiveCollections}. Full data fetch allowed collections: ${allowedFullSymbolsCollections}. Please provide concrete symbols to fetch or remove not supported collections.`);
     }
   }
 
