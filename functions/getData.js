@@ -29,10 +29,6 @@ exports = async function(date, collections, symbols, fullSymbolsCollections) {
     "updates"
   ];
   
-  if (symbols.length > maxSymbolsCount) {
-    _logAndThrow(`Max collections count '${maxSymbolsCount}' is exceeded. Please make sure there are less than 1000 unique symbols in the portfolio.`);
-  }
-  
   // Collections that have objects with non-searchable ID, e.g. 'USD' for 'exchange-rates'
   const nonSearchableIDCollections = [
     'exchange-rates',
@@ -87,6 +83,10 @@ exports = async function(date, collections, symbols, fullSymbolsCollections) {
       `Please pass symbols array as the third argument.`, 
       UserError
     );
+  
+    if (symbols.length > maxSymbolsCount) {
+      _logAndThrow(`Max collections count '${maxSymbolsCount}' is exceeded. Please make sure there are less than 1000 unique symbols in the portfolio.`);
+    }
   }
 
   if (fullSymbolsCollections != null) {
