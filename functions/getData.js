@@ -45,7 +45,7 @@ exports = async function(date, collections, symbols, fullSymbolsCollections) {
     // TODO: We might need to compute device vs server delta to fix device time.
     const currentDate = new Date();
     if (date > currentDate) {
-      logAndThrow(`Invalid last update date parameter. Passed date '${date}' is higher than the current date: ${currentDate}`);
+      logAndThrow(`Invalid last update date parameter. Passed date '${date} (${date.getTime()})' is higher than the current date: ${currentDate} (${date.getTime()})`);
     }
   }
 
