@@ -67,15 +67,13 @@ exports = async function() {
           s: pastDividend.s,
           // Ex date might change a little bit.
           e: { $gte: lowerExDate, $lte: upperExDate }, 
-          $and: [
-            // We might have different frequency dividends on same or close date.
-            { f: pastDividend.f },
-            // Currency might be "" for future dividends.
-            { $or: [{ c: currency }, { c: "" }] },
-            // Amount might be 0.0 for future dividends.
-            // GSK, TTE. Amount might change a little bit.
-            { $or: [{ a: { $gte: lowerAmount, $lte: upperAmount } }, { a: 0.0 }] }
-          ]
+          // We might have different frequency dividends on same or close date.
+          f: pastDividend.f,
+          // Currency might be "" for future dividends.
+          c: { $in: [currency, ""] },
+          // Amount might be 0.0 for future dividends.
+          // GSK, TTE. Amount might change a little bit.
+          $or: [{ a: { $gte: lowerAmount, $lte: upperAmount } }, { a: 0.0 }]
         })
         .upsert()
         .updateOne(updateOne);
