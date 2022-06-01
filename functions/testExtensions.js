@@ -8,7 +8,9 @@ exports = async function() {
   const collection = db.collection("tmp");
 
   try {
-    testArrayPrototypeSortedDeletedToTheStart();
+    test_Object_prototype_updateFrom_1();
+    test_Object_prototype_updateFrom_2();
+    test_Array_Prototype_sortedDeletedToTheStart();
     await test(collection, testKnownOldObjects);
     await test(collection, testUnknownOldObjects);
     await test(collection, testKnownOldObjectsWithoutUpdateDate);
@@ -20,11 +22,47 @@ exports = async function() {
 
 //////////////////////////// LOCAL
 
-function testArrayPrototypeSortedDeletedToTheStart() {
+function test_Array_Prototype_sortedDeletedToTheStart() {
   const array = [{}, { x: true }, { x: false }, {}];
   const resultArray = array.sortedDeletedToTheStart();
   if (resultArray[0].x != true) {
-    throw `Method 'Array.prototype.sortedDeletedToTheStart' failure`;
+    throw `[test_Array_Prototype_sortedDeletedToTheStart] deleted object was not sorted to the start`;
+  }
+}
+
+function test_Object_prototype_updateFrom_1() {
+  const object = { a: 1 };
+  const oldObject = { x: true, a: 2 };
+  const update = object.updateFrom(oldObject, true);
+  if (update.$currentDate.u != true) {
+    throw `[test_Object_prototype_updateFrom] update date is not set`;
+  }
+  if (update.$set.a !== 1) {
+    throw `[test_Object_prototype_updateFrom] 'a' is not updated`;
+  }
+  if (update.$unset != null) {
+    throw `[test_Object_prototype_updateFrom] excessive unset operation`;
+  }
+}
+
+function test_Object_prototype_updateFrom_1() {
+  const object = { a: 2, x: true };
+  const oldObject = { a: 2 };
+  const update = object.updateFrom(oldObject, true);
+  if (update.$currentDate.u != true) {
+    throw `[test_Object_prototype_updateFrom] update date is not set`;
+  }
+  if (update.$set.x != true) {
+    throw `[test_Object_prototype_updateFrom] 'x' is not updated`;
+  }
+
+  const setLength = Object.keys(update.$set).length;
+  if (setLength !== 1) {
+    throw `[test_Object_prototype_updateFrom] excessive set operations: ${setLength}`;
+  }
+
+  if (update.$unset != null) {
+    throw `[test_Object_prototype_updateFrom] excessive unset operation`;
   }
 }
 
