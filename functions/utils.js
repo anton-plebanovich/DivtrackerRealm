@@ -165,7 +165,11 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields,
   const dictionary = oldObjects.toDictionary(fields);
   for (const newObject of newObjects) {
     const existingObject = fields.reduce((dictionary, field) => {
-      return dictionary[newObject[field]];
+      if (dictionary != null) {
+        return dictionary[newObject[field]];
+      } else {
+        return null;
+      }
     }, dictionary);
 
     bulk.findAndUpdateOrInsertIfNeeded(newObject, existingObject, fields, setUpdateDate);
