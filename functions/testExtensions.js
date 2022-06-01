@@ -41,7 +41,7 @@ function test_Object_prototype_updateFrom_preserve_deleted() {
   }
 }
 
-function test_Object_prototype_updateFrom_preserve_deleted() {
+function test_Object_prototype_updateFrom_set_deleted() {
   const object = { a: 2, x: true };
   const oldObject = { a: 2 };
   const update = object.updateFrom(oldObject, true);
