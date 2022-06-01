@@ -130,8 +130,8 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields,
   }
 
   if (typeof oldObjects === 'undefined') {
-    // Sort deleted to the end
-    const sort = { x: 1 };
+    // Sort deleted to the start so they will be overridden in the dictionary
+    const sort = { x: -1 };
 
     if (newObjects.length < 1000) {
       console.log(`Old objects are undefined. Fetching them by '${fields}'.`);
@@ -153,7 +153,7 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields,
       }
     }
   } else {
-    oldObjects = oldObjects.sortedDeletedToTheEnd();
+    oldObjects = oldObjects.sortedDeletedToTheStart();
   }
 
   if (oldObjects == null || oldObjects === []) {
@@ -162,12 +162,11 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields,
   }
 
   const bulk = this.initializeUnorderedBulkOp();
+  const dictionary = oldObjects.toDictionary(fields);
   for (const newObject of newObjects) {
-    const existingObject = oldObjects.find(oldObject =>
-      fields.every(field =>
-        oldObject[field].isEqual(newObject[field])
-      )
-    );
+    const existingObject = fields.reduce((dictionary, field) => {
+      return dictionary[newObject[field]];
+    }, dictionary);
 
     bulk.findAndUpdateOrInsertIfNeeded(newObject, existingObject, fields, setUpdateDate);
   }
@@ -236,6 +235,9 @@ Object.prototype.updateFrom = function(object, setUpdateDate) {
   object = Object.assign({}, object);
   delete object._id;
   delete object.u;
+
+  // We should not unset deleted flag since it's manual fix operation and has higher priority from updates.
+  delete object.x;
 
   const set = Object.assign({}, this);
   delete set._id;
@@ -405,22 +407,48 @@ Array.prototype.compactMap = function(callbackfn) {
 
 /**
  * Creates dictionary from objects using provided `key` or function as source for keys and object as value.
- * @param {function|string} arg Key map function or key.
+ * @param {function|array|string|null} arg Key map function or key.
  */
 Array.prototype.toDictionary = function(arg) {
   let getKey;
-  if (typeof arg === 'string' || arg instanceof String) {
-    getKey = (object) => object[arg];
-  } else if (arg == null) {
+  let isMultidimensional = false;
+  if (arg == null) {
     getKey = (object) => object;
+  } else if (typeof arg === 'string' || arg instanceof String) {
+    getKey = (object) => object[arg];
+  } else if (Object.prototype.toString.call(arg) === '[object Array]') {
+    isMultidimensional = true;
+    getKey = (object) => arg.map(key => object[key]);
   } else {
     getKey = arg;
   }
 
-  return this.reduce((dictionary, value) => {
-    const key = getKey(value);
-    return Object.assign(dictionary, { [key]: value });
-  }, {});
+  if (isMultidimensional) {
+    const dictionary = {};
+    for (const element of this) {
+      const keys = getKey(element);
+      const lastIndex = keys.length - 1;
+      let currentDictionary = dictionary;
+      for (const [i, key] of keys.entries()) {
+        if (i == lastIndex) {
+          currentDictionary[key] = element;
+        } else {
+          if (currentDictionary[key] == null) {
+            currentDictionary[key] = {};
+          }
+          currentDictionary = currentDictionary[key];
+        }
+      }
+    }
+
+    return dictionary;
+
+  } else {
+    return this.reduce((dictionary, element) => {
+      const key = getKey(element);
+      return Object.assign(dictionary, { [key]: element });
+    }, {});
+  }
 };
 
 /**
@@ -486,16 +514,16 @@ Array.prototype.contains = function(func) {
 };
 
 /**
- * Sorts objects with `x: true` field to the end and returns resulted array.
+ * Sorts objects with `x: true` field to the start and returns resulted array.
  */
-Array.prototype.sortedDeletedToTheEnd = function() {
+Array.prototype.sortedDeletedToTheStart = function() {
   return this.sorted((l, r) => {
     if (l.x === r.x) {
       return 0;
     } else if (l.x === true) {
-      return 1;
-    } else {
       return -1;
+    } else {
+      return 1;
     }
   });
 };
