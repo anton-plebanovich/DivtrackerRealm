@@ -130,8 +130,8 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields,
   }
 
   if (typeof oldObjects === 'undefined') {
-    // Sort deleted to the end
-    const sort = { x: 1 };
+    // Sort deleted to the start so they will be overridden in the dictionary
+    const sort = { x: -1 };
 
     if (newObjects.length < 1000) {
       console.log(`Old objects are undefined. Fetching them by '${fields}'.`);
@@ -153,7 +153,7 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields,
       }
     }
   } else {
-    oldObjects = oldObjects.sortedDeletedToTheEnd();
+    oldObjects = oldObjects.sortedDeletedToTheStart();
   }
 
   if (oldObjects == null || oldObjects === []) {
@@ -235,6 +235,9 @@ Object.prototype.updateFrom = function(object, setUpdateDate) {
   object = Object.assign({}, object);
   delete object._id;
   delete object.u;
+
+  // We should not unset deleted flag since it's manual fix operation and has higher priority from updates.
+  delete object.x;
 
   const set = Object.assign({}, this);
   delete set._id;
@@ -492,16 +495,16 @@ Array.prototype.contains = function(func) {
 };
 
 /**
- * Sorts objects with `x: true` field to the end and returns resulted array.
+ * Sorts objects with `x: true` field to the start and returns resulted array.
  */
-Array.prototype.sortedDeletedToTheEnd = function() {
+Array.prototype.sortedDeletedToTheStart = function() {
   return this.sorted((l, r) => {
     if (l.x === r.x) {
       return 0;
     } else if (l.x === true) {
-      return 1;
-    } else {
       return -1;
+    } else {
+      return 1;
     }
   });
 };
