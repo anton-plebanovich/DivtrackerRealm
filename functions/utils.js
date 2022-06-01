@@ -376,6 +376,25 @@ Array.prototype.chunked = function(size) {
 };
 
 /**
+ * Returns `count` random elements from an array.
+ */
+Array.prototype.getRandomElements = function(count) {
+  const elements = [];
+  const copy = [...this];
+  for (var i = 0; i < count; i++) {
+    if (copy.length === 0) {
+      return elements;
+    }
+
+    let index = Math.floor(Math.random() * copy.length);
+    const element = copy.splice(index, 1)[0];
+    elements.push(element);
+  }
+
+  return elements;
+}
+
+/**
  * Filters `null` and `undefined` elements.
  */
 Array.prototype.filterNullAndUndefined = function() {

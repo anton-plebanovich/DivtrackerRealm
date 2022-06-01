@@ -83,6 +83,46 @@
         "private": true
     },
     {
+        "name": "testAddTransactions",
+        "private": true,
+        "run_as_system": true
+    },
+    {
+        "name": "testAddTransactionsMultipleDuplicated",
+        "private": true,
+        "run_as_system": true
+    },
+    {
+        "name": "testAddTransactionsMultipleRandom",
+        "private": true,
+        "run_as_system": true
+    },
+    {
+        "name": "testExtensions",
+        "private": true,
+        "run_as_system": true
+    },
+    {
+        "name": "testFMPUpdates",
+        "private": true,
+        "run_as_system": true
+    },
+    {
+        "name": "testGetData",
+        "private": true,
+        "run_as_system": true
+    },
+    {
+        "name": "testIEXUpdates",
+        "private": true,
+        "run_as_system": true
+    },
+    {
+        "name": "testUtils",
+        "private": true,
+        "run_as_system": true
+    },
+    {
         "name": "updateCompaniesV2",
         "private": true
     },
