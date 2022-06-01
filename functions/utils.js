@@ -162,12 +162,11 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields,
   }
 
   const bulk = this.initializeUnorderedBulkOp();
+  const dictionary = oldObjects.toDictionary(fields);
   for (const newObject of newObjects) {
-    const existingObject = oldObjects.find(oldObject =>
-      fields.every(field =>
-        oldObject[field].isEqual(newObject[field])
-      )
-    );
+    const existingObject = fields.reduce((dictionary, field) => {
+      return dictionary[newObject[field]];
+    }, dictionary);
 
     bulk.findAndUpdateOrInsertIfNeeded(newObject, existingObject, fields, setUpdateDate);
   }
