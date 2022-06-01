@@ -8,12 +8,16 @@ exports = async function() {
   const collection = db.collection("tmp");
 
   try {
-    test_Object_prototype_updateFrom_1();
-    test_Object_prototype_updateFrom_2();
-    test_Array_Prototype_sortedDeletedToTheStart();
-    await test(collection, testKnownOldObjects);
-    await test(collection, testUnknownOldObjects);
-    await test(collection, testKnownOldObjectsWithoutUpdateDate);
+    test_Object_prototype_updateFrom_preserve_deleted();
+    test_Object_prototype_updateFrom_set_deleted();
+    test_Array_prototype_sortedDeletedToTheStart();
+    test_Array_prototype_toDictionary_keys_array();
+    await test(collection, test_singleKey_known_old_objects);
+    await test(collection, test_singleKey_unknown_old_objects);
+    await test(collection, test_singleKey_known_old_objects_without_update_date);
+    await test(collection, test_multipleKeys_known_old_objects);
+    await test(collection, test_multipleKeys_unknown_old_objects);
+    await test(collection, test_multipleKeys_known_old_objects_without_update_date);
   } catch(error) {
     console.log(error);
     throw error;
@@ -22,15 +26,7 @@ exports = async function() {
 
 //////////////////////////// LOCAL
 
-function test_Array_Prototype_sortedDeletedToTheStart() {
-  const array = [{}, { x: true }, { x: false }, {}];
-  const resultArray = array.sortedDeletedToTheStart();
-  if (resultArray[0].x != true) {
-    throw `[test_Array_Prototype_sortedDeletedToTheStart] deleted object was not sorted to the start`;
-  }
-}
-
-function test_Object_prototype_updateFrom_1() {
+function test_Object_prototype_updateFrom_preserve_deleted() {
   const object = { a: 1 };
   const oldObject = { x: true, a: 2 };
   const update = object.updateFrom(oldObject, true);
@@ -45,7 +41,7 @@ function test_Object_prototype_updateFrom_1() {
   }
 }
 
-function test_Object_prototype_updateFrom_1() {
+function test_Object_prototype_updateFrom_preserve_deleted() {
   const object = { a: 2, x: true };
   const oldObject = { a: 2 };
   const update = object.updateFrom(oldObject, true);
@@ -66,6 +62,28 @@ function test_Object_prototype_updateFrom_1() {
   }
 }
 
+function test_Array_prototype_sortedDeletedToTheStart() {
+  const array = [{}, { x: true }, { x: false }, {}];
+  const resultArray = array.sortedDeletedToTheStart();
+  if (resultArray[0].x != true) {
+    throw `[test_Array_Prototype_sortedDeletedToTheStart] deleted object was not sorted to the start`;
+  }
+}
+
+function test_Array_prototype_toDictionary_keys_array() {
+  const array = [
+    {a: "a1", b: "b1"},
+    {a: "a1", b: "b2"},
+    {a: "a2", b: "b2"}
+  ]
+  
+  const keys = ["a", "b"];
+  const dic = array.toDictionary(["a", "b"]);
+  if (dic.stringify() !== '{"a1":{"b1":{"a":"a1","b":"b1"},"b2":{"a":"a1","b":"b2"}},"a2":{"b2":{"a":"a2","b":"b2"}}}') {
+    throw `[test_Array_prototype_toDictionary_keys_array] unexpected result`;
+  }
+}
+
 //////////////////////////// ENVIRONMENT
 
 function setEnvironment() {
@@ -83,7 +101,27 @@ async function test(collection, testFunction) {
   await testFunction(collection);
 }
 
-async function testKnownOldObjects(collection) {
+async function test_singleKey_known_old_objects(collection, keys) {
+  await collection.insertOne(_deletedObject1);
+  await collection.insertOne(_object);
+  await collection.insertOne(_deletedObject2);
+  await collection.safeUpdateMany([_modifiedObject, _newObject], [_object], 'id1', true);
+  await checkObjects(collection, true);
+}
+
+async function test_singleKey_unknown_old_objects(collection) {
+  await collection.insertOne(_object);
+  await collection.safeUpdateMany([_modifiedObject, _newObject], undefined, 'id1', true);
+  await checkObjects(collection, true);
+}
+
+async function test_singleKey_known_old_objects_without_update_date(collection) {
+  await collection.insertOne(_object);
+  await collection.safeUpdateMany([_modifiedObject, _newObject], undefined, 'id1', false);
+  await checkObjects(collection, false);
+}
+
+async function test_multipleKeys_known_old_objects(collection) {
   await collection.insertOne(_deletedObject1);
   await collection.insertOne(_object);
   await collection.insertOne(_deletedObject2);
@@ -91,13 +129,13 @@ async function testKnownOldObjects(collection) {
   await checkObjects(collection, true);
 }
 
-async function testUnknownOldObjects(collection) {
+async function test_multipleKeys_unknown_old_objects(collection) {
   await collection.insertOne(_object);
   await collection.safeUpdateMany([_modifiedObject, _newObject], undefined, ['id1', 'id2'], true);
   await checkObjects(collection, true);
 }
 
-async function testKnownOldObjectsWithoutUpdateDate(collection) {
+async function test_multipleKeys_known_old_objects_without_update_date(collection) {
   await collection.insertOne(_object);
   await collection.safeUpdateMany([_modifiedObject, _newObject], undefined, ['id1', 'id2'], false);
   await checkObjects(collection, false);
