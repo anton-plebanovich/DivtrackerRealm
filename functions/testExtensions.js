@@ -6,8 +6,9 @@ exports = async function() {
 
   context.functions.execute("testUtils");
   const collection = db.collection("tmp");
-  
+
   try {
+    testArrayPrototypeSortedDeletedToTheStart();
     await test(collection, testKnownOldObjects);
     await test(collection, testUnknownOldObjects);
     await test(collection, testKnownOldObjectsWithoutUpdateDate);
@@ -16,6 +17,16 @@ exports = async function() {
     throw error;
   }
 };
+
+//////////////////////////// LOCAL
+
+function testArrayPrototypeSortedDeletedToTheStart() {
+  const array = [{}, { x: true }, { x: false }, {}];
+  const resultArray = array.sortedDeletedToTheStart();
+  if (resultArray[0].x != true) {
+    throw `Method 'Array.prototype.sortedDeletedToTheStart' failure`;
+  }
+}
 
 //////////////////////////// ENVIRONMENT
 
