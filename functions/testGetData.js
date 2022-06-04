@@ -22,7 +22,7 @@ exports = async function() {
 
   // Data update
   await context.functions.execute("getData", new Date('2020-01-01'), null, symbolIDs, ["exchange-rates", "symbols", "updates"]);
-  verifyResponse(response, ["exchange-rates", "symbols", "updates"]);
+  verifyResponse(response, ["companies", "dividends", "historical-prices", "quotes", "splits", "exchange-rates", "symbols", "updates"]);
 };
 
 function verifyResponse(response, collections) {
