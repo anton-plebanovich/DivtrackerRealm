@@ -1,9 +1,11 @@
 
 // getData.js
 
+// TODO: Improve response structure in V2
 exports = async function(date, collections, symbols, fullSymbolsCollections) {
   context.functions.execute("utils");
 
+  const lastUpdateDate = new Date();
   const maxSymbolsCount = 1000;
 
   const allCollections = [
@@ -42,10 +44,8 @@ exports = async function(date, collections, symbols, fullSymbolsCollections) {
       UserError
     );
     
-    // TODO: We might need to compute device vs server delta to fix device time.
-    const currentDate = new Date();
-    if (date > currentDate) {
-      logAndThrow(`Invalid last update date parameter. Passed date '${date} (${date.getTime()})' is higher than the current date: ${currentDate} (${date.getTime()})`);
+    if (date > lastUpdateDate) {
+      logAndThrow(`Invalid last update date parameter. Passed date '${date} (${date.getTime()})' is higher than the new update date: ${lastUpdateDate} (${lastUpdateDate.getTime()})`);
     }
   }
 
@@ -197,6 +197,8 @@ exports = async function(date, collections, symbols, fullSymbolsCollections) {
   const result = operationResults.reduce((result, operationResult) => {
     return Object.assign(result, operationResult);
   }, {});
+
+  result.lastUpdateDate = lastUpdateDate;
 
   return result;
 };
