@@ -133,7 +133,7 @@ getShortSymbols = _getShortSymbols;
 /**
  * Default range to fetch.
  */
-const defaultRange = '6y';
+const defaultRange = '10y';
 
 fetchSymbols = async function fetchSymbols() {
   // https://cloud.iexapis.com/stable/ref-data/symbols?token=pk_9f1d7a2688f24e26bb24335710eae053
@@ -517,11 +517,11 @@ function _removeDuplicatedIEXDividends(iexDividends) {
   const buckets = iexDividends.toBuckets('refid');
   const result = [];
   for (const bucket of Object.values(buckets)) {
-    // Prefer the one without payment date and earlier ones (descending order)
+    // Prefer the one with payment date and earlier ones (descending order)
     const sortedBucket = bucket.sorted((l, r) => {
-      if (r.paymentDate == null || r.paymentDate == "0000-00-00") {
+      if (l.paymentDate == null || l.paymentDate === "0000-00-00") {
         return -1;
-      } else if (l.paymentDate == null || l.paymentDate == "0000-00-00") {
+      } else if (r.paymentDate == null || r.paymentDate === "0000-00-00") {
         return 1;
       } else {
         return r.exDate.localeCompare(l.exDate);
