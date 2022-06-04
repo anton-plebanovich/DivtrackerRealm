@@ -5,7 +5,10 @@
 exports = async function(date, collections, symbols, fullSymbolsCollections) {
   context.functions.execute("utils");
 
+  // Create new date and round to seconds because Realm date type does not support millis
   const lastUpdateDate = new Date();
+  lastUpdateDate.setMilliseconds(0);
+
   const maxSymbolsCount = 1000;
 
   const allCollections = [
