@@ -27,6 +27,8 @@ All the same as for normal flow except we don't have the required time window an
 
 ### Sandbox
 
+- When automated tests are passed in the `tests` environment we deploy to the `sandbox`.
+- We should not have any `testXXX` function deployed here so they should be removed during merge if needed.
 - IEX data comes from the IEX Production so we should have the same data as in the `production` environment but in less volume.
 - Manual testing is happening here.
 - The team is working here so if something looks wrong it should be reported immediately and fixed.
