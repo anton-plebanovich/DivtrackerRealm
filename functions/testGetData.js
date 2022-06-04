@@ -17,11 +17,11 @@ exports = async function() {
   verifyResponse(response, ["exchange-rates", "symbols", "updates"]);
 
   // Symbols data fetch
-  await context.functions.execute("getData", null, ["companies", "dividends", "historical-prices", "quotes", "splits"], symbolIDs, null);
+  response = await context.functions.execute("getData", null, ["companies", "dividends", "historical-prices", "quotes", "splits"], symbolIDs, null);
   verifyResponse(response, ["companies", "dividends", "historical-prices", "quotes", "splits"]);
 
   // Data update
-  await context.functions.execute("getData", new Date('2020-01-01'), null, symbolIDs, ["exchange-rates", "symbols", "updates"]);
+  response = await context.functions.execute("getData", new Date('2020-01-01'), null, symbolIDs, ["exchange-rates", "symbols", "updates"]);
   verifyResponse(response, ["companies", "dividends", "historical-prices", "quotes", "splits", "exchange-rates", "symbols", "updates"]);
 };
 
