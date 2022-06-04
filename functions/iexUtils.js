@@ -517,14 +517,14 @@ function _removeDuplicatedIEXDividends(iexDividends) {
   const buckets = iexDividends.toBuckets('refid');
   const result = [];
   for (const bucket of Object.values(buckets)) {
-    // Prefer the one without payment date and later ones.
+    // Prefer the one without payment date and earlier ones (descending order)
     const sortedBucket = bucket.sorted((l, r) => {
-      if (l.paymentDate == null || l.paymentDate == "0000-00-00") {
-        return true;
-      } else if (r.paymentDate == null || r.paymentDate == "0000-00-00") {
-        return false;
+      if (r.paymentDate == null || r.paymentDate == "0000-00-00") {
+        return -1;
+      } else if (l.paymentDate == null || l.paymentDate == "0000-00-00") {
+        return 1;
       } else {
-        return l.exDate >= r.exDate;
+        return r.exDate.localeCompare(l.exDate);
       }
     });
 
@@ -544,9 +544,9 @@ function _removeDuplicatedDividends(dividends) {
   // Sort, so we can compare closest ones
   const sortedDividends = [...dividends].sorted((l, r) => {
     if (compareOptionalDates(l.e, r.e)) {
-      return l.a <= r.a;
+      return l.a - r.a;
     } else {
-      return l.e <= r.e;
+      return l.e - r.e;
     }
   })
   
@@ -728,8 +728,11 @@ function _fixSplits(iexSplits, symbolID) {
     }
   
     console.logVerbose(`Fixing splits for ${symbolID}`);
+
+    iexSplits = iexSplits.filterNullAndUndefined();
+    iexSplits = _removeDuplicatedIEXSplits(iexSplits);
+
     return iexSplits
-      .filterNullAndUndefined()
       .map(iexSplit => {
         const split = {};
         split.e = _getOpenDate(iexSplit.exDate);
@@ -749,6 +752,26 @@ function _fixSplits(iexSplits, symbolID) {
 };
 
 fixSplits = _fixSplits;
+
+function _removeDuplicatedIEXSplits(iexSplits) {
+  const buckets = iexSplits.toBuckets('refid');
+  const result = [];
+  for (const bucket of Object.values(buckets)) {
+    // Prefer the later one (ascending order)
+    const sortedBucket = bucket.sorted((l, r) => {
+      return l.exDate.localeCompare(r.exDate);
+    });
+
+    if (sortedBucket.length > 1) {
+      const duplicate = sortedBucket[0];
+      console.error(`Duplicate split for ${duplicate.symbol}: ${duplicate.stringify()}`);
+    }
+
+    result.push(sortedBucket[sortedBucket.length - 1]);
+  }
+
+  return result;
+}
 
 /** 
  * First parameter: Date in the "yyyy-mm-dd" or timestamp or Date format, e.g. "2020-03-27" or '1633046400000' or Date.
