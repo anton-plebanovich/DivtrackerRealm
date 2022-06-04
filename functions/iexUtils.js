@@ -133,7 +133,7 @@ getShortSymbols = _getShortSymbols;
 /**
  * Default range to fetch.
  */
-const defaultRange = '6y';
+const defaultRange = '10y';
 
 fetchSymbols = async function fetchSymbols() {
   // https://cloud.iexapis.com/stable/ref-data/symbols?token=pk_9f1d7a2688f24e26bb24335710eae053
