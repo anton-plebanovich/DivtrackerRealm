@@ -524,7 +524,7 @@ function _removeDuplicatedIEXDividends(iexDividends) {
       } else if (l.paymentDate == null || l.paymentDate == "0000-00-00") {
         return 1;
       } else {
-        return l.exDate - r.exDate;
+        return l.exDate.localeCompare(r.exDate);
       }
     });
 
@@ -759,7 +759,7 @@ function _removeDuplicatedIEXSplits(iexSplits) {
   for (const bucket of Object.values(buckets)) {
     // Prefer the later one (ascending order)
     const sortedBucket = bucket.sorted((l, r) => {
-      return l.exDate - r.exDate;
+      return l.exDate.localeCompare(r.exDate);
     });
 
     if (sortedBucket.length > 1) {
