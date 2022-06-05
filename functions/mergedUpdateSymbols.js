@@ -173,7 +173,7 @@ function getUpdateSymbolOperation(sourceField, sourceSymbol, mergedSymbol) {
     // Check if we can detach any other source. 
     // This is a case when we attach to a disabled merged symbol.
     const otherFields = fields.filter(field => field !== sourceField);
-    const fieldToDetach = otherFields.first(field => mergedSymbol[field] != null && mergedSymbol[field].e == false);
+    const fieldToDetach = otherFields.find(field => mergedSymbol[field] != null && mergedSymbol[field].e == false);
     if (fieldToDetach != null) {
       unset[fieldToDetach] = "";
     }
