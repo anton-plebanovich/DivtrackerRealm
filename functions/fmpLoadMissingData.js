@@ -61,7 +61,8 @@ async function loadMissingCompanies(shortSymbols) {
       operations.push(operation);
     }
   
-    await collection.bulkWrite(operations);
+    const options = { ordered: false };
+    await collection.bulkWrite(operations, options);
     await updateStatus(collectionName, symbolIDs);
   });
 }
