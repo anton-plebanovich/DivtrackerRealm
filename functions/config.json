@@ -75,6 +75,10 @@
         "private": false
     },
     {
+        "name": "mergedUpdateSymbols",
+        "private": true
+    },
+    {
         "name": "migrations",
         "private": true
     },
