@@ -75,9 +75,9 @@ async function update(mergedSymbolsCollection, find, source) {
   const [sourceSymbols, mergedSymbols] = await Promise.all([
     sourceCollection.find(find).toArray(),
     mergedSymbolsCollection.find({}).toArray(),
-  ])
+  ]);
 
-  const mergedSymbolByID = mergedSymbols.toDictionary(x => x[sourceField]._id);
+  const mergedSymbolByID = mergedSymbols.toDictionary(x => x[sourceField]?._id);
   const mergedSymbolByTicker = mergedSymbols.toDictionary(x => x.m.t);
   const mergedSymbolByName = mergedSymbols.toDictionary(x => x.m.n);
   
@@ -86,21 +86,21 @@ async function update(mergedSymbolsCollection, find, source) {
     let operation;
 
     // First, we need to check if symbol already added
-    operation = getUpdateMergedSymbolOperation(mergedSymbolByID, sourceField, sourceSymbol, '_id')
+    operation = getUpdateMergedSymbolOperation(mergedSymbolByID, sourceField, sourceSymbol, '_id');
     if (operation != null) {
       operations.push(operation);
       continue;
     }
 
     // Second, check if symbol is added from different source. Try to search by ticker as more robust.
-    operation = getUpdateMergedSymbolOperation(mergedSymbolByTicker, sourceField, sourceSymbol, 't')
+    operation = getUpdateMergedSymbolOperation(mergedSymbolByTicker, sourceField, sourceSymbol, 't');
     if (operation != null) {
       operations.push(operation);
       continue;
     }
 
     // Third, try to search by name as least robust.
-    operation = getUpdateMergedSymbolOperation(mergedSymbolByName, sourceField, sourceSymbol, 'n')
+    operation = getUpdateMergedSymbolOperation(mergedSymbolByName, sourceField, sourceSymbol, 'n');
     if (operation != null) {
       operations.push(operation);
       continue;
@@ -116,10 +116,14 @@ async function update(mergedSymbolsCollection, find, source) {
     operations.push(operation);
   }
 
-  console.log(`Performing ${operations.length} symbols update operations`);
-  const options = { ordered: false };
-  await mergedSymbolsCollection.bulkWrite(operations, options);
-  console.log(`Performed ${operations.length} symbols update operations`);
+  if (operations.length) {
+    console.log(`Performing ${operations.length} symbols update operations for '${sourceField}' source field`);
+    const options = { ordered: false };
+    await mergedSymbolsCollection.bulkWrite(operations, options);
+    console.log(`Performed ${operations.length} symbols update operations for '${sourceField}' source field`);
+  } else {
+    console.log(`No operations to perform for '${sourceField}' source field`);
+  }
 }
 
 /**
@@ -127,11 +131,13 @@ async function update(mergedSymbolsCollection, find, source) {
  */
 function getUpdateMergedSymbolOperation(dictionary, sourceField, sourceSymbol, compareField) {
   const key = sourceSymbol[compareField];
+  if (key == null) { return null; }
+
   const mergedSymbol = dictionary[key];
-  if (mergedSymbol != null) {
-    return getUpdateSymbolOperation(sourceField, sourceSymbol, mergedSymbol);
-  } else {
+  if (mergedSymbol == null) {
     return null;
+  } else {
+    return getUpdateSymbolOperation(sourceField, sourceSymbol, mergedSymbol);
   }
 }
 
@@ -152,6 +158,8 @@ function getUpdateSymbolOperation(sourceField, sourceSymbol, mergedSymbol) {
       }
     }
   }
+
+  console.logData(`New main source`, newMainSource);
 
   const newMainSourceIDString = newMainSource._id.toString();
   const mergedSymbolMainIDString = mergedSymbol.m._id.toString();
@@ -187,10 +195,9 @@ function getUpdateSymbolOperation(sourceField, sourceSymbol, mergedSymbol) {
   }
 
   if (isMainSourceChange) {
-    update.$currentDate.u = true;
-    update.$currentDate.r = true;
+    update.$currentDate = { u: true, r: true };
   } else if (isMainSourceUpdate) {
-    update.$currentDate.u = true;
+    update.$currentDate = { u: true };
   }
 
   const filter = { _id: mergedSymbol._id };

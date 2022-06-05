@@ -432,6 +432,8 @@ Array.prototype.toDictionary = function(arg) {
     const dictionary = {};
     for (const element of this) {
       const keys = getKey(element);
+      if (keys == null) { continue; }
+      
       const lastIndex = keys.length - 1;
       let currentDictionary = dictionary;
       for (const [i, key] of keys.entries()) {
