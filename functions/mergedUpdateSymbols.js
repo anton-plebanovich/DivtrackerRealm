@@ -99,12 +99,10 @@ async function update(mergedSymbolsCollection, find, source) {
       continue;
     }
 
-    // Third, try to search by name as least robust.
-    operation = getUpdateMergedSymbolOperation(mergedSymbolByName, sourceField, sourceSymbol, 'n');
-    if (operation != null) {
-      operations.push(operation);
-      continue;
-    }
+    // Sadly, we can't merge using name because FMP may shorten symbol names:
+    // JFR - Nuveen Floating Rate Income Fund
+    // NFRIX - Nuveen Floating Rate Income Fund Class I
+    // FMP => NFRIX - Nuveen Floating Rate Income Fund
 
     // Just insert new symbol
     const insertOne = {
