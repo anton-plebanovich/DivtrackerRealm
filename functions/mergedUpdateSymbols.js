@@ -9,20 +9,6 @@
 // https://docs.mongodb.com/realm/mongodb/
 // https://docs.mongodb.com/realm/mongodb/actions/collection.bulkWrite/#std-label-mongodb-service-collection-bulk-write
 
-// Merged symbols collection fields.
-// _id: ID. Inherited from source symbol ID on creation.
-// f: FMP symbol ID or `null`
-// i: IEX symbol ID or `null`
-// r: Refetch date or `null`
-// m: Main source symbol ID
-// t: Main source ticker
-// n: Main source company name
-//
-// Rules:
-// First, we check IEX collection since it more robust. Then, FMP.
-// When we have both FMP and IEX symbols we prioritize FMP as the main source.
-// When the main source ID changes we update refetch date.
-
 /**
  * Available sources
  */
@@ -79,7 +65,6 @@ async function update(mergedSymbolsCollection, find, source) {
 
   const mergedSymbolByID = mergedSymbols.toDictionary(x => x[sourceField]?._id);
   const mergedSymbolByTicker = mergedSymbols.toDictionary(x => x.m.t);
-  const mergedSymbolByName = mergedSymbols.toDictionary(x => x.m.n);
   
   const operations = [];
   for (const sourceSymbol of sourceSymbols) {
@@ -87,15 +72,13 @@ async function update(mergedSymbolsCollection, find, source) {
 
     // First, we need to check if symbol already added
     operation = getUpdateMergedSymbolOperation(mergedSymbolByID, sourceField, sourceSymbol, '_id');
-    if (operation != null) {
-      operations.push(operation);
+    if (addOperationIfNeeded(operation, operations)) {
       continue;
     }
 
     // Second, check if symbol is added from different source. Try to search by ticker as more robust.
     operation = getUpdateMergedSymbolOperation(mergedSymbolByTicker, sourceField, sourceSymbol, 't');
-    if (operation != null) {
-      operations.push(operation);
+    if (addOperationIfNeeded(operation, operations)) {
       continue;
     }
 
@@ -125,7 +108,7 @@ async function update(mergedSymbolsCollection, find, source) {
 }
 
 /**
- * Returns `true` on success update
+ * Returns operation on success update
  */
 function getUpdateMergedSymbolOperation(dictionary, sourceField, sourceSymbol, compareField) {
   const key = sourceSymbol[compareField];
@@ -139,6 +122,9 @@ function getUpdateMergedSymbolOperation(dictionary, sourceField, sourceSymbol, c
   }
 }
 
+/**
+ * Returns operation on success update
+ */
 function getUpdateSymbolOperation(sourceField, sourceSymbol, mergedSymbol) {
   let newMainSource = mergedSymbol.m;
   for (const field of fields) {
@@ -166,15 +152,19 @@ function getUpdateSymbolOperation(sourceField, sourceSymbol, mergedSymbol) {
   const isMainSourceUpdate = sourceSymbolIDString === newMainSourceIDString;
   const isSourceDetach = sourceSymbol.e == false && newMainSourceIDString !== sourceSymbolIDString;
 
-  const set = {
-    m: newMainSource,
-  };
+  const set = {}
+
+  if (!newMainSource.isEqual(mergedSymbol.m)) {
+    set.m = newMainSource;
+  }
 
   const unset = {};
   if (isSourceDetach) {
     unset[sourceField] = "";
   } else {
-    set[sourceField] = sourceSymbol;
+    if (!sourceSymbol.isEqual(mergedSymbol[sourceField])) {
+      set[sourceField] = sourceSymbol;
+    }
 
     // Check if we can detach any other source. 
     // This is a case when we attach to a disabled merged symbol.
@@ -185,11 +175,17 @@ function getUpdateSymbolOperation(sourceField, sourceSymbol, mergedSymbol) {
     }
   }
 
-  let update;
+  const update = {};
+  if (Object.keys(set).length !== 0) {
+    update.$set = set;
+  }
+
   if (Object.keys(unset).length === 0) {
-    update = { $set: set };
-  } else {
-    update = { $set: set, $unset: unset };
+    update.$unset = unset;
+  }
+
+  if (Object.keys(update).length === 0) {
+    return {};
   }
 
   if (isMainSourceChange) {
@@ -203,4 +199,19 @@ function getUpdateSymbolOperation(sourceField, sourceSymbol, mergedSymbol) {
   const operation = { updateOne: updateOne };
 
   return operation;
+}
+
+/**
+ * Returns `true` if there was an operation, even if it is empty.
+ * Means update succeeded.
+ */
+function addOperationIfNeeded(operation, opertaions) {
+  if (operation == null) {
+    return false;
+  } else if (Object.keys(operation).length === 0) {
+    return true;
+  } else {
+    opertaions.push(operation);
+    return true;
+  }
 }
