@@ -152,7 +152,7 @@ function getUpdateSymbolOperation(sourceField, sourceSymbol, mergedSymbol) {
   const isMainSourceUpdate = sourceSymbolIDString === newMainSourceIDString;
   const isSourceDetach = sourceSymbol.e == false && newMainSourceIDString !== sourceSymbolIDString;
 
-  const set = {}
+  const set = {};
 
   if (!newMainSource.isEqual(mergedSymbol.m)) {
     set.m = newMainSource;
@@ -162,7 +162,8 @@ function getUpdateSymbolOperation(sourceField, sourceSymbol, mergedSymbol) {
   if (isSourceDetach) {
     unset[sourceField] = "";
   } else {
-    if (!sourceSymbol.isEqual(mergedSymbol[sourceField])) {
+    const oldSourceSymbol = mergedSymbol[sourceField];
+    if (oldSourceSymbol == null || !sourceSymbol.isEqual(oldSourceSymbol)) {
       set[sourceField] = sourceSymbol;
     }
 
@@ -205,13 +206,13 @@ function getUpdateSymbolOperation(sourceField, sourceSymbol, mergedSymbol) {
  * Returns `true` if there was an operation, even if it is empty.
  * Means update succeeded.
  */
-function addOperationIfNeeded(operation, opertaions) {
+function addOperationIfNeeded(operation, operations) {
   if (operation == null) {
     return false;
   } else if (Object.keys(operation).length === 0) {
     return true;
   } else {
-    opertaions.push(operation);
+    operations.push(operation);
     return true;
   }
 }

@@ -8,12 +8,13 @@
 exports = async function() {
   context.functions.execute("testUtils");
 
-  setup()
+  setup();
 
   try {
     await test(testIEXInsert);
   } catch(error) {
     console.log(error);
+    await restore();
     throw error;
   }
 
@@ -39,7 +40,7 @@ async function testIEXInsert() {
   }
 
   const mergedSymbol = mergedSymbols[0];
-  if (!symbol.isEqual(mergedSymbol.m) || !symbol.isEqual(mergedSymbol.i) || mergedSymbol.m.toString() !== id.toString()) {
+  if (!symbol.isEqual(mergedSymbol.m) || !symbol.isEqual(mergedSymbol.i) || mergedSymbol._id.toString() !== id.toString()) {
     throw `[testIEXInsert] Unexpected merged symbols content: ${mergedSymbol.stringify()}`;
   }
 }
@@ -73,9 +74,7 @@ async function cleanup() {
 }
 
 async function restore() {
-  await db.collection('symbols').deleteMany({});
-  await Promise.all([
-    context.functions.execute("updateSymbolsV2"),
-    context.functions.execute("fmpUpdateSymbols"),
-  ]);
+  await cleanup();
+  await context.functions.execute("updateSymbolsV2");
+  await context.functions.execute("fmpUpdateSymbols");
 }
