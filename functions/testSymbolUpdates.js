@@ -12,13 +12,13 @@ exports = async function() {
 
   try {
     await test(testIEXInsert);
+    await test(testFMPInsert);
+    await restore();
   } catch(error) {
     console.log(error);
     await restore();
     throw error;
   }
-
-  await restore();
 };
 
 async function test(testFunction) {
@@ -46,6 +46,22 @@ async function testIEXInsert() {
 }
 
 // Insert FMP
+async function testFMPInsert() {
+  const id = new BSON.ObjectId();
+  const symbol = { _id: id, t: "TICKER", n: "NAME" };
+  await fmpSymbolsCollection.insertOne(symbol);
+  await context.functions.execute("mergedUpdateSymbols");
+  const mergedSymbols = await mergedSymbolsCollection.find({}).toArray();
+  if (mergedSymbols.length !== 1) {
+    throw `[testFMPInsert] Unexpected merged symbols length: ${mergedSymbols.stringify()}`;
+  }
+
+  const mergedSymbol = mergedSymbols[0];
+  if (!symbol.isEqual(mergedSymbol.m) || !symbol.isEqual(mergedSymbol.i) || mergedSymbol._id.toString() !== id.toString()) {
+    throw `[testFMPInsert] Unexpected merged symbols content: ${mergedSymbol.stringify()}`;
+  }
+}
+
 // Merge FMP to IEX
 // Merge IEX to FMP
 // Disable singular source symbol and enable it back
@@ -54,8 +70,6 @@ async function testIEXInsert() {
 // Update singular source symbol (ticker, company name, nothing)
 // Update primary source for multiple sources symbol (ticker, company name, nothing)
 // Update backup source for multiple sources symbol (ticker, company name, nothing)
-
-
 
 //////////////////////////// HELPERS
 
@@ -77,4 +91,5 @@ async function restore() {
   await cleanup();
   await context.functions.execute("updateSymbolsV2");
   await context.functions.execute("fmpUpdateSymbols");
+  await context.functions.execute("mergedUpdateSymbols");
 }
