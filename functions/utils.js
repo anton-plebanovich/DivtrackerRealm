@@ -641,6 +641,18 @@ Date.prototype.apiParameter = function() {
 };
 
 /**
+ * Returns `find` operator to search for new records after `this`.
+ */
+Date.prototype.getFindOperator = function() {
+  return {
+    $or: [
+      { _id: { $gte: BSON.ObjectId.fromDate(this) } },
+      { u: { $gte: this } }
+    ]
+  };
+}
+
+/**
  * Stringifies object using JSON format.
  * @returns Stringified object in JSON format.
  */
