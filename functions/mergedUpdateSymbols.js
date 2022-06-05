@@ -48,7 +48,7 @@ exports = async function(date, sourceName) {
   context.functions.execute("utils");
 
   let find;
-  if (date == null) {
+  if (date == null || Object.prototype.toString.call(date) !== '[object Date]') {
     find = {};
   } else {
     find = date.getFindOperator();
@@ -71,56 +71,71 @@ exports = async function(date, sourceName) {
 
 async function update(mergedSymbolsCollection, find, source) {
   const sourceCollection = atlas.db(source.database).collection("symbols");
-  const sourceSymbols = await sourceCollection.find(find).toArray();
   const sourceField = source.field;
+  const [sourceSymbols, mergedSymbols] = await Promise.all([
+    sourceCollection.find(find).toArray(),
+    mergedSymbolsCollection.find({}).toArray(),
+  ])
 
-  // TODO: We can do that in parallel
-  // TODO?: Instead we can just get all symbols and use dictionaries to get data. Should be faster.
+  const mergedSymbolByID = mergedSymbols.toDictionary(x => x[sourceField]._id);
+  const mergedSymbolByTicker = mergedSymbols.toDictionary(x => x.m.t);
+  const mergedSymbolByName = mergedSymbols.toDictionary(x => x.m.n);
+  
+  const operations = [];
   for (const sourceSymbol of sourceSymbols) {
+    let operation;
+
     // First, we need to check if symbol already added
-    if (await updatemergedSymbolIfPossible(mergedSymbolsCollection, sourceField, sourceSymbol, '_id')) {
+    operation = getUpdateMergedSymbolOperation(mergedSymbolByID, sourceField, sourceSymbol, '_id')
+    if (operation != null) {
+      operations.push(operation);
       continue;
     }
 
     // Second, check if symbol is added from different source. Try to search by ticker as more robust.
-    if (await updatemergedSymbolIfPossible(mergedSymbolsCollection, sourceField, sourceSymbol, 't')) {
+    operation = getUpdateMergedSymbolOperation(mergedSymbolByTicker, sourceField, sourceSymbol, 't')
+    if (operation != null) {
+      operations.push(operation);
       continue;
     }
 
     // Third, try to search by name as least robust.
-    if (await updatemergedSymbolIfPossible(mergedSymbolsCollection, sourceField, sourceSymbol, 'n')) {
+    operation = getUpdateMergedSymbolOperation(mergedSymbolByName, sourceField, sourceSymbol, 'n')
+    if (operation != null) {
+      operations.push(operation);
       continue;
     }
 
     // Just insert new symbol
-    await mergedSymbolsCollection.insertOne({
+    const insertOne = {
       _id: sourceSymbol._id,
       m: sourceSymbol,
       [sourceField]: sourceSymbol,
-    });
+    };
+    operation = { insertOne: insertOne };
+    operations.push(operation);
   }
+
+  console.log(`Performing ${operations.length} symbols update operations`);
+  const options = { ordered: false };
+  await mergedSymbolsCollection.bulkWrite(operations, options);
+  console.log(`Performed ${operations.length} symbols update operations`);
 }
 
 /**
  * Returns `true` on success update
  */
-async function updatemergedSymbolIfPossible(mergedSymbolsCollection, sourceField, sourceSymbol, compareField) {
-  const find = getFindOperator(sourceField, sourceSymbol, compareField);
-  const mergedSymbol = await mergedSymbolsCollection.findOne(find);
+function getUpdateMergedSymbolOperation(dictionary, sourceField, sourceSymbol, compareField) {
+  const key = sourceSymbol[compareField];
+  const mergedSymbol = dictionary[key];
   if (mergedSymbol != null) {
-    await updateSymbol(mergedSymbolsCollection, sourceField, sourceSymbol, mergedSymbol);
-    return true;
+    return getUpdateSymbolOperation(sourceField, sourceSymbol, mergedSymbol);
   } else {
-    return false;
+    return null;
   }
 }
 
-function getFindOperator(sourceField, sourceSymbol, compareField) {
-  const idField = `${sourceField}.${compareField}`;
-  return { [idField]: sourceSymbol[compareField] };
-}
-
-async function updateSymbol(mergedSymbolsCollection, sourceField, sourceSymbol, mergedSymbol) {
+function getUpdateSymbolOperation(sourceField, sourceSymbol, mergedSymbol) {
   let newMainSource = mergedSymbol.m;
   for (const field of fields) {
     if (field === sourceField) {
@@ -145,7 +160,6 @@ async function updateSymbol(mergedSymbolsCollection, sourceField, sourceSymbol, 
   const isMainSourceUpdate = sourceSymbolIDString === newMainSourceIDString;
   const isSourceDetach = sourceSymbol.e == false && newMainSourceIDString !== sourceSymbolIDString;
 
-  const find = { _id: mergedSymbol._id };
   const set = {
     m: newMainSource,
   };
@@ -179,5 +193,9 @@ async function updateSymbol(mergedSymbolsCollection, sourceField, sourceSymbol, 
     update.$currentDate.u = true;
   }
 
-  await mergedSymbolsCollection.updateOne(find, update);
+  const filter = { _id: mergedSymbol._id };
+  const updateOne = { filter: filter, update: update, upsert: false };
+  const operation = { updateOne: updateOne };
+
+  return operation;
 }

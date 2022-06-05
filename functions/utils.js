@@ -541,6 +541,9 @@ Array.prototype.sorted = function(func) {
   return copy.sort(func);
 };
 
+/**
+ * Performs map operator async with specified simultaneous concurrent queues.
+ */
 Array.prototype.asyncMap = async function(limit, callback) {
   let index = 0;
   const results = [];
