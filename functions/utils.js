@@ -411,6 +411,7 @@ Array.prototype.compactMap = function(callbackfn) {
 
 /**
  * Creates dictionary from objects using provided `key` or function as source for keys and object as value.
+ * If returned key is `null` or `undefined` then value is ignored.
  * @param {function|array|string|null} arg Key map function or key.
  */
 Array.prototype.toDictionary = function(arg) {
@@ -450,7 +451,11 @@ Array.prototype.toDictionary = function(arg) {
   } else {
     return this.reduce((dictionary, element) => {
       const key = getKey(element);
-      return Object.assign(dictionary, { [key]: element });
+      if (key != null) {
+        return Object.assign(dictionary, { [key]: element });
+      } else {
+        return dictionary;
+      }
     }, {});
   }
 };
