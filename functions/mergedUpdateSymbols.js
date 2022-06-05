@@ -29,7 +29,7 @@
 const sources = {
   iex: { field: 'i', database: 'divtracker-v2' },
   fmp: { field: 'f', database: 'fmp' },
-}
+};
 
 /**
  * Fields in descending priority order. Higher priority became the main source on conflicts.
@@ -37,7 +37,7 @@ const sources = {
 const fields = [
   sources.fmp.field,
   sources.iex.field,
-]
+];
 
 /**
  * Updates merged symbols collection.
@@ -45,7 +45,7 @@ const fields = [
  * @param {String} sourceName Update source: 'iex' or 'fmp'. By default, updates from both sources.
  */
 exports = async function(date, sourceName) {
-  context.functions.execute("utils", database);
+  context.functions.execute("utils");
 
   let find;
   if (date == null) {
@@ -138,9 +138,9 @@ async function updateSymbol(mergedSymbolsCollection, sourceField, sourceSymbol, 
     }
   }
 
-  const newMainSourceIDString = newMainSource._id.toString()
-  const mergedSymbolMainIDString = mergedSymbol.m._id.toString()
-  const sourceSymbolIDString = sourceSymbol._id.toString()
+  const newMainSourceIDString = newMainSource._id.toString();
+  const mergedSymbolMainIDString = mergedSymbol.m._id.toString();
+  const sourceSymbolIDString = sourceSymbol._id.toString();
   const isMainSourceChange = newMainSourceIDString !== mergedSymbolMainIDString;
   const isMainSourceUpdate = sourceSymbolIDString === newMainSourceIDString;
   const isSourceDetach = sourceSymbol.e == false && newMainSourceIDString !== sourceSymbolIDString;
