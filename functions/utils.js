@@ -1393,14 +1393,8 @@ getTickersAndIDByTicker = _getTickersAndIDByTicker;
  * @returns {Promise<[ObjectId]>} Array of existing enabled symbol IDs from both IEX and FMP databases, e.g. [ObjectId("61b102c0048b84e9c13e454d")]
 */
 async function _getExistingSymbolIDs() {
-  const iexSymbolsCollection = db.collection("symbols");
-  const fmpSymbolsCollection = atlas.db("fmp").collection("symbols");
-  const [iexSupportedSymbolIDs, fmpSupportedSymbolIDs] = await Promise.all([
-    iexSymbolsCollection.distinct("_id", {}),
-    fmpSymbolsCollection.distinct("_id", {}),
-  ]);
-
-  const supportedSymbolIDs = iexSupportedSymbolIDs.concat(fmpSupportedSymbolIDs)
+  const symbolsCollection = atlas.db("merged").collection("symbols");
+  const supportedSymbolIDs = await symbolsCollection.distinct("_id", {});
   console.log(`Existing symbols (${supportedSymbolIDs.length})`);
   console.logData(`Existing symbols (${supportedSymbolIDs.length})`, supportedSymbolIDs);
 
@@ -1413,14 +1407,8 @@ getExistingSymbolIDs = _getExistingSymbolIDs;
  * @returns {Promise<[ObjectId]>} Array of existing enabled symbol IDs from both IEX and FMP databases, e.g. [ObjectId("61b102c0048b84e9c13e454d")]
 */
 async function _getSupportedSymbolIDs() {
-  const iexSymbolsCollection = db.collection("symbols");
-  const fmpSymbolsCollection = atlas.db("fmp").collection("symbols");
-  const [iexSupportedSymbolIDs, fmpSupportedSymbolIDs] = await Promise.all([
-    iexSymbolsCollection.distinct("_id", { e: null }),
-    fmpSymbolsCollection.distinct("_id", { e: null }),
-  ]);
-
-  const supportedSymbolIDs = iexSupportedSymbolIDs.concat(fmpSupportedSymbolIDs);
+  const symbolsCollection = atlas.db("merged").collection("symbols");
+  const supportedSymbolIDs = await symbolsCollection.distinct("_id", { e: { $ne: false } });
   console.log(`Supported symbols (${supportedSymbolIDs.length})`);
   console.logData(`Supported symbols (${supportedSymbolIDs.length})`, supportedSymbolIDs);
 
