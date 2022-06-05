@@ -57,11 +57,11 @@ exports = async function(date, sourceName) {
   const mergedSymbolsCollection = atlas.db("merged").collection("symbols");
   
   if (sourceName == null) {
-    update(mergedSymbolsCollection, find, sources.iex);
-    update(mergedSymbolsCollection, find, sources.fmp);
+    await update(mergedSymbolsCollection, find, sources.iex);
+    await update(mergedSymbolsCollection, find, sources.fmp);
   } else {
     const source = sources[sourceName];
-    update(mergedSymbolsCollection, find, source);
+    await update(mergedSymbolsCollection, find, source);
   }
   
   await setUpdateDate(`merged-symbols`);
