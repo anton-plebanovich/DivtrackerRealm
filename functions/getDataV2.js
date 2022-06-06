@@ -1,5 +1,5 @@
 
-// getData.js
+// getDataV2.js
 
 exports = async function(date, collections, symbols, fullSymbolsCollections) {
   context.functions.execute("utils");
