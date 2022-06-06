@@ -156,7 +156,7 @@ function getUpdateSymbolOperation(sourceField, sourceSymbol, mergedSymbol) {
   const sourceSymbolIDString = sourceSymbol._id.toString();
   const isMainSourceChange = newMainSourceIDString !== mergedSymbolMainIDString;
   const isMainSourceUpdate = sourceSymbolIDString === newMainSourceIDString;
-  const isSourceDetach = sourceSymbol.e == false && newMainSourceIDString !== sourceSymbolIDString;
+  const isSourceDetach = sourceSymbol.e == false && mergedSymbol[sourceField].e != false;
 
   const set = {};
 

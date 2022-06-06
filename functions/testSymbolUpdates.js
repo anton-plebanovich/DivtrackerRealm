@@ -124,7 +124,7 @@ async function test_IEX_disable_enable_on_multiple_sources() {
   iexSymbol.e = false;
   await iexSymbolsCollection.updateOne({ _id: iexID }, { $set: { e: iexSymbol.e }, $currentDate: { "u": true } });
   await context.functions.execute("mergedUpdateSymbols", date, "iex");
-  await checkMergedSymbol('test_IEX_disable_enable_on_multiple_sources.disable', iexSymbol, fmpSymbol, fmpSymbol, iexID, date);
+  await checkMergedSymbol('test_IEX_disable_enable_on_multiple_sources.disable', null, fmpSymbol, fmpSymbol, iexID, date);
 
   // Enable back
   date = new Date();
