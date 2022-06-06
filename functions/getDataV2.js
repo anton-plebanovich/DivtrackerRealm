@@ -15,7 +15,7 @@ exports = async function(timestamp, collectionNames, symbolIDs, fullFetchCollect
   
   let previousUpdateDate = null;
   if (timestamp != null) {
-    _throwIfNotNumber(
+    throwIfNotNumber(
       timestamp, 
       `Please pass date as the first argument.`, 
       UserError

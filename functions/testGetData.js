@@ -71,7 +71,7 @@ async function testGetDataV2(transactions) {
   verifyResponseV2(response, ["companies", "dividends", "historical-prices", "quotes", "splits"]);
 
   // Data update
-  response = await context.functions.execute("getDataV2", new Date('2020-01-01'), null, symbolIDs, ["exchange-rates", "symbols", "updates"]);
+  response = await context.functions.execute("getDataV2", new Date('2020-01-01').getTime(), null, symbolIDs, ["exchange-rates", "symbols", "updates"]);
   verifyResponseV2(response, ["companies", "dividends", "historical-prices", "quotes", "splits", "exchange-rates", "symbols", "updates"]);
 }
 
