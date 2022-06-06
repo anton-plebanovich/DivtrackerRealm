@@ -911,10 +911,12 @@ exports = function(database) {
   if (typeof fmp === 'undefined') {
     database = _getFMPDatabaseName(database);
     fmp = atlas.db(database);
+    Object.freeze(fmp);
   }
 
   if (typeof apikey === 'undefined') {
     apikey = "969387165d69a8607f9726e8bb52b901";
+    Object.freeze(apikey);
   }
   
   console.log("Imported FMP utils");

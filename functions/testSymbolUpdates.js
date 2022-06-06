@@ -333,12 +333,14 @@ async function checkMergedSymbol(testName, iexSymbol, fmpSymbol, mainSymbol, id,
       throw `[${testName}] Merged symbol main source expected to be null: ${mergedSymbol.m.stringify()}`;
     }
   } else {
-    // Delete source field since original symbol does not have it
+    // Delete '_id' field since main symbol should have '_id' from merged symbol
+    const mainSymbolCopy = Object.assign({}, mainSymbol);
+    delete mainSymbolCopy._id;
     const mergedSymbolMainCopy = Object.assign({}, mergedSymbol.m);
-    delete mergedSymbolMainCopy.s;
+    delete mergedSymbolMainCopy._id;
 
-    if (!mainSymbol.isEqual(mergedSymbolMainCopy)) {
-      throw `[${testName}] Merged symbol main source '${mergedSymbolMainCopy.stringify()}' expected to be equal to '${mainSymbol.stringify()}'`;
+    if (!mainSymbolCopy.isEqual(mergedSymbolMainCopy)) {
+      throw `[${testName}] Merged symbol main source '${mergedSymbolMainCopy.stringify()}' expected to be equal to '${mainSymbolCopy.stringify()}'`;
     }
   }
 
@@ -347,6 +349,11 @@ async function checkMergedSymbol(testName, iexSymbol, fmpSymbol, mainSymbol, id,
     const idString = id.toString();
     if (mergedSymbolIDString !== idString) {
       throw `[${testName}] Merged symbol ID '${mergedSymbolIDString}' expected to be equal to '${idString}'`;
+    }
+
+    const mainSymbolIDString = mergedSymbol.m._id.toString();
+    if (mainSymbolIDString !== idString) {
+      throw `[${testName}] Main symbol ID '${mainSymbolIDString}' expected to be equal to '${idString}'`;
     }
   }
 

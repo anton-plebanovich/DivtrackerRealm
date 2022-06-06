@@ -23,14 +23,15 @@ exports = async function(date, sourceName) {
   } else {
     find = date.getFindOperator();
   }
-
+  
   const mergedSymbolsCollection = atlas.db("merged").collection("symbols");
   
   if (sourceName == null) {
-    await update(mergedSymbolsCollection, find, sources.iex);
-    await update(mergedSymbolsCollection, find, sources.fmp);
+    // For backward compatibility with symbols in transactions we update IEX first
+    await update(mergedSymbolsCollection, find, sourceByName.iex);
+    await update(mergedSymbolsCollection, find, sourceByName.fmp);
   } else {
-    const source = sources[sourceName];
+    const source = sourceByName[sourceName];
     await update(mergedSymbolsCollection, find, source);
   }
   
@@ -40,14 +41,13 @@ exports = async function(date, sourceName) {
 };
 
 async function update(mergedSymbolsCollection, find, source) {
-  const sourceCollection = atlas.db(source.database).collection("symbols");
-  const sourceField = source.field;
+  const sourceCollection = atlas.db(source.databaseName).collection("symbols");
   const [sourceSymbols, mergedSymbols] = await Promise.all([
     sourceCollection.find(find, { u: false }).toArray(),
     mergedSymbolsCollection.find({}, { u: false }).toArray(),
   ]);
 
-  const mergedSymbolByID = mergedSymbols.toDictionary(x => x[sourceField]?._id);
+  const mergedSymbolByID = mergedSymbols.toDictionary(x => x[source.field]?._id);
   const mergedSymbolByTicker = mergedSymbols.toDictionary(x => x.m.t);
   
   const operations = [];
@@ -55,13 +55,13 @@ async function update(mergedSymbolsCollection, find, source) {
     let operation;
 
     // First, we need to check if symbol already added
-    operation = getUpdateMergedSymbolOperation(mergedSymbolByID, sourceField, sourceSymbol, '_id');
+    operation = getUpdateMergedSymbolOperation(mergedSymbolByID, source, sourceSymbol, '_id');
     if (addOperationIfNeeded(operation, operations)) {
       continue;
     }
 
     // Second, check if symbol is added from different source. Try to search by ticker as more robust.
-    operation = getUpdateMergedSymbolOperation(mergedSymbolByTicker, sourceField, sourceSymbol, 't');
+    operation = getUpdateMergedSymbolOperation(mergedSymbolByTicker, source, sourceSymbol, 't');
     if (addOperationIfNeeded(operation, operations)) {
       continue;
     }
@@ -78,26 +78,26 @@ async function update(mergedSymbolsCollection, find, source) {
     const insertOne = {
       _id: sourceSymbol._id,
       m: main,
-      [sourceField]: sourceSymbol,
+      [source.field]: sourceSymbol,
     };
     operation = { insertOne: insertOne };
     operations.push(operation);
   }
 
   if (operations.length) {
-    console.log(`Performing ${operations.length} symbols update operations for '${sourceField}' source field`);
+    console.log(`Performing ${operations.length} symbols update operations for '${source.name}' source`);
     const options = { ordered: false };
     await mergedSymbolsCollection.bulkWrite(operations, options);
-    console.log(`Performed ${operations.length} symbols update operations for '${sourceField}' source field`);
+    console.log(`Performed ${operations.length} symbols update operations for '${source.name}' source`);
   } else {
-    console.log(`No operations to perform for '${sourceField}' source field`);
+    console.log(`No operations to perform for '${source.name}' source`);
   }
 }
 
 /**
  * Returns operation on success update
  */
-function getUpdateMergedSymbolOperation(dictionary, sourceField, sourceSymbol, compareField) {
+function getUpdateMergedSymbolOperation(dictionary, source, sourceSymbol, compareField) {
   const key = sourceSymbol[compareField];
   if (key == null) { return null; }
 
@@ -105,28 +105,29 @@ function getUpdateMergedSymbolOperation(dictionary, sourceField, sourceSymbol, c
   if (mergedSymbol == null) {
     return null;
   } else {
-    return getUpdateSymbolOperation(sourceField, sourceSymbol, mergedSymbol);
+    return getUpdateSymbolOperation(source, sourceSymbol, mergedSymbol);
   }
 }
 
 /**
  * Returns operation on success update
  */
-function getUpdateSymbolOperation(sourceField, sourceSymbol, mergedSymbol) {
-  let newMainSource;
-  for (const field of sourceFields) {
-    if (field === sourceField) {
+function getUpdateSymbolOperation(source, sourceSymbol, mergedSymbol) {
+  let newMainSymbol;
+  for (const otherSource of sources) {
+    const otherField = otherSource.field;
+    if (otherField === source.field) {
       if (sourceSymbol.e != false) {
-        newMainSource = Object.assign({}, sourceSymbol);
-        newMainSource.s = sourceField;
+        newMainSymbol = Object.assign({}, sourceSymbol);
+        newMainSymbol.s = source.field;
         break;
       }
 
     } else {
-      const sourceSymbol = mergedSymbol[field];
-      if (sourceSymbol != null && sourceSymbol.e != false) {
-        newMainSource = Object.assign({}, sourceSymbol);
-        newMainSource.s = field;
+      const otherSourceSymbol = mergedSymbol[otherField];
+      if (otherSourceSymbol != null && otherSourceSymbol.e != false) {
+        newMainSymbol = Object.assign({}, otherSourceSymbol);
+        newMainSymbol.s = otherField;
         break;
       }
     }
@@ -134,41 +135,41 @@ function getUpdateSymbolOperation(sourceField, sourceSymbol, mergedSymbol) {
 
   // This may happen when there is only one disabled source.
   // Though, we still need to update data even if symbols is disabled.
-  if (newMainSource == null) {
-    newMainSource = Object.assign({}, sourceSymbol);
-    newMainSource.s = sourceField;
+  if (newMainSymbol == null) {
+    newMainSymbol = Object.assign({}, sourceSymbol);
+    newMainSymbol.s = source.field;
   }
 
-  console.logData(`New main source`, newMainSource);
+  // Main source and merged symbol IDs should be synchronized.
+  newMainSymbol._id = mergedSymbol._id;
 
-  const newMainSourceIDString = newMainSource._id.toString();
-  const mergedSymbolMainIDString = mergedSymbol.m._id.toString();
-  const sourceSymbolIDString = sourceSymbol._id.toString();
-  const isMainSourceChange = newMainSourceIDString !== mergedSymbolMainIDString;
-  const isMainSourceUpdate = sourceSymbolIDString === newMainSourceIDString;
+  console.logData(`New main source`, newMainSymbol);
+  const isSourceChange = newMainSymbol.s !== mergedSymbol.m.s;
+  const isMainSymbolUpdate = !newMainSymbol.isEqual(mergedSymbol.m);
   
   // We can't detach main source
-  const isSourceDetach = sourceSymbol.e == false && newMainSourceIDString !== sourceSymbolIDString;
+  const isSourceDetach = sourceSymbol.e == false && newMainSymbol.s !== source.field;
 
   const set = {};
 
-  if (!newMainSource.isEqual(mergedSymbol.m)) {
-    set.m = newMainSource;
+  if (!newMainSymbol.isEqual(mergedSymbol.m)) {
+    set.m = newMainSymbol;
   }
-
+  
   const unset = {};
   if (isSourceDetach) {
-    unset[sourceField] = "";
+    unset[source.field] = "";
   } else {
-    const oldSourceSymbol = mergedSymbol[sourceField];
+    const oldSourceSymbol = mergedSymbol[source.field];
     if (oldSourceSymbol == null || !sourceSymbol.isEqual(oldSourceSymbol)) {
-      set[sourceField] = sourceSymbol;
+      set[source.field] = sourceSymbol;
     }
 
     // Check if we can detach any other source. 
     // This is a case when we attach to a disabled merged symbol.
-    const otherFields = sourceFields.filter(field => field !== sourceField);
-    const fieldToDetach = otherFields.find(field => mergedSymbol[field] != null && mergedSymbol[field].e == false);
+    const otherSources = sources.filter(otherSource => otherSource.field !== source.field);
+    const sourceToDetach = otherSources.find(otherSource => mergedSymbol[otherSource.field]?.e == false);
+    const fieldToDetach = sourceToDetach.field;
     if (fieldToDetach != null) {
       unset[fieldToDetach] = "";
     }
@@ -187,9 +188,9 @@ function getUpdateSymbolOperation(sourceField, sourceSymbol, mergedSymbol) {
     return {};
   }
 
-  if (isMainSourceChange) {
+  if (isSourceChange) {
     update.$currentDate = { u: true, r: true };
-  } else if (isMainSourceUpdate) {
+  } else if (isMainSymbolUpdate) {
     update.$currentDate = { u: true };
   } else {
     // Backup source updates do not change update date because only 'm' field is primary data and all other fields are here to simplify updates.

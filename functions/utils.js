@@ -498,11 +498,11 @@ Array.prototype.toBuckets = function(arg) {
 
   return this.reduce((dictionary, value) => {
     const key = getKey(value);
-    const dictionaryValue = dictionary[key];
-    if (dictionaryValue == null) {
+    const bucket = dictionary[key];
+    if (bucket == null) {
       dictionary[key] = [value];
     } else {
-      dictionaryValue.push(value);
+      bucket.push(value);
     }
     return dictionary;
   }, {});
@@ -1211,10 +1211,24 @@ function _throwIfNotArray(object, message, ErrorType) {
   if (ErrorType == null) { ErrorType = _SystemError; }
   if (message == null) { message = ""; }
   
-  throw new ErrorType(`Argument should be of the Array type. Instead, received '${type}'. ${message}`);
+  throw new ErrorType(`Argument should be of the 'Array' type. Instead, received '${type}'. ${message}`);
 }
 
 throwIfNotArray = _throwIfNotArray;
+
+function _throwIfNotNumber(object, message, ErrorType) {
+  _throwIfUndefinedOrNull(object, message, ErrorType);
+
+  const type = typeof object;
+  const objectType = Object.prototype.toString.call(object);
+  if (type === 'number' || objectType === '[object Number]') { return object; }
+  if (ErrorType == null) { ErrorType = _SystemError; }
+  if (message == null) { message = ""; }
+  
+  throw new ErrorType(`Argument should be of the 'number' type. Instead, received '${objectType} (${type})'. ${message}`);
+}
+
+throwIfNotNumber = _throwIfNotNumber;
 
 function _throwIfNotDate(object, message, ErrorType) {
   _throwIfUndefinedOrNull(object, message, ErrorType);
@@ -1224,7 +1238,7 @@ function _throwIfNotDate(object, message, ErrorType) {
   if (ErrorType == null) { ErrorType = _SystemError; }
   if (message == null) { message = ""; }
   
-  throw new ErrorType(`Argument should be of the Date type. Instead, received '${type}'. ${message}`);
+  throw new ErrorType(`Argument should be of the 'Date' type. Instead, received '${type}'. ${message}`);
 }
 
 throwIfNotDate = _throwIfNotDate;
@@ -1237,7 +1251,7 @@ function _throwIfNotObjectId(object, message, ErrorType) {
   if (ErrorType == null) { ErrorType = _SystemError; }
   if (message == null) { message = ""; }
   
-  throw new ErrorType(`Argument should be of the ObjectId type. Instead, received '${type}'. ${message}`);
+  throw new ErrorType(`Argument should be of the 'ObjectId' type. Instead, received '${type}'. ${message}`);
 }
 
 throwIfNotObjectId = _throwIfNotObjectId;
@@ -1541,26 +1555,27 @@ exports = function() {
 
   if (typeof atlas === 'undefined') {
     atlas = context.services.get("mongodb-atlas");
+    Object.freeze(atlas);
   }
 
   if (typeof db === 'undefined') {
     db = atlas.db("divtracker-v2");
+    Object.freeze(db);
   }
 
   // Available sources
   if (typeof sources === 'undefined') {
-    sources = {
-      iex: { field: 'i', database: 'divtracker-v2' },
-      fmp: { field: 'f', database: 'fmp' },
-    };
-
     /**
-     * Source fields in descending priority order. Higher priority became the main source on conflicts.
+     * Sources in descending priority order. Higher priority became the main source on conflicts.
      */
-    sourceFields = [
-      sources.fmp.field,
-      sources.iex.field,
+    sources = [
+      { field: 'i', name: 'iex', databaseName: 'divtracker-v2' },
+      { field: 'f', name: 'fmp', databaseName: 'fmp' },
     ];
+    Object.freeze(sources);
+
+    sourceByName = sources.toDictionary('name');
+    Object.freeze(sourceByName);
   }
 
   // Adjusting console log
