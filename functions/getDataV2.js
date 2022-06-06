@@ -175,6 +175,10 @@ exports = async function(timestamp, collectionNames, symbolIDs, fullFetchCollect
       return { symbols: symbols };
     } else {
       const operations = sources.map(async source => {
+        if (singularSourceCollections.includes(collectionName)) {
+          return [];
+        }
+
         const collection = atlas.db(source.databaseName).collection(collectionName);
         const sourceSymbolIDs = symbolIDsBySource[source.field];
         const sourceRefetchSymbolIDs = refetchSymbolIDsBySource[source.field];
@@ -216,7 +220,7 @@ async function getSymbolsData(mergedSymbolsCollection, previousUpdateDate, symbo
     Object.assign(find, previousUpdateDate.getFindOperator());
   }
 
-  if (symbolIDs != null && !fullFetchCollections.includes(collection)) {
+  if (symbolIDs != null && !fullFetchCollections.includes('symbols')) {
     find._id = { $in: symbolIDs };
   }
 
@@ -226,7 +230,7 @@ async function getSymbolsData(mergedSymbolsCollection, previousUpdateDate, symbo
   const mergedSymbols = await mergedSymbolsCollection.find(find, projection).toArray();
   const symbols = mergedSymbols.map(x => x.m);
 
-  return { [collection]: symbols };
+  return symbols;
 }
 
 async function getCollectionData(collection, collectionName, previousUpdateDate, symbolIDs, refetchSymbolIDs, fullFetchCollections) {
@@ -310,6 +314,12 @@ const allowedFullFetchCollections = [
 
 // Collections that have objects with non-searchable ID, e.g. 'USD' for 'exchange-rates'
 const nonSearchableIDCollections = [
+  'exchange-rates',
+  'updates',
+];
+
+// Collections that has only one source - 'divtracker-v2'
+const singularSourceCollections = [
   'exchange-rates',
   'updates',
 ];

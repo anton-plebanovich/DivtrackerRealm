@@ -8,8 +8,13 @@ exports = async function() {
   const transactions = await generateRandomTransactions(10);
   await context.functions.execute("addTransactionsV2", transactions);
 
-  await testGetDataV1(transactions);
-  await testGetDataV2(transactions);
+  try {
+    await testGetDataV1(transactions);
+    await testGetDataV2(transactions);
+  } catch(error) {
+    console.log(error);
+    throw error;
+  }
 };
 
 //////////////////////////// TESTS V1
