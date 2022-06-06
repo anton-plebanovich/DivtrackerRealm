@@ -128,14 +128,14 @@ async function test_singular_source_disable_attach_and_enable() {
   const iexSymbol = { _id: iexID, t: "TICKER", n: "IEX_NAME" };
   await iexSymbolsCollection.insertOne(iexSymbol);
   await context.functions.execute("mergedUpdateSymbols", null, "iex");
-  await checkMergedSymbol('test_singular_source_disable_attach_and_enable.attach', iexSymbol, null, iexSymbol, fmpID, date);
+  await checkMergedSymbol('test_singular_source_disable_attach_and_enable.attach', iexSymbol, null, iexSymbol, fmpID, date, null, date, null);
 
   // Enable back
   date = new Date();
   delete fmpSymbol.e;
   await fmpSymbolsCollection.updateOne({ _id: fmpID }, { $unset: { e: "" }, $currentDate: { "u": true } });
   await context.functions.execute("mergedUpdateSymbols", date, "fmp");
-  await checkMergedSymbol('test_singular_source_disable_attach_and_enable.enable', iexSymbol, fmpSymbol, fmpSymbol, fmpID, date);
+  await checkMergedSymbol('test_singular_source_disable_attach_and_enable.enable', iexSymbol, fmpSymbol, fmpSymbol, fmpID, date, null, date, null);
 }
 
 // Disable IEX source on multiple sources symbol and enable it back
@@ -159,14 +159,14 @@ async function test_IEX_disable_enable_on_multiple_sources() {
   iexSymbol.e = false;
   await iexSymbolsCollection.updateOne({ _id: iexID }, { $set: { e: iexSymbol.e }, $currentDate: { "u": true } });
   await context.functions.execute("mergedUpdateSymbols", date, "iex");
-  await checkMergedSymbol('test_IEX_disable_enable_on_multiple_sources.disable', null, fmpSymbol, fmpSymbol, iexID, null, updatesStartDate);
+  await checkMergedSymbol('test_IEX_disable_enable_on_multiple_sources.disable', null, fmpSymbol, fmpSymbol, iexID, null, updatesStartDate, null, updatesStartDate);
 
   // Enable back
   date = new Date();
   delete iexSymbol.e;
   await iexSymbolsCollection.updateOne({ _id: iexID }, { $unset: { e: "" }, $currentDate: { "u": true } });
   await context.functions.execute("mergedUpdateSymbols", date, "iex");
-  await checkMergedSymbol('test_IEX_disable_enable_on_multiple_sources.enable', iexSymbol, fmpSymbol, fmpSymbol, iexID, null, updatesStartDate);
+  await checkMergedSymbol('test_IEX_disable_enable_on_multiple_sources.enable', iexSymbol, fmpSymbol, fmpSymbol, iexID, null, updatesStartDate, null, updatesStartDate);
 }
 
 // Disable FMP source on multiple sources symbol and enable it back
@@ -188,14 +188,14 @@ async function test_FMP_disable_enable_on_multiple_sources() {
   fmpSymbol.e = false;
   await fmpSymbolsCollection.updateOne({ _id: fmpID }, { $set: { e: fmpSymbol.e }, $currentDate: { "u": true } });
   await context.functions.execute("mergedUpdateSymbols", date, "fmp");
-  await checkMergedSymbol('test_FMP_disable_enable_on_multiple_sources.disable', iexSymbol, null, iexSymbol, iexID, date);
+  await checkMergedSymbol('test_FMP_disable_enable_on_multiple_sources.disable', iexSymbol, null, iexSymbol, iexID, date, null, date, null);
 
   // Enable back
   date = new Date();
   delete fmpSymbol.e;
   await fmpSymbolsCollection.updateOne({ _id: fmpID }, { $unset: { e: "" }, $currentDate: { "u": true } });
   await context.functions.execute("mergedUpdateSymbols", date, "fmp");
-  await checkMergedSymbol('test_FMP_disable_enable_on_multiple_sources.enable', iexSymbol, fmpSymbol, fmpSymbol, iexID, date);
+  await checkMergedSymbol('test_FMP_disable_enable_on_multiple_sources.enable', iexSymbol, fmpSymbol, fmpSymbol, iexID, date, null, date, null);
 }
 
 // Update singular source symbol (ticker, name, nothing)
@@ -302,7 +302,7 @@ async function test_backup_source_update() {
 
 //////////////////////////// TESTS HELPERS
 
-async function checkMergedSymbol(testName, iexSymbol, fmpSymbol, mainSymbol, id, updateDate, noUpdateDate) {
+async function checkMergedSymbol(testName, iexSymbol, fmpSymbol, mainSymbol, id, lowerUpdateDate, upperUpdateDate, lowerRefetchDate, upperRefetchDate) {
   const mergedSymbol = await getMergedSymbol(testName);
 
   // IEX
@@ -346,15 +346,27 @@ async function checkMergedSymbol(testName, iexSymbol, fmpSymbol, mainSymbol, id,
     }
   }
 
-  if (updateDate != null) {
-    if (mergedSymbol.u <= updateDate) {
-      throw `[${testName}] Merged symbol update date '${mergedSymbol.u.getTime()}' should be greater than or equal to update date '${updateDate.getTime()}'`;
+  if (lowerUpdateDate != null) {
+    if (mergedSymbol.u <= lowerUpdateDate) {
+      throw `[${testName}] Merged symbol update date '${mergedSymbol.u.getTime()}' should be greater than or equal to lower update date '${lowerUpdateDate.getTime()}'`;
     }
   }
 
-  if (noUpdateDate != null) {
-    if (mergedSymbol.u >= noUpdateDate) {
-      throw `[${testName}] Merged symbol update date '${mergedSymbol.u.getTime()}' should be lower than or equal to no update date '${noUpdateDate.getTime()}'`;
+  if (upperUpdateDate != null) {
+    if (mergedSymbol.u >= upperUpdateDate) {
+      throw `[${testName}] Merged symbol update date '${mergedSymbol.u.getTime()}' should be lower than or equal to upper update date '${upperUpdateDate.getTime()}'`;
+    }
+  }
+
+  if (lowerRefetchDate != null) {
+    if (mergedSymbol.r <= lowerRefetchDate) {
+      throw `[${testName}] Merged symbol update date '${mergedSymbol.r.getTime()}' should be greater than or equal lower refetch date '${lowerRefetchDate.getTime()}'`;
+    }
+  }
+
+  if (upperRefetchDate != null) {
+    if (mergedSymbol.r >= upperRefetchDate) {
+      throw `[${testName}] Merged symbol update date '${mergedSymbol.r.getTime()}' should be lower than or equal to upper refetch date '${upperRefetchDate.getTime()}'`;
     }
   }
 }
