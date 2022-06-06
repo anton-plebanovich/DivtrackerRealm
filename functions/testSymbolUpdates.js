@@ -12,6 +12,7 @@ exports = async function() {
     await test(test_FMP_to_IEX_merge);
     await test(test_IEX_to_FMP_merge);
     await test(test_singular_source_disable_and_enable);
+    await test(test_singular_source_disable_attach_and_enable);
     await test(test_IEX_disable_enable_on_multiple_sources);
     await test(test_FMP_disable_enable_on_multiple_sources);
     await test(test_singular_source_update);
@@ -103,6 +104,38 @@ async function test_singular_source_disable_and_enable() {
   await fmpSymbolsCollection.updateOne({ _id: fmpID }, { $unset: { e: "" }, $currentDate: { "u": true } });
   await context.functions.execute("mergedUpdateSymbols", date, "fmp");
   await checkMergedSymbol('test_singular_source_disable_and_enable.enable', null, fmpSymbol, fmpSymbol, fmpID, date);
+}
+
+// Disable singular source symbol, attach new source and enable disabled source back
+async function test_singular_source_disable_attach_and_enable() {
+  let date;
+
+  date = new Date();
+  const fmpID = new BSON.ObjectId();
+  const fmpSymbol = { _id: fmpID, t: "TICKER", n: "FMP_NAME" };
+  await fmpSymbolsCollection.insertOne(fmpSymbol);
+  await context.functions.execute("mergedUpdateSymbols", date, "fmp");
+
+  // Disable
+  date = new Date();
+  fmpSymbol.e = false;
+  await fmpSymbolsCollection.updateOne({ _id: fmpID }, { $set: { e: fmpSymbol.e }, $currentDate: { "u": true } });
+  await context.functions.execute("mergedUpdateSymbols", date, "fmp");
+  await checkMergedSymbol('test_singular_source_disable_attach_and_enable.disable', null, fmpSymbol, fmpSymbol, fmpID, date);
+
+  // Attach
+  const iexID = new BSON.ObjectId();
+  const iexSymbol = { _id: iexID, t: "TICKER", n: "IEX_NAME" };
+  await iexSymbolsCollection.insertOne(iexSymbol);
+  await context.functions.execute("mergedUpdateSymbols", null, "iex");
+  await checkMergedSymbol('test_singular_source_disable_attach_and_enable.attach', iexSymbol, null, null, fmpID, date);
+
+  // Enable back
+  date = new Date();
+  delete fmpSymbol.e;
+  await fmpSymbolsCollection.updateOne({ _id: fmpID }, { $unset: { e: "" }, $currentDate: { "u": true } });
+  await context.functions.execute("mergedUpdateSymbols", date, "fmp");
+  await checkMergedSymbol('test_singular_source_disable_attach_and_enable.enable', iexSymbol, fmpSymbol, fmpSymbol, fmpID, date);
 }
 
 // Disable IEX source on multiple sources symbol and enable it back
