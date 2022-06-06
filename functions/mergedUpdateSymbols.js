@@ -90,7 +90,7 @@ async function update(mergedSymbolsCollection, find, source) {
     // Just insert new symbol
     const main = Object.assign({}, sourceSymbol);
     main.s = sourceField;
-    
+
     const insertOne = {
       _id: sourceSymbol._id,
       m: main,
@@ -133,7 +133,7 @@ function getUpdateSymbolOperation(sourceField, sourceSymbol, mergedSymbol) {
   for (const field of fields) {
     if (field === sourceField) {
       if (sourceSymbol.e != false) {
-        newMainSource = sourceSymbol;
+        newMainSource = Object.assign({}, sourceSymbol);
         newMainSource.s = sourceField;
         break;
       }
@@ -141,7 +141,7 @@ function getUpdateSymbolOperation(sourceField, sourceSymbol, mergedSymbol) {
     } else {
       const sourceSymbol = mergedSymbol[field];
       if (sourceSymbol != null && sourceSymbol.e != false) {
-        newMainSource = sourceSymbol;
+        newMainSource = Object.assign({}, sourceSymbol);
         newMainSource.s = field;
         break;
       }
@@ -151,7 +151,7 @@ function getUpdateSymbolOperation(sourceField, sourceSymbol, mergedSymbol) {
   // This may happen when there is only one disabled source.
   // Though, we still need to update data even if symbols is disabled.
   if (newMainSource == null) {
-    newMainSource = sourceSymbol;
+    newMainSource = Object.assign({}, sourceSymbol);
     newMainSource.s = sourceField;
   }
 
