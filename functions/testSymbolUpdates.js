@@ -99,14 +99,14 @@ async function test_singular_source_disable_and_enable() {
   fmpSymbol.e = false;
   await fmpSymbolsCollection.updateOne({ _id: fmpID }, { $set: { e: fmpSymbol.e }, $currentDate: { "u": true } });
   await context.functions.execute("mergedUpdateSymbols", date, "fmp");
-  await checkMergedSymbol('test_singular_source_disable_and_enable', null, fmpSymbol, fmpSymbol, fmpID, date);
+  await checkMergedSymbol('test_singular_source_disable_and_enable.disable', null, fmpSymbol, fmpSymbol, fmpID, date);
 
   // Enable back
   date = new Date();
   delete fmpSymbol.e;
   await fmpSymbolsCollection.updateOne({ _id: fmpID }, { $unset: { e: "" }, $currentDate: { "u": true } });
   await context.functions.execute("mergedUpdateSymbols", date, "fmp");
-  await checkMergedSymbol('test_singular_source_disable_and_enable', null, fmpSymbol, fmpSymbol, fmpID, date);
+  await checkMergedSymbol('test_singular_source_disable_and_enable.enable', null, fmpSymbol, fmpSymbol, fmpID, date);
 }
 
 // Disable IEX source on multiple sources symbol and enable it back
@@ -128,14 +128,14 @@ async function test_IEX_disable_enable_on_multiple_sources() {
   iexSymbol.e = false;
   await iexSymbolsCollection.updateOne({ _id: iexID }, { $set: { e: iexSymbol.e }, $currentDate: { "u": true } });
   await context.functions.execute("mergedUpdateSymbols", date, "iex");
-  await checkMergedSymbol('test_IEX_disable_enable_on_multiple_sources', iexSymbol, fmpSymbol, fmpSymbol, iexID, date);
+  await checkMergedSymbol('test_IEX_disable_enable_on_multiple_sources.disable', iexSymbol, fmpSymbol, fmpSymbol, iexID, date);
 
   // Enable back
   date = new Date();
   delete iexSymbol.e;
   await iexSymbolsCollection.updateOne({ _id: iexID }, { $unset: { e: "" }, $currentDate: { "u": true } });
   await context.functions.execute("mergedUpdateSymbols", date, "iex");
-  await checkMergedSymbol('test_IEX_disable_enable_on_multiple_sources', iexSymbol, fmpSymbol, fmpSymbol, iexID, date);
+  await checkMergedSymbol('test_IEX_disable_enable_on_multiple_sources.enable', iexSymbol, fmpSymbol, fmpSymbol, iexID, date);
 }
 
 // Disable FMP source on multiple sources symbol and enable it back
@@ -157,14 +157,14 @@ async function test_FMP_disable_enable_on_multiple_sources() {
   fmpSymbol.e = false;
   await fmpSymbolsCollection.updateOne({ _id: iexID }, { $set: { e: fmpSymbol.e }, $currentDate: { "u": true } });
   await context.functions.execute("mergedUpdateSymbols", date, "fmp");
-  await checkMergedSymbol('test_FMP_disable_enable_on_multiple_sources', iexSymbol, null, iexSymbol, iexID, date);
+  await checkMergedSymbol('test_FMP_disable_enable_on_multiple_sources.disable', iexSymbol, null, iexSymbol, iexID, date);
 
   // Enable back
   date = new Date();
   delete fmpSymbol.e;
   await fmpSymbolsCollection.updateOne({ _id: iexID }, { $uset: { e: "" }, $currentDate: { "u": true } });
   await context.functions.execute("mergedUpdateSymbols", date, "fmp");
-  await checkMergedSymbol('test_FMP_disable_enable_on_multiple_sources', iexSymbol, fmpSymbol, fmpSymbol, iexID, date);
+  await checkMergedSymbol('test_FMP_disable_enable_on_multiple_sources.enable', iexSymbol, fmpSymbol, fmpSymbol, iexID, date);
 }
 
 // Update singular source symbol (ticker, name, nothing)
@@ -181,20 +181,20 @@ async function test_singular_source_update() {
   iexSymbol.t = "TICKER_NEW";
   await iexSymbolsCollection.updateOne({ _id: iexID }, { $set: iexSymbol, $currentDate: { "u": true } });
   await context.functions.execute("mergedUpdateSymbols", date, "iex");
-  await checkMergedSymbol('test_singular_source_update', iexSymbol, null, iexSymbol, iexID, date);
+  await checkMergedSymbol('test_singular_source_update.ticker', iexSymbol, null, iexSymbol, iexID, date);
 
   // Update name
   date = new Date();
   iexSymbol.n = "NAME_NEW";
   await iexSymbolsCollection.updateOne({ _id: iexID }, { $set: iexSymbol, $currentDate: { "u": true } });
   await context.functions.execute("mergedUpdateSymbols", date, "iex");
-  await checkMergedSymbol('test_singular_source_update', iexSymbol, null, iexSymbol, iexID, date);
+  await checkMergedSymbol('test_singular_source_update.name', iexSymbol, null, iexSymbol, iexID, date);
 
   // Update nothing
   date = new Date();
   await iexSymbolsCollection.updateOne({ _id: iexID }, { $set: iexSymbol, $currentDate: { "u": true } });
   await context.functions.execute("mergedUpdateSymbols", date, "iex");
-  await checkMergedSymbol('test_singular_source_update', iexSymbol, null, iexSymbol, iexID, null, date);
+  await checkMergedSymbol('test_singular_source_update.nothing', iexSymbol, null, iexSymbol, iexID, null, date);
 }
 
 // Update primary source for multiple sources symbol (ticker, name, nothing)
@@ -216,20 +216,20 @@ async function test_primary_source_update() {
   fmpSymbol.t = "TICKER_NEW";
   await fmpSymbolsCollection.updateOne({ _id: fmpID }, { $set: fmpSymbol, $currentDate: { "u": true } });
   await context.functions.execute("mergedUpdateSymbols", date, "fmp");
-  await checkMergedSymbol('test_primary_source_update', iexSymbol, fmpSymbol, fmpSymbol, iexID, date);
+  await checkMergedSymbol('test_primary_source_update.ticker', iexSymbol, fmpSymbol, fmpSymbol, iexID, date);
 
   // Update name
   date = new Date();
   fmpSymbol.n = "FMP_NAME_NEW";
   await fmpSymbolsCollection.updateOne({ _id: fmpID }, { $set: fmpSymbol, $currentDate: { "u": true } });
   await context.functions.execute("mergedUpdateSymbols", date, "fmp");
-  await checkMergedSymbol('test_primary_source_update', iexSymbol, fmpSymbol, fmpSymbol, iexID, date);
+  await checkMergedSymbol('test_primary_source_update.name', iexSymbol, fmpSymbol, fmpSymbol, iexID, date);
 
   // Update nothing
   date = new Date();
   await fmpSymbolsCollection.updateOne({ _id: fmpID }, { $set: fmpSymbol, $currentDate: { "u": true } });
   await context.functions.execute("mergedUpdateSymbols", date, "fmp");
-  await checkMergedSymbol('test_primary_source_update', iexSymbol, fmpSymbol, fmpSymbol, iexID, null, date);
+  await checkMergedSymbol('test_primary_source_update.nothing', iexSymbol, fmpSymbol, fmpSymbol, iexID, null, date);
 }
 
 // Update backup source for multiple sources symbol (ticker, name, nothing)
@@ -253,20 +253,20 @@ async function test_backup_source_update() {
   iexSymbol.t = "TICKER_NEW";
   await iexSymbolsCollection.updateOne({ _id: iexID }, { $set: iexSymbol, $currentDate: { "u": true } });
   await context.functions.execute("mergedUpdateSymbols", date, "iex");
-  await checkMergedSymbol('test_backup_source_update', iexSymbol, null, iexSymbol, iexID, null, updatesStartDate);
+  await checkMergedSymbol('test_backup_source_update.ticker', iexSymbol, null, iexSymbol, iexID, null, updatesStartDate);
 
   // Update name
   date = new Date();
   iexSymbol.n = "NAME_NEW";
   await iexSymbolsCollection.updateOne({ _id: iexID }, { $set: iexSymbol, $currentDate: { "u": true } });
   await context.functions.execute("mergedUpdateSymbols", date, "iex");
-  await checkMergedSymbol('test_backup_source_update', iexSymbol, null, iexSymbol, iexID, null, updatesStartDate);
+  await checkMergedSymbol('test_backup_source_update.name', iexSymbol, null, iexSymbol, iexID, null, updatesStartDate);
 
   // Update nothing
   date = new Date();
   await iexSymbolsCollection.updateOne({ _id: iexID }, { $set: iexSymbol, $currentDate: { "u": true } });
   await context.functions.execute("mergedUpdateSymbols", date, "iex");
-  await checkMergedSymbol('test_backup_source_update', iexSymbol, null, iexSymbol, iexID, null, updatesStartDate);
+  await checkMergedSymbol('test_backup_source_update.nothing', iexSymbol, null, iexSymbol, iexID, null, updatesStartDate);
 }
 
 //////////////////////////// TESTS HELPERS
