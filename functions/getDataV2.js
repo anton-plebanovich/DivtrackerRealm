@@ -174,7 +174,7 @@ exports = async function(timestamp, collectionNames, symbolIDs, fullFetchCollect
       const symbols = await getSymbolsData(mergedSymbolsCollection, previousUpdateDate, symbolIDs, fullFetchCollections);
       return { symbols: symbols };
     } else {
-      const operations = sources.map(source => {
+      const operations = sources.map(async source => {
         const collection = atlas.db(source.databaseName).collection(collectionName);
         const sourceSymbolIDs = symbolIDsBySource[source.field];
         const sourceRefetchSymbolIDs = refetchSymbolIDsBySource[source.field];
