@@ -1,10 +1,6 @@
 
 // testSymbolUpdates.js
 
-/**
- * @example
-   exports();
- */
 exports = async function() {
   context.functions.execute("testUtils");
 

@@ -126,7 +126,7 @@ function getUpdateMergedSymbolOperation(dictionary, sourceField, sourceSymbol, c
  * Returns operation on success update
  */
 function getUpdateSymbolOperation(sourceField, sourceSymbol, mergedSymbol) {
-  let newMainSource = mergedSymbol.m;
+  let newMainSource;
   for (const field of fields) {
     if (field === sourceField) {
       if (sourceSymbol.e != false) {
@@ -141,6 +141,12 @@ function getUpdateSymbolOperation(sourceField, sourceSymbol, mergedSymbol) {
         break;
       }
     }
+  }
+
+  // This may happen when there is only one disabled source.
+  // Though, we still need to update data even if symbols is disabled.
+  if (newMainSource == null) {
+    newMainSource = sourceSymbol;
   }
 
   console.logData(`New main source`, newMainSource);
