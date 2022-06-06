@@ -103,8 +103,8 @@ async function test_singular_source_disable_and_enable() {
 
   // Enable back
   date = new Date();
-  fmpSymbol.e = true;
-  await fmpSymbolsCollection.updateOne({ _id: fmpID }, { $set: { e: fmpSymbol.e }, $currentDate: { "u": true } });
+  delete fmpSymbol.e;
+  await fmpSymbolsCollection.updateOne({ _id: fmpID }, { $unset: { e: "" }, $currentDate: { "u": true } });
   await context.functions.execute("mergedUpdateSymbols", date, "fmp");
   await checkMergedSymbol('test_singular_source_disable_and_enable', null, fmpSymbol, fmpSymbol, fmpID, date);
 }
@@ -132,8 +132,8 @@ async function test_IEX_disable_enable_on_multiple_sources() {
 
   // Enable back
   date = new Date();
-  iexSymbol.e = true;
-  await iexSymbolsCollection.updateOne({ _id: iexID }, { $set: { e: iexSymbol.e }, $currentDate: { "u": true } });
+  delete iexSymbol.e;
+  await iexSymbolsCollection.updateOne({ _id: iexID }, { $unset: { e: "" }, $currentDate: { "u": true } });
   await context.functions.execute("mergedUpdateSymbols", date, "iex");
   await checkMergedSymbol('test_IEX_disable_enable_on_multiple_sources', iexSymbol, fmpSymbol, fmpSymbol, iexID, date);
 }
@@ -161,8 +161,8 @@ async function test_FMP_disable_enable_on_multiple_sources() {
 
   // Enable back
   date = new Date();
-  fmpSymbol.e = true;
-  await fmpSymbolsCollection.updateOne({ _id: iexID }, { $set: { e: fmpSymbol.e }, $currentDate: { "u": true } });
+  delete fmpSymbol.e;
+  await fmpSymbolsCollection.updateOne({ _id: iexID }, { $uset: { e: "" }, $currentDate: { "u": true } });
   await context.functions.execute("mergedUpdateSymbols", date, "fmp");
   await checkMergedSymbol('test_FMP_disable_enable_on_multiple_sources', iexSymbol, fmpSymbol, fmpSymbol, iexID, date);
 }
