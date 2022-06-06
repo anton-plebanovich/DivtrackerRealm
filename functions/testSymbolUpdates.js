@@ -339,6 +339,9 @@ async function checkMergedSymbol(testName, iexSymbol, fmpSymbol, mainSymbol, id,
     const mergedSymbolMainCopy = Object.assign({}, mergedSymbol.m);
     delete mergedSymbolMainCopy._id;
 
+    // Source will be compared separately
+    delete mergedSymbolMainCopy.s;
+
     if (!mainSymbolCopy.isEqual(mergedSymbolMainCopy)) {
       throw `[${testName}] Merged symbol main source '${mergedSymbolMainCopy.stringify()}' expected to be equal to '${mainSymbolCopy.stringify()}'`;
     }
