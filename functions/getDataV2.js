@@ -203,9 +203,7 @@ exports = async function(timestamp, collectionNames, symbolIDs, fullFetchCollect
   if (refetchMergedSymbolIDs.length) {
     result.cleanups = refetchMergedSymbolIDs;
   }
-  if (updates.length) {
-    result.updates = updates;
-  }
+  result.updates = updates;
   result.lastUpdateTimestamp = lastUpdateTimestamp;
 
   return result;
