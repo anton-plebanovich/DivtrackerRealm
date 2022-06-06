@@ -188,14 +188,14 @@ async function test_FMP_disable_enable_on_multiple_sources() {
   fmpSymbol.e = false;
   await fmpSymbolsCollection.updateOne({ _id: fmpID }, { $set: { e: fmpSymbol.e }, $currentDate: { "u": true } });
   await context.functions.execute("mergedUpdateSymbols", date, "fmp");
-  await checkMergedSymbol('test_FMP_disable_enable_on_multiple_sources.disable', iexSymbol, null, iexSymbol, iexID, date, 'i', null, date, null);
+  await checkMergedSymbol('test_FMP_disable_enable_on_multiple_sources.disable', iexSymbol, null, iexSymbol, iexID, 'i', date, null, date, null);
 
   // Enable back
   date = new Date();
   delete fmpSymbol.e;
   await fmpSymbolsCollection.updateOne({ _id: fmpID }, { $unset: { e: "" }, $currentDate: { "u": true } });
   await context.functions.execute("mergedUpdateSymbols", date, "fmp");
-  await checkMergedSymbol('test_FMP_disable_enable_on_multiple_sources.enable', iexSymbol, fmpSymbol, fmpSymbol, iexID, date, 'f', null, date, null);
+  await checkMergedSymbol('test_FMP_disable_enable_on_multiple_sources.enable', iexSymbol, fmpSymbol, fmpSymbol, iexID, 'f', date, null, date, null);
 }
 
 // Update singular source symbol (ticker, name, nothing)
@@ -336,7 +336,7 @@ async function checkMergedSymbol(testName, iexSymbol, fmpSymbol, mainSymbol, id,
     // Delete source field since original symbol does not have it
     const mergedSymbolMainCopy = Object.assign({}, mergedSymbol.m);
     delete mergedSymbolMainCopy.s;
-    
+
     if (!mainSymbol.isEqual(mergedSymbolMainCopy)) {
       throw `[${testName}] Merged symbol main source '${mergedSymbolMainCopy.stringify()}' expected to be equal to '${mainSymbol.stringify()}'`;
     }
