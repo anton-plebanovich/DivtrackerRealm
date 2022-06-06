@@ -911,7 +911,6 @@ exports = function(database) {
   if (typeof fmp === 'undefined') {
     database = _getFMPDatabaseName(database);
     fmp = atlas.db(database);
-    Object.freeze(fmp);
   }
 
   if (typeof apikey === 'undefined') {

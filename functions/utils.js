@@ -1555,12 +1555,10 @@ exports = function() {
 
   if (typeof atlas === 'undefined') {
     atlas = context.services.get("mongodb-atlas");
-    Object.freeze(atlas);
   }
 
   if (typeof db === 'undefined') {
     db = atlas.db("divtracker-v2");
-    Object.freeze(db);
   }
 
   // Available sources

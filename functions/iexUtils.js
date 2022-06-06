@@ -859,7 +859,6 @@ exports = function() {
 
   if (typeof iex === 'undefined') {
     iex = atlas.db("iex");
-    Object.freeze(iex);
   }
 
   /** Premium token. Will be used for all API calls if defined. */
