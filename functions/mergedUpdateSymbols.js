@@ -189,7 +189,7 @@ function getUpdateSymbolOperation(sourceField, sourceSymbol, mergedSymbol) {
     update.$set = set;
   }
 
-  if (Object.keys(unset).length === 0) {
+  if (Object.keys(unset).length !== 0) {
     update.$unset = unset;
   }
 
