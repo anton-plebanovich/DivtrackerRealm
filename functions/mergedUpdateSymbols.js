@@ -73,7 +73,7 @@ async function update(mergedSymbolsCollection, find, source) {
 
     // Just insert new symbol
     const main = Object.assign({}, sourceSymbol);
-    main.s = sourceField;
+    main.s = source.field;
 
     const insertOne = {
       _id: sourceSymbol._id,
