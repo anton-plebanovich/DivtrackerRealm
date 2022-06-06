@@ -88,9 +88,12 @@ async function update(mergedSymbolsCollection, find, source) {
     // FMP => NFRIX - Nuveen Floating Rate Income Fund
 
     // Just insert new symbol
+    const main = Object.assign({}, sourceSymbol);
+    main.s = sourceField;
+    
     const insertOne = {
       _id: sourceSymbol._id,
-      m: sourceSymbol,
+      m: main,
       [sourceField]: sourceSymbol,
     };
     operation = { insertOne: insertOne };
