@@ -152,7 +152,7 @@ function getUpdateSymbolOperation(source, sourceSymbol, mergedSymbol) {
 
   const set = {};
 
-  if (!newMainSymbol.isEqual(mergedSymbol.m)) {
+  if (isMainSymbolUpdate) {
     set.m = newMainSymbol;
   }
   

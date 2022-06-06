@@ -1567,8 +1567,8 @@ exports = function() {
      * Sources in descending priority order. Higher priority became the main source on conflicts.
      */
     sources = [
-      { field: 'i', name: 'iex', databaseName: 'divtracker-v2' },
       { field: 'f', name: 'fmp', databaseName: 'fmp' },
+      { field: 'i', name: 'iex', databaseName: 'divtracker-v2' },
     ];
     Object.freeze(sources);
 
