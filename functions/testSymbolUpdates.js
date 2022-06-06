@@ -193,7 +193,7 @@ async function test_FMP_disable_enable_on_multiple_sources() {
   // Enable back
   date = new Date();
   delete fmpSymbol.e;
-  await fmpSymbolsCollection.updateOne({ _id: fmpID }, { $uset: { e: "" }, $currentDate: { "u": true } });
+  await fmpSymbolsCollection.updateOne({ _id: fmpID }, { $unset: { e: "" }, $currentDate: { "u": true } });
   await context.functions.execute("mergedUpdateSymbols", date, "fmp");
   await checkMergedSymbol('test_FMP_disable_enable_on_multiple_sources.enable', iexSymbol, fmpSymbol, fmpSymbol, iexID, date);
 }
@@ -284,20 +284,20 @@ async function test_backup_source_update() {
   iexSymbol.t = "TICKER_NEW";
   await iexSymbolsCollection.updateOne({ _id: iexID }, { $set: iexSymbol, $currentDate: { "u": true } });
   await context.functions.execute("mergedUpdateSymbols", date, "iex");
-  await checkMergedSymbol('test_backup_source_update.ticker', iexSymbol, null, iexSymbol, iexID, null, updatesStartDate);
+  await checkMergedSymbol('test_backup_source_update.ticker', iexSymbol, fmpSymbol, fmpSymbol, iexID, null, updatesStartDate);
 
   // Update name
   date = new Date();
   iexSymbol.n = "NAME_NEW";
   await iexSymbolsCollection.updateOne({ _id: iexID }, { $set: iexSymbol, $currentDate: { "u": true } });
   await context.functions.execute("mergedUpdateSymbols", date, "iex");
-  await checkMergedSymbol('test_backup_source_update.name', iexSymbol, null, iexSymbol, iexID, null, updatesStartDate);
+  await checkMergedSymbol('test_backup_source_update.name', iexSymbol, fmpSymbol, fmpSymbol, iexID, null, updatesStartDate);
 
   // Update nothing
   date = new Date();
   await iexSymbolsCollection.updateOne({ _id: iexID }, { $set: iexSymbol, $currentDate: { "u": true } });
   await context.functions.execute("mergedUpdateSymbols", date, "iex");
-  await checkMergedSymbol('test_backup_source_update.nothing', iexSymbol, null, iexSymbol, iexID, null, updatesStartDate);
+  await checkMergedSymbol('test_backup_source_update.nothing', iexSymbol, fmpSymbol, fmpSymbol, iexID, null, updatesStartDate);
 }
 
 //////////////////////////// TESTS HELPERS

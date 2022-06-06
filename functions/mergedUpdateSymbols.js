@@ -201,6 +201,8 @@ function getUpdateSymbolOperation(sourceField, sourceSymbol, mergedSymbol) {
     update.$currentDate = { u: true, r: true };
   } else if (isMainSourceUpdate) {
     update.$currentDate = { u: true };
+  } else {
+    // Backup source updates do not change update date because only 'm' field is primary data and all other fields are here to simplify updates.
   }
 
   const filter = { _id: mergedSymbol._id };
