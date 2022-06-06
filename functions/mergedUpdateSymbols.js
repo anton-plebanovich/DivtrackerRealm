@@ -59,8 +59,8 @@ async function update(mergedSymbolsCollection, find, source) {
   const sourceCollection = atlas.db(source.database).collection("symbols");
   const sourceField = source.field;
   const [sourceSymbols, mergedSymbols] = await Promise.all([
-    sourceCollection.find(find).toArray(),
-    mergedSymbolsCollection.find({}).toArray(),
+    sourceCollection.find(find, { u: false }).toArray(),
+    mergedSymbolsCollection.find({}, { u: false }).toArray(),
   ]);
 
   const mergedSymbolByID = mergedSymbols.toDictionary(x => x[sourceField]?._id);
