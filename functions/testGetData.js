@@ -76,8 +76,12 @@ async function testGetDataV2(transactions) {
 }
 
 function verifyResponseV2(response, collections) {
-  if (response.lastUpdateDate == null) {
-    throw `lastUpdateDate is absent in the response: ${response.stringify()}`;
+  if (response.lastUpdateTimestamp == null) {
+    throw `'lastUpdateTimestamp' field is absent in the response: ${response.stringify()}`;
+  }
+
+  if (response.updates == null) {
+    throw `'updates' field is absent in the response: ${response.stringify()}`;
   }
 
   const hasRequiredCollections = collections.reduce((success, collection) => success && response.updates[collection] != null, true);
