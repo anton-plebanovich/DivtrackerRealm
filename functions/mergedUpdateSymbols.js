@@ -10,22 +10,6 @@
 // https://docs.mongodb.com/realm/mongodb/actions/collection.bulkWrite/#std-label-mongodb-service-collection-bulk-write
 
 /**
- * Available sources
- */
-const sources = {
-  iex: { field: 'i', database: 'divtracker-v2' },
-  fmp: { field: 'f', database: 'fmp' },
-};
-
-/**
- * Fields in descending priority order. Higher priority became the main source on conflicts.
- */
-const fields = [
-  sources.fmp.field,
-  sources.iex.field,
-];
-
-/**
  * Updates merged symbols collection.
  * @param {Date} date Before update date. Used to determine updated source symbols.
  * @param {String} sourceName Update source: 'iex' or 'fmp'. By default, updates from both sources.
@@ -130,7 +114,7 @@ function getUpdateMergedSymbolOperation(dictionary, sourceField, sourceSymbol, c
  */
 function getUpdateSymbolOperation(sourceField, sourceSymbol, mergedSymbol) {
   let newMainSource;
-  for (const field of fields) {
+  for (const field of sourceFields) {
     if (field === sourceField) {
       if (sourceSymbol.e != false) {
         newMainSource = Object.assign({}, sourceSymbol);
@@ -183,7 +167,7 @@ function getUpdateSymbolOperation(sourceField, sourceSymbol, mergedSymbol) {
 
     // Check if we can detach any other source. 
     // This is a case when we attach to a disabled merged symbol.
-    const otherFields = fields.filter(field => field !== sourceField);
+    const otherFields = sourceFields.filter(field => field !== sourceField);
     const fieldToDetach = otherFields.find(field => mergedSymbol[field] != null && mergedSymbol[field].e == false);
     if (fieldToDetach != null) {
       unset[fieldToDetach] = "";

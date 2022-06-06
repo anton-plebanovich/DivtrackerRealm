@@ -1547,6 +1547,22 @@ exports = function() {
     db = atlas.db("divtracker-v2");
   }
 
+  // Available sources
+  if (typeof sources === 'undefined') {
+    sources = {
+      iex: { field: 'i', database: 'divtracker-v2' },
+      fmp: { field: 'f', database: 'fmp' },
+    };
+
+    /**
+     * Source fields in descending priority order. Higher priority became the main source on conflicts.
+     */
+    sourceFields = [
+      sources.fmp.field,
+      sources.iex.field,
+    ];
+  }
+
   // Adjusting console log
   if (!console.logCopy) {
     console.logCopy = console.log.bind(console);
