@@ -175,7 +175,7 @@ exports = async function(timestamp, collectionNames, symbolIDs, fullFetchCollect
       return { symbols: symbols };
     } else {
       const operations = sources.map(async source => {
-        if (singularSourceCollections.includes(collectionName) && collectionName !== sourceByName.iex.databaseName) {
+        if (singularSourceCollections.includes(collectionName) && source.name !== 'iex') {
           return [];
         }
 
