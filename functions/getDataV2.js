@@ -15,7 +15,6 @@ exports = async function(timestamp, collectionNames, symbolIDs, fullFetchCollect
   
   let previousUpdateDate = null;
   if (timestamp != null) {
-    throw `timestamp: ${timestamp.getTime()}`;
     throwIfNotNumber(
       timestamp, 
       `Please pass timestamp in milliseconds as the first argument.`, 
