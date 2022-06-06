@@ -131,6 +131,7 @@ function getUpdateSymbolOperation(sourceField, sourceSymbol, mergedSymbol) {
     if (field === sourceField) {
       if (sourceSymbol.e != false) {
         newMainSource = sourceSymbol;
+        newMainSource.s = sourceField;
         break;
       }
 
@@ -138,6 +139,7 @@ function getUpdateSymbolOperation(sourceField, sourceSymbol, mergedSymbol) {
       const sourceSymbol = mergedSymbol[field];
       if (sourceSymbol != null && sourceSymbol.e != false) {
         newMainSource = sourceSymbol;
+        newMainSource.s = field;
         break;
       }
     }
@@ -147,6 +149,7 @@ function getUpdateSymbolOperation(sourceField, sourceSymbol, mergedSymbol) {
   // Though, we still need to update data even if symbols is disabled.
   if (newMainSource == null) {
     newMainSource = sourceSymbol;
+    newMainSource.s = sourceField;
   }
 
   console.logData(`New main source`, newMainSource);
