@@ -117,81 +117,81 @@ async function test_getDataV2_errors() {
   try {
     await expectGetDataError(new Date().getTime() + 1000, null, null, null);
   } catch(error) {
-    verifyError(error, RegExp(`{"type":"system","message":"Invalid last update timestamp parameter. Passed timestamp '[0-9]*' is higher than the new update timestamp: '[0-9]*'"}`));
+    verifyError(error, RegExp(`{"type":"user","message":"Invalid last update timestamp parameter. Passed timestamp '[0-9]*' is higher than the new update timestamp '[0-9]*'"}`));
   }
   
   try {
     await expectGetDataError(null, "parameter", null, null);
   } catch(error) {
-    verifyError(error, 'TODO3');
+    verifyError(error, `{"type":"user","message":"Argument should be of the 'Array' type. Instead, received '[object String]'. Please pass collections array as the second argument. It may be null but must not be empty. Valid collections are: companies,dividends,exchange-rates,historical-prices,quotes,splits,symbols,updates."}`);
   }
   
   try {
     await expectGetDataError(null, [], null, null);
   } catch(error) {
-    verifyError(error, 'TODO4');
+    verifyError(error, `{"type":"user","message":"Array is empty. Please pass collections array as the second argument. It may be null but must not be empty. Valid collections are: companies,dividends,exchange-rates,historical-prices,quotes,splits,symbols,updates."}`);
   }
   
   try {
     await expectGetDataError(null, [1], null, null);
   } catch(error) {
-    verifyError(error, 'TODO5');
+    verifyError(error, `{"type":"user","message":"Argument should be of the 'string' type. Instead, received '[object Number]'. Please pass collections array as the second argument. Valid collections are: companies,dividends,exchange-rates,historical-prices,quotes,splits,symbols,updates."}`);
   }
   
   try {
     await expectGetDataError(null, ["parameter"], null, null);
   } catch(error) {
-    verifyError(error, 'TODO6');
+    verifyError(error, `{"type":"user","message":"Invalid collections array as the second argument: parameter. Valid collections are: companies,dividends,exchange-rates,historical-prices,quotes,splits,symbols,updates."}`);
   }
   
   try {
     await expectGetDataError(null, null, [], null);
   } catch(error) {
-    verifyError(error, 'TODO7');
+    verifyError(error, `{"type":"user","message":"Array is empty. Please pass symbol IDs array as the third argument. It may be null but must not be empty."}`);
   }
   
   try {
     await expectGetDataError(null, null, "parameter", null);
   } catch(error) {
-    verifyError(error, 'TODO8');
+    verifyError(error, `{"type":"user","message":"Argument should be of the 'Array' type. Instead, received '[object String]'. Please pass symbol IDs array as the third argument. It may be null but must not be empty."}`);
   }
   
   try {
     await expectGetDataError(null, null, ["parameter"], null);
   } catch(error) {
-    verifyError(error, 'TODO9');
+    verifyError(error, `{"type":"user","message":"Argument should be of the 'ObjectId' type. Instead, received '[object String]'. Please pass symbol IDs array as the third argument."}`);
   }
   
   try {
     await expectGetDataError(null, null, ['companies', 'dividends', 'historical-prices', 'quotes', 'splits'], null);
   } catch(error) {
-    verifyError(error, 'TODO10');
+    verifyError(error, `{"type":"user","message":"Argument should be of the 'ObjectId' type. Instead, received '[object String]'. Please pass symbol IDs array as the third argument."}`);
   }
   
   try {
-    const symbolIDs = Array(1001).map(x => new BSON.ObjectId());
+    const symbolIDs = [...Array(1001).keys()].map(x => new BSON.ObjectId());
     await expectGetDataError(null, null, symbolIDs, null);
   } catch(error) {
-    verifyError(error, 'TODO11');
+    verifyError(error, `{"type":"user","message":"Max collections count '1000' is exceeded. Please make sure there are less than 1000 unique symbols in the portfolio."}`);
   }
 
   
   try {
     await expectGetDataError(null, null, null, "parameter");
   } catch(error) {
-    verifyError(error, 'TODO12');
+    verifyError(error, `{"type":"user","message":"Argument should be of the 'Array' type. Instead, received '[object String]'. Please pass full symbol collections array as the fourth argument. It may be null. Valid collections are: companies,dividends,exchange-rates,historical-prices,quotes,splits,symbols,updates."}`);
   }
   
   try {
     await expectGetDataError(null, null, null, [1]);
   } catch(error) {
-    verifyError(error, 'TODO13');
+    verifyError(error, `{"type":"user","message":"Argument should be of the 'string' type. Instead, received '[object Number]'. Please pass full symbol collections array as the fourth argument. Valid collections are: companies,dividends,exchange-rates,historical-prices,quotes,splits,symbols,updates."}`);
   }
   
   try {
     await expectGetDataError(null, null, null, ["parameter"]);
   } catch(error) {
-    verifyError(error, 'TODO14');
+    verifyError(error, `{"type":"user","message":"Invalid full symbol collections array as the fourth argument: parameter. Valid full symbol collections are: exchange-rates,symbols,updates."}`);
   }
 }
 
@@ -201,7 +201,7 @@ async function expectGetDataError(timestamp, collectionNames, symbolIDs, fullFet
 }
 
 async function test_getDataV2_refetch() {
-  console.log("test_getDataV2_errors");
+  console.log("test_getDataV2_refetch");
 
   let response;
   let timestamp;
