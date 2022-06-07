@@ -40,6 +40,7 @@ cleanupSymbols = _cleanupSymbols;
 async function _restoreSymbols() {
   await _cleanupSymbols();
   await context.functions.execute("updateSymbolsV2");
+  await context.functions.execute("mergedUpdateSymbols");
   await context.functions.execute("fmpUpdateSymbols");
   await context.functions.execute("mergedUpdateSymbols");
 }
