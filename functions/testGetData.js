@@ -10,9 +10,15 @@ exports = async function() {
 
   try {
     await testGetDataV1(transactions);
+  } catch(error) {
+    console.error(error);
+    throw error;
+  }
+
+  try {
     await testGetDataV2(transactions);
   } catch(error) {
-    console.log(error);
+    console.error(error);
     await restoreSymbols();
     throw error;
   }
@@ -77,7 +83,7 @@ async function testGetDataV2(transactions) {
 
   await test_getDataV2_refetch();
   await test_getDataV2_FMP();
-  await test_getDataV2_FMP_and_IEX();
+  await test_getDataV2_FMP_and_IEX(symbolIDs);
   await test_getDataV2_errors();
   await restoreSymbols();
 }
@@ -185,7 +191,7 @@ async function test_getDataV2_errors() {
   }
   
   try {
-    const symbolIDs = Array(1001).map(x => new BSON.ObjectId())
+    const symbolIDs = Array(1001).map(x => new BSON.ObjectId());
     await expectGetDataError(null, null, symbolIDs, null);
   } catch(error) {
     verifyError(error, 'TODO');
@@ -217,6 +223,8 @@ async function expectGetDataError(timestamp, collectionNames, symbolIDs, fullFet
 }
 
 function verifyResponseV2(response, collections, length) {
+  console.logData(`response: `, response);
+
   if (response.lastUpdateTimestamp == null) {
     throw `'lastUpdateTimestamp' field is absent in the response: ${response.stringify()}`;
   }
@@ -233,11 +241,20 @@ function verifyResponseV2(response, collections, length) {
 
   if (length != null) {
     requiredDataCollections.forEach(collection => {
-      const updatesLength = response.updates[collection].length
-      if (updatesLength < length) {
-        throw `Unexpected data length '${updatesLength} < ${length}' for '${collection}' collection`;
+      if (!collections.includes(collection)) {
+        return;
       }
-    })
+
+      const data = response.updates[collection];
+      if (data == null) {
+        throw `'updates' data for '${collection}' collection is null`;
+      }
+
+      const dataLength = data.length;
+      if (dataLength < length) {
+        throw `Unexpected data length '${dataLength} < ${length}' for '${collection}' collection`;
+      }
+    });
   }
 
   // TODO: Add more data verifications
@@ -262,7 +279,7 @@ function verifyRefetchResponse(response, timestamp, fullFetchCollections) {
     if (updates[collection].length == 0) {
       throw `Refetch updates for '${collection}' collection are empty`;
     }
-  })
+  });
 
   if (fullFetchCollections != null) {
     fullFetchCollections.forEach(collection => {
@@ -270,7 +287,7 @@ function verifyRefetchResponse(response, timestamp, fullFetchCollections) {
       if (length <= 1) {
         throw `Unexpected '${collection}' collection length: ${length}`;
       }
-    })
+    });
   }
 }
 
@@ -285,7 +302,6 @@ function verifyError(error, message) {
 const requiredDataCollections = [
   'companies',
   'exchange-rates',
-  'historical-prices',
   'quotes',
   'symbols',
   'updates',

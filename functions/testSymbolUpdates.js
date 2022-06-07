@@ -4,8 +4,6 @@
 exports = async function() {
   context.functions.execute("testUtils");
 
-  setup();
-
   try {
     await test(test_IEX_insert);
     await test(test_FMP_insert);
@@ -373,33 +371,10 @@ async function checkMergedSymbol(testName, iexSymbol, fmpSymbol, mainSymbol, id,
 }
 
 async function getMergedSymbol(testName) {
-  const mergedSymbols = await mergedSymbolsCollection.find({}).toArray();
+  const mergedSymbols = await atlas.db("merged").collection("symbols").find({}).toArray();
   if (mergedSymbols.length !== 1) {
     throw `[${testName}] Unexpected merged symbols length: ${mergedSymbols.stringify()}`;
   }
 
   return mergedSymbols[0];
-}
-
-//////////////////////////// ENVIRONMENT HELPERS
-
-function setup() {
-  iexSymbolsCollection = db.collection('symbols');
-  fmpSymbolsCollection = atlas.db('fmp').collection('symbols');
-  mergedSymbolsCollection = atlas.db("merged").collection("symbols");
-}
-
-async function cleanupSymbols() {
-  await Promise.all([
-    iexSymbolsCollection.deleteMany({}),
-    fmpSymbolsCollection.deleteMany({}),
-    mergedSymbolsCollection.deleteMany({}),
-  ]);
-}
-
-async function restoreSymbols() {
-  await cleanup();
-  await context.functions.execute("updateSymbolsV2");
-  await context.functions.execute("fmpUpdateSymbols");
-  await context.functions.execute("mergedUpdateSymbols");
 }
