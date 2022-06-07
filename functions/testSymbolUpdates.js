@@ -214,6 +214,81 @@ async function test_backup_source_update() {
 
 //////////////////////////// TESTS HELPERS
 
+async function add_IEX_symbol(name, date) {
+  return await add_symbol(name, date, "iex");
+}
+
+async function add_FMP_symbol(name, date) {
+  return await add_symbol(name, date, "fmp");
+}
+
+async function add_symbol(name, date, sourceName) {
+  const source = sourceByName[sourceName];
+  const databaseName = source.databaseName;
+  const collection = atlas.db(databaseName).collection('symbols')
+
+  if (name == null) {
+    name = `${sourceName}_NAME`;
+  }
+
+  const id = new BSON.ObjectId();
+  const symbol = { _id: id, t: "TICKER", n: name };
+  await collection.insertOne(symbol);
+  await context.functions.execute("mergedUpdateSymbols", date, sourceName);
+
+  return [id, symbol];
+}
+
+async function disable_IEX_symbol(symbol, date) {
+  await disable_symbol(symbol, date, "iex");
+}
+
+async function disable_FMP_symbol(symbol, date) {
+  await disable_symbol(symbol, date, "fmp");
+}
+
+async function disable_symbol(symbol, date, sourceName) {
+  symbol.e = false;
+  const source = sourceByName[sourceName];
+  const databaseName = source.databaseName;
+  const collection = atlas.db(databaseName).collection('symbols')
+  await collection.updateOne({ _id: symbol._id }, { $set: { e: symbol.e }, $currentDate: { "u": true } });
+  await context.functions.execute("mergedUpdateSymbols", date, sourceName);
+}
+
+async function enable_IEX_symbol(symbol, date) {
+  await enable_symbol(symbol, date, "iex");
+}
+
+async function enable_FMP_symbol(symbol, date) {
+  await enable_symbol(symbol, date, "fmp");
+}
+
+async function enable_symbol(symbol, date, sourceName) {
+  delete symbol.e;
+  const source = sourceByName[sourceName];
+  const databaseName = source.databaseName;
+  const collection = atlas.db(databaseName).collection('symbols')
+  await collection.updateOne({ _id: symbol._id }, { $unset: { e: "" }, $currentDate: { "u": true } });
+  await context.functions.execute("mergedUpdateSymbols", date, sourceName);
+}
+
+async function update_IEX_symbol(symbol, date) {
+  await update_symbol(symbol, date, "iex");
+}
+
+async function update_FMP_symbol(symbol, date) {
+  await update_symbol(symbol, date, "fmp");
+}
+
+async function update_symbol(symbol, date, sourceName) {
+  const source = sourceByName[sourceName];
+  const databaseName = source.databaseName;
+  const collection = atlas.db(databaseName).collection('symbols')
+  await collection.updateOne({ _id: symbol._id }, { $set: symbol, $currentDate: { "u": true } });
+  await context.functions.execute("mergedUpdateSymbols", date, sourceName);
+}
+
 async function checkMergedSymbol(testName, iexSymbol, fmpSymbol, mainSymbol, id, source, lowerUpdateDate, upperUpdateDate, lowerRefetchDate, upperRefetchDate) {
   const mergedSymbol = await getMergedSymbol(testName);
 
@@ -316,4 +391,19 @@ function setup() {
   iexSymbolsCollection = db.collection('symbols');
   fmpSymbolsCollection = atlas.db('fmp').collection('symbols');
   mergedSymbolsCollection = atlas.db("merged").collection("symbols");
+}
+
+async function cleanupSymbols() {
+  await Promise.all([
+    iexSymbolsCollection.deleteMany({}),
+    fmpSymbolsCollection.deleteMany({}),
+    mergedSymbolsCollection.deleteMany({}),
+  ]);
+}
+
+async function restoreSymbols() {
+  await cleanup();
+  await context.functions.execute("updateSymbolsV2");
+  await context.functions.execute("fmpUpdateSymbols");
+  await context.functions.execute("mergedUpdateSymbols");
 }
