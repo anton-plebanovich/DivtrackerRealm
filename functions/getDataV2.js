@@ -7,6 +7,7 @@
  * @param {Array<String>} collectionNames Collection names for which data is requested. Assumes all collections if `null`.
  * @param {Array<ObjectId>} symbolIDs Symbol IDs for which data is requested. Everything is returned if `null`.
  * @param {Array<String>} fullFetchCollections Collections for which to perform full data fetch and ignore passed `symbolIDs`.
+ * @returns {{ lastUpdateTimestamp: Number, updates: Object, cleanups: Array<ObjectId> }} Response
  */
 exports = async function(timestamp, collectionNames, symbolIDs, fullFetchCollections) {
   context.functions.execute("utils");
@@ -179,7 +180,7 @@ exports = async function(timestamp, collectionNames, symbolIDs, fullFetchCollect
           return [];
         }
 
-        const collection = atlas.db(source.databaseName).collection(collectionName);
+        const collection = source.db.collection(collectionName);
         const sourceSymbolIDs = symbolIDsBySource[source.field];
         const sourceRefetchSymbolIDs = refetchSymbolIDsBySource[source.field];
         return await getCollectionData(collection, collectionName, previousUpdateDate, sourceSymbolIDs, sourceRefetchSymbolIDs, fullFetchCollections)
