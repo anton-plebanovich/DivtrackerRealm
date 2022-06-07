@@ -1591,14 +1591,20 @@ exports = function() {
   }
   
   if (!console.logVerbose) {
+    verboseLogEnabled = false;
     console.logVerbose = function(message) {
-      // this.logCopy(getDateLogString(), message);
+      if (verboseLogEnabled) {
+        this.logCopy(getDateLogString(), message);
+      }
     };
   }
   
   if (!console.logData) {
+    dataLogEnabled = false;
     console.logData = function(message, data) {
-      // this.logCopy(getDateLogString(), `${message}: ${data.stringify()}`);
+      if (dataLogEnabled) {
+        this.logCopy(getDateLogString(), `${message}: ${data.stringify()}`);
+      }
     };
   }
   
