@@ -29,9 +29,9 @@ async function _cleanup() {
 cleanup = _cleanup;
 
 async function _cleanupSymbols() {
-  const sourceSymbolsOperations = sources.map(source => source.db.collection('symbols').deleteMany({}));
+  const operations = sources.map(source => source.db.collection('symbols').deleteMany({}));
   const mergedSymbolsOperation = atlas.db("merged").collection("symbols").deleteMany({});
-  const operations = sourceSymbolsOperations.push(mergedSymbolsOperation);
+  operations.push(mergedSymbolsOperation);
   await Promise.all(operations);
 }
 
