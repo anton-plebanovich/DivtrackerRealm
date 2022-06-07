@@ -70,7 +70,8 @@ async function loadMissingCompanies(shortSymbols, symbolIDs) {
   }
 
   console.log(`Performing ${companies.length} update operations for companies.`);
-  await collection.bulkWrite(operations);
+  const options = { ordered: false };
+  await collection.bulkWrite(operations, options);
   console.log(`Performed ${companies.length} update operations for companies.`);
 }
 
