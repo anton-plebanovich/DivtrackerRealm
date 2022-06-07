@@ -23,7 +23,10 @@ exports = async function(timestamp, collectionNames, symbolIDs, fullFetchCollect
     );
     
     if (timestamp > lastUpdateTimestamp) {
-      logAndThrow(`Invalid last update timestamp parameter. Passed timestamp '${timestamp}' is higher than the new update timestamp '${lastUpdateTimestamp}'`);
+      logAndThrow(
+        `Invalid last update timestamp parameter. Passed timestamp '${timestamp}' is higher than the new update timestamp '${lastUpdateTimestamp}'`, 
+        UserError
+      );
     }
 
     previousUpdateDate = new Date(timestamp);
@@ -44,7 +47,10 @@ exports = async function(timestamp, collectionNames, symbolIDs, fullFetchCollect
 
     const excessiveCollections = collectionNames.filter(x => !allCollections.includes(x));
     if (excessiveCollections.length) {
-      logAndThrow(`Invalid collections array as the second argument: ${excessiveCollections}. Valid collections are: ${allCollections}.`);
+      logAndThrow(
+        `Invalid collections array as the second argument: ${excessiveCollections}. Valid collections are: ${allCollections}.`,
+        UserError
+        );
     }
     
   } else {
@@ -65,7 +71,10 @@ exports = async function(timestamp, collectionNames, symbolIDs, fullFetchCollect
     );
   
     if (symbolIDs.length > maxSymbolsCount) {
-      logAndThrow(`Max collections count '${maxSymbolsCount}' is exceeded. Please make sure there are less than 1000 unique symbols in the portfolio.`);
+      logAndThrow(
+        `Max collections count '${maxSymbolsCount}' is exceeded. Please make sure there are less than 1000 unique symbols in the portfolio.`,
+        UserError
+      );
     }
   }
 
@@ -86,7 +95,10 @@ exports = async function(timestamp, collectionNames, symbolIDs, fullFetchCollect
       // Check that there are no unexpected full fetch collections
       const excessiveFullFetchCollections = fullFetchCollections.filter(x => !allowedFullFetchCollections.includes(x));
       if (excessiveFullFetchCollections.length) {
-        logAndThrow(`Invalid full symbol collections array as the fourth argument: ${excessiveFullFetchCollections}. Valid full symbol collections are: ${allowedFullFetchCollections}.`);
+        logAndThrow(
+          `Invalid full symbol collections array as the fourth argument: ${excessiveFullFetchCollections}. Valid full symbol collections are: ${allowedFullFetchCollections}.`, 
+          UserError
+        );
       }
     }
   } else {
@@ -107,7 +119,10 @@ exports = async function(timestamp, collectionNames, symbolIDs, fullFetchCollect
   if (symbolIDs == null || symbolIDs.length === 0) {
     const excessiveCollections = collectionNames.filter(x => !allowedFullFetchCollections.includes(x));
     if (excessiveCollections.length > 0) {
-      logAndThrow(`Invalid collections array as the second argument: ${collectionNames}. Full data is not supported for: ${excessiveCollections}. Full data fetch allowed collections: ${allowedFullFetchCollections}. Please provide concrete symbols to fetch or remove not supported collections.`);
+      logAndThrow(
+        `Invalid collections array as the second argument: ${collectionNames}. Full data is not supported for: ${excessiveCollections}. Full data fetch allowed collections: ${allowedFullFetchCollections}. Please provide concrete symbols to fetch or remove not supported collections.`,
+        UserError
+      );
     }
   }
 
