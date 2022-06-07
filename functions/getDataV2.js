@@ -160,7 +160,7 @@ exports = async function(timestamp, collectionNames, symbolIDs, fullFetchCollect
     });
 
     if (previousUpdateDate != null) {
-      const refetchMergedSymbols = mergedSymbols.filter(x => x.r?.getTime() >= lastUpdateTimestamp);
+      const refetchMergedSymbols = mergedSymbols.filter(x => x.r?.getTime() >= timestamp);
       refetchSymbolIDsBySource = refetchMergedSymbols.reduce((dictionary, refetchMergedSymbol) => {
         const key = refetchMergedSymbol.m.s;
         const value = mergedSymbol[key]._id;
@@ -241,7 +241,7 @@ async function getSymbolsData(mergedSymbolsCollection, previousUpdateDate, symbo
     find._id = { $in: symbolIDs };
   }
 
-  console.log(`Performing 'symbols' find: ${find.stringify()}`);
+  console.logData(`Performing 'symbols' find`, find);
 
   const projection = { m: true };
   const mergedSymbols = await mergedSymbolsCollection.find(find, projection).toArray();
@@ -256,7 +256,7 @@ async function getCollectionData(source, collectionName, previousUpdateDate, sym
 
   if (symbolIDs != null && !fullFetchCollections.includes(collectionName)) {
     if (symbolIDs.length === 0) {
-      console.log(`No symbols to fetch for '${source.name}-${collectionName}'. Skipping.`);
+      console.logVerbose(`No symbols to fetch for '${source.name}-${collectionName}'. Skipping.`);
       return [];
     }
 
@@ -297,7 +297,7 @@ async function getCollectionData(source, collectionName, previousUpdateDate, sym
     }
   }
 
-  console.log(`Performing '${source.name}-${collectionName}' find: ${find.stringify()}`);
+  console.logData(`Performing '${source.name}-${collectionName}' find`, find);
 
   const projection = { u: false };
 
