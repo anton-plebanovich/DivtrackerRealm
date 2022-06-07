@@ -1404,7 +1404,7 @@ function _getURL(baseURL, api, queryParameters) {
 getTickersAndIDByTicker = _getTickersAndIDByTicker;
 
 /** 
- * @returns {Promise<[ObjectId]>} Array of existing enabled symbol IDs from both IEX and FMP databases, e.g. [ObjectId("61b102c0048b84e9c13e454d")]
+ * @returns {Promise<[ObjectId]>} Array of existing enabled symbol IDs from merged symbols database, e.g. [ObjectId("61b102c0048b84e9c13e454d")]
 */
 async function _getExistingSymbolIDs() {
   const symbolsCollection = atlas.db("merged").collection("symbols");
@@ -1418,11 +1418,11 @@ async function _getExistingSymbolIDs() {
 getExistingSymbolIDs = _getExistingSymbolIDs;
 
 /** 
- * @returns {Promise<[ObjectId]>} Array of existing enabled symbol IDs from both IEX and FMP databases, e.g. [ObjectId("61b102c0048b84e9c13e454d")]
+ * @returns {Promise<[ObjectId]>} Array of existing enabled symbol IDs from merged symbols database, e.g. [ObjectId("61b102c0048b84e9c13e454d")]
 */
 async function _getSupportedSymbolIDs() {
   const symbolsCollection = atlas.db("merged").collection("symbols");
-  const supportedSymbolIDs = await symbolsCollection.distinct("_id", { e: { $ne: false } });
+  const supportedSymbolIDs = await symbolsCollection.distinct("_id", { "m.e": { $ne: false } });
   console.log(`Supported symbols (${supportedSymbolIDs.length})`);
   console.logData(`Supported symbols (${supportedSymbolIDs.length})`, supportedSymbolIDs);
 
