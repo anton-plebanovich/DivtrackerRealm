@@ -161,8 +161,8 @@ exports = async function(timestamp, collectionNames, symbolIDs, fullFetchCollect
 
     if (previousUpdateDate != null) {
       const refetchMergedSymbols = mergedSymbols.filter(x => x.r?.getTime() >= timestamp);
-      refetchSymbolIDsBySource = refetchMergedSymbols.reduce((dictionary, refetchMergedSymbol) => {
-        const key = refetchMergedSymbol.m.s;
+      refetchSymbolIDsBySource = refetchMergedSymbols.reduce((dictionary, mergedSymbol) => {
+        const key = mergedSymbol.m.s;
         const value = mergedSymbol[key]._id;
         const bucket = dictionary[key];
         if (bucket == null) {
