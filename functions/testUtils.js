@@ -24,7 +24,7 @@ async function _cleanup() {
     db.collection('splits').deleteMany({}),
     db.collection('transactions').deleteMany({})
   ]);
-};
+}
 
 cleanup = _cleanup;
 

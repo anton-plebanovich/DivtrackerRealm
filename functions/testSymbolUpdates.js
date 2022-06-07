@@ -46,8 +46,10 @@ async function test_FMP_insert() {
 // Merge FMP to IEX
 async function test_FMP_to_IEX_merge() {
   const [iexID, iexSymbol] = await add_IEX_symbol();
+  const lowerRefetchDate = new Date();
   const [fmpID, fmpSymbol] = await add_FMP_symbol();
-  await checkMergedSymbol('test_FMP_to_IEX_merge', iexSymbol, fmpSymbol, fmpSymbol, iexID, 'f', null);
+  const upperRefetchDate = new Date();
+  await checkMergedSymbol('test_FMP_to_IEX_merge', iexSymbol, fmpSymbol, fmpSymbol, iexID, 'f', null, null, lowerRefetchDate, upperRefetchDate);
 }
 
 // Merge IEX to FMP
@@ -89,13 +91,17 @@ async function test_singular_source_disable_attach_and_enable() {
   await checkMergedSymbol('test_singular_source_disable_attach_and_enable.disable', null, fmpSymbol, fmpSymbol, fmpID, 'f', date);
 
   // Attach
+  const lowerRefetchDate1 = new Date();
   const [iexID, iexSymbol] = await add_IEX_symbol();
-  await checkMergedSymbol('test_singular_source_disable_attach_and_enable.attach', iexSymbol, null, iexSymbol, fmpID, 'i', date, null, date, null);
+  const upperRefetchDate1 = new Date();
+  await checkMergedSymbol('test_singular_source_disable_attach_and_enable.attach', iexSymbol, null, iexSymbol, fmpID, 'i', date, null, lowerRefetchDate1, upperRefetchDate1);
 
   // Enable back
   date = new Date();
+  const lowerRefetchDate2 = new Date();
   await enable_FMP_symbol(fmpSymbol, date);
-  await checkMergedSymbol('test_singular_source_disable_attach_and_enable.enable', iexSymbol, fmpSymbol, fmpSymbol, fmpID, 'f', date, null, date, null);
+  const upperRefetchDate2 = new Date();
+  await checkMergedSymbol('test_singular_source_disable_attach_and_enable.enable', iexSymbol, fmpSymbol, fmpSymbol, fmpID, 'f', date, null, date, null, lowerRefetchDate2, upperRefetchDate2);
 }
 
 // Disable IEX source on multiple sources symbol and enable it back
@@ -127,12 +133,14 @@ async function test_FMP_disable_enable_on_multiple_sources() {
   // Disable
   date = new Date();
   await disable_FMP_symbol(fmpSymbol, date);
-  await checkMergedSymbol('test_FMP_disable_enable_on_multiple_sources.disable', iexSymbol, null, iexSymbol, iexID, 'i', date, null, date, null);
+  const upperRefetchDate1 = new Date();
+  await checkMergedSymbol('test_FMP_disable_enable_on_multiple_sources.disable', iexSymbol, null, iexSymbol, iexID, 'i', date, null, date, upperRefetchDate1);
 
   // Enable back
   date = new Date();
   await enable_FMP_symbol(fmpSymbol, date);
-  await checkMergedSymbol('test_FMP_disable_enable_on_multiple_sources.enable', iexSymbol, fmpSymbol, fmpSymbol, iexID, 'f', date, null, date, null);
+  const upperRefetchDate2 = new Date();
+  await checkMergedSymbol('test_FMP_disable_enable_on_multiple_sources.enable', iexSymbol, fmpSymbol, fmpSymbol, iexID, 'f', date, null, date, upperRefetchDate2);
 }
 
 // Update singular source symbol (ticker, name, nothing)
