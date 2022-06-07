@@ -224,8 +224,7 @@ async function add_FMP_symbol(name, date) {
 
 async function add_symbol(name, date, sourceName) {
   const source = sourceByName[sourceName];
-  const databaseName = source.databaseName;
-  const collection = atlas.db(databaseName).collection('symbols')
+  const collection = source.db.collection('symbols');
 
   if (name == null) {
     name = `${sourceName}_NAME`;
@@ -250,8 +249,7 @@ async function disable_FMP_symbol(symbol, date) {
 async function disable_symbol(symbol, date, sourceName) {
   symbol.e = false;
   const source = sourceByName[sourceName];
-  const databaseName = source.databaseName;
-  const collection = atlas.db(databaseName).collection('symbols')
+  const collection = source.db.collection('symbols')
   await collection.updateOne({ _id: symbol._id }, { $set: { e: symbol.e }, $currentDate: { "u": true } });
   await context.functions.execute("mergedUpdateSymbols", date, sourceName);
 }
@@ -267,8 +265,7 @@ async function enable_FMP_symbol(symbol, date) {
 async function enable_symbol(symbol, date, sourceName) {
   delete symbol.e;
   const source = sourceByName[sourceName];
-  const databaseName = source.databaseName;
-  const collection = atlas.db(databaseName).collection('symbols')
+  const collection = source.db.collection('symbols');
   await collection.updateOne({ _id: symbol._id }, { $unset: { e: "" }, $currentDate: { "u": true } });
   await context.functions.execute("mergedUpdateSymbols", date, sourceName);
 }
@@ -283,8 +280,7 @@ async function update_FMP_symbol(symbol, date) {
 
 async function update_symbol(symbol, date, sourceName) {
   const source = sourceByName[sourceName];
-  const databaseName = source.databaseName;
-  const collection = atlas.db(databaseName).collection('symbols')
+  const collection = source.db.collection('symbols');
   await collection.updateOne({ _id: symbol._id }, { $set: symbol, $currentDate: { "u": true } });
   await context.functions.execute("mergedUpdateSymbols", date, sourceName);
 }
