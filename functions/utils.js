@@ -411,6 +411,7 @@ Array.prototype.compactMap = function(callbackfn) {
 
 /**
  * Creates dictionary from objects using provided `key` or function as source for keys and object as value.
+ * If returned key is `null` or `undefined` then value is ignored.
  * @param {function|array|string|null} arg Key map function or key.
  */
 Array.prototype.toDictionary = function(arg) {
@@ -431,6 +432,8 @@ Array.prototype.toDictionary = function(arg) {
     const dictionary = {};
     for (const element of this) {
       const keys = getKey(element);
+      if (keys == null) { continue; }
+      
       const lastIndex = keys.length - 1;
       let currentDictionary = dictionary;
       for (const [i, key] of keys.entries()) {
@@ -450,7 +453,11 @@ Array.prototype.toDictionary = function(arg) {
   } else {
     return this.reduce((dictionary, element) => {
       const key = getKey(element);
-      return Object.assign(dictionary, { [key]: element });
+      if (key != null) {
+        return Object.assign(dictionary, { [key]: element });
+      } else {
+        return dictionary;
+      }
     }, {});
   }
 };
@@ -491,11 +498,11 @@ Array.prototype.toBuckets = function(arg) {
 
   return this.reduce((dictionary, value) => {
     const key = getKey(value);
-    const dictionaryValue = dictionary[key];
-    if (dictionaryValue == null) {
+    const bucket = dictionary[key];
+    if (bucket == null) {
       dictionary[key] = [value];
     } else {
-      dictionaryValue.push(value);
+      bucket.push(value);
     }
     return dictionary;
   }, {});
@@ -541,6 +548,9 @@ Array.prototype.sorted = function(func) {
   return copy.sort(func);
 };
 
+/**
+ * Performs map operator async with specified simultaneous concurrent queues.
+ */
 Array.prototype.asyncMap = async function(limit, callback) {
   let index = 0;
   const results = [];
@@ -639,6 +649,18 @@ Date.prototype.apiParameter = function() {
   
   return dateString;
 };
+
+/**
+ * Returns `find` operator to search for new records after `this`.
+ */
+Date.prototype.getFindOperator = function() {
+  return {
+    $or: [
+      { _id: { $gte: BSON.ObjectId.fromDate(this) } },
+      { u: { $gte: this } }
+    ]
+  };
+}
 
 /**
  * Stringifies object using JSON format.
@@ -1189,10 +1211,24 @@ function _throwIfNotArray(object, message, ErrorType) {
   if (ErrorType == null) { ErrorType = _SystemError; }
   if (message == null) { message = ""; }
   
-  throw new ErrorType(`Argument should be of the Array type. Instead, received '${type}'. ${message}`);
+  throw new ErrorType(`Argument should be of the 'Array' type. Instead, received '${type}'. ${message}`);
 }
 
 throwIfNotArray = _throwIfNotArray;
+
+function _throwIfNotNumber(object, message, ErrorType) {
+  _throwIfUndefinedOrNull(object, message, ErrorType);
+
+  const type = typeof object;
+  const objectType = Object.prototype.toString.call(object);
+  if (type === 'number' || objectType === '[object Number]') { return object; }
+  if (ErrorType == null) { ErrorType = _SystemError; }
+  if (message == null) { message = ""; }
+  
+  throw new ErrorType(`Argument should be of the 'number' type. Instead, received '${objectType} (${type})'. ${message}`);
+}
+
+throwIfNotNumber = _throwIfNotNumber;
 
 function _throwIfNotDate(object, message, ErrorType) {
   _throwIfUndefinedOrNull(object, message, ErrorType);
@@ -1202,7 +1238,7 @@ function _throwIfNotDate(object, message, ErrorType) {
   if (ErrorType == null) { ErrorType = _SystemError; }
   if (message == null) { message = ""; }
   
-  throw new ErrorType(`Argument should be of the Date type. Instead, received '${type}'. ${message}`);
+  throw new ErrorType(`Argument should be of the 'Date' type. Instead, received '${type}'. ${message}`);
 }
 
 throwIfNotDate = _throwIfNotDate;
@@ -1215,7 +1251,7 @@ function _throwIfNotObjectId(object, message, ErrorType) {
   if (ErrorType == null) { ErrorType = _SystemError; }
   if (message == null) { message = ""; }
   
-  throw new ErrorType(`Argument should be of the ObjectId type. Instead, received '${type}'. ${message}`);
+  throw new ErrorType(`Argument should be of the 'ObjectId' type. Instead, received '${type}'. ${message}`);
 }
 
 throwIfNotObjectId = _throwIfNotObjectId;
@@ -1368,17 +1404,11 @@ function _getURL(baseURL, api, queryParameters) {
 getTickersAndIDByTicker = _getTickersAndIDByTicker;
 
 /** 
- * @returns {Promise<[ObjectId]>} Array of existing enabled symbol IDs from both IEX and FMP databases, e.g. [ObjectId("61b102c0048b84e9c13e454d")]
+ * @returns {Promise<[ObjectId]>} Array of existing enabled symbol IDs from merged symbols database, e.g. [ObjectId("61b102c0048b84e9c13e454d")]
 */
 async function _getExistingSymbolIDs() {
-  const iexSymbolsCollection = db.collection("symbols");
-  const fmpSymbolsCollection = atlas.db("fmp").collection("symbols");
-  const [iexSupportedSymbolIDs, fmpSupportedSymbolIDs] = await Promise.all([
-    iexSymbolsCollection.distinct("_id", {}),
-    fmpSymbolsCollection.distinct("_id", {}),
-  ]);
-
-  const supportedSymbolIDs = iexSupportedSymbolIDs.concat(fmpSupportedSymbolIDs)
+  const symbolsCollection = atlas.db("merged").collection("symbols");
+  const supportedSymbolIDs = await symbolsCollection.distinct("_id", {});
   console.log(`Existing symbols (${supportedSymbolIDs.length})`);
   console.logData(`Existing symbols (${supportedSymbolIDs.length})`, supportedSymbolIDs);
 
@@ -1388,17 +1418,11 @@ async function _getExistingSymbolIDs() {
 getExistingSymbolIDs = _getExistingSymbolIDs;
 
 /** 
- * @returns {Promise<[ObjectId]>} Array of existing enabled symbol IDs from both IEX and FMP databases, e.g. [ObjectId("61b102c0048b84e9c13e454d")]
+ * @returns {Promise<[ObjectId]>} Array of existing enabled symbol IDs from merged symbols database, e.g. [ObjectId("61b102c0048b84e9c13e454d")]
 */
 async function _getSupportedSymbolIDs() {
-  const iexSymbolsCollection = db.collection("symbols");
-  const fmpSymbolsCollection = atlas.db("fmp").collection("symbols");
-  const [iexSupportedSymbolIDs, fmpSupportedSymbolIDs] = await Promise.all([
-    iexSymbolsCollection.distinct("_id", { e: null }),
-    fmpSymbolsCollection.distinct("_id", { e: null }),
-  ]);
-
-  const supportedSymbolIDs = iexSupportedSymbolIDs.concat(fmpSupportedSymbolIDs);
+  const symbolsCollection = atlas.db("merged").collection("symbols");
+  const supportedSymbolIDs = await symbolsCollection.distinct("_id", { "m.e": { $ne: false } });
   console.log(`Supported symbols (${supportedSymbolIDs.length})`);
   console.logData(`Supported symbols (${supportedSymbolIDs.length})`, supportedSymbolIDs);
 
@@ -1537,6 +1561,19 @@ exports = function() {
     db = atlas.db("divtracker-v2");
   }
 
+  // Available sources
+  if (typeof sources === 'undefined') {
+    /**
+     * Sources in descending priority order. Higher priority became the main source on conflicts.
+     */
+    sources = [
+      { field: 'f', name: 'fmp', db: atlas.db("fmp") },
+      { field: 'i', name: 'iex', db: atlas.db("divtracker-v2") },
+    ];
+
+    sourceByName = sources.toDictionary('name');
+  }
+
   // Adjusting console log
   if (!console.logCopy) {
     console.logCopy = console.log.bind(console);
@@ -1554,14 +1591,20 @@ exports = function() {
   }
   
   if (!console.logVerbose) {
+    verboseLogEnabled = false;
     console.logVerbose = function(message) {
-      // this.logCopy(getDateLogString(), message);
+      if (verboseLogEnabled) {
+        this.logCopy(getDateLogString(), message);
+      }
     };
   }
   
   if (!console.logData) {
+    dataLogEnabled = false;
     console.logData = function(message, data) {
-      // this.logCopy(getDateLogString(), `${message}: ${data.stringify()}`);
+      if (dataLogEnabled) {
+        this.logCopy(getDateLogString(), `${message}: ${data.stringify()}`);
+      }
     };
   }
   

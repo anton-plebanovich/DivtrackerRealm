@@ -63,6 +63,11 @@
         "run_as_system": true
     },
     {
+        "name": "getDataV2",
+        "private": false,
+        "run_as_system": true
+    },
+    {
         "name": "iexUtils",
         "private": true
     },
@@ -73,6 +78,10 @@
     {
         "name": "login",
         "private": false
+    },
+    {
+        "name": "mergedUpdateSymbols",
+        "private": true
     },
     {
         "name": "migrations",
@@ -114,6 +123,11 @@
     },
     {
         "name": "testIEXUpdates",
+        "private": true,
+        "run_as_system": true
+    },
+    {
+        "name": "testSymbolUpdates",
         "private": true,
         "run_as_system": true
     },

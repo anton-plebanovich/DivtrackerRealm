@@ -24,9 +24,30 @@ async function _cleanup() {
     db.collection('splits').deleteMany({}),
     db.collection('transactions').deleteMany({})
   ]);
-};
+}
 
 cleanup = _cleanup;
+
+async function _cleanupSymbols() {
+  const operations = sources.map(source => source.db.collection('symbols').deleteMany({}));
+  const mergedSymbolsOperation = atlas.db("merged").collection("symbols").deleteMany({});
+  operations.push(mergedSymbolsOperation);
+  await Promise.all(operations);
+}
+
+cleanupSymbols = _cleanupSymbols;
+
+async function _restoreSymbols() {
+  await _cleanupSymbols();
+  await context.functions.execute("updateSymbolsV2");
+  await context.functions.execute("mergedUpdateSymbols");
+  await context.functions.execute("fmpUpdateSymbols");
+  await context.functions.execute("mergedUpdateSymbols");
+}
+
+restoreSymbols = _restoreSymbols;
+
+//////////////////////////////////////////////////////////////////// SYMBOLS OPERATIONS
 
 /**
  * Generates random transactions

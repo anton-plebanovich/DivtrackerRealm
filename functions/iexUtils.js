@@ -849,10 +849,12 @@ exports = function() {
 
   if (typeof isIEXSandbox === 'undefined') {
     isIEXSandbox = context.values.get("base_url") === 'https://sandbox.iexapis.com/stable';
+    Object.freeze(isIEXSandbox);
   }
 
   if (typeof isIEXProduction === 'undefined') {
     isIEXProduction = !isIEXSandbox;
+    Object.freeze(isIEXProduction);
   }
 
   if (typeof iex === 'undefined') {
@@ -862,11 +864,13 @@ exports = function() {
   /** Premium token. Will be used for all API calls if defined. */
   if (typeof premiumToken === 'undefined') {
     premiumToken = context.values.get("premium-token");
+    Object.freeze(premiumToken);
   }
 
   /** Tokens that are set deneding on an environment */
   if (typeof tokens === 'undefined') {
     tokens = context.values.get("tokens");
+    Object.freeze(tokens);
   }
 
   /** Initial token is chosen randomly and then it increase by 1 to diverse between tokens */
