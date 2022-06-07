@@ -201,41 +201,25 @@ async function expectGetDataError(timestamp, collectionNames, symbolIDs, fullFet
 }
 
 async function test_getDataV2_refetch() {
-  console.log("test_getDataV2_refetch");
 
-  let response;
-  let timestamp;
-  let refetchSymbol;
-
-  // We are 
-  try {
-    await cleanupSymbols();
-  
-    // We fetch lower priority source symbols first and then higher priority and so there should be multiple source symbols in the end
-    await context.functions.execute("updateSymbolsV2"); 
-    await context.functions.execute("mergedUpdateSymbols");
-  
-    // Get timestamp just before we create refetch symbols
-    timestamp = new Date().getTime();
-  
-    // Create and get refetch symbol
-    await context.functions.execute("fmpUpdateSymbols");
-    refetchSymbol = await atlas.db("merged").collection("symbols").findOne({ "r": { $ne: null } });
-    if (refetchSymbol == null) {
-      throw `Unable to get refetch symbol`;
-    }
-
-  } catch(error) {
-    await restoreSymbols();
-    throw error;
+  // Create and get refetch symbol
+  const refetchSymbol = await atlas.db("merged").collection("symbols").findOne({ "r": { $ne: null } });
+  if (refetchSymbol == null) {
+    throw `Unable to get refetch symbol`;
   }
 
+  // Get timestamp just before refetch date
+  const timestamp = refetchSymbol.r.getTime() - 1;
 
+  let response;
+
+  console.log("test_getDataV2_refetch.update_default");
   response = await context.functions.execute("getDataV2", timestamp, null, [refetchSymbol._id], ["exchange-rates", "symbols", "updates"]);
   verifyResponseV2(response, ["companies", "dividends", "historical-prices", "quotes", "splits", "exchange-rates", "symbols", "updates"], 1);
   verifyRefetchResponse(response, timestamp, ["exchange-rates", "symbols", "updates"]);
 
-  response = await context.functions.execute("getDataV2", lastUpdateTimestamp, null, [refetchSymbol._id], null);
+  console.log("test_getDataV2_refetch.update_symbol");
+  response = await context.functions.execute("getDataV2", timestamp, null, [refetchSymbol._id], null);
   verifyResponseV2(response, ["companies", "dividends", "historical-prices", "quotes", "splits", "exchange-rates", "symbols", "updates"], 1);
   verifyRefetchResponse(response, timestamp);
 }

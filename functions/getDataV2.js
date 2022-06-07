@@ -184,6 +184,10 @@ exports = async function(timestamp, collectionNames, symbolIDs, fullFetchCollect
       refetchMergedSymbolIDs = refetchMergedSymbols.map(x => x._id);
     }
   }
+  
+  console.logData('refetchMergedSymbolIDs', refetchMergedSymbolIDs);
+  console.logData('refetchSymbolIDsBySource', refetchSymbolIDsBySource);
+  console.logData('symbolIDsBySource', symbolIDsBySource);
 
   const operations = collectionNames.map(async collectionName => {
     if (collectionName === 'symbols') {
@@ -195,7 +199,6 @@ exports = async function(timestamp, collectionNames, symbolIDs, fullFetchCollect
           return [];
         }
 
-        console.log(`Getting data for '${source.name}' source`);
         const sourceSymbolIDs = symbolIDsBySource[source.field];
         const sourceRefetchSymbolIDs = refetchSymbolIDsBySource[source.field];
         return await getCollectionData(source, collectionName, previousUpdateDate, sourceSymbolIDs, sourceRefetchSymbolIDs, fullFetchCollections)
@@ -253,7 +256,7 @@ async function getCollectionData(source, collectionName, previousUpdateDate, sym
 
   if (symbolIDs != null && !fullFetchCollections.includes(collectionName)) {
     if (symbolIDs.length === 0) {
-      console.log(`No symbols to fetch. Skipping.`);
+      console.log(`No symbols to fetch for '${source.name}-${collectionName}'. Skipping.`);
       return [];
     }
 
