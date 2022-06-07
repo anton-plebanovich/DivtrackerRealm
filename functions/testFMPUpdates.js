@@ -17,6 +17,8 @@
 };
 
 async function test() {
+  await context.functions.execute("fmpUpdateSymbols");
+
   // Cleanup FMP environment
   await Promise.all([
     fmp.collection('companies').deleteMany({}),
@@ -32,6 +34,8 @@ async function test() {
   const symbols = await fetchSymbols();
   const symbolsToAdd = symbols.getRandomElements(20);
   await fmp.collection('symbols').insertMany(symbolsToAdd);
+  await context.functions.execute("mergedUpdateSymbols");
+  await context.functions.execute("fmpLoadMissingData");
 
   await Promise.all([
     context.functions.execute("fmpUpdateCompanies"),
@@ -40,6 +44,4 @@ async function test() {
     context.functions.execute("fmpUpdateQuotes"),
     context.functions.execute("fmpUpdateSplits"),
   ]);
-
-  await context.functions.execute("fmpUpdateSymbols");
 }
