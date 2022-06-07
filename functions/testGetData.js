@@ -4,6 +4,9 @@
 exports = async function() {
   context.functions.execute("testUtils");
 
+  // verboseLogEnabled = true;
+  // dataLogEnabled = true;
+
   const transactions = await generateRandomTransactions(1);
   const symbolIDs = transactions.map(x => x.s);
   await context.functions.execute("addTransactionsV2", transactions);
@@ -72,19 +75,19 @@ function verifyResponseV1(response, collections) {
 async function test_getDataV2_base_fetch() {
   console.log("test_getDataV2_base_fetch");
   const response = await context.functions.execute("getDataV2", null, ["exchange-rates", "symbols", "updates"], null, null);
-  verifyResponseV2(response, ["exchange-rates", "symbols", "updates"], null);
+  verifyResponseV2(response, null, ["exchange-rates", "symbols", "updates"], null);
 }
 
 async function test_getDataV2_symbols_fetch(symbolIDs) {
   console.log("test_getDataV2_symbols_fetch");
   const response = await context.functions.execute("getDataV2", null, ["companies", "dividends", "historical-prices", "quotes", "splits"], symbolIDs, null);
-  verifyResponseV2(response, ["companies", "dividends", "historical-prices", "quotes", "splits"], symbolIDs);
+  verifyResponseV2(response, null, ["companies", "dividends", "historical-prices", "quotes", "splits"], symbolIDs);
 }
 
 async function test_getDataV2_update_fetch(symbolIDs) {
   console.log("test_getDataV2_update_fetch");
   const response = await context.functions.execute("getDataV2", new Date('2020-01-01').getTime(), null, symbolIDs, ["exchange-rates", "symbols", "updates"]);
-  verifyResponseV2(response, ["companies", "dividends", "historical-prices", "quotes", "splits", "exchange-rates", "symbols", "updates"], symbolIDs, ["exchange-rates", "symbols", "updates"]);
+  verifyResponseV2(response, null, ["companies", "dividends", "historical-prices", "quotes", "splits", "exchange-rates", "symbols", "updates"], symbolIDs, ["exchange-rates", "symbols", "updates"]);
 }
 
 async function test_getDataV2_FMP() {
@@ -92,7 +95,7 @@ async function test_getDataV2_FMP() {
   const fmpSymbol = await atlas.db("merged").collection("symbols").findOne({ "m.s": "f" });
   const symbolIDs = [fmpSymbol._id];
   const response = await context.functions.execute("getDataV2", null, null, symbolIDs, null);
-  verifyResponseV2(response, ["companies", "dividends", "historical-prices", "quotes", "splits", "exchange-rates", "symbols", "updates"], symbolIDs);
+  verifyResponseV2(response, null, ["companies", "dividends", "historical-prices", "quotes", "splits", "exchange-rates", "symbols", "updates"], symbolIDs);
 }
 
 async function test_getDataV2_FMP_and_IEX(_symbolIDs) {
@@ -101,7 +104,7 @@ async function test_getDataV2_FMP_and_IEX(_symbolIDs) {
   const symbolIDs = [..._symbolIDs];
   symbolIDs.push(fmpSymbol._id);
   const response = await context.functions.execute("getDataV2", null, null, symbolIDs, null);
-  verifyResponseV2(response, ["companies", "dividends", "historical-prices", "quotes", "splits", "exchange-rates", "symbols", "updates"], symbolIDs);
+  verifyResponseV2(response, null, ["companies", "dividends", "historical-prices", "quotes", "splits", "exchange-rates", "symbols", "updates"], symbolIDs);
 }
 
 async function test_getDataV2_errors() {
@@ -213,20 +216,20 @@ async function test_getDataV2_refetch() {
   let response;
 
   console.log("test_getDataV2_refetch.update_default");
-  response = await context.functions.execute("getDataV2", timestamp, null, [symbolID], ["exchange-rates", "symbols", "updates"]);
-  verifyResponseV2(response, ["companies", "dividends", "historical-prices", "quotes", "splits", "exchange-rates", "symbols", "updates"], symbolIDs, ["exchange-rates", "symbols", "updates"]);
+  response = await context.functions.execute("getDataV2", timestamp, null, symbolIDs, ["exchange-rates", "symbols", "updates"]);
+  verifyResponseV2(response, timestamp, ["companies", "dividends", "historical-prices", "quotes", "splits", "exchange-rates", "symbols", "updates"], symbolIDs, ["exchange-rates", "symbols", "updates"]);
   verifyRefetchResponse(response, timestamp, ["exchange-rates", "symbols", "updates"]);
 
   console.log("test_getDataV2_refetch.update_symbol");
-  response = await context.functions.execute("getDataV2", timestamp, null, [symbolID], null);
-  verifyResponseV2(response, ["companies", "dividends", "historical-prices", "quotes", "splits", "exchange-rates", "symbols", "updates"], symbolIDs);
+  response = await context.functions.execute("getDataV2", timestamp, null, symbolIDs, null);
+  verifyResponseV2(response, timestamp, ["companies", "dividends", "historical-prices", "quotes", "splits", "exchange-rates", "symbols", "updates"], symbolIDs);
   verifyRefetchResponse(response, timestamp);
 }
 
 //////////////////////////// VERIFICATION V2
 
-function verifyResponseV2(response, collections, symbolIDs, fullFetchCollections) {
-  console.logData(`response: `, response);
+function verifyResponseV2(response, timestamp, collections, symbolIDs, fullFetchCollections) {
+  console.logData(`response`, response);
 
   if (response.lastUpdateTimestamp == null) {
     throw `'lastUpdateTimestamp' field is absent in the response: ${response.stringify()}`;
@@ -280,9 +283,11 @@ function verifyResponseV2(response, collections, symbolIDs, fullFetchCollections
         throw `'updates' data for '${collection}' collection is null`;
       }
 
-      const dataLength = data.length;
-      if (dataLength < length) {
-        throw `Unexpected data length '${dataLength}' lower than '${length}' for '${collection}' collection`;
+      if (timestamp == null) {
+        const dataLength = data.length;
+        if (dataLength < length) {
+          throw `Unexpected data length '${dataLength}' lower than '${length}' for '${collection}' collection`;
+        }
       }
     });
   }
@@ -303,6 +308,8 @@ function verifyRefetchResponse(response, timestamp, fullFetchCollections) {
   }
 
   requiredDataCollections.forEach(collection => {
+    if (nonSearchableIDCollections.includes(collection)) { return; }
+
     if (updates[collection] == null) {
       throw `Refetch updates for '${collection}' collection are null`;
     }
@@ -311,8 +318,10 @@ function verifyRefetchResponse(response, timestamp, fullFetchCollections) {
     }
   });
 
-  if (fullFetchCollections != null) {
+  if (fullFetchCollections != null && timestamp == null) {
     fullFetchCollections.forEach(collection => {
+    if (nonSearchableIDCollections.includes(collection)) { return; }
+
       const length = updates[collection].length;
       if (length <= 1) {
         throw `Unexpected '${collection}' collection length: ${length}`;
