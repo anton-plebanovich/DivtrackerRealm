@@ -101,7 +101,7 @@ async function test_getDataV2_refetch() {
 
   // Create and get refetch symbol
   await context.functions.execute("fmpUpdateSymbols");
-  const refetchSymbol = await atlas.db("merged").collection("symbols").findOne({ "m.r": { $ne: null } });
+  const refetchSymbol = await atlas.db("merged").collection("symbols").findOne({ "r": { $ne: null } });
   if (refetchSymbol == null) {
     throw `Unable to get refetch symbol`;
   }
