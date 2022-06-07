@@ -35,49 +35,27 @@ async function test(testFunction) {
 
 // Insert IEX
 async function test_IEX_insert() {
-  const id = new BSON.ObjectId();
-  const iexSymbol = { _id: id, t: "TICKER", n: "NAME" };
-  await iexSymbolsCollection.insertOne(iexSymbol);
-  await context.functions.execute("mergedUpdateSymbols", null, "iex");
-  await checkMergedSymbol('test_IEX_insert', iexSymbol, null, iexSymbol, id, 'i', null);
+  const [iexID, iexSymbol] = await add_IEX_symbol();
+  await checkMergedSymbol('test_IEX_insert', iexSymbol, null, iexSymbol, iexID, 'i', null);
 }
 
 // Insert FMP
 async function test_FMP_insert() {
-  const id = new BSON.ObjectId();
-  const fmpSymbol = { _id: id, t: "TICKER", n: "NAME" };
-  await fmpSymbolsCollection.insertOne(fmpSymbol);
-  await context.functions.execute("mergedUpdateSymbols", null, "fmp");
-  await checkMergedSymbol('test_FMP_insert', null, fmpSymbol, fmpSymbol, id, 'f', null);
+  const [fmpID, fmpSymbol] = await add_FMP_symbol();
+  await checkMergedSymbol('test_FMP_insert', null, fmpSymbol, fmpSymbol, fmpID, 'f', null);
 }
 
 // Merge FMP to IEX
 async function test_FMP_to_IEX_merge() {
-  const iexID = new BSON.ObjectId();
-  const iexSymbol = { _id: iexID, t: "TICKER", n: "IEX_NAME" };
-  await iexSymbolsCollection.insertOne(iexSymbol);
-  await context.functions.execute("mergedUpdateSymbols", null, "iex");
-
-  const fmpID = new BSON.ObjectId();
-  const fmpSymbol = { _id: fmpID, t: "TICKER", n: "FMP_NAME" };
-  await fmpSymbolsCollection.insertOne(fmpSymbol);
-  await context.functions.execute("mergedUpdateSymbols", null, "fmp");
-  
+  const [iexID, iexSymbol] = await add_IEX_symbol();
+  const [fmpID, fmpSymbol] = await add_FMP_symbol();
   await checkMergedSymbol('test_FMP_to_IEX_merge', iexSymbol, fmpSymbol, fmpSymbol, iexID, 'f', null);
 }
 
 // Merge IEX to FMP
 async function test_IEX_to_FMP_merge() {
-  const fmpID = new BSON.ObjectId();
-  const fmpSymbol = { _id: fmpID, t: "TICKER", n: "FMP_NAME" };
-  await fmpSymbolsCollection.insertOne(fmpSymbol);
-  await context.functions.execute("mergedUpdateSymbols", null, "fmp");
-
-  const iexID = new BSON.ObjectId();
-  const iexSymbol = { _id: iexID, t: "TICKER", n: "IEX_NAME" };
-  await iexSymbolsCollection.insertOne(iexSymbol);
-  await context.functions.execute("mergedUpdateSymbols", null, "iex");
-  
+  const [fmpID, fmpSymbol] = await add_FMP_symbol();
+  const [iexID, iexSymbol] = await add_IEX_symbol();
   await checkMergedSymbol('test_IEX_to_FMP_merge', iexSymbol, fmpSymbol, fmpSymbol, fmpID, 'f', null);
 }
 
@@ -86,23 +64,16 @@ async function test_singular_source_disable_and_enable() {
   let date;
 
   date = new Date();
-  const fmpID = new BSON.ObjectId();
-  const fmpSymbol = { _id: fmpID, t: "TICKER", n: "FMP_NAME" };
-  await fmpSymbolsCollection.insertOne(fmpSymbol);
-  await context.functions.execute("mergedUpdateSymbols", date, "fmp");
+  const [fmpID, fmpSymbol] = await add_FMP_symbol(null, date);
 
   // Disable
   date = new Date();
-  fmpSymbol.e = false;
-  await fmpSymbolsCollection.updateOne({ _id: fmpID }, { $set: { e: fmpSymbol.e }, $currentDate: { "u": true } });
-  await context.functions.execute("mergedUpdateSymbols", date, "fmp");
+  await disable_FMP_symbol(fmpSymbol, date);
   await checkMergedSymbol('test_singular_source_disable_and_enable.disable', null, fmpSymbol, fmpSymbol, fmpID, 'f', date);
 
   // Enable back
   date = new Date();
-  delete fmpSymbol.e;
-  await fmpSymbolsCollection.updateOne({ _id: fmpID }, { $unset: { e: "" }, $currentDate: { "u": true } });
-  await context.functions.execute("mergedUpdateSymbols", date, "fmp");
+  await enable_FMP_symbol(fmpSymbol, date);
   await checkMergedSymbol('test_singular_source_disable_and_enable.enable', null, fmpSymbol, fmpSymbol, fmpID, 'f', date);
 }
 
@@ -111,30 +82,21 @@ async function test_singular_source_disable_attach_and_enable() {
   let date;
 
   date = new Date();
-  const fmpID = new BSON.ObjectId();
-  const fmpSymbol = { _id: fmpID, t: "TICKER", n: "FMP_NAME" };
-  await fmpSymbolsCollection.insertOne(fmpSymbol);
-  await context.functions.execute("mergedUpdateSymbols", date, "fmp");
+  const [fmpID, fmpSymbol] = await add_FMP_symbol(null, date);
 
   // Disable
   date = new Date();
   fmpSymbol.e = false;
-  await fmpSymbolsCollection.updateOne({ _id: fmpID }, { $set: { e: fmpSymbol.e }, $currentDate: { "u": true } });
-  await context.functions.execute("mergedUpdateSymbols", date, "fmp");
+  await disable_FMP_symbol(fmpSymbol, date);
   await checkMergedSymbol('test_singular_source_disable_attach_and_enable.disable', null, fmpSymbol, fmpSymbol, fmpID, 'f', date);
 
   // Attach
-  const iexID = new BSON.ObjectId();
-  const iexSymbol = { _id: iexID, t: "TICKER", n: "IEX_NAME" };
-  await iexSymbolsCollection.insertOne(iexSymbol);
-  await context.functions.execute("mergedUpdateSymbols", null, "iex");
+  const [iexID, iexSymbol] = await add_IEX_symbol();
   await checkMergedSymbol('test_singular_source_disable_attach_and_enable.attach', iexSymbol, null, iexSymbol, fmpID, 'i', date, null, date, null);
 
   // Enable back
   date = new Date();
-  delete fmpSymbol.e;
-  await fmpSymbolsCollection.updateOne({ _id: fmpID }, { $unset: { e: "" }, $currentDate: { "u": true } });
-  await context.functions.execute("mergedUpdateSymbols", date, "fmp");
+  await enable_FMP_symbol(fmpSymbol, date);
   await checkMergedSymbol('test_singular_source_disable_attach_and_enable.enable', iexSymbol, fmpSymbol, fmpSymbol, fmpID, 'f', date, null, date, null);
 }
 
@@ -142,30 +104,18 @@ async function test_singular_source_disable_attach_and_enable() {
 async function test_IEX_disable_enable_on_multiple_sources() {
   let date;
   
-  const iexID = new BSON.ObjectId();
-  const iexSymbol = { _id: iexID, t: "TICKER", n: "IEX_NAME" };
-  await iexSymbolsCollection.insertOne(iexSymbol);
-  await context.functions.execute("mergedUpdateSymbols", null, "iex");
-
-  const fmpID = new BSON.ObjectId();
-  const fmpSymbol = { _id: fmpID, t: "TICKER", n: "FMP_NAME" };
-  await fmpSymbolsCollection.insertOne(fmpSymbol);
-  await context.functions.execute("mergedUpdateSymbols", null, "fmp");
-
+  const [iexID, iexSymbol] = await add_IEX_symbol();
+  const [fmpID, fmpSymbol] = await add_FMP_symbol();
   const updatesStartDate = new Date();
   
   // Disable
   date = new Date();
-  iexSymbol.e = false;
-  await iexSymbolsCollection.updateOne({ _id: iexID }, { $set: { e: iexSymbol.e }, $currentDate: { "u": true } });
-  await context.functions.execute("mergedUpdateSymbols", date, "iex");
+  await disable_IEX_symbol(iexSymbol, date);
   await checkMergedSymbol('test_IEX_disable_enable_on_multiple_sources.disable', null, fmpSymbol, fmpSymbol, iexID, 'f', null, updatesStartDate, null, updatesStartDate);
 
   // Enable back
   date = new Date();
-  delete iexSymbol.e;
-  await iexSymbolsCollection.updateOne({ _id: iexID }, { $unset: { e: "" }, $currentDate: { "u": true } });
-  await context.functions.execute("mergedUpdateSymbols", date, "iex");
+  await enable_IEX_symbol(iexSymbol, date);
   await checkMergedSymbol('test_IEX_disable_enable_on_multiple_sources.enable', iexSymbol, fmpSymbol, fmpSymbol, iexID, 'f', null, updatesStartDate, null, updatesStartDate);
 }
 
@@ -173,28 +123,17 @@ async function test_IEX_disable_enable_on_multiple_sources() {
 async function test_FMP_disable_enable_on_multiple_sources() {
   let date;
 
-  const iexID = new BSON.ObjectId();
-  const iexSymbol = { _id: iexID, t: "TICKER", n: "IEX_NAME" };
-  await iexSymbolsCollection.insertOne(iexSymbol);
-  await context.functions.execute("mergedUpdateSymbols", null, "iex");
-
-  const fmpID = new BSON.ObjectId();
-  const fmpSymbol = { _id: fmpID, t: "TICKER", n: "FMP_NAME" };
-  await fmpSymbolsCollection.insertOne(fmpSymbol);
-  await context.functions.execute("mergedUpdateSymbols", null, "fmp");
+  const [iexID, iexSymbol] = await add_IEX_symbol();
+  const [fmpID, fmpSymbol] = await add_FMP_symbol();
   
   // Disable
   date = new Date();
-  fmpSymbol.e = false;
-  await fmpSymbolsCollection.updateOne({ _id: fmpID }, { $set: { e: fmpSymbol.e }, $currentDate: { "u": true } });
-  await context.functions.execute("mergedUpdateSymbols", date, "fmp");
+  await disable_FMP_symbol(fmpSymbol, date);
   await checkMergedSymbol('test_FMP_disable_enable_on_multiple_sources.disable', iexSymbol, null, iexSymbol, iexID, 'i', date, null, date, null);
 
   // Enable back
   date = new Date();
-  delete fmpSymbol.e;
-  await fmpSymbolsCollection.updateOne({ _id: fmpID }, { $unset: { e: "" }, $currentDate: { "u": true } });
-  await context.functions.execute("mergedUpdateSymbols", date, "fmp");
+  await enable_FMP_symbol(fmpSymbol, date);
   await checkMergedSymbol('test_FMP_disable_enable_on_multiple_sources.enable', iexSymbol, fmpSymbol, fmpSymbol, iexID, 'f', date, null, date, null);
 }
 
@@ -202,29 +141,23 @@ async function test_FMP_disable_enable_on_multiple_sources() {
 async function test_singular_source_update() {
   let date;
   
-  const iexID = new BSON.ObjectId();
-  const iexSymbol = { _id: iexID, t: "TICKER", n: "NAME" };
-  await iexSymbolsCollection.insertOne(iexSymbol);
-  await context.functions.execute("mergedUpdateSymbols", null, "iex");
+  const [iexID, iexSymbol] = await add_IEX_symbol();
 
   // Update ticker
   date = new Date();
   iexSymbol.t = "TICKER_NEW";
-  await iexSymbolsCollection.updateOne({ _id: iexID }, { $set: iexSymbol, $currentDate: { "u": true } });
-  await context.functions.execute("mergedUpdateSymbols", date, "iex");
+  await update_IEX_symbol(iexSymbol, date);
   await checkMergedSymbol('test_singular_source_update.ticker', iexSymbol, null, iexSymbol, iexID, 'i', date);
 
   // Update name
   date = new Date();
   iexSymbol.n = "NAME_NEW";
-  await iexSymbolsCollection.updateOne({ _id: iexID }, { $set: iexSymbol, $currentDate: { "u": true } });
-  await context.functions.execute("mergedUpdateSymbols", date, "iex");
+  await update_IEX_symbol(iexSymbol, date);
   await checkMergedSymbol('test_singular_source_update.name', iexSymbol, null, iexSymbol, iexID, 'i', date);
 
   // Update nothing
   date = new Date();
-  await iexSymbolsCollection.updateOne({ _id: iexID }, { $set: iexSymbol, $currentDate: { "u": true } });
-  await context.functions.execute("mergedUpdateSymbols", date, "iex");
+  await update_IEX_symbol(iexSymbol, date);
   await checkMergedSymbol('test_singular_source_update.nothing', iexSymbol, null, iexSymbol, iexID, 'i', null, date);
 }
 
@@ -232,34 +165,24 @@ async function test_singular_source_update() {
 async function test_primary_source_update() {
   let date;
   
-  const iexID = new BSON.ObjectId();
-  const iexSymbol = { _id: iexID, t: "TICKER", n: "IEX_NAME" };
-  await iexSymbolsCollection.insertOne(iexSymbol);
-  await context.functions.execute("mergedUpdateSymbols", null, "iex");
-
-  const fmpID = new BSON.ObjectId();
-  const fmpSymbol = { _id: fmpID, t: "TICKER", n: "FMP_NAME" };
-  await fmpSymbolsCollection.insertOne(fmpSymbol);
-  await context.functions.execute("mergedUpdateSymbols", null, "fmp");
+  const [iexID, iexSymbol] = await add_IEX_symbol();
+  const [fmpID, fmpSymbol] = await add_FMP_symbol();
 
   // Update ticker
   date = new Date();
   fmpSymbol.t = "TICKER_NEW";
-  await fmpSymbolsCollection.updateOne({ _id: fmpID }, { $set: fmpSymbol, $currentDate: { "u": true } });
-  await context.functions.execute("mergedUpdateSymbols", date, "fmp");
+  await update_FMP_symbol(fmpSymbol, date);
   await checkMergedSymbol('test_primary_source_update.ticker', iexSymbol, fmpSymbol, fmpSymbol, iexID, 'f', date);
 
   // Update name
   date = new Date();
   fmpSymbol.n = "FMP_NAME_NEW";
-  await fmpSymbolsCollection.updateOne({ _id: fmpID }, { $set: fmpSymbol, $currentDate: { "u": true } });
-  await context.functions.execute("mergedUpdateSymbols", date, "fmp");
+  await update_FMP_symbol(fmpSymbol, date);
   await checkMergedSymbol('test_primary_source_update.name', iexSymbol, fmpSymbol, fmpSymbol, iexID, 'f', date);
 
   // Update nothing
   date = new Date();
-  await fmpSymbolsCollection.updateOne({ _id: fmpID }, { $set: fmpSymbol, $currentDate: { "u": true } });
-  await context.functions.execute("mergedUpdateSymbols", date, "fmp");
+  await update_FMP_symbol(fmpSymbol, date);
   await checkMergedSymbol('test_primary_source_update.nothing', iexSymbol, fmpSymbol, fmpSymbol, iexID, 'f', null, date);
 }
 
@@ -267,40 +190,104 @@ async function test_primary_source_update() {
 async function test_backup_source_update() {
   let date;
   
-  const iexID = new BSON.ObjectId();
-  const iexSymbol = { _id: iexID, t: "TICKER", n: "NAME" };
-  await iexSymbolsCollection.insertOne(iexSymbol);
-  await context.functions.execute("mergedUpdateSymbols", null, "iex");
-
-  const fmpID = new BSON.ObjectId();
-  const fmpSymbol = { _id: fmpID, t: "TICKER", n: "FMP_NAME" };
-  await fmpSymbolsCollection.insertOne(fmpSymbol);
-  await context.functions.execute("mergedUpdateSymbols", null, "fmp");
-
+  const [iexID, iexSymbol] = await add_IEX_symbol();
+  const [fmpID, fmpSymbol] = await add_FMP_symbol();
   const updatesStartDate = new Date();
 
   // Update ticker
   date = new Date();
   iexSymbol.t = "TICKER_NEW";
-  await iexSymbolsCollection.updateOne({ _id: iexID }, { $set: iexSymbol, $currentDate: { "u": true } });
-  await context.functions.execute("mergedUpdateSymbols", date, "iex");
+  await update_IEX_symbol(iexSymbol, date);
   await checkMergedSymbol('test_backup_source_update.ticker', iexSymbol, fmpSymbol, fmpSymbol, iexID, 'f', null, updatesStartDate);
 
   // Update name
   date = new Date();
   iexSymbol.n = "NAME_NEW";
-  await iexSymbolsCollection.updateOne({ _id: iexID }, { $set: iexSymbol, $currentDate: { "u": true } });
-  await context.functions.execute("mergedUpdateSymbols", date, "iex");
+  await update_IEX_symbol(iexSymbol, date);
   await checkMergedSymbol('test_backup_source_update.name', iexSymbol, fmpSymbol, fmpSymbol, iexID, 'f', null, updatesStartDate);
 
   // Update nothing
   date = new Date();
-  await iexSymbolsCollection.updateOne({ _id: iexID }, { $set: iexSymbol, $currentDate: { "u": true } });
-  await context.functions.execute("mergedUpdateSymbols", date, "iex");
+  await update_IEX_symbol(iexSymbol, date);
   await checkMergedSymbol('test_backup_source_update.nothing', iexSymbol, fmpSymbol, fmpSymbol, iexID, 'f', null, updatesStartDate);
 }
 
 //////////////////////////// TESTS HELPERS
+
+async function add_IEX_symbol(name, date) {
+  return await add_symbol(name, date, "iex");
+}
+
+async function add_FMP_symbol(name, date) {
+  return await add_symbol(name, date, "fmp");
+}
+
+async function add_symbol(name, date, sourceName) {
+  const source = sourceByName[sourceName];
+  const databaseName = source.databaseName;
+  const collection = atlas.db(databaseName).collection('symbols')
+
+  if (name == null) {
+    name = `${sourceName}_NAME`;
+  }
+
+  const id = new BSON.ObjectId();
+  const symbol = { _id: id, t: "TICKER", n: name };
+  await collection.insertOne(symbol);
+  await context.functions.execute("mergedUpdateSymbols", date, sourceName);
+
+  return [id, symbol];
+}
+
+async function disable_IEX_symbol(symbol, date) {
+  await disable_symbol(symbol, date, "iex");
+}
+
+async function disable_FMP_symbol(symbol, date) {
+  await disable_symbol(symbol, date, "fmp");
+}
+
+async function disable_symbol(symbol, date, sourceName) {
+  symbol.e = false;
+  const source = sourceByName[sourceName];
+  const databaseName = source.databaseName;
+  const collection = atlas.db(databaseName).collection('symbols')
+  await collection.updateOne({ _id: symbol._id }, { $set: { e: symbol.e }, $currentDate: { "u": true } });
+  await context.functions.execute("mergedUpdateSymbols", date, sourceName);
+}
+
+async function enable_IEX_symbol(symbol, date) {
+  await enable_symbol(symbol, date, "iex");
+}
+
+async function enable_FMP_symbol(symbol, date) {
+  await enable_symbol(symbol, date, "fmp");
+}
+
+async function enable_symbol(symbol, date, sourceName) {
+  delete symbol.e;
+  const source = sourceByName[sourceName];
+  const databaseName = source.databaseName;
+  const collection = atlas.db(databaseName).collection('symbols')
+  await collection.updateOne({ _id: symbol._id }, { $unset: { e: "" }, $currentDate: { "u": true } });
+  await context.functions.execute("mergedUpdateSymbols", date, sourceName);
+}
+
+async function update_IEX_symbol(symbol, date) {
+  await update_symbol(symbol, date, "iex");
+}
+
+async function update_FMP_symbol(symbol, date) {
+  await update_symbol(symbol, date, "fmp");
+}
+
+async function update_symbol(symbol, date, sourceName) {
+  const source = sourceByName[sourceName];
+  const databaseName = source.databaseName;
+  const collection = atlas.db(databaseName).collection('symbols')
+  await collection.updateOne({ _id: symbol._id }, { $set: symbol, $currentDate: { "u": true } });
+  await context.functions.execute("mergedUpdateSymbols", date, sourceName);
+}
 
 async function checkMergedSymbol(testName, iexSymbol, fmpSymbol, mainSymbol, id, source, lowerUpdateDate, upperUpdateDate, lowerRefetchDate, upperRefetchDate) {
   const mergedSymbol = await getMergedSymbol(testName);
