@@ -137,6 +137,9 @@ exports = async function(timestamp, collectionNames, symbolIDs, fullFetchCollect
   // This goes to specific collection query and so contains source symbol IDs
   let symbolIDsBySource = {};
 
+  // Used to fix source object IDs if they don't match main symbol ID.
+  let mainIDBySourceID = {}
+
   if (symbolIDs?.length) {
     const mergedSymbols = await mergedSymbolsCollection.find({ _id: { $in: symbolIDs } }).toArray();
     symbolIDsBySource = mergedSymbols.reduce((dictionary, mergedSymbol) => {
@@ -149,6 +152,17 @@ exports = async function(timestamp, collectionNames, symbolIDs, fullFetchCollect
         bucket.push(value);
       }
       
+      return dictionary;
+    }, {});
+
+    mainIDBySourceID = mergedSymbols.reduce((dictionary, mergedSymbol) => {
+      const sourceField = mergedSymbol.m.s;
+      const sourceID = mergedSymbol[sourceField]._id;
+      const mainID = mergedSymbol.m._id;
+      if (mainID.toString() !== sourceID.toString()) {
+        dictionary[sourceID] = mainID;
+      }
+
       return dictionary;
     }, {});
 
@@ -201,7 +215,7 @@ exports = async function(timestamp, collectionNames, symbolIDs, fullFetchCollect
 
         const sourceSymbolIDs = symbolIDsBySource[source.field];
         const sourceRefetchSymbolIDs = refetchSymbolIDsBySource[source.field];
-        return await getCollectionData(source, collectionName, previousUpdateDate, sourceSymbolIDs, sourceRefetchSymbolIDs, fullFetchCollections)
+        return await getCollectionData(source, collectionName, previousUpdateDate, sourceSymbolIDs, sourceRefetchSymbolIDs, fullFetchCollections, mainIDBySourceID)
       });
 
       const arrays = await Promise.all(operations);
@@ -250,7 +264,7 @@ async function getSymbolsData(mergedSymbolsCollection, previousUpdateDate, symbo
   return symbols;
 }
 
-async function getCollectionData(source, collectionName, previousUpdateDate, symbolIDs, refetchSymbolIDs, fullFetchCollections) {
+async function getCollectionData(source, collectionName, previousUpdateDate, symbolIDs, refetchSymbolIDs, fullFetchCollections, mainIDBySourceID) {
   const collection = source.db.collection(collectionName);
   const find = {};
 
@@ -301,7 +315,31 @@ async function getCollectionData(source, collectionName, previousUpdateDate, sym
 
   const projection = { u: false };
 
-  return await collection.find(find, projection).toArray();
+  const objects = await collection.find(find, projection).toArray();
+  fixData(objects, collectionName, mainIDBySourceID);
+
+  return objects
+}
+
+function fixData(objects, collectionName, mainIDBySourceID) {
+  if (nonSearchableIDCollections.includes(collectionName)) { return objects; }
+
+  if (singularSymbolCollections.includes(collectionName)) {
+    objects.forEach(object => {
+      const mainID = mainIDBySourceID[object._id];
+      if (mainID != null) {
+        object._id = mainID;
+      }
+    });
+
+  } else {
+    objects.forEach(object => {
+      const mainID = mainIDBySourceID[object.s];
+      if (mainID != null) {
+        object.s = mainID;
+      }
+    });
+  }
 }
 
 //////////////////////////// CONSTANTS

@@ -16,11 +16,11 @@ exports = async function() {
   }
   
   try {
-    await test_getDataV2_base_fetch(transactions);
-    await test_getDataV2_symbols_fetch(transactions, symbolIDs);
-    await test_getDataV2_update_fetch(transactions, symbolIDs);
+    await test_getDataV2_base_fetch();
+    await test_getDataV2_symbols_fetch(symbolIDs);
+    await test_getDataV2_update_fetch(symbolIDs);
     await test_getDataV2_FMP();
-    await test_getDataV2_FMP_and_IEX();
+    await test_getDataV2_FMP_and_IEX(symbolIDs);
     await test_getDataV2_errors();
     await test_getDataV2_refetch();
   } catch(error) {
@@ -69,41 +69,39 @@ function verifyResponseV1(response, collections) {
 
 //////////////////////////// TESTS V2
 
-async function test_getDataV2_base_fetch(transactions) {
+async function test_getDataV2_base_fetch() {
   console.log("test_getDataV2_base_fetch");
   const response = await context.functions.execute("getDataV2", null, ["exchange-rates", "symbols", "updates"], null, null);
-  verifyResponseV2(response, ["exchange-rates", "symbols", "updates"], transactions.length);
+  verifyResponseV2(response, ["exchange-rates", "symbols", "updates"], null);
 }
 
-async function test_getDataV2_symbols_fetch(transactions, symbolIDs) {
+async function test_getDataV2_symbols_fetch(symbolIDs) {
   console.log("test_getDataV2_symbols_fetch");
   const response = await context.functions.execute("getDataV2", null, ["companies", "dividends", "historical-prices", "quotes", "splits"], symbolIDs, null);
-  verifyResponseV2(response, ["companies", "dividends", "historical-prices", "quotes", "splits"], transactions.length);
+  verifyResponseV2(response, ["companies", "dividends", "historical-prices", "quotes", "splits"], symbolIDs);
 }
 
-async function test_getDataV2_update_fetch(transactions, symbolIDs) {
+async function test_getDataV2_update_fetch(symbolIDs) {
   console.log("test_getDataV2_update_fetch");
   const response = await context.functions.execute("getDataV2", new Date('2020-01-01').getTime(), null, symbolIDs, ["exchange-rates", "symbols", "updates"]);
-  verifyResponseV2(response, ["companies", "dividends", "historical-prices", "quotes", "splits", "exchange-rates", "symbols", "updates"], transactions.length);
+  verifyResponseV2(response, ["companies", "dividends", "historical-prices", "quotes", "splits", "exchange-rates", "symbols", "updates"], symbolIDs, ["exchange-rates", "symbols", "updates"]);
 }
 
 async function test_getDataV2_FMP() {
   console.log("test_getDataV2_FMP");
   const fmpSymbol = await atlas.db("merged").collection("symbols").findOne({ "m.s": "f" });
-  const response = await context.functions.execute("getDataV2", null, null, [fmpSymbol._id], null);
-  verifyResponseV2(response, ["companies", "dividends", "historical-prices", "quotes", "splits", "exchange-rates", "symbols", "updates"], 1);
+  const symbolIDs = [fmpSymbol._id];
+  const response = await context.functions.execute("getDataV2", null, null, symbolIDs, null);
+  verifyResponseV2(response, ["companies", "dividends", "historical-prices", "quotes", "splits", "exchange-rates", "symbols", "updates"], symbolIDs);
 }
 
-async function test_getDataV2_FMP_and_IEX() {
+async function test_getDataV2_FMP_and_IEX(_symbolIDs) {
   console.log("test_getDataV2_FMP_and_IEX");
-  const transactions = await generateRandomTransactions(1);
-  const symbolIDs = transactions.map(x => x.s);
-  await context.functions.execute("addTransactionsV2", transactions);
-
   const fmpSymbol = await atlas.db("merged").collection("symbols").findOne({ "m.s": "f" });
+  const symbolIDs = [..._symbolIDs];
   symbolIDs.push(fmpSymbol._id);
   const response = await context.functions.execute("getDataV2", null, null, symbolIDs, null);
-  verifyResponseV2(response, ["companies", "dividends", "historical-prices", "quotes", "splits", "exchange-rates", "symbols", "updates"], symbolIDs.length);
+  verifyResponseV2(response, ["companies", "dividends", "historical-prices", "quotes", "splits", "exchange-rates", "symbols", "updates"], symbolIDs);
 }
 
 async function test_getDataV2_errors() {
@@ -210,23 +208,24 @@ async function test_getDataV2_refetch() {
 
   // Get timestamp just before refetch date
   const timestamp = refetchSymbol.r.getTime() - 1;
+  const symbolIDs = [refetchSymbol._id];
 
   let response;
 
   console.log("test_getDataV2_refetch.update_default");
-  response = await context.functions.execute("getDataV2", timestamp, null, [refetchSymbol._id], ["exchange-rates", "symbols", "updates"]);
-  verifyResponseV2(response, ["companies", "dividends", "historical-prices", "quotes", "splits", "exchange-rates", "symbols", "updates"], 1);
+  response = await context.functions.execute("getDataV2", timestamp, null, [symbolID], ["exchange-rates", "symbols", "updates"]);
+  verifyResponseV2(response, ["companies", "dividends", "historical-prices", "quotes", "splits", "exchange-rates", "symbols", "updates"], symbolIDs, ["exchange-rates", "symbols", "updates"]);
   verifyRefetchResponse(response, timestamp, ["exchange-rates", "symbols", "updates"]);
 
   console.log("test_getDataV2_refetch.update_symbol");
-  response = await context.functions.execute("getDataV2", timestamp, null, [refetchSymbol._id], null);
-  verifyResponseV2(response, ["companies", "dividends", "historical-prices", "quotes", "splits", "exchange-rates", "symbols", "updates"], 1);
+  response = await context.functions.execute("getDataV2", timestamp, null, [symbolID], null);
+  verifyResponseV2(response, ["companies", "dividends", "historical-prices", "quotes", "splits", "exchange-rates", "symbols", "updates"], symbolIDs);
   verifyRefetchResponse(response, timestamp);
 }
 
 //////////////////////////// VERIFICATION V2
 
-function verifyResponseV2(response, collections, length) {
+function verifyResponseV2(response, collections, symbolIDs, fullFetchCollections) {
   console.logData(`response: `, response);
 
   if (response.lastUpdateTimestamp == null) {
@@ -237,12 +236,39 @@ function verifyResponseV2(response, collections, length) {
     throw `'updates' field is absent in the response: ${response.stringify()}`;
   }
 
-  const hasRequiredCollections = collections.reduce((success, collection) => success && response.updates[collection] != null, true);
-  const keys = Object.keys(response.updates);
+  const updates = response.updates;
+  const hasRequiredCollections = collections.reduce((success, collection) => success && updates[collection] != null, true);
+  const updateCollections = Object.keys(updates);
   if (!hasRequiredCollections) {
-    throw `Response does not have all required collections. Collections: ${collections}. Keys: ${keys}`;
+    throw `Response does not have all required collections. Collections: ${collections}. Update collections: ${updateCollections}`;
   }
 
+  if (symbolIDs != null) {
+    const symbolIDStrings = symbolIDs.map(x => x.toString());
+    for (const collection of updateCollections) {
+      if (nonSearchableIDCollections.includes(collection)) { continue; }
+      if (fullFetchCollections?.includes(collection)) { continue; }
+  
+      const objects = updates[collection];
+      if (singularSymbolCollections.includes(collection)) {
+        objects.forEach(object => { 
+          const idString = object._id.toString();
+          if (!symbolIDStrings.includes(idString)) {
+            throw `Collection '${collection}' update data ID '${idString}' expected to be included in requested symbol IDs: ${symbolIDStrings}. Data: ${object.stringify()}`;
+          }
+        });
+      } else {
+        objects.forEach(update => { 
+          const idString = update.s.toString();
+          if (!symbolIDStrings.includes(idString)) {
+            throw `Collection '${collection}' update symbol ID '${idString}' expected to be included in requested symbol IDs: ${symbolIDStrings}. Data: ${object.stringify()}`;
+          }
+        });
+      }
+    }
+  }
+
+  const length = symbolIDs?.length;
   if (length != null) {
     requiredDataCollections.forEach(collection => {
       if (!collections.includes(collection)) {
@@ -314,5 +340,16 @@ const requiredDataCollections = [
   'exchange-rates',
   'quotes',
   'symbols',
+  'updates',
+];
+
+const singularSymbolCollections = [
+  'companies',
+  'quotes',
+  'symbols',
+];
+
+const nonSearchableIDCollections = [
+  'exchange-rates',
   'updates',
 ];
