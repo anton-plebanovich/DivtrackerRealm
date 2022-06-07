@@ -28,11 +28,14 @@ async function test() {
     fmp.collection('quotes').deleteMany({}),
     fmp.collection('splits').deleteMany({}),
     fmp.collection('symbols').deleteMany({}),
+    atlas.db("merged").collection("symbols").deleteMany({}),
   ]);
   
   // Add some symbols
   const symbols = await fetchSymbols();
-  const symbolsToAdd = symbols.getRandomElements(20);
+  const symbolsToAdd = symbols.getRandomElements(19);
+  const pciSymbol = symbols.find(x => x.t === "PCI");
+  symbolsToAdd.push(pciSymbol);
   await fmp.collection('symbols').insertMany(symbolsToAdd);
   await context.functions.execute("mergedUpdateSymbols");
   await context.functions.execute("fmpLoadMissingData");

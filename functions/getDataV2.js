@@ -202,6 +202,7 @@ exports = async function(timestamp, collectionNames, symbolIDs, fullFetchCollect
   console.logData('refetchMergedSymbolIDs', refetchMergedSymbolIDs);
   console.logData('refetchSymbolIDsBySource', refetchSymbolIDsBySource);
   console.logData('symbolIDsBySource', symbolIDsBySource);
+  console.logData('mainIDBySourceID', mainIDBySourceID);
 
   const operations = collectionNames.map(async collectionName => {
     if (collectionName === 'symbols') {
