@@ -233,11 +233,19 @@ async function getSymbolsData(mergedSymbolsCollection, previousUpdateDate, symbo
 }
 
 async function getCollectionData(collection, collectionName, previousUpdateDate, symbolIDs, refetchSymbolIDs, fullFetchCollections) {
-  if (symbolIDs?.length === 0) {
-    return [];
-  }
-
   const find = {};
+
+  if (symbolIDs != null && !fullFetchCollections.includes(collectionName)) {
+    if (symbolIDs.length === 0) {
+      return [];
+    }
+
+    if (singularSymbolCollections.includes(collectionName)) {
+      find._id = { $in: symbolIDs };
+    } else {
+      find.s = { $in: symbolIDs };
+    }
+  }
 
   if (previousUpdateDate != null) {
     // TODO: We might need to use date - 5 mins to prevent race conditions. I am not 100% sure because I don't know if MongoDB handles it properly.
@@ -266,14 +274,6 @@ async function getCollectionData(collection, collectionName, previousUpdateDate,
 
     } else {
       Object.assign(find, dateFind);
-    }
-  }
-
-  if (symbolIDs != null && !fullFetchCollections.includes(collectionName)) {
-    if (singularSymbolCollections.includes(collectionName)) {
-      find._id = { $in: symbolIDs };
-    } else {
-      find.s = { $in: symbolIDs };
     }
   }
 

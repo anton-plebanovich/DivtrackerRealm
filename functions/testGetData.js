@@ -64,47 +64,61 @@ function verifyResponseV1(response, collections) {
 
 //////////////////////////// TESTS V2
 
-async function testGetDataV2(transactions) {
+async function testGetDataV2() {
+  const transactions = await generateRandomTransactions(1);
   const symbolIDs = transactions.map(x => x.s);
+  await context.functions.execute("addTransactionsV2", transactions);
 
   let response;
 
-  // Base data fetch
+  console.log("Base data fetch test")
   response = await context.functions.execute("getDataV2", null, ["exchange-rates", "symbols", "updates"], null, null);
   verifyResponseV2(response, ["exchange-rates", "symbols", "updates"], transactions.length);
 
-  // Symbols data fetch
+  console.log("Symbols data fetch test")
   response = await context.functions.execute("getDataV2", null, ["companies", "dividends", "historical-prices", "quotes", "splits"], symbolIDs, null);
   verifyResponseV2(response, ["companies", "dividends", "historical-prices", "quotes", "splits"], transactions.length);
 
-  // Data update
+  console.log("Data update test")
   response = await context.functions.execute("getDataV2", new Date('2020-01-01').getTime(), null, symbolIDs, ["exchange-rates", "symbols", "updates"]);
   verifyResponseV2(response, ["companies", "dividends", "historical-prices", "quotes", "splits", "exchange-rates", "symbols", "updates"], transactions.length);
 
-  await test_getDataV2_refetch();
   await test_getDataV2_FMP();
-  await test_getDataV2_FMP_and_IEX(symbolIDs);
+  await test_getDataV2_FMP_and_IEX();
   await test_getDataV2_errors();
-  await restoreSymbols();
+  await test_getDataV2_refetch();
 }
 
 async function test_getDataV2_refetch() {
+  console.log("test_getDataV2_errors");
+
   let response;
+  let timestamp;
+  let refetchSymbol;
 
-  await cleanupSymbols();
+  // We are 
+  try {
+    await cleanupSymbols();
+  
+    // We fetch lower priority source symbols first and then higher priority and so there should be multiple source symbols in the end
+    await context.functions.execute("updateSymbolsV2"); 
+    await context.functions.execute("mergedUpdateSymbols");
+  
+    // Get timestamp just before we create refetch symbols
+    timestamp = new Date().getTime();
+  
+    // Create and get refetch symbol
+    await context.functions.execute("fmpUpdateSymbols");
+    refetchSymbol = await atlas.db("merged").collection("symbols").findOne({ "r": { $ne: null } });
+    if (refetchSymbol == null) {
+      throw `Unable to get refetch symbol`;
+    }
 
-  // We fetch lower priority source symbols first and then higher priority and so there should be multiple source symbols in the end
-  await context.functions.execute("updateSymbolsV2"); 
-
-  // Get timestamp just before we create refetch symbols
-  const timestamp = new Date().getTime();
-
-  // Create and get refetch symbol
-  await context.functions.execute("fmpUpdateSymbols");
-  const refetchSymbol = await atlas.db("merged").collection("symbols").findOne({ "r": { $ne: null } });
-  if (refetchSymbol == null) {
-    throw `Unable to get refetch symbol`;
+  } catch(error) {
+    await restoreSymbols();
+    throw error;
   }
+
 
   response = await context.functions.execute("getDataV2", timestamp, null, [refetchSymbol._id], ["exchange-rates", "symbols", "updates"]);
   verifyResponseV2(response, ["companies", "dividends", "historical-prices", "quotes", "splits", "exchange-rates", "symbols", "updates"], 1);
@@ -116,20 +130,26 @@ async function test_getDataV2_refetch() {
 }
 
 async function test_getDataV2_FMP() {
+  console.log("test_getDataV2_FMP");
   const fmpSymbol = await atlas.db("merged").collection("symbols").findOne({ "m.s": "f" });
-  const response = await context.functions.execute("getDataV2", null, null, [fmpSymbol._id], ["exchange-rates", "symbols", "updates"]);
+  const response = await context.functions.execute("getDataV2", null, null, [fmpSymbol._id], null);
   verifyResponseV2(response, ["companies", "dividends", "historical-prices", "quotes", "splits", "exchange-rates", "symbols", "updates"], 1);
 }
 
-async function test_getDataV2_FMP_and_IEX(_symbolIDs) {
+async function test_getDataV2_FMP_and_IEX() {
+  console.log("test_getDataV2_FMP_and_IEX");
+  const transactions = await generateRandomTransactions(1);
+  const symbolIDs = transactions.map(x => x.s);
+  await context.functions.execute("addTransactionsV2", transactions);
+
   const fmpSymbol = await atlas.db("merged").collection("symbols").findOne({ "m.s": "f" });
-  const symbolIDs = [..._symbolIDs];
   symbolIDs.push(fmpSymbol);
-  const response = await context.functions.execute("getDataV2", null, null, symbolIDs, ["exchange-rates", "symbols", "updates"]);
+  const response = await context.functions.execute("getDataV2", null, null, symbolIDs, null);
   verifyResponseV2(response, ["companies", "dividends", "historical-prices", "quotes", "splits", "exchange-rates", "symbols", "updates"], symbolIDs.length);
 }
 
 async function test_getDataV2_errors() {
+  console.log("test_getDataV2_errors");
   try {
     await expectGetDataError(new Date(), null, null, null);
   } catch(error) {
@@ -252,7 +272,7 @@ function verifyResponseV2(response, collections, length) {
 
       const dataLength = data.length;
       if (dataLength < length) {
-        throw `Unexpected data length '${dataLength} < ${length}' for '${collection}' collection`;
+        throw `Unexpected data length '${dataLength}' lower than '${length}' for '${collection}' collection`;
       }
     });
   }
