@@ -23,7 +23,7 @@ exports = async function(timestamp, collectionNames, symbolIDs, fullFetchCollect
     );
     
     if (timestamp > lastUpdateTimestamp) {
-      logAndThrow(`Invalid last update timestamp parameter. Passed timestamp '${timestamp}' is higher than the new update timestamp: ${lastUpdateTimestamp})`);
+      logAndThrow(`Invalid last update timestamp parameter. Passed timestamp '${timestamp}' is higher than the new update timestamp '${lastUpdateTimestamp}'`);
     }
 
     previousUpdateDate = new Date(timestamp);
@@ -180,10 +180,10 @@ exports = async function(timestamp, collectionNames, symbolIDs, fullFetchCollect
           return [];
         }
 
-        const collection = source.db.collection(collectionName);
+        console.log(`Getting data for '${source.name}' source`);
         const sourceSymbolIDs = symbolIDsBySource[source.field];
         const sourceRefetchSymbolIDs = refetchSymbolIDsBySource[source.field];
-        return await getCollectionData(collection, collectionName, previousUpdateDate, sourceSymbolIDs, sourceRefetchSymbolIDs, fullFetchCollections)
+        return await getCollectionData(source, collectionName, previousUpdateDate, sourceSymbolIDs, sourceRefetchSymbolIDs, fullFetchCollections)
       });
 
       const arrays = await Promise.all(operations);
@@ -232,11 +232,13 @@ async function getSymbolsData(mergedSymbolsCollection, previousUpdateDate, symbo
   return symbols;
 }
 
-async function getCollectionData(collection, collectionName, previousUpdateDate, symbolIDs, refetchSymbolIDs, fullFetchCollections) {
+async function getCollectionData(source, collectionName, previousUpdateDate, symbolIDs, refetchSymbolIDs, fullFetchCollections) {
+  const collection = source.db.collection(collectionName);
   const find = {};
 
   if (symbolIDs != null && !fullFetchCollections.includes(collectionName)) {
     if (symbolIDs.length === 0) {
+      console.log(`No symbols to fetch. Skipping.`);
       return [];
     }
 
@@ -277,7 +279,7 @@ async function getCollectionData(collection, collectionName, previousUpdateDate,
     }
   }
 
-  console.log(`Performing '${collectionName}' find: ${find.stringify()}`);
+  console.log(`Performing '${source.name}-${collectionName}' find: ${find.stringify()}`);
 
   const projection = { u: false };
 

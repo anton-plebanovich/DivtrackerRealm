@@ -3,23 +3,20 @@
 
 exports = async function() {
   context.functions.execute("testUtils");
-  
-  // Prepate environment
-  const transactions = await generateRandomTransactions(1);
-  await context.functions.execute("addTransactionsV2", transactions);
 
   try {
+    const transactions = await generateRandomTransactions(1);
+    await context.functions.execute("addTransactionsV2", transactions);
     await testGetDataV1(transactions);
   } catch(error) {
     console.error(error);
     throw error;
   }
-
+  
   try {
-    await testGetDataV2(transactions);
+    await testGetDataV2();
   } catch(error) {
     console.error(error);
-    await restoreSymbols();
     throw error;
   }
 };
@@ -71,15 +68,15 @@ async function testGetDataV2() {
 
   let response;
 
-  console.log("Base data fetch test")
+  console.log("Base data fetch test");
   response = await context.functions.execute("getDataV2", null, ["exchange-rates", "symbols", "updates"], null, null);
   verifyResponseV2(response, ["exchange-rates", "symbols", "updates"], transactions.length);
 
-  console.log("Symbols data fetch test")
+  console.log("Symbols data fetch test");
   response = await context.functions.execute("getDataV2", null, ["companies", "dividends", "historical-prices", "quotes", "splits"], symbolIDs, null);
   verifyResponseV2(response, ["companies", "dividends", "historical-prices", "quotes", "splits"], transactions.length);
 
-  console.log("Data update test")
+  console.log("Data update test");
   response = await context.functions.execute("getDataV2", new Date('2020-01-01').getTime(), null, symbolIDs, ["exchange-rates", "symbols", "updates"]);
   verifyResponseV2(response, ["companies", "dividends", "historical-prices", "quotes", "splits", "exchange-rates", "symbols", "updates"], transactions.length);
 
@@ -143,7 +140,7 @@ async function test_getDataV2_FMP_and_IEX() {
   await context.functions.execute("addTransactionsV2", transactions);
 
   const fmpSymbol = await atlas.db("merged").collection("symbols").findOne({ "m.s": "f" });
-  symbolIDs.push(fmpSymbol);
+  symbolIDs.push(fmpSymbol._id);
   const response = await context.functions.execute("getDataV2", null, null, symbolIDs, null);
   verifyResponseV2(response, ["companies", "dividends", "historical-prices", "quotes", "splits", "exchange-rates", "symbols", "updates"], symbolIDs.length);
 }
@@ -153,13 +150,13 @@ async function test_getDataV2_errors() {
   try {
     await expectGetDataError(new Date(), null, null, null);
   } catch(error) {
-    verifyError(error, 'TODO');
+    verifyError(error, `{"type":"user","message":"Argument should be of the 'number' type. Instead, received '[object Date] (object)'. Please pass timestamp in milliseconds as the first argument."}`);
   }
   
   try {
     await expectGetDataError(new Date().getTime() + 1000, null, null, null);
   } catch(error) {
-    verifyError(error, 'TODO');
+    verifyError(error, RegExp(`{"type":"system","message":"Invalid last update timestamp parameter. Passed timestamp '[0-9]*' is higher than the new update timestamp: '[0-9]*'"}`));
   }
   
   try {
@@ -312,8 +309,14 @@ function verifyRefetchResponse(response, timestamp, fullFetchCollections) {
 }
 
 function verifyError(error, message) {
-  if (error !== message) {
-    throw `Error '${error}' expected to be equal to '${message}'`;
+  if (message instanceof RegExp) {
+    if (!message.test(error)) {
+      throw `Error '${error}' expected to be equal to '${message}'`;
+    }
+  } else {
+    if (error != message) {
+      throw `Error '${error}' expected to be equal to '${message}'`;
+    }
   }
 }
 
