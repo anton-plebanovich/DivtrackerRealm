@@ -13,13 +13,13 @@ String.prototype.removeSensitiveData = function() {
   
   if (premiumToken != null) {
     const regexp = new RegExp(premiumToken, "g");
-    safeString = safeString.replace(regexp, 'sk_***');
+    safeString = safeString.replace(regexp, '<TOKEN>');
   }
 
   if (tokens != null) {
     for (const token of tokens) {
       const regexp = new RegExp(token, "g");
-      safeString = safeString.replace(regexp, 'pk_***');
+      safeString = safeString.replace(regexp, '<TOKEN>');
     }
   }
 

@@ -1321,9 +1321,12 @@ async function _httpGET(baseURL, api, queryParameters) {
   const url = _getURL(baseURL, api, queryParameters);
   console.log(`Request with URL: ${url}`);
 
-  const response = await context.http.get({ url: url });
-
-  return new _NetworkResponse(url, response);
+  try {
+    const response = await context.http.get({ url: url });
+    return new _NetworkResponse(url, response);
+  } catch(error) {
+    throw new _SystemError(error.message.removeSensitiveData());
+  }
 }
 
 function _getURL(baseURL, api, queryParameters) {
