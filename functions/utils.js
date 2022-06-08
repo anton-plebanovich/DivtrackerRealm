@@ -1094,7 +1094,7 @@ function extendRuntime() {
       );
     }
 
-    const seconds = timestamp;
+    const seconds = timestamp / 1000;
     const hexSeconds = Math.floor(seconds)
       .toString(16)
       .padStart(8, "0");
