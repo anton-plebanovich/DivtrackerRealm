@@ -122,6 +122,12 @@ async function test_getDataV2_errors() {
   }
   
   try {
+    await expectGetDataError(new Date(-1).getTime(), null, null, null);
+  } catch(error) {
+    verifyError(error, RegExp(`{"type":"user","message":"Invalid last update timestamp parameter. Timestamp '-[0-9]*' should be greater than zero"}`));
+  }
+  
+  try {
     await expectGetDataError(null, "parameter", null, null);
   } catch(error) {
     verifyError(error, `{"type":"user","message":"Argument should be of the 'Array' type. Instead, received '[object String]'. Please pass collections array as the second argument. It may be null but must not be empty. Valid collections are: companies,dividends,exchange-rates,historical-prices,quotes,splits,symbols,updates."}`);

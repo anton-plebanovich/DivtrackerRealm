@@ -1076,14 +1076,35 @@ function extendRuntime() {
     }
 
     if (hex == null) {
-      hex = "0000000000000000"
+      hex = "0000000000000000";
     }
 
-    if (hex.length != 16) {
-      _logAndThrow(`Hex part of ObjectID should have 16 characters length, instead received '${hex}' with ${hex.length} length`)
+    if (hex.length !== 16) {
+      _logAndThrow(
+        `Hex part of ObjectID should have 16 characters length, instead received '${hex}' with '${hex.length}' length`, 
+        _SystemError
+      );
     }
 
-    const hexSeconds = Math.floor(date/1000).toString(16);
+    const timestamp = date.getTime();
+    if (timestamp < 0) {
+      _logAndThrow(
+        `Date should be above '1970-01-01', instead received '${date}' date with '${timestamp}' timestamp`, 
+        _SystemError
+      );
+    }
+
+    const seconds = timestamp / 1000;
+    const hexSeconds = Math.floor(seconds)
+      .toString(16)
+      .padStart(8, "0");
+
+    if (hexSeconds.length !== 8) {
+      _logAndThrow(
+        `Hex time part of ObjectID should have 8 characters length, instead received '${hexSeconds}' with '${hexSeconds.length}' length`, 
+        _SystemError
+      );
+    }
 
     // 62649eca 6e72da17e710cd18
     // --time-- ------hex-------

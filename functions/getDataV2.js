@@ -29,6 +29,13 @@ exports = async function(timestamp, collectionNames, symbolIDs, fullFetchCollect
       );
     }
 
+    if (timestamp < 0) {
+      logAndThrow(
+        `Invalid last update timestamp parameter. Timestamp '${timestamp}' should be greater than zero`, 
+        UserError
+      );
+    }
+
     previousUpdateDate = new Date(timestamp);
   }
 
