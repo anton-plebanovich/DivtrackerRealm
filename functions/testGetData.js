@@ -122,7 +122,7 @@ async function test_getDataV2_errors() {
   }
   
   try {
-    await expectGetDataError(new Date(-1), null, null, null);
+    await expectGetDataError(new Date(-1).getTime(), null, null, null);
   } catch(error) {
     verifyError(error, RegExp(`{"type":"user","message":"Invalid last update timestamp parameter. Timestamp '-[0-9]*' should be greater than zero"}`));
   }
