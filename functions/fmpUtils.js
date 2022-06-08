@@ -288,8 +288,12 @@ async function _fmpFetchBatchAndMapArray(api, tickers, queryParameters, maxBatch
     _mapAndCallback = undefined;
   }
 
-  return await _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, groupingKey, _mapAndCallback)
-    .then(_map);
+  const response = await _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, groupingKey, _mapAndCallback);
+  
+  // Only return data if callback is missing. We should not perform double mapping.
+  if (callback == null) {
+    return _map(response);
+  }
 }
 
 /**
@@ -324,8 +328,12 @@ async function _fmpFetchBatchAndMapArray(api, tickers, queryParameters, maxBatch
     _mapAndCallback = undefined;
   }
   
-  return await _fmpFetchChunked(api, tickers, queryParameters, maxFetchSize, _mapAndCallback)
-    .then(_map);
+  const response = await _fmpFetchChunked(api, tickers, queryParameters, maxFetchSize, _mapAndCallback);
+
+  // Only return data if callback is missing. We should not perform double mapping.
+  if (callback == null) {
+    return _map(response);
+  }
 }
 
 //////////////////////////////////// Base Fetch
