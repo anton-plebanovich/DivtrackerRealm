@@ -557,7 +557,7 @@ function _fixFMPDividends(fmpDividends, symbolID) {
     let dividends = fmpDividends
       .filterNullAndUndefined()
       // FMP have dividends history from 1973 year for some companies and we do not need so much at the moment
-      .filter(fmpDividend => fmpDividend.date > '2016-01-01')
+      .filter(fmpDividend => fmpDividend.date >= '2016-01-01')
       .sorted((l, r) => l.date.localeCompare(r.date))
       .map(fmpDividend => {
         const dividend = {};
@@ -711,7 +711,7 @@ function _fixFMPHistoricalPrices(fmpHistoricalPrices, symbolID) {
     const monthStart = Date.monthStart().dayString();
     const fmpHistoricalPricesByMonth = fmpHistoricalPrices
       // FMP have dividends history from 1997 year for some companies and we do not need so much at the moment
-      .filter(fmpHistoricalPrice => fmpHistoricalPrice.date > '2016-01-01')
+      .filter(fmpHistoricalPrice => fmpHistoricalPrice.date >= '2016-01-01')
       // Do not add partial months
       .filter(x => x.date < monthStart)
       .toBuckets(fmpHistoricalPrice => {
@@ -801,7 +801,7 @@ function _fixFMPSplits(fmpSplits, symbolID) {
     return fmpSplits
       .filterNullAndUndefined()
       // FMP have splits history from 1987 year for some companies and we do not need so much at the moment
-      .filter(fmpSplit => fmpSplit.date > '2016-01-01')
+      .filter(fmpSplit => fmpSplit.date >= '2016-01-01')
       .map(fmpSplit => {
         const split = {};
         split.e = _getOpenDate(fmpSplit.date);
