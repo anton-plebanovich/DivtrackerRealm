@@ -12,9 +12,4 @@
 exports = async function() {
   context.functions.execute("utils");
 
-  // Release new server
-  // dt call-realm-function --environment tests --function mergedUpdateSymbols --verbose
-  // Release new client
-  // Deprecate old clients
-  // Release more tickers
 };
