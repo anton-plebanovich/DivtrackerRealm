@@ -499,7 +499,7 @@ function _fixFMPCompany(fmpCompany, symbolID) {
       company.c = fmpCompany.currency.toUpperCase();
     } else {
       console.error(`No currency '${symbolID}': ${fmpCompany.stringify()}`)
-      return null;
+      company.c = "NONE";
     }
 
     if (fmpCompany.industry) {
@@ -510,7 +510,7 @@ function _fixFMPCompany(fmpCompany, symbolID) {
       company.n = fmpCompany.companyName;
     } else {
       console.error(`No company name '${symbolID}': ${fmpCompany.stringify()}`)
-      return null;
+      company.n = "N/A";
     }
 
     if (fmpCompany.isAdr == true) {
