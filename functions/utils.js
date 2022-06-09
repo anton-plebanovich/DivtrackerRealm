@@ -129,7 +129,7 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields,
     return await _logAndReject(`${invalidObjectsLength} of ${newObjects.length} new objects do not contain required '${fields}' fields`);
   }
 
-  if (typeof oldObjects === 'undefined') {
+  if (oldObjects == null) {
     // Sort deleted to the start so they will be overridden in the dictionary
     const sort = { x: -1 };
 
