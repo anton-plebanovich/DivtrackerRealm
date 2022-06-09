@@ -30,7 +30,7 @@ async function _getShortSymbols() {
   const shortSymbols = await symbolsCollection
     .find(
       { e: null },
-      { _id: 1, t: 1 }
+      { _id: 1, t: 1, c: 1 }
     )
     .toArray();
 
@@ -52,6 +52,9 @@ getShortSymbols = _getShortSymbols;
 
 /// To prevent `414 Request-URI Too Large` error we need to split our requests by some value.
 const defaultMaxFetchSize = 100;
+
+/// To prevent `This request is limited to 5 symbols to prevent exceeding server response time.` error we need to limit our batch size.
+const defaultMaxBatchSize = 5;
 
 /// Each batch or chunked request will have concurrent fetches limited by this parameter.
 const maxConcurrentFetchesPerRequest = 3;
@@ -100,7 +103,7 @@ fetchDividends = async function fetchDividends(shortSymbols, limit, callback) {
     "/v3/historical-price-full/stock_dividend",
     tickers,
     queryParameters,
-    5,
+    defaultMaxBatchSize,
     limit,
     'historicalStockList',
     'historical',
@@ -137,11 +140,6 @@ fetchDividendsCalendar = async function fetchDividendsCalendar(shortSymbols) {
 fetchHistoricalPrices = async function fetchHistoricalPrices(shortSymbols, queryParameters, callback) {
   throwIfEmptyArray(shortSymbols, `fetchHistoricalPrices shortSymbols`);
 
-  const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
-
-  // We can't group tickers from different exchanges and since we do not preserve exchanges we can't be sure so just fetching one by one instead.
-  const maxBatchSize = 1;
-
   if (queryParameters == null) {
     queryParameters = {};
   }
@@ -151,19 +149,35 @@ fetchHistoricalPrices = async function fetchHistoricalPrices(shortSymbols, query
   // FMP have historical prices history from 1997 year for some companies and we do not need so much at the moment
   queryParameters.from = "2016-01-01";
 
-  // https://financialmodelingprep.com/api/v3/historical-price-full/AAPL,AAP?serietype=line&from=2016-01-01&apikey=969387165d69a8607f9726e8bb52b901
-  return await _fmpFetchBatchAndMapArray(
-    "/v3/historical-price-full",
-    tickers,
-    queryParameters,
-    maxBatchSize,
-    null,
-    'historicalStockList',
-    'historical',
-    idByTicker,
-    _fixFMPHistoricalPrices,
-    callback
-  );
+  // We need to split tickers by exchanges or it won't work
+  const results = [];
+  const shortSymbolsByExchange = shortSymbols.toBuckets('c');
+  const exchanges = Object.keys(shortSymbolsByExchange);
+  console.log(`Fetching historical prices data for '${exchanges.length}' exchanges`);
+  for (const [exchange, shortSymbols] of Object.entries(shortSymbolsByExchange)) {
+    const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
+    console.log(`Fetching '${tickers.length}' tockers historical prices data for '${exchange}' exchange`);
+  
+    // https://financialmodelingprep.com/api/v3/historical-price-full/AAPL,AAP?serietype=line&from=2016-01-01&apikey=969387165d69a8607f9726e8bb52b901
+    const result = await _fmpFetchBatchAndMapArray(
+      "/v3/historical-price-full",
+      tickers,
+      queryParameters,
+      defaultMaxBatchSize,
+      null,
+      'historicalStockList',
+      'historical',
+      idByTicker,
+      _fixFMPHistoricalPrices,
+      callback
+    );
+
+    console.log(`Fetched '${tickers.length}' tickers historical prices data for '${exchange}' exchange`);
+    results.push(result);
+  }
+  console.log(`Fetched historical prices data for '${exchanges.length}' exchanges`);
+
+  return results.flat();
 };
 
 /**
@@ -208,7 +222,7 @@ fetchSplits = async function fetchSplits(shortSymbols, callback) {
     "/v3/historical-price-full/stock_split",
     tickers,
     queryParameters,
-    5,
+    defaultMaxBatchSize,
     null,
     'historicalStockList',
     'historical',
@@ -848,10 +862,11 @@ function _fixFMPSymbols(fmpSymbols) {
     console.logVerbose(`Fixing symbols`);
     return fmpSymbols
       .filterNullAndUndefined()
-      // We only support 'MCX' and funds ATM
+      // Limit to only supported types
       .filter(fmpSymbol => fmpSymbol.exchangeShortName === "MCX" || fmpSymbol.type === "fund" || fmpSymbol.type === "etf")
       .map(fmpSymbol => {
         const symbol = {};
+        symbol.c = fmpSymbol.exchangeShortName;
         symbol.n = fmpSymbol.name;
         symbol.t = fmpSymbol.symbol;
 
