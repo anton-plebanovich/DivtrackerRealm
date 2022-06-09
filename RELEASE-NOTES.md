@@ -29,7 +29,14 @@
 # 2022-06-XX | getDataV2
 
 - Release new server
-- dt call-realm-function --environment tests --function mergedUpdateSymbols --verbose
+- dt call-realm-function --environment sandbox-anton --function mergedUpdateSymbols --verbose
 - Release new client
 - Deprecate old clients
 - Release more tickers
+
+# 2022-06-XX | IEX calendar splits and dedupe
+
+- Release new server
+- dt check-splits --environment sandbox-anton
+- dt call-realm-function --environment sandbox-anton --function migrations --verbose
+- dt check-splits --environment sandbox-anton
