@@ -161,7 +161,7 @@ fetchHistoricalPrices = async function fetchHistoricalPrices(shortSymbols, query
   console.log(`Fetching historical prices data for '${exchanges.length}' exchanges`);
   for (const [exchange, shortSymbols] of Object.entries(shortSymbolsByExchange)) {
     const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
-    console.log(`Fetching '${tickers.length}' tockers historical prices data for '${exchange}' exchange`);
+    console.log(`Fetching '${tickers.length}' tickers historical prices data for '${exchange}' exchange`);
   
     // https://financialmodelingprep.com/api/v3/historical-price-full/AAPL,AAP?serietype=line&from=2016-01-01&apikey=969387165d69a8607f9726e8bb52b901
     const result = await _fmpFetchBatchAndMapArray(
