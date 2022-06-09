@@ -13,33 +13,33 @@
 exports = async function() {
   context.functions.execute("iexUtils");
   const shortSymbols = await getInUseShortSymbols();
-  const days = 3;
-
   if (shortSymbols.length <= 0) {
     console.log(`No symbols. Skipping update.`);
     return;
   }
 
-  console.log(`Fetching splits for the last ${days} days`);
+  const days = 3;
   const daysParam = `${days}d`;
-  const splits = await fetchSplits(shortSymbols, daysParam);
+  const collection = db.collection("splits");
+
+  // Future
+  console.log(`Fetching and updating calendar splits`);
+  const futureSplits = await fetchSplits(shortSymbols, null, true);
+  await collection.safeInsertMissing(futureSplits, 'i');
+
+  // Past
+  // We do not update to prevent date adjust on duplicated splits.
+  console.log(`Fetching historical splits for the last ${days} days`);
+  const splits = await fetchSplits(shortSymbols, daysParam, false);
   if (splits.length) {
     console.log(`Inserting missed`);
 
-    const collection = db.collection("splits");
-    const bulk = collection.initializeUnorderedBulkOp();
-    for (const split of splits) {
-      console.log(`Checking '${split.s}' for '${split.e}' ex date`);
-      bulk.find({ e: split.e, s: split.s })
-        .upsert()
-        .updateOne({ $setOnInsert: split });
-    }
-    bulk.execute();
+    await collection.safeInsertMissing(splits, 'i');
 
     console.log(`SUCCESS`);
 
   } else {
-    console.log(`Splits are empty for symbols: '${shortSymbols.map(x => x.t)}'`);
+    console.log(`Historical splits are empty for symbols: '${shortSymbols.map(x => x.t)}'`);
   }
 
   await setUpdateDate("splits");

@@ -554,12 +554,29 @@ function _fixFMPCompany(fmpCompany, symbolID) {
       company.n = "N/A";
     }
 
+    // Refers to the common issue type of the stock.
+    // ad - ADR
+    // cs - Common Stock
+    // cef - Closed End Fund
+    // et - ETF
+    // oef - Open Ended Fund
+    // ps - Preferred Stock
+    // rt - Right
+    // struct - Structured Product
+    // ut - Unit
+    // wi - When Issued
+    // wt - Warrant
+    // empty - Other
     if (fmpCompany.isAdr == true) {
       company.t = "ad";
     } else if (fmpCompany.isEtf == true) {
       company.t = "et";
     } else if (fmpCompany.isFund == true) {
       company.t = "f";
+    } else if (fmpCompany.exchangeShortName === 'MUTUAL_FUND') {
+      company.t = "mf";
+    } else if (fmpCompany.exchangeShortName === 'OTC') {
+      company.t = "otc";
     } else {
       company.t = "s"; // Stock
     }

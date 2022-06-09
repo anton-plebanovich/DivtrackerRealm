@@ -112,7 +112,7 @@ Object.prototype.safeUpsertMany = async function(newObjects, field, setUpdateDat
 /**
  * Safely computes and executes update operation from old to new objects on a collection.
  */
-Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields, setUpdateDate) {
+Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields, setUpdateDate, insertMissing = true) {
   _throwIfNotArray(newObjects, `Please pass new objects array as the first argument. safeUpdateMany`);
   if (newObjects.length === 0) {
     console.log(`New objects array is empty. Nothing to update.`);
@@ -129,7 +129,7 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields,
     return await _logAndReject(`${invalidObjectsLength} of ${newObjects.length} new objects do not contain required '${fields}' fields`);
   }
 
-  if (typeof oldObjects === 'undefined') {
+  if (oldObjects == null) {
     // Sort deleted to the start so they will be overridden in the dictionary
     const sort = { x: -1 };
 
@@ -157,8 +157,13 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields,
   }
 
   if (oldObjects == null || oldObjects === []) {
-    console.log(`No old objects. Just inserting new objects.`);
-    return await this.insertMany(newObjects);
+    if (insertMissing) {
+      console.log(`No old objects. Just inserting new objects.`);
+      return await this.insertMany(newObjects);
+    } else {
+      console.log(`No old objects. Nothing to update.`);
+      return;
+    }
   }
 
   const bulk = this.initializeUnorderedBulkOp();
@@ -172,7 +177,7 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields,
       }
     }, dictionary);
 
-    bulk.findAndUpdateOrInsertIfNeeded(newObject, existingObject, fields, setUpdateDate);
+    bulk.findAndUpdateOrInsertIfNeeded(newObject, existingObject, fields, setUpdateDate, insertMissing);
   }
 
   return await bulk.safeExecute();
@@ -182,14 +187,19 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields,
  * Executes find by field and update or insert for a new object from an old object.
  * Uses `_id` field by default.
  */
-Object.prototype.findAndUpdateOrInsertIfNeeded = function(newObject, oldObject, fields, setUpdateDate) {
+Object.prototype.findAndUpdateOrInsertIfNeeded = function(newObject, oldObject, fields, setUpdateDate, insertMissing = true) {
   if (newObject == null) {
     throw new _SystemError(`New object should not be null for insert or update`);
     
   } else if (oldObject == null) {
     // No old object means we should insert
-    console.log(`Inserting: ${newObject.stringify()}`);
-    return this.insert(newObject);
+    if (insertMissing) {
+      console.log(`Inserting: ${newObject.stringify()}`);
+      return this.insert(newObject);
+    } else {
+      console.log(`Old object is missing. Skipping insert: ${newObject.stringify()}`);
+      return;
+    }
 
   } else {
     return this.findAndUpdateIfNeeded(newObject, oldObject, fields, setUpdateDate);
@@ -837,15 +847,6 @@ class _NetworkResponse {
           return retryable;
         }
 
-        // You have used all available credits for the month. Please upgrade or purchase additional packages to access more data.
-        if (this.statusCode === 402) {
-          // We can try and retry if there is no premium token and we are using ordinary tokens.
-          // Some might not be expired yet.
-          retryable = typeof premiumToken === 'undefined';
-
-          return retryable;
-        }
-
         retryable = false;
         return retryable;
       }
@@ -882,6 +883,20 @@ class _NetworkResponse {
 
   toNetworkError() {
     return new _NetworkError(this.statusCode, this.string);
+  }
+
+  possiblyRetryable(queryParameters) {
+    // You have used all available credits for the month. Please upgrade or purchase additional packages to access more data.
+    if (this.statusCode !== 402) {
+      return false;
+    }
+
+    // Check if that's an IEX context
+    if (typeof adjustTokenIfPossible !== 'function') {
+      return false;
+    }
+
+    return adjustTokenIfPossible(queryParameters);
   }
 }
 
@@ -1333,7 +1348,7 @@ async function _fetch(baseURL, api, queryParameters) {
   let response = await _httpGET(baseURL, api, queryParameters);
 
   // Retry several times on retryable errors
-  for (let step = 0; step < 10 && response.retryable; step++) {
+  for (let step = 0; step < 10 && (response.retryable || response.possiblyRetryable(queryParameters)); step++) {
     let delay;
     if (response.retryDelay != null) {
       delay = response.retryDelay;
