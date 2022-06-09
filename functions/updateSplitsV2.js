@@ -23,12 +23,13 @@ exports = async function() {
   const collection = db.collection("splits");
 
   // Future
-  const futureSplits = await fetchSplits(shortSymbols, daysParam, true);
+  console.log(`Fetching and updating calendar splits`);
+  const futureSplits = await fetchSplits(shortSymbols, null, true);
   await collection.safeInsertMissing(futureSplits, 'i');
 
   // Past
   // We do not update to prevent date adjust on duplicated splits.
-  console.log(`Fetching splits for the last ${days} days`);
+  console.log(`Fetching historical splits for the last ${days} days`);
   const splits = await fetchSplits(shortSymbols, daysParam, false);
   if (splits.length) {
     console.log(`Inserting missed`);
@@ -38,7 +39,7 @@ exports = async function() {
     console.log(`SUCCESS`);
 
   } else {
-    console.log(`Splits are empty for symbols: '${shortSymbols.map(x => x.t)}'`);
+    console.log(`Historical splits are empty for symbols: '${shortSymbols.map(x => x.t)}'`);
   }
 
   await setUpdateDate("splits");
