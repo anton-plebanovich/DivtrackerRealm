@@ -252,8 +252,9 @@ fetchPreviousDayPrices = _fetchPreviousDayPrices;
  * @param {string} range Range to fetch.
  * @returns {[Split]} Array of requested objects.
  */
- fetchSplits = async function fetchSplits(shortSymbols, range) {
+ fetchSplits = async function fetchSplits(shortSymbols, range, isFuture) {
   throwIfUndefinedOrNull(shortSymbols, `fetchSplits shortSymbols`);
+  throwIfUndefinedOrNull(isFuture, `fetchSplits isFuture`);
 
   if (range == null) {
     range = defaultRange;
@@ -261,6 +262,9 @@ fetchPreviousDayPrices = _fetchPreviousDayPrices;
   
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
   const parameters = { range: range };
+  if (isFuture) {
+    parameters.calendar = 'true';
+  }
 
   // https://cloud.iexapis.com/stable/stock/market/batch?types=splits&token=pk_9f1d7a2688f24e26bb24335710eae053&range=6y&symbols=AAPL,AAP
   // https://sandbox.iexapis.com/stable/stock/market/batch?types=splits&token=Tpk_581685f711114d9f9ab06d77506fdd49&range=6y&symbols=AAPL,AAP

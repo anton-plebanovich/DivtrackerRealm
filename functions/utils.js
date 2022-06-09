@@ -112,7 +112,7 @@ Object.prototype.safeUpsertMany = async function(newObjects, field, setUpdateDat
 /**
  * Safely computes and executes update operation from old to new objects on a collection.
  */
-Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields, setUpdateDate) {
+Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields, setUpdateDate, insertMissing = true) {
   _throwIfNotArray(newObjects, `Please pass new objects array as the first argument. safeUpdateMany`);
   if (newObjects.length === 0) {
     console.log(`New objects array is empty. Nothing to update.`);
@@ -157,8 +157,13 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields,
   }
 
   if (oldObjects == null || oldObjects === []) {
-    console.log(`No old objects. Just inserting new objects.`);
-    return await this.insertMany(newObjects);
+    if (insertMissing) {
+      console.log(`No old objects. Just inserting new objects.`);
+      return await this.insertMany(newObjects);
+    } else {
+      console.log(`No old objects. Nothing to update.`);
+      return;
+    }
   }
 
   const bulk = this.initializeUnorderedBulkOp();
@@ -172,7 +177,7 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields,
       }
     }, dictionary);
 
-    bulk.findAndUpdateOrInsertIfNeeded(newObject, existingObject, fields, setUpdateDate);
+    bulk.findAndUpdateOrInsertIfNeeded(newObject, existingObject, fields, setUpdateDate, insertMissing);
   }
 
   return await bulk.safeExecute();
@@ -182,14 +187,19 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields,
  * Executes find by field and update or insert for a new object from an old object.
  * Uses `_id` field by default.
  */
-Object.prototype.findAndUpdateOrInsertIfNeeded = function(newObject, oldObject, fields, setUpdateDate) {
+Object.prototype.findAndUpdateOrInsertIfNeeded = function(newObject, oldObject, fields, setUpdateDate, insertMissing = true) {
   if (newObject == null) {
     throw new _SystemError(`New object should not be null for insert or update`);
     
   } else if (oldObject == null) {
     // No old object means we should insert
-    console.log(`Inserting: ${newObject.stringify()}`);
-    return this.insert(newObject);
+    if (insertMissing) {
+      console.log(`Inserting: ${newObject.stringify()}`);
+      return this.insert(newObject);
+    } else {
+      console.log(`Old object is missing. Skipping insert: ${newObject.stringify()}`);
+      return;
+    }
 
   } else {
     return this.findAndUpdateIfNeeded(newObject, oldObject, fields, setUpdateDate);

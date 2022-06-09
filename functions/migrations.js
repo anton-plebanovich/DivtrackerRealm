@@ -21,6 +21,18 @@ async function fetch_refid_for_IEX_splits() {
   const shortSymbols = await getInUseShortSymbols();
   const range = '10y';
   const splits = await fetchSplits(shortSymbols, range);
+  const splitsByRefid = splits.toBuckets('refid');
+  const dedupedSplits = []
+  for (const [refid, splits] of Object.entries(splitsByRefid)) {
+    const split = splits.sorted((l, r) => r.e - l.e)[0];
+    dedupedSplits.push(split);
+  }
+
   const collection = db.collection("splits");
-  return await collection.safeUpdateMany(splits, null, ['e', 's'], true);
+
+  // First, set refid on existing splits
+  await collection.safeUpdateMany(splits, null, ['e', 's'], true, false);
+
+  // Second, update with deduped on 'i' field
+  await collection.safeUpdateMany(dedupedSplits, null, 'i', true, false);
 }

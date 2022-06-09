@@ -227,7 +227,7 @@ async function loadMissingSplits(shortSymbols, symbolIDs) {
     return;
   }
   
-  const splits = await fetchSplits(missingShortSymbols);
+  const splits = await fetchSplits(missingShortSymbols, null, false);
   if (!splits.length) {
     console.log(`No splits. Skipping insert.`);
     return;

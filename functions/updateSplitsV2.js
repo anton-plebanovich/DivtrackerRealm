@@ -20,14 +20,20 @@ exports = async function() {
     return;
   }
 
+  // Future
+  const futureSplits = await fetchSplits(shortSymbols, daysParam, true);
+  await collection.safeInsertMissing(futureSplits, 'i');
+
+  // Past
+  // We do not update to prevent date adjust on duplicated splits.
   console.log(`Fetching splits for the last ${days} days`);
   const daysParam = `${days}d`;
-  const splits = await fetchSplits(shortSymbols, daysParam);
+  const splits = await fetchSplits(shortSymbols, daysParam, false);
   if (splits.length) {
     console.log(`Inserting missed`);
 
     const collection = db.collection("splits");
-    await collection.safeUpdateMany(splits, null, 'i', true);
+    await collection.safeInsertMissing(splits, 'i');
 
     console.log(`SUCCESS`);
 
