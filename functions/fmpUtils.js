@@ -139,6 +139,9 @@ fetchHistoricalPrices = async function fetchHistoricalPrices(shortSymbols, query
 
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
 
+  // We can't group tickers from different exchanges and since we do not preserve exchanges we can't be sure so just fetching one by one instead.
+  const maxBatchSize = 1;
+
   if (queryParameters == null) {
     queryParameters = {};
   }
@@ -153,7 +156,7 @@ fetchHistoricalPrices = async function fetchHistoricalPrices(shortSymbols, query
     "/v3/historical-price-full",
     tickers,
     queryParameters,
-    5,
+    maxBatchSize,
     null,
     'historicalStockList',
     'historical',

@@ -8,7 +8,7 @@
 
 - Call below commands several times because it looks like that some data might not be fetched for some reason from the first try
 - dt call-realm-function --environment sandbox-anton --function fmpLoadMissingData --argument fmp-tmp --retry-on-error 'execution time limit exceeded'
-- dt data-status --environment sandbox-anton --database fmp-tmp
+- dt data-status --environment sandbox-anton --database fmp-tmp -collection historical-prices --erase
 
 - dt backup --environment sandbox-anton --database fmp-tmp
 - dt restore --environment local --backup-source-environment sandbox-anton --database fmp-tmp
