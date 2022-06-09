@@ -14,6 +14,7 @@ exports = async function() {
   context.functions.execute("iexUtils");
   const shortSymbols = await getInUseShortSymbols();
   const days = 3;
+  const daysParam = `${days}d`;
 
   if (shortSymbols.length <= 0) {
     console.log(`No symbols. Skipping update.`);
@@ -27,7 +28,6 @@ exports = async function() {
   // Past
   // We do not update to prevent date adjust on duplicated splits.
   console.log(`Fetching splits for the last ${days} days`);
-  const daysParam = `${days}d`;
   const splits = await fetchSplits(shortSymbols, daysParam, false);
   if (splits.length) {
     console.log(`Inserting missed`);
