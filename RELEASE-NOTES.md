@@ -26,12 +26,15 @@
 - dt call-realm-function --environment sandbox-anton --function checkTransactionsV2 --verbose
 - Enable FMP symbols update
 
-# 2022-06-XX | getDataV2
+# 2022-06-XX | Merged symbols and getDataV2
 
+- Check if there are conflicting transactions: `dt call-realm-function --environment sandbox-anton --function playground --verbose`
 - Release new server
 - dt call-realm-function --environment sandbox-anton --function mergedUpdateSymbols --verbose
-- Release new client
+- Push new app in the review and release
+- Wait one week
 - Deprecate old clients
+- Wait one day
 - Release more tickers
 
 # 2022-06-XX | IEX calendar splits and dedupe
