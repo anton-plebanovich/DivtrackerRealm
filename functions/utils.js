@@ -847,15 +847,6 @@ class _NetworkResponse {
           return retryable;
         }
 
-        // You have used all available credits for the month. Please upgrade or purchase additional packages to access more data.
-        if (this.statusCode === 402) {
-          // We can try and retry if there is no premium token and we are using ordinary tokens.
-          // Some might not be expired yet.
-          retryable = typeof premiumToken === 'undefined';
-
-          return retryable;
-        }
-
         retryable = false;
         return retryable;
       }
@@ -892,6 +883,20 @@ class _NetworkResponse {
 
   toNetworkError() {
     return new _NetworkError(this.statusCode, this.string);
+  }
+
+  possiblyRetryable(queryParameters) {
+    // You have used all available credits for the month. Please upgrade or purchase additional packages to access more data.
+    if (this.statusCode !== 402) {
+      return false;
+    }
+
+    // Check if that's an IEX context
+    if (typeof adjustTokenIfPossible !== 'function') {
+      return false;
+    }
+
+    return adjustTokenIfPossible(queryParameters);
   }
 }
 
@@ -1343,7 +1348,7 @@ async function _fetch(baseURL, api, queryParameters) {
   let response = await _httpGET(baseURL, api, queryParameters);
 
   // Retry several times on retryable errors
-  for (let step = 0; step < 10 && response.retryable; step++) {
+  for (let step = 0; step < 10 && (response.retryable || response.possiblyRetryable(queryParameters)); step++) {
     let delay;
     if (response.retryDelay != null) {
       delay = response.retryDelay;

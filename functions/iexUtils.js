@@ -419,6 +419,22 @@ async function _iexFetch(api, queryParameters) {
 
 iexFetch = _iexFetch;
 
+function _adjustTokenIfPossible(queryParameters) {
+  // We can try and retry if there is no premium token and we are using ordinary tokens.
+  // Some might not be expired yet.
+  if (queryParameters.token == null || typeof premiumToken !== 'undefined') {
+    return false;
+  }
+
+  const token = tokens[counter % tokens.length];
+  counter++;
+  queryParameters.token = token;
+
+  return true;
+}
+
+adjustTokenIfPossible = _adjustTokenIfPossible;
+
 // exports();
 //
 // iexFetch("/ref-data/symbols")
