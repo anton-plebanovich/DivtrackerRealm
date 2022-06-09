@@ -304,6 +304,8 @@ async function _iexFetchBatchAndMapArray(type, tickers, idByTicker, mapFunction,
     );
 }
 
+iexFetchBatchAndMapArray = _iexFetchBatchAndMapArray
+
 /**
  * Requests data from IEX cloud/sandbox for types and symbols by a batch.
  * Then, maps objects data to our format in a array.
