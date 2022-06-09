@@ -59,6 +59,9 @@ const defaultMaxBatchSize = 5;
 /// Each batch or chunked request will have concurrent fetches limited by this parameter.
 const maxConcurrentFetchesPerRequest = 3;
 
+// We do not need data below that date at the moment.
+const minFetchDate = '2016-01-01';
+
 /**
  * Fetches companies in batch for short symbols.
  * @param {[ShortSymbol]} shortSymbols Short symbol models for which to fetch.
@@ -95,7 +98,7 @@ fetchDividends = async function fetchDividends(shortSymbols, limit, callback) {
   const queryParameters = {};
 
   // FMP have dividends history from 1973 year for some companies and we do not need so much at the moment
-  queryParameters.from = "2016-01-01";
+  queryParameters.from = minFetchDate;
 
   // https://financialmodelingprep.com/api/v3/historical-price-full/stock_dividend/AAPL?from=2016-01-01&apikey=969387165d69a8607f9726e8bb52b901
   // https://financialmodelingprep.com/api/v3/historical-price-full/stock_dividend/AAPL,AAP?from=2016-01-01&apikey=969387165d69a8607f9726e8bb52b901
@@ -146,8 +149,10 @@ fetchHistoricalPrices = async function fetchHistoricalPrices(shortSymbols, query
 
   queryParameters.serietype = "line";
 
-  // FMP have historical prices history from 1997 year for some companies and we do not need so much at the moment
-  queryParameters.from = "2016-01-01";
+  // FMP have full historical prices history, e.g. from 1962 year for Coca-Cola and we do not need so much at the moment.
+  // However, when we fetch with a batch and pass `from` parameter it will only fetch data for one year.
+  // If we don't pass that parameter we will get data for 5 years instead.
+  // queryParameters.from = minFetchDate;
 
   // We need to split tickers by exchanges or it won't work
   const results = [];
@@ -215,7 +220,7 @@ fetchSplits = async function fetchSplits(shortSymbols, callback) {
   const queryParameters = {};
 
   // FMP have splits history from 1987 year for some companies and we do not need so much at the moment
-  queryParameters.from = "2016-01-01";
+  queryParameters.from = minFetchDate;
 
   // https://financialmodelingprep.com/api/v3/historical-price-full/stock_split/AAPL,AAP?from=2016-01-01&apikey=969387165d69a8607f9726e8bb52b901
   return await _fmpFetchBatchAndMapArray(
@@ -584,6 +589,8 @@ function _fixFMPDividends(fmpDividends, symbolID) {
     console.logVerbose(`Fixing dividends for ${symbolID}`);
     let dividends = fmpDividends
       .filterNullAndUndefined()
+      // We may receive full timeline when one ticker is requested so we need to trim it
+      .filter(fmpDividend => fmpDividend.date >= minFetchDate)
       .sorted((l, r) => l.date.localeCompare(r.date))
       .map(fmpDividend => {
         const dividend = {};
@@ -736,6 +743,8 @@ function _fixFMPHistoricalPrices(fmpHistoricalPrices, symbolID) {
     // Bucket prices by month using 15 day.
     const monthStart = Date.monthStart().dayString();
     const fmpHistoricalPricesByMonth = fmpHistoricalPrices
+      // We may receive full timeline when one ticker is requested so we need to trim it
+      .filter(fmpHistoricalPrice => fmpHistoricalPrice.date >= minFetchDate)
       // Do not add partial months
       .filter(x => x.date < monthStart)
       .toBuckets(fmpHistoricalPrice => {
@@ -823,6 +832,8 @@ function _fixFMPSplits(fmpSplits, symbolID) {
   
     console.logVerbose(`Fixing splits for ${symbolID}`);
     return fmpSplits
+      // We may receive full timeline when one ticker is requested so we need to trim it
+      .filter(fmpSplit => fmpSplit.date >= minFetchDate)
       .filterNullAndUndefined()
       .map(fmpSplit => {
         const split = {};
