@@ -54,7 +54,7 @@ async function fetchSplits(shortSymbols, range, isFuture) {
   // https://cloud.iexapis.com/stable/stock/market/batch?types=splits&token=pk_9f1d7a2688f24e26bb24335710eae053&range=6y&symbols=AAPL,AAP
   // https://sandbox.iexapis.com/stable/stock/market/batch?types=splits&token=Tpk_581685f711114d9f9ab06d77506fdd49&range=6y&symbols=AAPL,AAP
   return await iexFetchBatchAndMapArray('splits', tickers, idByTicker, fixSplits, parameters);
-};
+}
 
 function fixSplits(iexSplits, symbolID) {
   try {
@@ -86,4 +86,4 @@ function fixSplits(iexSplits, symbolID) {
     console.logVerbose(`Unable to map splits: ${error}`);
     return [];
   }
-};
+}
