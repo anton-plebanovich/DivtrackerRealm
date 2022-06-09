@@ -20,26 +20,44 @@ async function fetch_refid_for_IEX_splits() {
 
   const shortSymbols = await getInUseShortSymbols();
   const range = '10y';
-  const splits = await fetchSplits(shortSymbols, range, false);
+  const splits = await fetchSplitsWithDuplicates(shortSymbols, range, false);
   const splitsByRefid = splits.toBuckets('refid');
   const dedupedSplits = [];
+  const dupedSplits = [];
   for (const [refid, splits] of Object.entries(splitsByRefid)) {
-    const split = splits.sorted((l, r) => r.e - l.e)[0];
-    dedupedSplits.push(split);
+    const sortedSplits = splits.sorted((l, r) => r.e - l.e);
+    const split = sortedSplits[0];
+    dedupedSplits.push(sortedSplits.shift());
+    dupedSplits.push(...sortedSplits);
   }
 
   const collection = db.collection("splits");
 
-  // First, set refid on existing splits
+  console.log(`First, set refid on existing splits`)
   await collection.safeUpdateMany(splits, null, ['e', 's'], true, false);
 
-  // Second, update with deduped on 'i' field
+  console.log(`Second, update with deduped on 'i' field. This may fix split date if duplicate was previously deleted.`)
   await collection.safeUpdateMany(dedupedSplits, null, 'i', true, false);
+
+  // This is dangerous because it might delete second split record if the first one is already deleted.
+  // console.log(`Third, delete duplicates if any left`)
+  // const bulk = collection.initializeUnorderedBulkOp();
+  // for (const dupedSplit of dupedSplits) {
+  //   const find = ['e', 's'].reduce((find, field) => {
+  //     return Object.assign(find, { [field]: dupedSplit[field] });
+  //   }, {});
+
+  //   bulk
+  //     .find(find)
+  //     .updateOne({ $set: { x: true }, $currentDate: { u: true } });
+  // }
+
+  // return await bulk.safeExecute();
 }
 
-async function fetchSplits(shortSymbols, range, isFuture) {
-  throwIfUndefinedOrNull(shortSymbols, `fetchSplits shortSymbols`);
-  throwIfUndefinedOrNull(isFuture, `fetchSplits isFuture`);
+async function fetchSplitsWithDuplicates(shortSymbols, range, isFuture) {
+  throwIfUndefinedOrNull(shortSymbols, `fetchSplitsWithDuplicates shortSymbols`);
+  throwIfUndefinedOrNull(isFuture, `fetchSplitsWithDuplicates isFuture`);
 
   if (range == null) {
     range = defaultRange;
@@ -53,13 +71,13 @@ async function fetchSplits(shortSymbols, range, isFuture) {
 
   // https://cloud.iexapis.com/stable/stock/market/batch?types=splits&token=pk_9f1d7a2688f24e26bb24335710eae053&range=6y&symbols=AAPL,AAP
   // https://sandbox.iexapis.com/stable/stock/market/batch?types=splits&token=Tpk_581685f711114d9f9ab06d77506fdd49&range=6y&symbols=AAPL,AAP
-  return await iexFetchBatchAndMapArray('splits', tickers, idByTicker, fixSplits, parameters);
+  return await iexFetchBatchAndMapArray('splits', tickers, idByTicker, fixSplitsWithDuplicates, parameters);
 }
 
-function fixSplits(iexSplits, symbolID) {
+function fixSplitsWithDuplicates(iexSplits, symbolID) {
   try {
-    throwIfUndefinedOrNull(iexSplits, `fixSplits splits`);
-    throwIfUndefinedOrNull(symbolID, `fixSplits symbolID`);
+    throwIfUndefinedOrNull(iexSplits, `fixSplitsWithDuplicates splits`);
+    throwIfUndefinedOrNull(symbolID, `fixSplitsWithDuplicates symbolID`);
     if (!iexSplits.length) { 
       console.logVerbose(`Splits are empty for ${symbolID}. Nothing to fix.`);
       return []; 
@@ -71,8 +89,8 @@ function fixSplits(iexSplits, symbolID) {
       .filterNullAndUndefined()
       .map(iexSplit => {
         const split = {};
-        split.e = _getOpenDate(iexSplit.exDate);
-        split.i = iexSplit.refid
+        split.e = getOpenDate(iexSplit.exDate);
+        split.i = iexSplit.refid;
         split.s = symbolID;
 
         if (iexSplit.ratio != null) {
@@ -83,7 +101,7 @@ function fixSplits(iexSplits, symbolID) {
       });
 
   } catch (error) {
-    console.logVerbose(`Unable to map splits: ${error}`);
+    console.error(`Unable to map splits: ${error}`);
     return [];
   }
 }

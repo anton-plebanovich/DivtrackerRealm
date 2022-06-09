@@ -473,7 +473,7 @@ function _fixCompany(iexCompany, symbolID) {
   
     return company;
   } catch(error) {
-    console.logVerbose(`Unable to map company: ${error}`);
+    console.error(`Unable to map company: ${error}`);
     return null;
   }
 };
@@ -532,7 +532,7 @@ function _fixDividends(iexDividends, symbolID) {
     return dividends;
 
   } catch(error) {
-    console.logVerbose(`Unable to map dividends: ${error}`);
+    console.error(`Unable to map dividends: ${error}`);
     return [];
   }
 }
@@ -663,7 +663,7 @@ function _fixPreviousDayPrice(iexPreviousDayPrice, symbolID) {
   } catch(error) {
     // {"AQNU":{"previous":null}}
     // {"AACOU":{"previous":null}}
-    console.logVerbose(`Unable to map previous day price: ${error}`);
+    console.error(`Unable to map previous day price: ${error}`);
     return null;
   }
 };
@@ -701,7 +701,7 @@ function _fixHistoricalPrices(iexHistoricalPrices, symbolID) {
       });
 
   } catch (error) {
-    console.logVerbose(`Unable to map historical prices: ${error}`);
+    console.error(`Unable to map historical prices: ${error}`);
     return [];
   }
 };
@@ -731,7 +731,7 @@ function _fixQuote(iexQuote, symbolID) {
     return quote;
 
   } catch(error) {
-    console.logVerbose(`Unable to map quote: ${error}`);
+    console.error(`Unable to map quote: ${error}`);
     return null;
   }
 };
@@ -762,7 +762,7 @@ function _fixSplits(iexSplits, symbolID) {
       .map(iexSplit => {
         const split = {};
         split.e = _getOpenDate(iexSplit.exDate);
-        split.i = iexSplit.refid
+        split.i = iexSplit.refid;
         split.s = symbolID;
 
         if (iexSplit.ratio != null) {
@@ -773,7 +773,7 @@ function _fixSplits(iexSplits, symbolID) {
       });
 
   } catch (error) {
-    console.logVerbose(`Unable to map splits: ${error}`);
+    console.error(`Unable to map splits: ${error}`);
     return [];
   }
 };
