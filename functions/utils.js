@@ -1601,8 +1601,12 @@ exports = function() {
   // Adjusting console log
   if (!console.logCopy) {
     console.logCopy = console.log.bind(console);
+
+    defaultLogEnabled = true;
     console.log = function(message) {
-      this.logCopy(getDateLogString(), message);
+      if (defaultLogEnabled) {
+        this.logCopy(getDateLogString(), message);
+      }
     };
   }
   
