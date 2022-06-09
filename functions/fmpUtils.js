@@ -89,13 +89,17 @@ fetchDividends = async function fetchDividends(shortSymbols, limit, callback) {
   throwIfEmptyArray(shortSymbols, `fetchDividends shortSymbols`);
 
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
+  const queryParameters = {};
 
-  // https://financialmodelingprep.com/api/v3/historical-price-full/stock_dividend/AAPL?apikey=969387165d69a8607f9726e8bb52b901
-  // https://financialmodelingprep.com/api/v3/historical-price-full/stock_dividend/AAPL,AAP?apikey=969387165d69a8607f9726e8bb52b901
+  // FMP have dividends history from 1973 year for some companies and we do not need so much at the moment
+  queryParameters.from = "2016-01-01";
+
+  // https://financialmodelingprep.com/api/v3/historical-price-full/stock_dividend/AAPL?from=2016-01-01&apikey=969387165d69a8607f9726e8bb52b901
+  // https://financialmodelingprep.com/api/v3/historical-price-full/stock_dividend/AAPL,AAP?from=2016-01-01&apikey=969387165d69a8607f9726e8bb52b901
   return await _fmpFetchBatchAndMapArray(
     "/v3/historical-price-full/stock_dividend",
     tickers,
-    null,
+    queryParameters,
     5,
     limit,
     'historicalStockList',
@@ -136,12 +140,15 @@ fetchHistoricalPrices = async function fetchHistoricalPrices(shortSymbols, query
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
 
   if (queryParameters == null) {
-    queryParameters = { serietype: "line" };
-  } else {
-    queryParameters.serietype = "line";
+    queryParameters = {};
   }
 
-  // https://financialmodelingprep.com/api/v3/historical-price-full/AAPL,AAP?serietype=line&apikey=969387165d69a8607f9726e8bb52b901
+  queryParameters.serietype = "line";
+
+  // FMP have historical prices history from 1997 year for some companies and we do not need so much at the moment
+  queryParameters.from = "2016-01-01";
+
+  // https://financialmodelingprep.com/api/v3/historical-price-full/AAPL,AAP?serietype=line&from=2016-01-01&apikey=969387165d69a8607f9726e8bb52b901
   return await _fmpFetchBatchAndMapArray(
     "/v3/historical-price-full",
     tickers,
@@ -188,12 +195,16 @@ fetchSplits = async function fetchSplits(shortSymbols, callback) {
   throwIfEmptyArray(shortSymbols, `fetchSplits shortSymbols`);
 
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
+  const queryParameters = {};
 
-  // https://financialmodelingprep.com/api/v3/historical-price-full/stock_split/AAPL,AAP?apikey=969387165d69a8607f9726e8bb52b901
+  // FMP have splits history from 1987 year for some companies and we do not need so much at the moment
+  queryParameters.from = "2016-01-01";
+
+  // https://financialmodelingprep.com/api/v3/historical-price-full/stock_split/AAPL,AAP?from=2016-01-01&apikey=969387165d69a8607f9726e8bb52b901
   return await _fmpFetchBatchAndMapArray(
     "/v3/historical-price-full/stock_split",
     tickers,
-    null,
+    queryParameters,
     5,
     null,
     'historicalStockList',
@@ -556,8 +567,6 @@ function _fixFMPDividends(fmpDividends, symbolID) {
     console.logVerbose(`Fixing dividends for ${symbolID}`);
     let dividends = fmpDividends
       .filterNullAndUndefined()
-      // FMP have dividends history from 1973 year for some companies and we do not need so much at the moment
-      .filter(fmpDividend => fmpDividend.date >= '2016-01-01')
       .sorted((l, r) => l.date.localeCompare(r.date))
       .map(fmpDividend => {
         const dividend = {};
@@ -710,8 +719,6 @@ function _fixFMPHistoricalPrices(fmpHistoricalPrices, symbolID) {
     // Bucket prices by month using 15 day.
     const monthStart = Date.monthStart().dayString();
     const fmpHistoricalPricesByMonth = fmpHistoricalPrices
-      // FMP have dividends history from 1997 year for some companies and we do not need so much at the moment
-      .filter(fmpHistoricalPrice => fmpHistoricalPrice.date >= '2016-01-01')
       // Do not add partial months
       .filter(x => x.date < monthStart)
       .toBuckets(fmpHistoricalPrice => {
@@ -800,8 +807,6 @@ function _fixFMPSplits(fmpSplits, symbolID) {
     console.logVerbose(`Fixing splits for ${symbolID}`);
     return fmpSplits
       .filterNullAndUndefined()
-      // FMP have splits history from 1987 year for some companies and we do not need so much at the moment
-      .filter(fmpSplit => fmpSplit.date >= '2016-01-01')
       .map(fmpSplit => {
         const split = {};
         split.e = _getOpenDate(fmpSplit.date);
