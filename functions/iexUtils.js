@@ -736,6 +736,7 @@ function _fixSplits(iexSplits, symbolID) {
       .map(iexSplit => {
         const split = {};
         split.e = _getOpenDate(iexSplit.exDate);
+        split.i = iexSplit.refid
         split.s = symbolID;
 
         if (iexSplit.ratio != null) {

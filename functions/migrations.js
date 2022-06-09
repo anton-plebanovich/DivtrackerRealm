@@ -10,6 +10,17 @@
 // https://docs.mongodb.com/manual/reference/method/Bulk.insert/
 
 exports = async function() {
-  context.functions.execute("utils");
-
+  return await fetch_refid_for_IEX_splits()
 };
+
+////////////////////////////////////////////////////// 2022-06-XX IEX refid for splits
+
+async function fetch_refid_for_IEX_splits() {
+  context.functions.execute("iexUtils");
+
+  const shortSymbols = await getInUseShortSymbols();
+  const range = '10y';
+  const splits = await fetchSplits(shortSymbols, range);
+  const collection = db.collection("splits");
+  return await collection.safeUpdateMany(splits, null, ['e', 's'], true);
+}

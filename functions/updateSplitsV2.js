@@ -27,14 +27,7 @@ exports = async function() {
     console.log(`Inserting missed`);
 
     const collection = db.collection("splits");
-    const bulk = collection.initializeUnorderedBulkOp();
-    for (const split of splits) {
-      console.log(`Checking '${split.s}' for '${split.e}' ex date`);
-      bulk.find({ e: split.e, s: split.s })
-        .upsert()
-        .updateOne({ $setOnInsert: split });
-    }
-    bulk.execute();
+    await collection.safeUpdateMany(splits, null, 'i', true);
 
     console.log(`SUCCESS`);
 
