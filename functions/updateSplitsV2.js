@@ -13,13 +13,14 @@
 exports = async function() {
   context.functions.execute("iexUtils");
   const shortSymbols = await getInUseShortSymbols();
-  const days = 3;
-  const daysParam = `${days}d`;
-
   if (shortSymbols.length <= 0) {
     console.log(`No symbols. Skipping update.`);
     return;
   }
+
+  const days = 3;
+  const daysParam = `${days}d`;
+  const collection = db.collection("splits");
 
   // Future
   const futureSplits = await fetchSplits(shortSymbols, daysParam, true);
@@ -32,7 +33,6 @@ exports = async function() {
   if (splits.length) {
     console.log(`Inserting missed`);
 
-    const collection = db.collection("splits");
     await collection.safeInsertMissing(splits, 'i');
 
     console.log(`SUCCESS`);
