@@ -248,9 +248,14 @@ async function test_getDataV2_full_fetch_deleted(symbolIDs) {
   await collection.updateOne({ _id: id }, { $set: { x: true } });
 
   const newResponse = await context.functions.execute("getDataV2", null, ["historical-prices"], [symbolID], null);
-  const deletedObject = newResponse.updates["historical-prices"].find(x => x._id.toString() === idString);
-  if (deletedObject != null) {
-    throw `Deleted object is returned during full fetch: ${deletedObject.stringify()}`;
+  const updatedObject = newResponse.updates?.["historical-prices"]?.find(x => x._id.toString() === idString);
+  if (updatedObject != null) {
+    throw `Deleted object is returned during full fetch: ${deletedObjectID.stringify()}`;
+  }
+
+  const deletedObjectID = newResponse.deletions?.["historical-prices"]?.find(x => x.toString() === idString);
+  if (deletedObjectID == null) {
+    throw `Deleted object ID is not returned during full fetch: ${newResponse.deletions?.stringify()}`;
   }
 
   // Restore environment

@@ -7,7 +7,7 @@
  * @param {Array<String>} collectionNames Collection names for which data is requested. Assumes all collections if `null`.
  * @param {Array<ObjectId>} symbolIDs Symbol IDs for which data is requested. Everything is returned if `null`.
  * @param {Array<String>} fullFetchCollections Collections for which to perform full data fetch and ignore passed `symbolIDs`.
- * @returns {{ lastUpdateTimestamp: Number, updates: Object, cleanups: Array<ObjectId> }} Response
+ * @returns {{ lastUpdateTimestamp: Int64, cleanups: [ObjectId], deletions: [String: [ObjectId]], updates: [String: [Object]] }} Response
  */
 exports = async function(timestamp, collectionNames, symbolIDs, fullFetchCollections) {
   context.functions.execute("utils");
@@ -227,8 +227,9 @@ exports = async function(timestamp, collectionNames, symbolIDs, fullFetchCollect
       });
 
       const arrays = await Promise.all(operations);
+      const objects = arrays.flat();
 
-      return { [collectionName]: arrays.flat() };
+      return { [collectionName]: objects };
     }
   });
 
@@ -236,16 +237,45 @@ exports = async function(timestamp, collectionNames, symbolIDs, fullFetchCollect
     .all(operations)
     .mapErrorToSystem();
 
-  const updates = operationResults.reduce((result, operationResult) => {
-    return Object.assign(result, operationResult);
-  }, {});
+  const [deletions, updates] = operationResults.reduce((result, operationResult) => {
+    const [deletions, updates] = result;
+    const collectionName = Object.keys(operationResult)[0];
+    const [deletedObjects, updatedObjects] = operationResult[collectionName].reduce((result, object) => {
+      const [deletedObjects, updatedObjects] = result;
+      if (object.x == true) {
+        deletedObjects.push(object);
+      } else {
+        updatedObjects.push(object);
+      }
+
+      return [deletedObjects, updatedObjects];
+    }, [[], []]);
+
+    if (deletedObjects.length) {
+      deletions[collectionName] = deletedObjects._id;
+    }
+
+    if (updatedObjects.length) {
+      updates[collectionName] = updatedObjects;
+    }
+    
+    return [deletions, updates];
+  }, [{}, {}]);
 
   const result = {};
+  result.lastUpdateTimestamp = lastUpdateTimestamp;
+
   if (refetchMergedSymbolIDs.length) {
     result.cleanups = refetchMergedSymbolIDs;
   }
-  result.updates = updates;
-  result.lastUpdateTimestamp = lastUpdateTimestamp;
+
+  if (Object.keys(deletions).length) {
+    result.deletions = deletions;
+  }
+
+  if (Object.keys(updates).length) {
+    result.updates = updates;
+  }
 
   return result;
 };
