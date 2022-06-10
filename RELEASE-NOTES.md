@@ -28,7 +28,7 @@
 
 # 2022-06-XX | Merged symbols and getDataV2
 
-- Check if there are conflicting transactions: `dt call-realm-function --environment sandbox-anton --function playground --verbose`
+- Check if there are conflicting transactions using `playground`
 - Release new server
 - dt call-realm-function --environment sandbox-anton --function mergedUpdateSymbols --verbose
 - Push new app in the review and release
@@ -41,5 +41,6 @@
 
 - Release new server
 - dt check-splits --environment sandbox-anton
+- dt call-realm-function --environment sandbox-anton --function updateSplitsV2 --verbose
 - dt call-realm-function --environment sandbox-anton --function migrations --verbose
 - dt check-splits --environment sandbox-anton
