@@ -319,8 +319,8 @@ function verifyResponseV2(response, timestamp, collections, symbolIDs, fullFetch
   }
 
   const length = symbolIDs?.length;
-  if (length != null) {
-    requiredDataCollections.forEach(collection => {
+  if (length != null && timestamp == null) {
+    requiredCollections.forEach(collection => {
       if (!collections.includes(collection)) {
         return;
       }
@@ -391,16 +391,9 @@ function verifyError(error, message) {
 
 //////////////////////////// CONSTANTS
 
-const requiredDataCollections = [
-  'companies',
-  'exchange-rates',
-  'quotes',
-  'symbols',
-  'updates',
-];
-
 const requiredCollections = [
   'companies',
+  'quotes',
 ];
 
 const singularSymbolCollections = [
