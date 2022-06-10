@@ -236,7 +236,10 @@ async function test_getDataV2_refetch() {
 async function test_getDataV2_full_fetch_deleted(symbolIDs) {
   console.log("test_getDataV2_full_fetch_deleted");
 
-  const response = await context.functions.execute("getDataV2", null, ["historical-prices"], symbolIDs, null);
+  let response;
+  let deletedObjectID;
+
+  response = await context.functions.execute("getDataV2", null, ["historical-prices"], symbolIDs, null);
   const historicalPrice = response.updates["historical-prices"][0];
   const id = historicalPrice._id;
   const idString = id.toString();
@@ -245,17 +248,24 @@ async function test_getDataV2_full_fetch_deleted(symbolIDs) {
   const collection = db.collection('historical-prices');
 
   // Delete historical price
-  await collection.updateOne({ _id: id }, { $set: { x: true } });
+  const timestamp = new Date().getTime();
+  await collection.updateOne({ _id: id }, { $set: { x: true }, $currentDate: { u: true } });
 
-  const newResponse = await context.functions.execute("getDataV2", null, ["historical-prices"], [symbolID], null);
-  const updatedObject = newResponse.updates?.["historical-prices"]?.find(x => x._id.toString() === idString);
+  response = await context.functions.execute("getDataV2", null, ["historical-prices"], [symbolID], null);
+  const updatedObject = response.updates?.["historical-prices"]?.find(x => x._id.toString() === idString);
   if (updatedObject != null) {
-    throw `Deleted object is returned during full fetch: ${deletedObjectID.stringify()}`;
+    throw `Deleted object is returned during full fetch: ${updatedObject.stringify()}`;
   }
 
-  const deletedObjectID = newResponse.deletions?.["historical-prices"]?.find(x => x.toString() === idString);
+  deletedObjectID = response.deletions?.["historical-prices"]?.find(x => x.toString() === idString);
+  if (deletedObjectID != null) {
+    throw `Deleted object ID returned during full fetch: ${response.deletions?.stringify()}`;
+  }
+
+  response = await context.functions.execute("getDataV2", timestamp, ["historical-prices"], [symbolID], null);
+  deletedObjectID = response.deletions?.["historical-prices"]?.find(x => x.toString() === idString);
   if (deletedObjectID == null) {
-    throw `Deleted object ID is not returned during full fetch: ${newResponse.deletions?.stringify()}`;
+    throw `Deleted object ID is not returned during update fetch: ${response.deletions?.stringify()}`;
   }
 
   // Restore environment
