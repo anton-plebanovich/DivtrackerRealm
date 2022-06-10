@@ -48,6 +48,12 @@ async function _restoreSymbols() {
 restoreSymbols = _restoreSymbols;
 
 async function _prepareFMPData() {
+  if (environment !== 'tests') {
+    return;
+  }
+  
+  context.functions.execute("fmpUtils");
+
   // Cleanup FMP environment
   await Promise.all([
     fmp.collection('companies').deleteMany({}),
@@ -68,6 +74,8 @@ async function _prepareFMPData() {
   await fmp.collection('symbols').insertMany(symbolsToAdd);
   await context.functions.execute("mergedUpdateSymbols");
   await context.functions.execute("fmpLoadMissingData");
+
+  context.functions.execute("iexUtils");
 }
 
 prepareFMPData = _prepareFMPData;

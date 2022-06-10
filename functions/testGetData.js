@@ -7,13 +7,12 @@ exports = async function() {
   // verboseLogEnabled = true;
   // dataLogEnabled = true;
 
+  await prepareFMPData();
+
   const transactions = await generateRandomTransactions(1);
   const symbolIDs = transactions.map(x => x.s);
-  await Promise.all([
-    await prepareFMPData(),
-    await context.functions.execute("addTransactionsV2", transactions),
-  ]);
- 
+  await context.functions.execute("addTransactionsV2", transactions);
+  
   try {
     await testGetDataV1(transactions);
   } catch(error) {

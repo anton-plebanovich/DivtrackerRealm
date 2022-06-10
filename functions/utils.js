@@ -1592,6 +1592,10 @@ getDateLogString = function getDateLogString() {
 exports = function() {
   extendRuntime();
 
+  if (typeof environment === 'undefined') {
+    environment = "sandbox-anton";
+  }
+
   if (typeof atlas === 'undefined') {
     atlas = context.services.get("mongodb-atlas");
   }
