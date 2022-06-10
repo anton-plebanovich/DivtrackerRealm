@@ -25,6 +25,7 @@
 - dt call-realm-function --environment sandbox-anton --function mergedUpdateSymbols --verbose
 - dt call-realm-function --environment sandbox-anton --function checkTransactionsV2 --verbose
 - Enable FMP symbols update
+- Drop fmp-tmp database
 
 # 2022-06-XX | Merged symbols and getDataV2
 
