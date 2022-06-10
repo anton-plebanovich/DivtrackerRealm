@@ -48,7 +48,6 @@ async function _restoreSymbols() {
 restoreSymbols = _restoreSymbols;
 
 async function _prepareFMPData() {
-
   // Cleanup FMP environment
   await Promise.all([
     fmp.collection('companies').deleteMany({}),
@@ -228,6 +227,7 @@ async function getMissedSymbolIDs(collection, key, distinctSymbolIDs) {
 //////////////////////////////////////////////////////////////////// Exports
 
 exports = function() {
+  context.functions.execute("fmpUtils");
   context.functions.execute("iexUtils");
   
   context.user.id = '61ae5154d9b3cb9ea55ec5c6';
