@@ -248,7 +248,7 @@ async function test_getDataV2_full_fetch_deleted(symbolIDs) {
   await collection.updateOne({ _id: id }, { $set: { x: true } });
 
   const newResponse = await context.functions.execute("getDataV2", null, ["historical-prices"], [symbolID], null);
-  const deletedObject = newResponse.find(x => x._id.toString() === idString);
+  const deletedObject = newResponse.updates["historical-prices"].find(x => x._id.toString() === idString);
   if (deletedObject != null) {
     throw `Deleted object is returned during full fetch: ${deletedObject.stringify()}`;
   }
