@@ -236,7 +236,10 @@ async function test_getDataV2_refetch() {
 async function test_getDataV2_full_fetch_deleted(symbolIDs) {
   console.log("test_getDataV2_full_fetch_deleted");
 
-  const response = await context.functions.execute("getDataV2", null, ["historical-prices"], symbolIDs, null);
+  let response;
+  let deletedObjectID;
+
+  response = await context.functions.execute("getDataV2", null, ["historical-prices"], symbolIDs, null);
   const historicalPrice = response.updates["historical-prices"][0];
   const id = historicalPrice._id;
   const idString = id.toString();
@@ -245,12 +248,24 @@ async function test_getDataV2_full_fetch_deleted(symbolIDs) {
   const collection = db.collection('historical-prices');
 
   // Delete historical price
-  await collection.updateOne({ _id: id }, { $set: { x: true } });
+  const timestamp = new Date().getTime();
+  await collection.updateOne({ _id: id }, { $set: { x: true }, $currentDate: { u: true } });
 
-  const newResponse = await context.functions.execute("getDataV2", null, ["historical-prices"], [symbolID], null);
-  const deletedObject = newResponse.updates["historical-prices"].find(x => x._id.toString() === idString);
-  if (deletedObject != null) {
-    throw `Deleted object is returned during full fetch: ${deletedObject.stringify()}`;
+  response = await context.functions.execute("getDataV2", null, ["historical-prices"], [symbolID], null);
+  const updatedObject = response.updates?.["historical-prices"]?.find(x => x._id.toString() === idString);
+  if (updatedObject != null) {
+    throw `Deleted object is returned during full fetch: ${updatedObject.stringify()}`;
+  }
+
+  deletedObjectID = response.deletions?.["historical-prices"]?.find(x => x.toString() === idString);
+  if (deletedObjectID != null) {
+    throw `Deleted object ID returned during full fetch: ${response.deletions?.stringify()}`;
+  }
+
+  response = await context.functions.execute("getDataV2", timestamp, ["historical-prices"], [symbolID], null);
+  deletedObjectID = response.deletions?.["historical-prices"]?.find(x => x.toString() === idString);
+  if (deletedObjectID == null) {
+    throw `Deleted object ID is not returned during update fetch: ${response.deletions?.stringify()}`;
   }
 
   // Restore environment
@@ -271,7 +286,8 @@ function verifyResponseV2(response, timestamp, collections, symbolIDs, fullFetch
   }
 
   const updates = response.updates;
-  const hasRequiredCollections = collections.reduce((success, collection) => success && updates[collection] != null, true);
+  const collectionsToCheck = collections.filter(x => requiredCollections.includes(x));
+  const hasRequiredCollections = collectionsToCheck.reduce((success, collection) => success && updates[collection] != null, true);
   const updateCollections = Object.keys(updates);
   if (!hasRequiredCollections) {
     throw `Response does not have all required collections. Collections: ${collections}. Update collections: ${updateCollections}`;
@@ -381,6 +397,10 @@ const requiredDataCollections = [
   'quotes',
   'symbols',
   'updates',
+];
+
+const requiredCollections = [
+  'companies',
 ];
 
 const singularSymbolCollections = [
