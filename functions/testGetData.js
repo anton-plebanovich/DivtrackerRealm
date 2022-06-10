@@ -9,8 +9,11 @@ exports = async function() {
 
   const transactions = await generateRandomTransactions(1);
   const symbolIDs = transactions.map(x => x.s);
-  await context.functions.execute("addTransactionsV2", transactions);
-
+  await Promise.all([
+    await prepareFMPData(),
+    await context.functions.execute("addTransactionsV2", transactions),
+  ]);
+ 
   try {
     await testGetDataV1(transactions);
   } catch(error) {
@@ -289,8 +292,8 @@ function verifyResponseV2(response, timestamp, collections, symbolIDs, fullFetch
   const collectionsToCheck = collections.filter(x => requiredCollections.includes(x));
   const hasRequiredCollections = collectionsToCheck.reduce((success, collection) => success && updates[collection] != null, true);
   const updateCollections = Object.keys(updates);
-  if (!hasRequiredCollections) {
-    throw `Response does not have all required collections. Collections: ${collections}. Update collections: ${updateCollections}`;
+  if (timestamp == null && !hasRequiredCollections) {
+    throw `Response does not have all required collections. Collections: ${collectionsToCheck}. Update collections: ${updateCollections}`;
   }
 
   if (symbolIDs != null) {
