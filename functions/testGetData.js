@@ -356,7 +356,7 @@ function verifyRefetchResponse(response, timestamp, fullFetchCollections) {
     throw `Wrong cleanups length: ${response.cleanups}`;
   }
 
-  requiredDataCollections.forEach(collection => {
+  requiredCollections.forEach(collection => {
     if (nonSearchableIDCollections.includes(collection)) { return; }
 
     if (updates[collection] == null) {
