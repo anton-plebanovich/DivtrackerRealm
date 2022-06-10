@@ -47,6 +47,32 @@ async function _restoreSymbols() {
 
 restoreSymbols = _restoreSymbols;
 
+async function _prepareFMPData() {
+
+  // Cleanup FMP environment
+  await Promise.all([
+    fmp.collection('companies').deleteMany({}),
+    fmp.collection('data-status').deleteMany({}),
+    fmp.collection('dividends').deleteMany({}),
+    fmp.collection('historical-prices').deleteMany({}),
+    fmp.collection('quotes').deleteMany({}),
+    fmp.collection('splits').deleteMany({}),
+    fmp.collection('symbols').deleteMany({}),
+    atlas.db("merged").collection("symbols").deleteMany({}),
+  ]);
+  
+  // Insert 20 symbols
+  const symbols = await fetchSymbols();
+  const symbolsToAdd = symbols.getRandomElements(19);
+  const pciSymbol = symbols.find(x => x.t === "PCI");
+  symbolsToAdd.push(pciSymbol);
+  await fmp.collection('symbols').insertMany(symbolsToAdd);
+  await context.functions.execute("mergedUpdateSymbols");
+  await context.functions.execute("fmpLoadMissingData");
+}
+
+prepareFMPData = _prepareFMPData;
+
 //////////////////////////////////////////////////////////////////// SYMBOLS OPERATIONS
 
 /**
