@@ -26,6 +26,7 @@ exports = async function() {
     await test_getDataV2_FMP_and_IEX(symbolIDs);
     await test_getDataV2_errors();
     await test_getDataV2_refetch();
+    await test_getDataV2_full_fetch_deleted(symbolIDs);
   } catch(error) {
     console.error(error);
     throw error;
@@ -230,6 +231,30 @@ async function test_getDataV2_refetch() {
   response = await context.functions.execute("getDataV2", timestamp, null, symbolIDs, null);
   verifyResponseV2(response, timestamp, ["companies", "dividends", "historical-prices", "quotes", "splits", "exchange-rates", "symbols", "updates"], symbolIDs);
   verifyRefetchResponse(response, timestamp);
+}
+
+async function test_getDataV2_full_fetch_deleted(symbolIDs) {
+  console.log("test_getDataV2_full_fetch_deleted");
+
+  const response = await context.functions.execute("getDataV2", null, ["historical-prices"], symbolIDs, null);
+  const historicalPrice = response.updates["historical-prices"][0];
+  const id = historicalPrice._id;
+  const idString = id.toString();
+  const symbolID = historicalPrice.s;
+  const db = sourceByName.iex.db;
+  const collection = db.collection('historical-prices');
+
+  // Delete historical price
+  await collection.updateOne({ _id: id }, { $set: { x: true } });
+
+  const newResponse = await context.functions.execute("getDataV2", null, ["historical-prices"], [symbolID], null);
+  const deletedObject = newResponse.find(x => x._id.toString() === idString);
+  if (deletedObject != null) {
+    throw `Deleted object is returned during full fetch: ${deletedObject.stringify()}`;
+  }
+
+  // Restore environment
+  await collection.updateOne({ _id: id }, { $unset: { x: "" } });
 }
 
 //////////////////////////// VERIFICATION V2
