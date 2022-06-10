@@ -243,7 +243,7 @@ exports = async function(timestamp, collectionNames, symbolIDs, fullFetchCollect
     const [deletedObjects, updatedObjects] = operationResult[collectionName].reduce((result, object) => {
       const [deletedObjects, updatedObjects] = result;
       if (object.x == true) {
-        deletedObjects.push(object);
+        deletedObjects.push(object._id);
       } else {
         updatedObjects.push(object);
       }
@@ -252,7 +252,7 @@ exports = async function(timestamp, collectionNames, symbolIDs, fullFetchCollect
     }, [[], []]);
 
     if (deletedObjects.length) {
-      deletions[collectionName] = deletedObjects._id;
+      deletions[collectionName] = deletedObjects;
     }
 
     if (updatedObjects.length) {

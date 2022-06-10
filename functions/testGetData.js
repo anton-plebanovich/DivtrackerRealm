@@ -276,7 +276,8 @@ function verifyResponseV2(response, timestamp, collections, symbolIDs, fullFetch
   }
 
   const updates = response.updates;
-  const hasRequiredCollections = collections.reduce((success, collection) => success && updates[collection] != null, true);
+  const collectionsToCheck = collections.filter(x => requiredCollections.includes(x));
+  const hasRequiredCollections = collectionsToCheck.reduce((success, collection) => success && updates[collection] != null, true);
   const updateCollections = Object.keys(updates);
   if (!hasRequiredCollections) {
     throw `Response does not have all required collections. Collections: ${collections}. Update collections: ${updateCollections}`;
@@ -386,6 +387,10 @@ const requiredDataCollections = [
   'quotes',
   'symbols',
   'updates',
+];
+
+const requiredCollections = [
+  'companies',
 ];
 
 const singularSymbolCollections = [
