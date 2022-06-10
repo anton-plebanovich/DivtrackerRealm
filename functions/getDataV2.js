@@ -254,6 +254,8 @@ exports = async function(timestamp, collectionNames, symbolIDs, fullFetchCollect
 
 async function getSymbolsData(mergedSymbolsCollection, previousUpdateDate, symbolIDs, fullFetchCollections) {
   const find = {};
+  const projection = { m: true };
+
   if (previousUpdateDate != null) {
     // TODO: We might need to use date - 5 mins to prevent race conditions. I am not 100% sure because I don't know if MongoDB handles it properly.
     Object.assign(find, previousUpdateDate.getFindOperator());
@@ -265,7 +267,6 @@ async function getSymbolsData(mergedSymbolsCollection, previousUpdateDate, symbo
 
   console.logData(`Performing 'symbols' find`, find);
 
-  const projection = { m: true };
   const mergedSymbols = await mergedSymbolsCollection.find(find, projection).toArray();
   const symbols = mergedSymbols.map(x => x.m);
 
@@ -275,6 +276,7 @@ async function getSymbolsData(mergedSymbolsCollection, previousUpdateDate, symbo
 async function getCollectionData(source, collectionName, previousUpdateDate, symbolIDs, refetchSymbolIDs, fullFetchCollections, mainIDBySourceID) {
   const collection = source.db.collection(collectionName);
   const find = {};
+  const projection = { u: false };
 
   if (symbolIDs != null && !fullFetchCollections.includes(collectionName)) {
     if (symbolIDs.length === 0) {
@@ -289,7 +291,13 @@ async function getCollectionData(source, collectionName, previousUpdateDate, sym
     }
   }
 
-  if (previousUpdateDate != null) {
+  if (previousUpdateDate == null) {
+    // We do not need to return deleted objects during full fetches for multiple objects collections
+    if (!singularSymbolCollections.includes(collectionName)) {
+      find.x = { $ne: true };
+    }
+    
+  } else {
     // TODO: We might need to use date - 5 mins to prevent race conditions. I am not 100% sure because I don't know if MongoDB handles it properly.
     const dateFind = {};
     if (nonSearchableIDCollections.includes(collectionName)) {
@@ -320,8 +328,6 @@ async function getCollectionData(source, collectionName, previousUpdateDate, sym
   }
 
   console.logData(`Performing '${source.name}-${collectionName}' find`, find);
-
-  const projection = { u: false };
 
   const objects = await collection.find(find, projection).toArray();
   fixData(objects, collectionName, mainIDBySourceID);
