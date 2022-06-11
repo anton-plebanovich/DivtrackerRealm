@@ -61,7 +61,8 @@ async function loadMissingCompanies(shortSymbols) {
       operations.push(operation);
     }
   
-    await collection.bulkWrite(operations);
+    const options = { ordered: false };
+    await collection.bulkWrite(operations, options);
     await updateStatus(collectionName, symbolIDs);
   });
 }
@@ -82,10 +83,15 @@ async function loadMissingDividends(shortSymbols) {
     return;
   }
 
-  const callback = async (dividends, symbolIDs) => {
+  const callbackBase = async (historical, dividends, symbolIDs) => {
     if (!dividends.length) {
-      console.log(`No dividends. Skipping insert.`);
-      await updateStatus(collectionName, symbolIDs);
+      if (historical) {
+        console.log(`No historical dividends. Skipping insert.`);
+        await updateStatus(collectionName, symbolIDs);
+      } else {
+        // We should not update status for calendar dividends and instead rely on historical dividends.
+        console.log(`No calendar dividends. Skipping insert.`);
+      }
       return;
     }
   
@@ -117,12 +123,22 @@ async function loadMissingDividends(shortSymbols) {
     }
   
     await bulk.execute();
-    await updateStatus(collectionName, symbolIDs);
+    if (historical) {
+      await updateStatus(collectionName, symbolIDs);
+    }
+  };
+
+  const calendarCallback = async (dividends, symbolIDs) => {
+    callbackBase(false, dividends, symbolIDs);
+  };
+
+  const historicalCallback = async (dividends, symbolIDs) => {
+    callbackBase(true, dividends, symbolIDs);
   };
 
   await Promise.all([
-    fetchDividendsCalendar(missingShortSymbols, callback),
-    fetchDividends(missingShortSymbols, null, callback)
+    fetchDividendsCalendar(missingShortSymbols, calendarCallback),
+    fetchDividends(missingShortSymbols, null, historicalCallback)
   ]);
 }
 

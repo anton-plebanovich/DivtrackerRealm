@@ -1,7 +1,6 @@
 
 // getData.js
 
-// TODO: Improve response structure in V2
 exports = async function(date, collections, symbols, fullSymbolsCollections) {
   context.functions.execute("utils");
 
@@ -146,10 +145,7 @@ exports = async function(date, collections, symbols, fullSymbolsCollections) {
         find.u = { $gte: date };
 
       } else {
-        find.$or = [
-          { _id: { $gte: BSON.ObjectId.fromDate(date) } },
-          { u: { $gte: date } }
-        ];
+        Object.assign(find, date.getFindOperator());
       }
     }
 

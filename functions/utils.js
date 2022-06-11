@@ -112,7 +112,7 @@ Object.prototype.safeUpsertMany = async function(newObjects, field, setUpdateDat
 /**
  * Safely computes and executes update operation from old to new objects on a collection.
  */
-Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields, setUpdateDate) {
+Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields, setUpdateDate, insertMissing = true) {
   _throwIfNotArray(newObjects, `Please pass new objects array as the first argument. safeUpdateMany`);
   if (newObjects.length === 0) {
     console.log(`New objects array is empty. Nothing to update.`);
@@ -129,7 +129,7 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields,
     return await _logAndReject(`${invalidObjectsLength} of ${newObjects.length} new objects do not contain required '${fields}' fields`);
   }
 
-  if (typeof oldObjects === 'undefined') {
+  if (oldObjects == null) {
     // Sort deleted to the start so they will be overridden in the dictionary
     const sort = { x: -1 };
 
@@ -157,8 +157,13 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields,
   }
 
   if (oldObjects == null || oldObjects === []) {
-    console.log(`No old objects. Just inserting new objects.`);
-    return await this.insertMany(newObjects);
+    if (insertMissing) {
+      console.log(`No old objects. Just inserting new objects.`);
+      return await this.insertMany(newObjects);
+    } else {
+      console.log(`No old objects. Nothing to update.`);
+      return;
+    }
   }
 
   const bulk = this.initializeUnorderedBulkOp();
@@ -172,7 +177,7 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields,
       }
     }, dictionary);
 
-    bulk.findAndUpdateOrInsertIfNeeded(newObject, existingObject, fields, setUpdateDate);
+    bulk.findAndUpdateOrInsertIfNeeded(newObject, existingObject, fields, setUpdateDate, insertMissing);
   }
 
   return await bulk.safeExecute();
@@ -182,14 +187,19 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields,
  * Executes find by field and update or insert for a new object from an old object.
  * Uses `_id` field by default.
  */
-Object.prototype.findAndUpdateOrInsertIfNeeded = function(newObject, oldObject, fields, setUpdateDate) {
+Object.prototype.findAndUpdateOrInsertIfNeeded = function(newObject, oldObject, fields, setUpdateDate, insertMissing = true) {
   if (newObject == null) {
     throw new _SystemError(`New object should not be null for insert or update`);
     
   } else if (oldObject == null) {
     // No old object means we should insert
-    console.log(`Inserting: ${newObject.stringify()}`);
-    return this.insert(newObject);
+    if (insertMissing) {
+      console.log(`Inserting: ${newObject.stringify()}`);
+      return this.insert(newObject);
+    } else {
+      console.log(`Old object is missing. Skipping insert: ${newObject.stringify()}`);
+      return;
+    }
 
   } else {
     return this.findAndUpdateIfNeeded(newObject, oldObject, fields, setUpdateDate);
@@ -411,6 +421,7 @@ Array.prototype.compactMap = function(callbackfn) {
 
 /**
  * Creates dictionary from objects using provided `key` or function as source for keys and object as value.
+ * If returned key is `null` or `undefined` then value is ignored.
  * @param {function|array|string|null} arg Key map function or key.
  */
 Array.prototype.toDictionary = function(arg) {
@@ -431,6 +442,8 @@ Array.prototype.toDictionary = function(arg) {
     const dictionary = {};
     for (const element of this) {
       const keys = getKey(element);
+      if (keys == null) { continue; }
+      
       const lastIndex = keys.length - 1;
       let currentDictionary = dictionary;
       for (const [i, key] of keys.entries()) {
@@ -450,7 +463,11 @@ Array.prototype.toDictionary = function(arg) {
   } else {
     return this.reduce((dictionary, element) => {
       const key = getKey(element);
-      return Object.assign(dictionary, { [key]: element });
+      if (key != null) {
+        return Object.assign(dictionary, { [key]: element });
+      } else {
+        return dictionary;
+      }
     }, {});
   }
 };
@@ -491,11 +508,13 @@ Array.prototype.toBuckets = function(arg) {
 
   return this.reduce((dictionary, value) => {
     const key = getKey(value);
-    const dictionaryValue = dictionary[key];
-    if (dictionaryValue == null) {
+    if (key == null) { return dictionary; }
+
+    const bucket = dictionary[key];
+    if (bucket == null) {
       dictionary[key] = [value];
     } else {
-      dictionaryValue.push(value);
+      bucket.push(value);
     }
     return dictionary;
   }, {});
@@ -541,6 +560,9 @@ Array.prototype.sorted = function(func) {
   return copy.sort(func);
 };
 
+/**
+ * Performs map operator async with specified simultaneous concurrent queues.
+ */
 Array.prototype.asyncMap = async function(limit, callback) {
   let index = 0;
   const results = [];
@@ -639,6 +661,18 @@ Date.prototype.apiParameter = function() {
   
   return dateString;
 };
+
+/**
+ * Returns `find` operator to search for new records after `this`.
+ */
+Date.prototype.getFindOperator = function() {
+  return {
+    $or: [
+      { _id: { $gte: BSON.ObjectId.fromDate(this) } },
+      { u: { $gte: this } }
+    ]
+  };
+}
 
 /**
  * Stringifies object using JSON format.
@@ -815,15 +849,6 @@ class _NetworkResponse {
           return retryable;
         }
 
-        // You have used all available credits for the month. Please upgrade or purchase additional packages to access more data.
-        if (this.statusCode === 402) {
-          // We can try and retry if there is no premium token and we are using ordinary tokens.
-          // Some might not be expired yet.
-          retryable = typeof premiumToken === 'undefined';
-
-          return retryable;
-        }
-
         retryable = false;
         return retryable;
       }
@@ -860,6 +885,20 @@ class _NetworkResponse {
 
   toNetworkError() {
     return new _NetworkError(this.statusCode, this.string);
+  }
+
+  possiblyRetryable(queryParameters) {
+    // You have used all available credits for the month. Please upgrade or purchase additional packages to access more data.
+    if (this.statusCode !== 402) {
+      return false;
+    }
+
+    // Check if that's an IEX context
+    if (typeof adjustTokenIfPossible !== 'function') {
+      return false;
+    }
+
+    return adjustTokenIfPossible(queryParameters);
   }
 }
 
@@ -1054,14 +1093,35 @@ function extendRuntime() {
     }
 
     if (hex == null) {
-      hex = "0000000000000000"
+      hex = "0000000000000000";
     }
 
-    if (hex.length != 16) {
-      _logAndThrow(`Hex part of ObjectID should have 16 characters length, instead received '${hex}' with ${hex.length} length`)
+    if (hex.length !== 16) {
+      _logAndThrow(
+        `Hex part of ObjectID should have 16 characters length, instead received '${hex}' with '${hex.length}' length`, 
+        _SystemError
+      );
     }
 
-    const hexSeconds = Math.floor(date/1000).toString(16);
+    const timestamp = date.getTime();
+    if (timestamp < 0) {
+      _logAndThrow(
+        `Date should be above '1970-01-01', instead received '${date}' date with '${timestamp}' timestamp`, 
+        _SystemError
+      );
+    }
+
+    const seconds = timestamp / 1000;
+    const hexSeconds = Math.floor(seconds)
+      .toString(16)
+      .padStart(8, "0");
+
+    if (hexSeconds.length !== 8) {
+      _logAndThrow(
+        `Hex time part of ObjectID should have 8 characters length, instead received '${hexSeconds}' with '${hexSeconds.length}' length`, 
+        _SystemError
+      );
+    }
 
     // 62649eca 6e72da17e710cd18
     // --time-- ------hex-------
@@ -1189,10 +1249,24 @@ function _throwIfNotArray(object, message, ErrorType) {
   if (ErrorType == null) { ErrorType = _SystemError; }
   if (message == null) { message = ""; }
   
-  throw new ErrorType(`Argument should be of the Array type. Instead, received '${type}'. ${message}`);
+  throw new ErrorType(`Argument should be of the 'Array' type. Instead, received '${type}'. ${message}`);
 }
 
 throwIfNotArray = _throwIfNotArray;
+
+function _throwIfNotNumber(object, message, ErrorType) {
+  _throwIfUndefinedOrNull(object, message, ErrorType);
+
+  const type = typeof object;
+  const objectType = Object.prototype.toString.call(object);
+  if (type === 'number' || objectType === '[object Number]') { return object; }
+  if (ErrorType == null) { ErrorType = _SystemError; }
+  if (message == null) { message = ""; }
+  
+  throw new ErrorType(`Argument should be of the 'number' type. Instead, received '${objectType} (${type})'. ${message}`);
+}
+
+throwIfNotNumber = _throwIfNotNumber;
 
 function _throwIfNotDate(object, message, ErrorType) {
   _throwIfUndefinedOrNull(object, message, ErrorType);
@@ -1202,7 +1276,7 @@ function _throwIfNotDate(object, message, ErrorType) {
   if (ErrorType == null) { ErrorType = _SystemError; }
   if (message == null) { message = ""; }
   
-  throw new ErrorType(`Argument should be of the Date type. Instead, received '${type}'. ${message}`);
+  throw new ErrorType(`Argument should be of the 'Date' type. Instead, received '${type}'. ${message}`);
 }
 
 throwIfNotDate = _throwIfNotDate;
@@ -1215,7 +1289,7 @@ function _throwIfNotObjectId(object, message, ErrorType) {
   if (ErrorType == null) { ErrorType = _SystemError; }
   if (message == null) { message = ""; }
   
-  throw new ErrorType(`Argument should be of the ObjectId type. Instead, received '${type}'. ${message}`);
+  throw new ErrorType(`Argument should be of the 'ObjectId' type. Instead, received '${type}'. ${message}`);
 }
 
 throwIfNotObjectId = _throwIfNotObjectId;
@@ -1276,7 +1350,7 @@ async function _fetch(baseURL, api, queryParameters) {
   let response = await _httpGET(baseURL, api, queryParameters);
 
   // Retry several times on retryable errors
-  for (let step = 0; step < 10 && response.retryable; step++) {
+  for (let step = 0; step < 10 && (response.retryable || response.possiblyRetryable(queryParameters)); step++) {
     let delay;
     if (response.retryDelay != null) {
       delay = response.retryDelay;
@@ -1371,17 +1445,11 @@ function _getURL(baseURL, api, queryParameters) {
 getTickersAndIDByTicker = _getTickersAndIDByTicker;
 
 /** 
- * @returns {Promise<[ObjectId]>} Array of existing enabled symbol IDs from both IEX and FMP databases, e.g. [ObjectId("61b102c0048b84e9c13e454d")]
+ * @returns {Promise<[ObjectId]>} Array of existing enabled symbol IDs from merged symbols database, e.g. [ObjectId("61b102c0048b84e9c13e454d")]
 */
 async function _getExistingSymbolIDs() {
-  const iexSymbolsCollection = db.collection("symbols");
-  const fmpSymbolsCollection = atlas.db("fmp").collection("symbols");
-  const [iexSupportedSymbolIDs, fmpSupportedSymbolIDs] = await Promise.all([
-    iexSymbolsCollection.distinct("_id", {}),
-    fmpSymbolsCollection.distinct("_id", {}),
-  ]);
-
-  const supportedSymbolIDs = iexSupportedSymbolIDs.concat(fmpSupportedSymbolIDs)
+  const symbolsCollection = atlas.db("merged").collection("symbols");
+  const supportedSymbolIDs = await symbolsCollection.distinct("_id", {});
   console.log(`Existing symbols (${supportedSymbolIDs.length})`);
   console.logData(`Existing symbols (${supportedSymbolIDs.length})`, supportedSymbolIDs);
 
@@ -1391,17 +1459,11 @@ async function _getExistingSymbolIDs() {
 getExistingSymbolIDs = _getExistingSymbolIDs;
 
 /** 
- * @returns {Promise<[ObjectId]>} Array of existing enabled symbol IDs from both IEX and FMP databases, e.g. [ObjectId("61b102c0048b84e9c13e454d")]
+ * @returns {Promise<[ObjectId]>} Array of existing enabled symbol IDs from merged symbols database, e.g. [ObjectId("61b102c0048b84e9c13e454d")]
 */
 async function _getSupportedSymbolIDs() {
-  const iexSymbolsCollection = db.collection("symbols");
-  const fmpSymbolsCollection = atlas.db("fmp").collection("symbols");
-  const [iexSupportedSymbolIDs, fmpSupportedSymbolIDs] = await Promise.all([
-    iexSymbolsCollection.distinct("_id", { e: null }),
-    fmpSymbolsCollection.distinct("_id", { e: null }),
-  ]);
-
-  const supportedSymbolIDs = iexSupportedSymbolIDs.concat(fmpSupportedSymbolIDs);
+  const symbolsCollection = atlas.db("merged").collection("symbols");
+  const supportedSymbolIDs = await symbolsCollection.distinct("_id", { "m.e": { $ne: false } });
   console.log(`Supported symbols (${supportedSymbolIDs.length})`);
   console.logData(`Supported symbols (${supportedSymbolIDs.length})`, supportedSymbolIDs);
 
@@ -1532,6 +1594,10 @@ getDateLogString = function getDateLogString() {
 exports = function() {
   extendRuntime();
 
+  if (typeof environment === 'undefined') {
+    environment = "stage";
+  }
+
   if (typeof atlas === 'undefined') {
     atlas = context.services.get("mongodb-atlas");
   }
@@ -1540,31 +1606,58 @@ exports = function() {
     db = atlas.db("divtracker-v2");
   }
 
+  // Available sources
+  if (typeof sources === 'undefined') {
+    /**
+     * Sources in descending priority order. Higher priority became the main source on conflicts.
+     */
+    sources = [
+      { field: 'f', name: 'fmp', db: atlas.db("fmp") },
+      { field: 'i', name: 'iex', db: atlas.db("divtracker-v2") },
+    ];
+
+    sourceByName = sources.toDictionary('name');
+  }
+
   // Adjusting console log
   if (!console.logCopy) {
     console.logCopy = console.log.bind(console);
+
+    logDefault = true;
     console.log = function(message) {
-      this.logCopy(getDateLogString(), message);
+      if (logDefault) {
+        this.logCopy(getDateLogString(), message);
+      }
     };
   }
   
   if (!console.errorCopy) {
     console.errorCopy = console.error.bind(console);
+    logError = true;
     console.error = function(message) {
-      const errorLogPrefix = `${getDateLogString()} [ ** ERRROR ** ]`;
-      this.logCopy(errorLogPrefix, message);
+      if (logError) {
+        const errorLogPrefix = `${getDateLogString()} [ ** ERRROR ** ]`;
+        this.logCopy(errorLogPrefix, message);
+        this.errorCopy(errorLogPrefix, message);
+      }
     };
   }
   
   if (!console.logVerbose) {
+    logVerbose = false;
     console.logVerbose = function(message) {
-      // this.logCopy(getDateLogString(), message);
+      if (logVerbose) {
+        this.logCopy(getDateLogString(), message);
+      }
     };
   }
   
   if (!console.logData) {
+    logData = false;
     console.logData = function(message, data) {
-      // this.logCopy(getDateLogString(), `${message}: ${data.stringify()}`);
+      if (logData) {
+        this.logCopy(getDateLogString(), `${message}: ${data.stringify()}`);
+      }
     };
   }
   

@@ -70,7 +70,8 @@ async function loadMissingCompanies(shortSymbols, symbolIDs) {
   }
 
   console.log(`Performing ${companies.length} update operations for companies.`);
-  await collection.bulkWrite(operations);
+  const options = { ordered: false };
+  await collection.bulkWrite(operations, options);
   console.log(`Performed ${companies.length} update operations for companies.`);
 }
 
@@ -226,7 +227,7 @@ async function loadMissingSplits(shortSymbols, symbolIDs) {
     return;
   }
   
-  const splits = await fetchSplits(missingShortSymbols);
+  const splits = await fetchSplits(missingShortSymbols, null, false);
   if (!splits.length) {
     console.log(`No splits. Skipping insert.`);
     return;
