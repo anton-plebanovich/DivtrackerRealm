@@ -4,8 +4,8 @@
 exports = async function() {
   context.functions.execute("testUtils");
 
-  // verboseLogEnabled = true;
-  // dataLogEnabled = true;
+  // logVerbose = true;
+  // logData = true;
 
   await prepareFMPData();
 

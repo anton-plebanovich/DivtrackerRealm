@@ -1621,9 +1621,9 @@ exports = function() {
   if (!console.logCopy) {
     console.logCopy = console.log.bind(console);
 
-    defaultLogEnabled = true;
+    logDefault = true;
     console.log = function(message) {
-      if (defaultLogEnabled) {
+      if (logDefault) {
         this.logCopy(getDateLogString(), message);
       }
     };
@@ -1631,25 +1631,29 @@ exports = function() {
   
   if (!console.errorCopy) {
     console.errorCopy = console.error.bind(console);
+    logError = true;
     console.error = function(message) {
-      const errorLogPrefix = `${getDateLogString()} [ ** ERRROR ** ]`;
-      this.logCopy(errorLogPrefix, message);
+      if (logError) {
+        const errorLogPrefix = `${getDateLogString()} [ ** ERRROR ** ]`;
+        this.logCopy(errorLogPrefix, message);
+        this.errorCopy(errorLogPrefix, message);
+      }
     };
   }
   
   if (!console.logVerbose) {
-    verboseLogEnabled = false;
+    logVerbose = false;
     console.logVerbose = function(message) {
-      if (verboseLogEnabled) {
+      if (logVerbose) {
         this.logCopy(getDateLogString(), message);
       }
     };
   }
   
   if (!console.logData) {
-    dataLogEnabled = false;
+    logData = false;
     console.logData = function(message, data) {
-      if (dataLogEnabled) {
+      if (logData) {
         this.logCopy(getDateLogString(), `${message}: ${data.stringify()}`);
       }
     };

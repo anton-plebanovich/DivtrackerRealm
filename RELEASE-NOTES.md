@@ -1,4 +1,11 @@
 
+# 2022-06-XX | IEX calendar splits
+ 
+- Release new server
+- dt call-realm-function --environment sandbox-anton --function updateSplitsV2 --verbose
+- dt check-splits --environment production
+- Check future splits using sort operator: `{ e: -1 }`
+
 # 2022-06-XX | FMP ETF support
 
 - Release new server with disabled FMP symbols update
@@ -27,7 +34,9 @@
 - Enable FMP symbols update
 - Drop fmp-tmp database
 
-# 2022-06-XX | Merged symbols and getDataV2
+# ######################################################################################################################
+
+# 2022-06-11 | Merged symbols and getDataV2
 
 - Check if there are conflicting transactions using `playground`
 - Release new server
@@ -38,10 +47,7 @@
 - Wait one day
 - Release more tickers
 
-# 2022-06-XX | IEX calendar splits and dedupe
+# 2022-06-11 | IEX refid for splits and dedupe
 
 - Release new server
-- dt check-splits --environment sandbox-anton
-- dt call-realm-function --environment sandbox-anton --function updateSplitsV2 --verbose
 - dt call-realm-function --environment sandbox-anton --function migrations --verbose
-- dt check-splits --environment sandbox-anton
