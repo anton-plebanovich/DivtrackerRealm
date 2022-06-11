@@ -68,20 +68,35 @@ async function updateIEXSymbols() {
     throw `Old IEX symbols count '${oldSymbols.length}' is huge. Pagination is not supported. Please update the query or logic.`;
   }
 
-  const oldSymbolByIexId = oldSymbols.toDictionary('iexId');
-  const oldSymbolByFigi = oldSymbols.toDictionary('figi');
-  const oldSymbolByTicker = oldSymbols.toDictionary('symbol');
+  // iexId - is always unique, small coverage
+  // figi - mostly unique but may have duplicates, big coverage
+  // lei - a lot of duplicates and small coverage
+  // cik - huge amount of duplicates but big coverage
+
+  const newSymbolsByIexId = newSymbols.toBuckets('iexId');
+  const newSymbolsByFigi = newSymbols.toBuckets('figi');
+  const newSymbolsByLei = newSymbols.toBuckets('lei');
+  const newSymbolsByCik = newSymbols.toBuckets('cik');
+  const newSymbolsByTicker = newSymbols.toBuckets('symbol');
+
+  const oldSymbolsByIexId = oldSymbols.toBuckets('iexId');
+  const oldSymbolsByFigi = oldSymbols.toBuckets('figi');
+  const oldSymbolsByLei = newSymbols.toBuckets('lei');
+  const oldSymbolsByCik = newSymbols.toBuckets('cik');
+  const oldSymbolsByTicker = oldSymbols.toBuckets('symbol');
 
   const bulk = iexCollection.initializeUnorderedBulkOp();
   for (const newSymbol of newSymbols) {
     // We try to update all symbold using IDs that allow us to track symbol renames.
-    if (isIEXProduction && newSymbol.iexId != null && update('iexId', bulk, oldSymbolByIexId, newSymbol)) {
+    if (isIEXProduction && update('iexId', bulk, newSymbol, newSymbolsByIexId, oldSymbolsByIexId)) {
       continue;
-    }
-    if (isIEXProduction && newSymbol.figi != null && update('figi', bulk, oldSymbolByFigi, newSymbol)) {
+    } else if (isIEXProduction && update('figi', bulk, newSymbol, newSymbolsByFigi, oldSymbolsByFigi)) {
       continue;
-    }
-    if (update('symbol', bulk, oldSymbolByTicker, newSymbol)) {
+    } else if (isIEXProduction && update('lei', bulk, newSymbol, newSymbolsByLei, oldSymbolsByLei)) {
+      continue;
+    } else if (isIEXProduction && update('cik', bulk, newSymbol, newSymbolsByCik, oldSymbolsByCik)) {
+      continue;
+    } else if (update('symbol', bulk, newSymbol, newSymbolsByTicker, oldSymbolsByTicker)) {
       continue;
     }
 
@@ -111,13 +126,26 @@ async function updateIEXSymbols() {
 // Checks if update is required for `newSymbol` using provided `fields`.
 // Adds bulk operation if needed and returns `true` if update check passed.
 // Returns `false` is update check wasn't possible.
-function update(field, bulk, oldSymbolByField, newSymbol) {
+function update(field, bulk, newSymbol, newSymbolsByField, oldSymbolsByField) {
   const newSymbolFieldValue = newSymbol[field];
   if (newSymbolFieldValue == null) {
     return false;
   }
 
-  let oldSymbol = oldSymbolByField[newSymbolFieldValue];
+  let oldSymbol;
+
+  // If we have 1 size old and new buckets we just update
+  // If we have bigger size buckets we compare by ticker name
+  const oldBucket = oldSymbolsByField[newSymbolFieldValue];
+  const newBucket = newSymbolsByField[newSymbolFieldValue];
+  if (oldBucket?.length === 1 && newBucket?.length === 1) {
+    oldSymbol = oldBucket[0];
+  } else if (oldBucket?.length) {
+    oldSymbol = oldBucket.find(x => x.symbol === newSymbol.symbol);
+  } else {
+    return false;
+  }
+
   if (oldSymbol == null) {
     return false;
 
