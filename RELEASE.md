@@ -7,7 +7,12 @@
 - Just before release to production we should check error logs from all our environments to make sure we didn't introduce any new bugs.
 - If logs look good we review all changes made once again by merging `sandbox` changes to `stage` branch without commiting.
 - If changes look good we deploy to the `stage` environment by pushing changes to the `origin`.
-- After deployment is finished we should check migrations if any using `production` environment data. To replace `stage` data with `production` data we execute command: `dt backup --environment production && dt erase-environment --environment stage --do-not-restore && dt restore --environment stage --backup-source-environment production --do-not-drop`.
+- After deployment is finished we should check migrations if any using `production` environment data. To replace `stage` data with `production` data we follow steps below:
+  - Go to `Deployment` -> `Configuration` and tap `Disable Drafts`, confirm by tapping `Disable Drafts` in the popup
+  - Go to `Device Sync` and tap `Terminate Sync` confirm by typing `Terminate sync` in the field and tapping `Terminate Sync`
+  - Execute command: `dt backup --environment production && dt restore --environment stage --backup-source-environment production --data-collections`
+  - Enable sync back using default parameters. Use `{"%%partition":{"%in":["%%user.id",null]}}` for `Read Permissions` and `{"%%partition":"%%user.id"}` for `Write Permissions`
+  - Go to `Deployment` -> `Configuration` and tap `Enable Automatic Deployment`
 - If migrations looks good we also perform the last round of manual testing with the `release` app version here.
 - If manual testing succeeded and we no longer need the `stage` environment we should erase data using `dt erase-environment --environment stage`.
 - We prepare to deploy to the `production` but we must stick to the 9-12 GMT time window on weekends.
