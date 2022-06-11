@@ -68,18 +68,20 @@ async function updateIEXSymbols() {
     throw `Old IEX symbols count '${oldSymbols.length}' is huge. Pagination is not supported. Please update the query or logic.`;
   }
 
+  const oldSymbolByIexId = oldSymbols.toDictionary('iexId');
+  const oldSymbolByFigi = oldSymbols.toDictionary('figi');
   const oldSymbolByTicker = oldSymbols.toDictionary('symbol');
 
   const bulk = iexCollection.initializeUnorderedBulkOp();
   for (const newSymbol of newSymbols) {
     // We try to update all symbold using IDs that allow us to track symbol renames.
-    if (isIEXProduction && newSymbol.iexId != null && update('iexId', bulk, oldSymbolByTicker, oldSymbols, newSymbol)) {
+    if (isIEXProduction && newSymbol.iexId != null && update('iexId', bulk, oldSymbolByIexId, newSymbol)) {
       continue;
     }
-    if (isIEXProduction && newSymbol.figi != null && update('figi', bulk, oldSymbolByTicker, oldSymbols, newSymbol)) {
+    if (isIEXProduction && newSymbol.figi != null && update('figi', bulk, oldSymbolByFigi, newSymbol)) {
       continue;
     }
-    if (update('symbol', bulk, oldSymbolByTicker, oldSymbols, newSymbol)) {
+    if (update('symbol', bulk, oldSymbolByTicker, newSymbol)) {
       continue;
     }
 
@@ -109,24 +111,18 @@ async function updateIEXSymbols() {
 // Checks if update is required for `newSymbol` using provided `fields`.
 // Adds bulk operation if needed and returns `true` if update check passed.
 // Returns `false` is update check wasn't possible.
-function update(field, bulk, oldSymbolByTicker, oldSymbols, newSymbol) {
-
-  // First, we try to use dictionary because in most cases symbols will just match
-  // and so we can increase performance.
+function update(field, bulk, oldSymbolByField, newSymbol) {
   const newSymbolFieldValue = newSymbol[field];
-  let oldSymbol = oldSymbolByTicker[newSymbol.symbol];
-  if (field !== 'symbol' && (!oldSymbol || oldSymbol[field] !== newSymbolFieldValue)) {
-    // Perform search since our assumption failed. This one is slower.
-    oldSymbol = oldSymbols.find(oldSymbol => {
-      return oldSymbol[field] === newSymbolFieldValue;
-    });
+  if (newSymbolFieldValue == null) {
+    return false;
   }
 
+  let oldSymbol = oldSymbolByField[newSymbolFieldValue];
   if (oldSymbol == null) {
     return false;
 
   } else if (isIEXSandbox && newSymbol.isEnabled === oldSymbol.isEnabled) {
-    // It takes too much time to update every symbol on sandbox so we just skip update if enabled field didn't change
+    // It takes too much time to update every symbol for IEX sandbox so we just skip update if enabled field didn't change
     return true;
 
   } else {
