@@ -1636,9 +1636,10 @@ exports = function() {
     logError = true;
     console.error = function(message) {
       if (logError) {
-        const errorLogPrefix = `${getDateLogString()} [ ** ERRROR ** ]`;
+        const timePrefix = getDateLogString();
+        const errorLogPrefix = `${timePrefix} [ ** ERRROR ** ]`;
         this.logCopy(errorLogPrefix, message);
-        this.errorCopy(errorLogPrefix, message);
+        this.errorCopy(message);
       }
     };
   }
