@@ -508,6 +508,8 @@ Array.prototype.toBuckets = function(arg) {
 
   return this.reduce((dictionary, value) => {
     const key = getKey(value);
+    if (key == null) { return dictionary; }
+
     const bucket = dictionary[key];
     if (bucket == null) {
       dictionary[key] = [value];
