@@ -40,6 +40,7 @@
 
 - Check if there are conflicting transactions using `playground` function and not released code
 - Release new server
+- Execute `dt call-realm-function --environment sandbox-anton --function fmpUpdateSymbols --verbose` and check using find operator `{ c: null }`
 - Execute `dt call-realm-function --environment sandbox-anton --function mergedUpdateSymbols --verbose` and check `merged.symbols` collection using `{ i: { $ne: null }, f: { $ne: null } }` and counts of other symbol collections `iexCount + fmpCount - doubleSourceCount = mergedCount`
 - Execute `dt call-realm-function --environment sandbox-anton --function migrations --verbose` and check that all splits are updated using find operator in the `divtracker-v2.splits` collection: `{ i: null }`
 - Execute `dt call-realm-function --environment sandbox-anton --function fmpUpdateCompanies --verbose` and check that companies count is equal to symbols count in the `fmp` database
