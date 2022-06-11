@@ -21,7 +21,7 @@ async function fetch_refid_for_IEX_splits() {
   logVerbose = true;
   logData = true;
 
-  const shortSymbols = await getInUseShortSymbols();
+  const shortSymbols = await getAllShortSymbols();
   const range = '10y';
   const splits = await fetchSplitsWithDuplicates(shortSymbols, range, false);
   const splitsByRefid = splits.toBuckets('refid');
@@ -36,10 +36,21 @@ async function fetch_refid_for_IEX_splits() {
 
   const collection = db.collection("splits");
 
-  console.log(`First, set refid on existing splits`)
+  console.log(`First, set refid on existing splits`);
   await collection.safeUpdateMany(splits, null, ['e', 's'], true, false);
 
-  console.log(`Second, update with deduped on 'i' field. This may fix split date if duplicate was previously deleted.`)
+  // Backward compatibility, we had different hour previously so need to also check that
+  const backwardCompatibilitySplits = splits.map(split => {
+    const newSplit = Object.assign({}, split);
+    const date = new Date(newSplit.e);
+    date.setUTCHours(date.getUTCHours() - 2); // 2 hours difference with old splits
+    newSplit.e = date;
+
+    return newSplit;
+  });
+  await collection.safeUpdateMany(backwardCompatibilitySplits, null, ['e', 's'], true, false);
+
+  console.log(`Second, update with deduped on 'i' field. This may fix split date if duplicate was previously deleted.`);
   await collection.safeUpdateMany(dedupedSplits, null, 'i', true, false);
 
   // This is dangerous because it might delete second split record if the first one is already deleted.
@@ -56,6 +67,26 @@ async function fetch_refid_for_IEX_splits() {
   // }
 
   // return await bulk.safeExecute();
+}
+
+async function getAllShortSymbols() {
+  // We combine transactions and companies distinct IDs. 
+  // Idealy, we should be checking all tables but we assume that only two will be enough.
+  // All symbols have company record so company DB contains all ever fetched symbols.
+  // Meanwhile transactions may contain not yet fetched symbols or have less symbols than we already should be updating (transactions may be deleted).
+  // So by combining we have all current + all future symbols. Idealy.
+  const companiesCollection = db.collection("companies");
+  const transactionsCollection = db.collection("transactions");
+  const [companyIDs, distinctTransactionSymbolIDs] = await Promise.all([
+    companiesCollection.distinct("_id", {}),
+    transactionsCollection.distinct("s", {}),
+  ]);
+
+  const objectIDByID = companyIDs.toDictionary(x => x.toString());
+  const additionalIDs = distinctTransactionSymbolIDs.filter(x => objectIDByID[x.toString()] == null);
+  const symbolIDs = companyIDs.concat(additionalIDs);
+
+  return await getShortSymbols(symbolIDs);
 }
 
 async function fetchSplitsWithDuplicates(shortSymbols, range, isFuture) {
