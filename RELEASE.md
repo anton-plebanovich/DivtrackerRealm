@@ -5,7 +5,7 @@
 - After a feature is done and tested in the `sandbox-anton` environment, it is then deployed to the `tests` environment. Then, we check that automatic tests are passing using `dt test --notify` command.
 - If automatic tests succeeded we deploy to the `sandbox` environment for manual testing by the team.
 - Just before release to production we should check error logs from all our environments to make sure we didn't introduce any new bugs.
-- If logs look good we deploy to the `stage` environment to check migrations if any and also perform the last round of manual testing. This is also a good opportunity to review all changes made once again. We should use old application versions for testing.
+- If logs look good we deploy to the `stage` environment. This is also a good opportunity to review all changes made once again. After deployment we should check migrations if any using `production` environment data. We also perform the last round of manual testing with the `release` app version here. 
 - If manual testing and migrations on the `stage` environment succeeded we prepare to deploy to the `production` but we must stick to the 9-12 GMT time window on weekends.
 
 # Hotfix release flow
