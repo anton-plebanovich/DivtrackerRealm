@@ -14,7 +14,7 @@
   - Enable sync back using default parameters. Use `{"%%partition":{"%in":["%%user.id",null]}}` for `Read Permissions` and `{"%%partition":"%%user.id"}` for `Write Permissions`
   - Go to `Deployment` -> `Configuration` and tap `Enable Automatic Deployment`
 - If migrations looks good we also perform the last round of manual testing with the `release` app version here.
-- If manual testing succeeded and we no longer need the `stage` environment we should erase data using `dt erase-environment --environment stage`.
+- If manual testing succeeded and we no longer need the `stage` environment we should erase data using `dt backup --environment sandbox && dt erase-environment --environment stage && dt restore --environment stage --backup-source-environment sandbox --data-collections --do-not-drop --yes`.
 - We prepare to deploy to the `production` but we must stick to the 9-12 GMT time window on weekends.
 
 # Hotfix release flow
