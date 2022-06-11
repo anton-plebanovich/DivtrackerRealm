@@ -4,7 +4,7 @@
 - All development is happening in the `sandbox-anton` environment. If new functionality is added we should write new automatic tests to cover it.
 - After a feature is done and tested in the `sandbox-anton` environment, it is then deployed to the `tests` environment. Then, we check that automatic tests are passing using `dt test --notify` command.
 - If automatic tests succeeded we deploy to the `sandbox` environment for manual testing by the team.
-- Just before release to production we should check error logs from all our environemnts to make sure we didn't introduce any new bugs.
+- Just before release to production we should check error logs from all our environments to make sure we didn't introduce any new bugs.
 - If logs look good we deploy to the `stage` environment to check migrations if any and also perform the last round of manual testing. This is also a good opportunity to review all changes made once again. We should use old application versions for testing.
 - If manual testing and migrations on the `stage` environment succeeded we prepare to deploy to the `production` but we must stick to the 9-12 GMT time window on weekends.
 
