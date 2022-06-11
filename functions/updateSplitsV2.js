@@ -23,9 +23,10 @@ exports = async function() {
   const collection = db.collection("splits");
 
   // Future
-  console.log(`Fetching and updating calendar splits`);
-  const futureSplits = await fetchSplits(shortSymbols, null, true);
-  await collection.safeInsertMissing(futureSplits, 'i');
+  // TODO: Enable when clients ready
+  // console.log(`Fetching and updating calendar splits`);
+  // const futureSplits = await fetchSplits(shortSymbols, null, true);
+  // await collection.safeInsertMissing(futureSplits, 'i');
 
   // Past
   // We do not update to prevent date adjust on duplicated splits.

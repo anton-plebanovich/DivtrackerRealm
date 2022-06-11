@@ -18,6 +18,9 @@ exports = async function() {
 async function fetch_refid_for_IEX_splits() {
   context.functions.execute("iexUtils");
 
+  logVerbose = true;
+  logData = true;
+
   const shortSymbols = await getInUseShortSymbols();
   const range = '10y';
   const splits = await fetchSplitsWithDuplicates(shortSymbols, range, false);
