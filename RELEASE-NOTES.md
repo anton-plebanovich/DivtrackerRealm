@@ -36,18 +36,10 @@
 
 # ######################################################################################################################
 
-# 2022-06-11 | Merged symbols and getDataV2
+# 2022-06-11 | Merged symbols, getDataV2, IEX refid for splits and dedupe
 
-- Check if there are conflicting transactions using `playground`
+- Check if there are conflicting transactions using `playground` function and not released code
 - Release new server
-- dt call-realm-function --environment sandbox-anton --function mergedUpdateSymbols --verbose
-- Push new app in the review and release
-- Wait one week
-- Deprecate old clients
-- Wait one day
-- Release more tickers
-
-# 2022-06-11 | IEX refid for splits and dedupe
-
-- Release new server
-- dt call-realm-function --environment sandbox-anton --function migrations --verbose
+- Execute `dt call-realm-function --environment sandbox-anton --function mergedUpdateSymbols --verbose` and check `merged.symbols` collection using `{ i: { $ne: null }, f: { $ne: null } }` and counts of other symbol collections `iexCount + fmpCount - doubleSourceCount = mergedCount`
+- Execute `dt call-realm-function --environment sandbox-anton --function migrations --verbose` and check that all splits are updated using find operator in the `divtracker-v2.splits` collection: `{ i: null }`
+- Execute `dt call-realm-function --environment sandbox-anton --function fmpUpdateCompanies --verbose` and check that companies count is equal to symbols count in the `fmp` database
