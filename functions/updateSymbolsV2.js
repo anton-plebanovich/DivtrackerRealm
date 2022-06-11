@@ -81,8 +81,8 @@ async function updateIEXSymbols() {
 
   const oldSymbolsByIexId = oldSymbols.toBuckets('iexId');
   const oldSymbolsByFigi = oldSymbols.toBuckets('figi');
-  const oldSymbolsByLei = newSymbols.toBuckets('lei');
-  const oldSymbolsByCik = newSymbols.toBuckets('cik');
+  const oldSymbolsByLei = oldSymbols.toBuckets('lei');
+  const oldSymbolsByCik = oldSymbols.toBuckets('cik');
   const oldSymbolsByTicker = oldSymbols.toBuckets('symbol');
 
   const bulk = iexCollection.initializeUnorderedBulkOp();
