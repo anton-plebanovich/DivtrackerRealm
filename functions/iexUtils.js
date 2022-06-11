@@ -126,6 +126,10 @@ getShortSymbols = _getShortSymbols;
 // pk_069c02e17d9749a0b6a1284991879c77 - nohopenotop+3 - sk_4793d0f53a82435ba64fbb6a5d3ec334
 // pk_462eaf9d7d94460a8751601cbc4c39e8 - nohopenotop+4 - sk_48a4856132604b47a77d96e64c1db39d
 // pk_4e48fb2bb54f433ebbf42cf5bff3404f - nohopenotop+5 - sk_8a83efa05f144153a570966b4b4cea06
+// pk_d91a6cd15c7641d1bc0063abbae86adf - nohopenotop+6 - sk_b0fe7f0958d94964996baff0a3f8b120
+// pk_fe3251a6a1bc4c99950f2abf60b966bd - nohopenotop+7 - sk_528f243249764a08b7881d0365de635e
+// pk_551db89285a24a358a35848f13d62694 - nohopenotop+8 - sk_920f1d5b1c724a0c845c4246b34b2141
+// pk_e1941a95ed6c4f13b24ec074bda8672d - nohopenotop+9 - sk_7da396205407472fa5bce81872f7f3fe
 
 // --- Premium
 // pk_01ef04dd60b5404b81d9cc47b2388176 - trackerdividend@gmail.com - sk_de6f102262874cfab3d9a83a6980e1db - 3ff51380e7f3a36ff4e0915e9d781878
@@ -252,8 +256,9 @@ fetchPreviousDayPrices = _fetchPreviousDayPrices;
  * @param {string} range Range to fetch.
  * @returns {[Split]} Array of requested objects.
  */
- fetchSplits = async function fetchSplits(shortSymbols, range) {
+ fetchSplits = async function fetchSplits(shortSymbols, range, isFuture) {
   throwIfUndefinedOrNull(shortSymbols, `fetchSplits shortSymbols`);
+  throwIfUndefinedOrNull(isFuture, `fetchSplits isFuture`);
 
   if (range == null) {
     range = defaultRange;
@@ -261,6 +266,9 @@ fetchPreviousDayPrices = _fetchPreviousDayPrices;
   
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
   const parameters = { range: range };
+  if (isFuture) {
+    parameters.calendar = 'true';
+  }
 
   // https://cloud.iexapis.com/stable/stock/market/batch?types=splits&token=pk_9f1d7a2688f24e26bb24335710eae053&range=6y&symbols=AAPL,AAP
   // https://sandbox.iexapis.com/stable/stock/market/batch?types=splits&token=Tpk_581685f711114d9f9ab06d77506fdd49&range=6y&symbols=AAPL,AAP
@@ -299,6 +307,8 @@ async function _iexFetchBatchAndMapArray(type, tickers, idByTicker, mapFunction,
       }
     );
 }
+
+iexFetchBatchAndMapArray = _iexFetchBatchAndMapArray
 
 /**
  * Requests data from IEX cloud/sandbox for types and symbols by a batch.
@@ -409,6 +419,22 @@ async function _iexFetch(api, queryParameters) {
 
 iexFetch = _iexFetch;
 
+function _adjustTokenIfPossible(queryParameters) {
+  // We can try and retry if there is no premium token and we are using ordinary tokens.
+  // Some might not be expired yet.
+  if (queryParameters.token == null || typeof premiumToken !== 'undefined') {
+    return false;
+  }
+
+  const token = tokens[counter % tokens.length];
+  counter++;
+  queryParameters.token = token;
+
+  return true;
+}
+
+adjustTokenIfPossible = _adjustTokenIfPossible;
+
 // exports();
 //
 // iexFetch("/ref-data/symbols")
@@ -447,7 +473,7 @@ function _fixCompany(iexCompany, symbolID) {
   
     return company;
   } catch(error) {
-    console.logVerbose(`Unable to map company: ${error}`);
+    console.error(`Unable to map company: ${error}`);
     return null;
   }
 };
@@ -506,7 +532,7 @@ function _fixDividends(iexDividends, symbolID) {
     return dividends;
 
   } catch(error) {
-    console.logVerbose(`Unable to map dividends: ${error}`);
+    console.error(`Unable to map dividends: ${error}`);
     return [];
   }
 }
@@ -637,7 +663,7 @@ function _fixPreviousDayPrice(iexPreviousDayPrice, symbolID) {
   } catch(error) {
     // {"AQNU":{"previous":null}}
     // {"AACOU":{"previous":null}}
-    console.logVerbose(`Unable to map previous day price: ${error}`);
+    console.error(`Unable to map previous day price: ${error}`);
     return null;
   }
 };
@@ -675,7 +701,7 @@ function _fixHistoricalPrices(iexHistoricalPrices, symbolID) {
       });
 
   } catch (error) {
-    console.logVerbose(`Unable to map historical prices: ${error}`);
+    console.error(`Unable to map historical prices: ${error}`);
     return [];
   }
 };
@@ -705,7 +731,7 @@ function _fixQuote(iexQuote, symbolID) {
     return quote;
 
   } catch(error) {
-    console.logVerbose(`Unable to map quote: ${error}`);
+    console.error(`Unable to map quote: ${error}`);
     return null;
   }
 };
@@ -736,6 +762,7 @@ function _fixSplits(iexSplits, symbolID) {
       .map(iexSplit => {
         const split = {};
         split.e = _getOpenDate(iexSplit.exDate);
+        split.i = iexSplit.refid;
         split.s = symbolID;
 
         if (iexSplit.ratio != null) {
@@ -746,7 +773,7 @@ function _fixSplits(iexSplits, symbolID) {
       });
 
   } catch (error) {
-    console.logVerbose(`Unable to map splits: ${error}`);
+    console.error(`Unable to map splits: ${error}`);
     return [];
   }
 };
@@ -849,10 +876,12 @@ exports = function() {
 
   if (typeof isIEXSandbox === 'undefined') {
     isIEXSandbox = context.values.get("base_url") === 'https://sandbox.iexapis.com/stable';
+    Object.freeze(isIEXSandbox);
   }
 
   if (typeof isIEXProduction === 'undefined') {
     isIEXProduction = !isIEXSandbox;
+    Object.freeze(isIEXProduction);
   }
 
   if (typeof iex === 'undefined') {
@@ -862,11 +891,13 @@ exports = function() {
   /** Premium token. Will be used for all API calls if defined. */
   if (typeof premiumToken === 'undefined') {
     premiumToken = context.values.get("premium-token");
+    Object.freeze(premiumToken);
   }
 
   /** Tokens that are set deneding on an environment */
   if (typeof tokens === 'undefined') {
     tokens = context.values.get("tokens");
+    Object.freeze(tokens);
   }
 
   /** Initial token is chosen randomly and then it increase by 1 to diverse between tokens */
