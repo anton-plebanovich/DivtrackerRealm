@@ -540,7 +540,7 @@ function _fixFMPCompany(fmpCompany, symbolID) {
       company.c = fmpCompany.currency.toUpperCase();
     } else {
       console.error(`No currency '${symbolID}': ${fmpCompany.stringify()}`)
-      company.c = "NONE";
+      company.c = "-";
     }
 
     if (fmpCompany.industry) {
