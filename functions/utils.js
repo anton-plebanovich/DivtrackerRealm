@@ -145,8 +145,7 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields,
       console.log(`Old objects are undefined. Fetching them by requesting all existing objects.`);
       oldObjects = await this
         .fullFind({})
-        .sort(sort)
-        .toArray();
+        .sortedDeletedToTheStart();
     }
   } else {
     oldObjects = oldObjects.sortedDeletedToTheStart();

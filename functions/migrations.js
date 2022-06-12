@@ -167,7 +167,6 @@ async function fetch_refid_for_IEX_dividends() {
     fetchDividendsWithDuplicates(specificShortSymbols, false, '10y', null),
   ]);
 
-
   const dividends = futureDividends
     .concat(recentDividends)
     .concat(specificDividends);
