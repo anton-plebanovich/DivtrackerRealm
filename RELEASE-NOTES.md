@@ -4,7 +4,7 @@
 - Release new server
 - Execute `dt call-realm-function --environment sandbox-anton --function migrations --verbose`
 - Check that all splits are updated using find operator in the `divtracker-v2.splits` collection: `{ i: null }`
-- Check that all future dividends for symbols are updated using find operator in the `divtracker-v2.dividends` collection: `{ i: null, e: { $gte: new Date() } }`, `{ i: null, s: { $in: [new BSON.ObjectId('61c42676a2660ba02db39480'), new BSON.ObjectId('61c42676a2660ba02db3afb2')] }}`
+- Check that all future dividends for symbols are updated using find operator in the `divtracker-v2.dividends` collection: `{ i: null, e: { $gte: new Date() } }`, `{ i: null, s: { $in: [ObjectId('61c42676a2660ba02db39480'), ObjectId('61c42676a2660ba02db3afb2')] } }`
 - Execute `dt call-realm-function --environment sandbox-anton --function updateSplitsV2 --verbose`
 - Execute `dt call-realm-function --environment sandbox-anton --function updateDividendsFuture --verbose`
 - Execute `dt call-realm-function --environment sandbox-anton --function updateDividendsPast --verbose`

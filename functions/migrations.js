@@ -11,7 +11,8 @@
 
 exports = async function() {
   try {
-    return await refid_migration();
+    await old_date_format_migration();
+    await refid_migration();
   } catch(error) {
     console.error(error);
   }
@@ -19,7 +20,44 @@ exports = async function() {
 
 ////////////////////////////////////////////////////// 2022-06-XX IEX refid for splits and dividends
 
+/**
+ * 2021-07-08T12:30:00.000+00:00 -> 2021-07-08T14:30:00.000+00:00
+ */
+async function old_date_format_migration() {
+  console.log('old_date_format_migration');
+  context.functions.execute("iexUtils");
+
+  ////////////////////////////////// Dividends
+  const dividendsCollection = db.collection("dividends");
+  const dividends = await dividendsCollection.fullFind({});
+  dividends.forEach(dividend => {
+    if (dividend.e.getUTCHours() === 12) {
+      dividend.e.setUTCHours(14);
+    }
+    if (dividend?.p.getUTCHours() === 12) {
+      dividend.p.setUTCHours(14);
+    }
+    if (dividend?.d.getUTCHours() === 12) {
+      dividend.d.setUTCHours(14);
+    }
+  });
+
+  await dividendsCollection.safeUpdateMany(dividends, null, '_id', true, false);
+
+  ////////////////////////////////// Splits
+  const splitsCollection = db.collection("splits");
+  const splits = await splitsCollection.fullFind({});
+  splits.forEach(split => {
+    if (split.e.getUTCHours() === 12) {
+      split.e.setUTCHours(14);
+    }
+  });
+
+  await splitsCollection.safeUpdateMany(splits, null, '_id', true, false);
+}
+
 async function refid_migration() {
+  console.log('refid_migration');
   context.functions.execute("iexUtils");
 
   logVerbose = true;
@@ -41,18 +79,7 @@ async function fetch_refid_for_IEX_splits() {
   console.log(`First, set refid on existing splits`);
   await collection.safeUpdateMany(splits, null, ['e', 's'], true, false);
 
-  console.log(`Second, backward compatibility, we had different hour previously so need to also check that`);
-  const backwardCompatibilitySplits = splits.map(split => {
-    const newSplit = Object.assign({}, split);
-    const date = new Date(newSplit.e);
-    date.setUTCHours(date.getUTCHours() - 2); // 2 hours difference with old splits
-    newSplit.e = date;
-
-    return newSplit;
-  });
-  await collection.safeUpdateMany(backwardCompatibilitySplits, null, ['e', 's'], true, false);
-
-  console.log(`Third, update with deduped on 'i' field. This may fix split date if duplicate was previously deleted.`);
+  console.log(`Second, update with deduped on 'i' field. This may fix split date if duplicate was previously deleted.`);
   const splitsByRefid = splits.toBuckets('i');
   const dedupedSplits = [];
   const dupedSplits = [];
@@ -65,7 +92,7 @@ async function fetch_refid_for_IEX_splits() {
   await collection.safeUpdateMany(dedupedSplits, null, 'i', true, false);
 
   // This is dangerous because it might delete second split record if the first one is already deleted.
-  // console.log(`Forth, delete duplicates if any left`)
+  // console.log(`Third, delete duplicates if any left`)
   // const bulk = collection.initializeUnorderedBulkOp();
   // for (const dupedSplit of dupedSplits) {
   //   const find = ['e', 's'].reduce((find, field) => {
@@ -158,6 +185,7 @@ async function fetch_refid_for_IEX_dividends() {
 
   const shortSymbols = await getAllShortSymbols();
 
+  // TODO: ADD MORE
   const specificTickers = ['BTI', 'QCOM'];
   const specificShortSymbols = shortSymbols.filter(x => specificTickers.includes(x.t));
 
@@ -180,12 +208,12 @@ async function fetch_refid_for_IEX_dividends() {
   const collection = db.collection("dividends");
 
   console.log(`First, set refid on existing dividends`);
-  const oldObjects = await collection
+  const oldDividends = await collection
     .fullFind({})
     .then(x => x.sortedDeletedToTheStart());
 
   const fields = ['s', 'e'];
-  const buckets = oldObjects.toBuckets(fields);
+  const buckets = oldDividends.toBuckets(fields);
   
   // Try to prevent 'pending promise returned that will never resolve/reject uncaught promise rejection: &{0xc1bac2aa90 0xc1bac2aa80}' error by splitting batch operations to chunks
   const chunkSize = 1000;
@@ -211,7 +239,7 @@ async function fetch_refid_for_IEX_dividends() {
         existingDividend = bucket.find(dividend => dividend.f === newDividend.f);
         if (existingDividend == null) {
           const lowerAmount = newDividend.a * 0.9;
-          const upperAmount = newDividend.a * 1.1;    
+          const upperAmount = newDividend.a * 1.1;
           existingDividend = bucket.find(dividend => dividend.a > lowerAmount && dividend.a < upperAmount);
         }
         if (existingDividend == null) {
