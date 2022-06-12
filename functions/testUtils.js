@@ -69,7 +69,7 @@ async function _prepareFMPData() {
   // Insert 20 symbols
   const symbols = await fetchSymbols();
   const symbolsToAdd = symbols.getRandomElements(19);
-  const pciSymbol = symbols.find(x => x.t === "PCI");
+  const pciSymbol = symbols.find(x => x.t === "DHROX");
   symbolsToAdd.push(pciSymbol);
   await fmp.collection('symbols').insertMany(symbolsToAdd);
   await context.functions.execute("mergedUpdateSymbols");
