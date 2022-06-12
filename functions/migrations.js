@@ -16,8 +16,10 @@ exports = async function(migration) {
   logData = true;
 
   try {
-    if (migration === 'old_date_format_migration') {
-      await old_date_format_migration();
+    if (migration === 'old_date_format_splits_migration') {
+      await old_date_format_splits_migration();
+    } else if (migration === 'old_date_format_dividends_migration') {
+      await old_date_format_dividends_migration();
     } else if (migration === 'fetch_refid_for_IEX_splits') {
       await fetch_refid_for_IEX_splits();
     } else if (migration === 'fetch_refid_for_IEX_dividends') {
@@ -36,9 +38,19 @@ exports = async function(migration) {
 /**
  * 2021-07-08T12:30:00.000+00:00 -> 2021-07-08T14:30:00.000+00:00
  */
-async function old_date_format_migration() {
+async function old_date_format_splits_migration() {
+  const splitsCollection = db.collection("splits");
+  const splits = await splitsCollection.fullFind({});
+  splits.forEach(split => {
+    if (split.e.getUTCHours() === 12) {
+      split.e.setUTCHours(14);
+    }
+  });
 
-  ////////////////////////////////// Dividends
+  await splitsCollection.safeUpdateMany(splits, null, '_id', true, false);
+}
+
+async function old_date_format_dividends_migration() {
   const dividendsCollection = db.collection("dividends");
   const dividends = await dividendsCollection.fullFind({});
   dividends.forEach(dividend => {
@@ -54,17 +66,6 @@ async function old_date_format_migration() {
   });
 
   await dividendsCollection.safeUpdateMany(dividends, null, '_id', true, false);
-
-  ////////////////////////////////// Splits
-  const splitsCollection = db.collection("splits");
-  const splits = await splitsCollection.fullFind({});
-  splits.forEach(split => {
-    if (split.e.getUTCHours() === 12) {
-      split.e.setUTCHours(14);
-    }
-  });
-
-  await splitsCollection.safeUpdateMany(splits, null, '_id', true, false);
 }
 
 async function fetch_refid_for_IEX_splits() {
