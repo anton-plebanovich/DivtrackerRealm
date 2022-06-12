@@ -192,7 +192,7 @@ async function fetch_refid_for_IEX_dividends() {
   const chunkedNewDividends = dividends.chunked(chunkSize);
   for (const [i, newDividendsChunk] of chunkedNewDividends.entries()) {
     console.log(`Updating dividends: ${i * chunkSize + newDividendsChunk.length}/${dividends.length}`);
-    const bulk = this.initializeUnorderedBulkOp();
+    const bulk = collection.initializeUnorderedBulkOp();
     for (const newDividend of newDividendsChunk) {
       const bucket = fields.reduce((buckets, field) => {
         if (buckets != null) {
