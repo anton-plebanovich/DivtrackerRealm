@@ -470,14 +470,14 @@ function _fixCompany(iexCompany, symbolID) {
     console.logVerbose(`Company data fix start`);
     const company = {};
     company._id = symbolID;
-    company.i = iexCompany.industry;
+    company.setIfNotNullOrUndefined('i', iexCompany.industry);
 
     if  (iexCompany.issueType) {
-      company.t = iexCompany.issueType.trim();
+      company.setIfNotNullOrUndefined('t', iexCompany.issueType.trim());
     }
 
     if  (iexCompany.companyName) {
-      company.n = iexCompany.companyName.trim();
+      company.setIfNotNullOrUndefined('n', iexCompany.companyName.trim());
     }
   
     return company;
@@ -512,24 +512,24 @@ function _fixDividends(iexDividends, symbolID) {
     dividends = dividends
       .map(iexDividend => {
         const dividend = {};
-        dividend.d = _getOpenDate(iexDividend.declaredDate);
-        dividend.e = _getOpenDate(iexDividend.exDate);
-        dividend.p = _getOpenDate(iexDividend.paymentDate);
-        dividend.i = iexDividend.refid;
+        dividend.setIfNotNullOrUndefined('d', _getOpenDate(iexDividend.declaredDate));
+        dividend.setIfNotNullOrUndefined('e', _getOpenDate(iexDividend.exDate));
+        dividend.setIfNotNullOrUndefined('p', _getOpenDate(iexDividend.paymentDate));
+        dividend.setIfNotNullOrUndefined('i', iexDividend.refid);
         dividend.s = symbolID;
 
         if (iexDividend.amount != null) {
-          dividend.a = BSON.Double(iexDividend.amount);
+          dividend.setIfNotNullOrUndefined('a', BSON.Double(iexDividend.amount));
         }
 
         // We add only the first letter of a frequency
         if (iexDividend.frequency != null) {
-          dividend.f = iexDividend.frequency.charAt(0);
+          dividend.setIfNotNullOrUndefined('f', iexDividend.frequency.charAt(0));
         }
     
         // We do not add `USD` frequencies to the database.
         if (iexDividend.currency != null && iexDividend.currency !== "USD") {
-          dividend.c = iexDividend.currency.toUpperCase();
+          dividend.setIfNotNullOrUndefined('c', iexDividend.currency.toUpperCase());
         }
     
         return dividend;
@@ -665,7 +665,7 @@ function _fixPreviousDayPrice(iexPreviousDayPrice, symbolID) {
     previousDayPrice._id = symbolID;
 
     if (iexPreviousDayPrice.close != null) {
-      previousDayPrice.c = BSON.Double(iexPreviousDayPrice.close);
+      previousDayPrice.setIfNotNullOrUndefined('c', BSON.Double(iexPreviousDayPrice.close));
     }
   
     return previousDayPrice;
@@ -700,11 +700,11 @@ function _fixHistoricalPrices(iexHistoricalPrices, symbolID) {
       .filterNullAndUndefined()
       .map(iexHistoricalPrice => {
         const historicalPrice = {};
-        historicalPrice.d = _getCloseDate(iexHistoricalPrice.date);
+        historicalPrice.setIfNotNullOrUndefined('d', _getCloseDate(iexHistoricalPrice.date));
         historicalPrice.s = symbolID;
 
         if (iexHistoricalPrice.close != null) {
-          historicalPrice.c = BSON.Double(iexHistoricalPrice.close);
+          historicalPrice.setIfNotNullOrUndefined('c', BSON.Double(iexHistoricalPrice.close));
         }
 
         return historicalPrice;
@@ -732,10 +732,10 @@ function _fixQuote(iexQuote, symbolID) {
     console.logVerbose(`Previous day price data fix start`);
     const quote = {};
     quote._id = symbolID;
-    quote.l = iexQuote.latestPrice;
+    quote.setIfNotNullOrUndefined('l', iexQuote.latestPrice);
 
     if (iexQuote.peRatio != null) {
-      quote.p = BSON.Double(iexQuote.peRatio);
+      quote.setIfNotNullOrUndefined('p', BSON.Double(iexQuote.peRatio));
     }
 
     return quote;
@@ -771,12 +771,12 @@ function _fixSplits(iexSplits, symbolID) {
     return iexSplits
       .map(iexSplit => {
         const split = {};
-        split.e = _getOpenDate(iexSplit.exDate);
-        split.i = iexSplit.refid;
+        split.setIfNotNullOrUndefined('e', _getOpenDate(iexSplit.exDate));
+        split.setIfNotNullOrUndefined('i', iexSplit.refid);
         split.s = symbolID;
 
         if (iexSplit.ratio != null) {
-          split.r = BSON.Double(iexSplit.ratio);
+          split.setIfNotNullOrUndefined('r', BSON.Double(iexSplit.ratio));
         }
 
         return split;

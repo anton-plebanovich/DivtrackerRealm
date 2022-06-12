@@ -47,6 +47,7 @@ function getFindOperation(objects, fields) {
  */
 Object.prototype.safeExecute = async function() {
   try {
+    // 100.000 operations max
     return await this.execute();
   } catch(error) {
     if (error.message === 'Failed to execute bulk writes: no operations specified') {
@@ -135,7 +136,7 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields,
 
     if (newObjects.length < 1000) {
       console.log(`Old objects are undefined. Fetching them by '${fields}'.`);
-      const find = getFindOperation(newObjects, fields)
+      const find = getFindOperation(newObjects, fields);
       oldObjects = await this
         .find(find)
         .sort(sort)
@@ -150,7 +151,7 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields,
     oldObjects = oldObjects.sortedDeletedToTheStart();
   }
 
-  if (oldObjects == null || oldObjects === []) {
+  if (!oldObjects?.length) {
     if (insertMissing) {
       console.log(`No old objects. Just inserting new objects.`);
       return await this.insertMany(newObjects);
@@ -160,21 +161,28 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields,
     }
   }
 
-  const bulk = this.initializeUnorderedBulkOp();
   const dictionary = oldObjects.toDictionary(fields);
-  for (const newObject of newObjects) {
-    const existingObject = fields.reduce((dictionary, field) => {
-      if (dictionary != null) {
-        return dictionary[newObject[field]];
-      } else {
-        return null;
-      }
-    }, dictionary);
 
-    bulk.findAndUpdateOrInsertIfNeeded(newObject, existingObject, fields, setUpdateDate, insertMissing);
+  // Try to prevent 'pending promise returned that will never resolve/reject uncaught promise rejection: &{0xc1bac2aa90 0xc1bac2aa80}' error by splitting batch operations to chunks
+  const chunkSize = 1000;
+  const chunkedNewObjects = newObjects.chunked(chunkSize);
+  for (const [i, newObjectsChunk] of chunkedNewObjects.entries()) {
+    console.log(`Updating objects: ${i * chunkSize + newObjectsChunk.length}/${newObjects.length}`);
+    const bulk = this.initializeUnorderedBulkOp();
+    for (const newObject of newObjectsChunk) {
+      const existingObject = fields.reduce((dictionary, field) => {
+        if (dictionary != null) {
+          return dictionary[newObject[field]];
+        } else {
+          return null;
+        }
+      }, dictionary);
+  
+      bulk.findAndUpdateOrInsertIfNeeded(newObject, existingObject, fields, setUpdateDate, insertMissing);
+    }
+  
+    await bulk.safeExecute();
   }
-
-  return await bulk.safeExecute();
 };
 
 /**
@@ -248,7 +256,7 @@ Object.prototype.fullFind = async function(find) {
     let compositeFind;
     if (objectsPage != null) {
       const pageFind = { _id: { $gt: objectsPage[objectsPage.length - 1]._id } };
-      compositeFind = { $and: [pageFind, find] };
+      compositeFind = { $and: [find, pageFind] };
     } else {
       compositeFind = find;
     }
@@ -267,8 +275,12 @@ Object.prototype.fullFind = async function(find) {
  * Only non-equal fields are added to `$set` and missing fields
  * are added to `$unset`.
  */
-Object.prototype.updateFrom = function(object, setUpdateDate) {
-  object = Object.assign({}, object);
+Object.prototype.updateFrom = function(_object, setUpdateDate) {
+  if (_object == null) {
+    _logAndThrow(`Unable to compute update from 'null'. This: ${this}`);
+  }
+
+  const object = Object.assign({}, _object);
   delete object._id;
   delete object.u;
 
@@ -297,6 +309,12 @@ Object.prototype.updateFrom = function(object, setUpdateDate) {
   let hasUnsets = false;
   const oldEntries = Object.entries(object);
   for (const [key, oldValue] of oldEntries) {
+    // Ignore 'null' if found
+    if (oldValue == null) { 
+      console.error(`[updateFrom] Unexpected 'null' value for '${key}' key: ${{ this: this, _object: _object }.stringify()}`);
+      continue;
+    }
+
     const newValue = set[key];
     if (newValue == null) {
       unset[key] = "";
@@ -318,7 +336,7 @@ Object.prototype.updateFrom = function(object, setUpdateDate) {
     update.$currentDate = { u: true };
   }
 
-  console.logData(`Updating`, { from: object, to: this, update: update });
+  console.logData(`Updating`, { from: _object, to: this, update: update });
 
   return update;
 };
@@ -706,12 +724,25 @@ Object.prototype.stringify = function() {
 };
 
 /**
+ * Sets value for a key only if it is not null or undefined.
+ */
+Object.prototype.setIfNotNullOrUndefined = function(key, value) {
+  if (value != null) {
+    this[key] = value;
+  }
+}
+
+/**
  * Checks database objects for equality. 
  * Objects are considered equal if all non-null values are equal.
  * Object values are compared using `toString()` comparison.
  * @returns {boolean} Comparison result.
  */
 Object.prototype.isEqual = function(rhs) {
+  if (rhs == null) {
+    return false;
+  }
+  
   const lhsEntries = Object.entries(this).filter(([key, value]) => value != null);
   const rhsEntries = Object.entries(rhs).filter(([key, value]) => value != null);
 

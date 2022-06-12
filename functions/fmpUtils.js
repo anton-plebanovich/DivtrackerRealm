@@ -537,18 +537,18 @@ function _fixFMPCompany(fmpCompany, symbolID) {
     company._id = symbolID;
 
     if (fmpCompany.currency) {
-      company.c = fmpCompany.currency.toUpperCase();
+      company.setIfNotNullOrUndefined('c', fmpCompany.currency.toUpperCase());
     } else {
       console.error(`No currency '${symbolID}': ${fmpCompany.stringify()}`)
       company.c = "-";
     }
 
     if (fmpCompany.industry) {
-      company.i = fmpCompany.industry;
+      company.setIfNotNullOrUndefined('i', fmpCompany.industry);
     }
 
     if (fmpCompany.companyName) {
-      company.n = fmpCompany.companyName;
+      company.setIfNotNullOrUndefined('n', fmpCompany.companyName);
     } else {
       console.error(`No company name '${symbolID}': ${fmpCompany.stringify()}`)
       company.n = "N/A";
@@ -611,9 +611,9 @@ function _fixFMPDividends(fmpDividends, symbolID) {
       .sorted((l, r) => l.date.localeCompare(r.date))
       .map(fmpDividend => {
         const dividend = {};
-        dividend.e = _getOpenDate(fmpDividend.date);
-        dividend.d = _getOpenDate(fmpDividend.declarationDate);
-        dividend.p = _getOpenDate(fmpDividend.paymentDate);
+        dividend.setIfNotNullOrUndefined('e', _getOpenDate(fmpDividend.date));
+        dividend.setIfNotNullOrUndefined('d', _getOpenDate(fmpDividend.declarationDate));
+        dividend.setIfNotNullOrUndefined('p', _getOpenDate(fmpDividend.paymentDate));
         dividend.s = symbolID;
 
         const amount = _getFmpDividendAmount(fmpDividend);
@@ -785,8 +785,8 @@ function _fixFMPHistoricalPrices(fmpHistoricalPrices, symbolID) {
       .map(month => {
         const averagePrice = averagePriceByMonth[month]
         const historicalPrice = {};
-        historicalPrice.c = BSON.Double(averagePrice);
-        historicalPrice.d = _getCloseDate(month);
+        historicalPrice.setIfNotNullOrUndefined('c', BSON.Double(averagePrice));
+        historicalPrice.setIfNotNullOrUndefined('d', _getCloseDate(month));
         historicalPrice.s = symbolID;
 
         return historicalPrice;
@@ -814,14 +814,14 @@ function _fixFMPQuote(fmpQuote, symbolID) {
     quote._id = symbolID;
 
     if (fmpQuote.price != null) {
-      quote.l = fmpQuote.price;
+      quote.setIfNotNullOrUndefined('l', fmpQuote.price);
     } else {
       console.error(`No quote price for '${symbolID}': ${fmpQuote.stringify()}`)
       return null
     }
 
     if (fmpQuote.pe != null) {
-      quote.p = BSON.Double(fmpQuote.pe);
+      quote.setIfNotNullOrUndefined('p', BSON.Double(fmpQuote.pe));
     }
 
     return quote;
@@ -854,11 +854,12 @@ function _fixFMPSplits(fmpSplits, symbolID) {
       .filterNullAndUndefined()
       .map(fmpSplit => {
         const split = {};
-        split.e = _getOpenDate(fmpSplit.date);
+        split.setIfNotNullOrUndefined('e', _getOpenDate(fmpSplit.date));
         split.s = symbolID;
 
         if (fmpSplit.denominator > 0 && fmpSplit.numerator > 0) {
-          split.r = BSON.Double(fmpSplit.denominator / fmpSplit.numerator);
+          const ratio = BSON.Double(fmpSplit.denominator / fmpSplit.numerator);
+          split.setIfNotNullOrUndefined('r', ratio);
         } else {
           console.error(`No ratio for split '${symbolID}': ${fmpSplit.stringify()}`)
           return null
@@ -894,9 +895,9 @@ function _fixFMPSymbols(fmpSymbols) {
       .filter(fmpSymbol => fmpSymbol.exchangeShortName === "MCX" || fmpSymbol.type === "fund")
       .map(fmpSymbol => {
         const symbol = {};
-        symbol.c = fmpSymbol.exchangeShortName;
-        symbol.n = fmpSymbol.name;
-        symbol.t = fmpSymbol.symbol;
+        symbol.setIfNotNullOrUndefined('c', fmpSymbol.exchangeShortName);
+        symbol.setIfNotNullOrUndefined('n', fmpSymbol.name);
+        symbol.setIfNotNullOrUndefined('t', fmpSymbol.symbol);
 
         return symbol;
       });

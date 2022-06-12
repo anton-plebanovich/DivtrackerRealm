@@ -163,8 +163,8 @@ async function updateDivtrackerSymbols() {
   const newSymbols = iexSymbols.map(iexSymbol => {
     const symbol = {};
     symbol._id = iexSymbol._id;
-    symbol.n = iexSymbol.name;
-    symbol.t = iexSymbol.symbol;
+    symbol.setIfNotNullOrUndefined('n', iexSymbol.name);
+    symbol.setIfNotNullOrUndefined('t', iexSymbol.symbol);
 
     // Enable flag should be only set if it's `false`
     if (!iexSymbol.isEnabled) {
