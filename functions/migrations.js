@@ -201,7 +201,7 @@ async function fetch_refid_for_IEX_dividends() {
           return null;
         }
       }, buckets);
-
+      
       let existingDividend; 
       if (bucket == null) {
         existingDividend = null;
@@ -210,13 +210,19 @@ async function fetch_refid_for_IEX_dividends() {
       } else {
         existingDividend = bucket.find(dividend => dividend.f === newDividend.f);
         if (existingDividend == null) {
-          existingDividend = bucket.find(dividend => dividend.a === newDividend.a);
+          const lowerAmount = newDividend.a * 0.9;
+          const upperAmount = newDividend.a * 1.1;    
+          existingDividend = bucket.find(dividend => dividend.a > lowerAmount && dividend.a < upperAmount);
         }
         if (existingDividend == null) {
-          existingDividend = bucket.find(dividend => dividend.p === newDividend.p);
+          existingDividend = bucket.find(dividend => compareOptionalDates(dividend.p, newDividend.p));
         }
         if (existingDividend == null) {
-          throw `Unable to determine existingDividend: ${{ newDividend: newDividend, bucket: bucket }.stringify()}`;
+          console.error(`Bucket`);
+          for (const dividend of bucket) {
+            console.error(dividend.stringify());
+          }
+          throw `Unable to determine existingDividend for newDividend: ${newDividend.stringify()}`;
         }
       }
   
