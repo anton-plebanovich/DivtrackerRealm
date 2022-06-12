@@ -23,7 +23,7 @@ async function refid_migration() {
 
   return await Promise.all([
     fetch_refid_for_IEX_splits(),
-    fetch_refid_for_IEX_future_dividends(),
+    fetch_refid_for_IEX_dividends(),
   ]);
 }
 
@@ -147,10 +147,31 @@ function fixSplitsWithDuplicates(iexSplits, symbolID) {
   }
 }
 
-async function fetch_refid_for_IEX_future_dividends() {
+async function fetch_refid_for_IEX_dividends() {
+  // We can't update all dividends because it will cost more than we can afford.
+  // So instead, we update only future dividends and 1 past dividend.
+  // There are also some known tickers with drifting value that we also update to fix their amount.
+
   const shortSymbols = await getAllShortSymbols();
-  const range = '10y';
-  const dividends = await fetchDividendsWithDuplicates(shortSymbols, true, range, null);
+
+  const specificTickers = ['BTI', 'QCOM'];
+  const specificShortSymbols = shortSymbols.filter(x => specificTickers.includes(x.t));
+
+  const [
+    futureDividends,
+    recentDividends,
+    specificDividends,
+  ] = await Promise.all([
+    fetchDividendsWithDuplicates(shortSymbols, true, '10y', null),
+    fetchDividendsWithDuplicates(shortSymbols, false, '1y', 1),
+    fetchDividendsWithDuplicates(specificShortSymbols, false, '10y', null),
+  ]);
+
+
+  const dividends = futureDividends
+    .concat(recentDividends)
+    .concat(specificDividends);
+
   const dividendsByRefid = dividends.toBuckets('refid');
   const dedupedDividends = [];
   const dupedDividends = [];
@@ -163,7 +184,7 @@ async function fetch_refid_for_IEX_future_dividends() {
   const collection = db.collection("dividends");
 
   console.log(`First, set refid on existing dividends`);
-  await collection.safeUpdateMany(dividends, null, ['s', 'e', 'a', 'f'], true, false);
+  await collection.safeUpdateMany(dividends, null, ['s', 'e', 'f'], true, false);
 
   console.log(`Second, update with deduped on 'i' field. This may fix dividend date if duplicate was previously deleted.`);
   await collection.safeUpdateMany(dedupedDividends, null, 'i', true, false);
