@@ -9,10 +9,23 @@
 // https://docs.mongodb.com/manual/reference/method/Bulk.find.removeOne/
 // https://docs.mongodb.com/manual/reference/method/Bulk.insert/
 
-exports = async function() {
+exports = async function(migration) {
+  context.functions.execute("iexUtils");
+
+  logVerbose = true;
+  logData = true;
+
   try {
-    await old_date_format_migration();
-    await refid_migration();
+    if (migration === 'old_date_format_migration') {
+      await old_date_format_migration();
+    } else if (migration === 'fetch_refid_for_IEX_splits') {
+      await fetch_refid_for_IEX_splits();
+    } else if (migration === 'fetch_refid_for_IEX_dividends') {
+      await fetch_refid_for_IEX_dividends();
+    } else {
+      throw `Unexpected migration: ${migration}`;
+    }
+    
   } catch(error) {
     console.error(error);
   }
@@ -24,8 +37,6 @@ exports = async function() {
  * 2021-07-08T12:30:00.000+00:00 -> 2021-07-08T14:30:00.000+00:00
  */
 async function old_date_format_migration() {
-  console.log('old_date_format_migration');
-  context.functions.execute("iexUtils");
 
   ////////////////////////////////// Dividends
   const dividendsCollection = db.collection("dividends");
@@ -54,19 +65,6 @@ async function old_date_format_migration() {
   });
 
   await splitsCollection.safeUpdateMany(splits, null, '_id', true, false);
-}
-
-async function refid_migration() {
-  console.log('refid_migration');
-  context.functions.execute("iexUtils");
-
-  logVerbose = true;
-  logData = true;
-
-  return await Promise.all([
-    fetch_refid_for_IEX_splits(),
-    fetch_refid_for_IEX_dividends(),
-  ]);
 }
 
 async function fetch_refid_for_IEX_splits() {

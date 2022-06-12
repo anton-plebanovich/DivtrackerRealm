@@ -1,9 +1,13 @@
 
-# 2022-06-XX | IEX calendar splits and refid for dividends
+# 2022-06-XX | Old format date, IEX calendar splits, and refid for dividends
  
 - Release new server
-- Execute `dt call-realm-function --environment sandbox-anton --function migrations --verbose`
+- Execute `dt call-realm-function --environment sandbox-anton --function migrations --arg old_date_format_migration --verbose`
+- Check `divtracker-v2.dividends` collection using sort operator: `{ e: 1 }`. There should be no `12` hour dates.
+- Check `divtracker-v2.splits` collection using sort operator: `{ e: 1 }`. There should be no `12` hour dates.
+- Execute `dt call-realm-function --environment sandbox-anton --function migrations --arg fetch_refid_for_IEX_splits --verbose`
 - Check that all splits are updated using find operator in the `divtracker-v2.splits` collection: `{ i: null }`
+- Execute `dt call-realm-function --environment sandbox-anton --function migrations --arg fetch_refid_for_IEX_dividends --verbose`
 - Check that all future dividends for symbols are updated using find operator in the `divtracker-v2.dividends` collection: `{ i: null, e: { $gte: new Date() } }`, `{ i: null, s: { $in: [ObjectId('61c42676a2660ba02db39480'), ObjectId('61c42676a2660ba02db3afb2')] } }`
 - Execute `dt call-realm-function --environment sandbox-anton --function updateSplitsV2 --verbose`
 - Execute `dt call-realm-function --environment sandbox-anton --function updateDividendsFuture --verbose`
