@@ -10,7 +10,11 @@
 // https://docs.mongodb.com/manual/reference/method/Bulk.insert/
 
 exports = async function() {
-  return await refid_migration();
+  try {
+    return await refid_migration();
+  } catch(error) {
+    console.error(error);
+  }
 };
 
 ////////////////////////////////////////////////////// 2022-06-XX IEX refid for splits and dividends
@@ -269,7 +273,7 @@ function removeDuplicatedDividends(dividends) {
       } else if (r.p == null) {
         return 1;
       } else {
-        return r.e.localeCompare(l.e);
+        return r.e - l.e;
       }
     });
 
