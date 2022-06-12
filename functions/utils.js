@@ -255,7 +255,7 @@ Object.prototype.fullFind = async function(find) {
 
     objectsPage = await this.find(compositeFind).sort({ _id: 1 }).limit(pageSize).toArray();
     console.log(`Full fetch objects length: ${objectsPage.length}`);
-    objects.push(objectsPage);
+    objects.concat(...objectsPage);
   } while (objectsPage.length >= pageSize);
 
   return objects;
