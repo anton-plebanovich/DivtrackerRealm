@@ -284,9 +284,6 @@ Object.prototype.updateFrom = function(_object, setUpdateDate) {
   delete object._id;
   delete object.u;
 
-  // We should not unset deleted flag since it's manual fix operation and has higher priority from updates.
-  delete object.x;
-
   const set = Object.assign({}, this);
   delete set._id;
   delete set.u;
@@ -306,7 +303,6 @@ Object.prototype.updateFrom = function(_object, setUpdateDate) {
   }
 
   // Collect keys to unset
-  let hasUnsets = false;
   const oldEntries = Object.entries(object);
   for (const [key, oldValue] of oldEntries) {
     // Ignore 'null' if found
@@ -318,15 +314,19 @@ Object.prototype.updateFrom = function(_object, setUpdateDate) {
     const newValue = set[key];
     if (newValue == null) {
       unset[key] = "";
-      hasUnsets = true;
 
     } else if (newValue.isEqual(oldValue)) {
       delete set[key];
     }
   }
+  
+  // We should not unset deleted flag since it's manual fix operation and has higher priority from updates.
+  if (unset.x != null) {
+    delete unset.x;
+  }
 
   let update;
-  if (hasUnsets) {
+  if (Object.keys(unset).length) {
     update = { $set: set, $unset: unset };
   } else {
     update = { $set: set };
