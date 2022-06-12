@@ -32,21 +32,12 @@ async function fetch_refid_for_IEX_splits() {
   const shortSymbols = await getAllShortSymbols();
   const range = '10y';
   const splits = await fetchSplitsWithDuplicates(shortSymbols, range, false);
-  const splitsByRefid = splits.toBuckets('refid');
-  const dedupedSplits = [];
-  const dupedSplits = [];
-  for (const splits of Object.values(splitsByRefid)) {
-    const sortedSplits = splits.sorted((l, r) => r.e - l.e);
-    dedupedSplits.push(sortedSplits.shift());
-    dupedSplits.push(...sortedSplits);
-  }
-
   const collection = db.collection("splits");
 
   console.log(`First, set refid on existing splits`);
   await collection.safeUpdateMany(splits, null, ['e', 's'], true, false);
 
-  // Backward compatibility, we had different hour previously so need to also check that
+  console.log(`Second, backward compatibility, we had different hour previously so need to also check that`);
   const backwardCompatibilitySplits = splits.map(split => {
     const newSplit = Object.assign({}, split);
     const date = new Date(newSplit.e);
@@ -57,11 +48,20 @@ async function fetch_refid_for_IEX_splits() {
   });
   await collection.safeUpdateMany(backwardCompatibilitySplits, null, ['e', 's'], true, false);
 
-  console.log(`Second, update with deduped on 'i' field. This may fix split date if duplicate was previously deleted.`);
+  console.log(`Third, update with deduped on 'i' field. This may fix split date if duplicate was previously deleted.`);
+  const splitsByRefid = splits.toBuckets('i');
+  const dedupedSplits = [];
+  const dupedSplits = [];
+  for (const splits of Object.values(splitsByRefid)) {
+    const sortedSplits = splits.sorted((l, r) => r.e - l.e);
+    dedupedSplits.push(sortedSplits.shift());
+    dupedSplits.push(...sortedSplits);
+  }
+
   await collection.safeUpdateMany(dedupedSplits, null, 'i', true, false);
 
   // This is dangerous because it might delete second split record if the first one is already deleted.
-  // console.log(`Third, delete duplicates if any left`)
+  // console.log(`Forth, delete duplicates if any left`)
   // const bulk = collection.initializeUnorderedBulkOp();
   // for (const dupedSplit of dupedSplits) {
   //   const find = ['e', 's'].reduce((find, field) => {
@@ -173,21 +173,18 @@ async function fetch_refid_for_IEX_dividends() {
 
   console.log(`Updating refid field for '${dividends.length}' dividends`);
 
-  const dividendsByRefid = dividends.toBuckets('refid');
-  const dedupedDividends = [];
-  const dupedDividends = [];
-  for (const dividends of Object.values(dividendsByRefid)) {
-    const sortedDividends = dividends.sorted((l, r) => r.e - l.e);
-    dedupedDividends.push(sortedDividends.shift());
-    dupedDividends.push(...sortedDividends);
-  }
-
   const collection = db.collection("dividends");
 
   console.log(`First, set refid on existing dividends`);
   await collection.safeUpdateMany(dividends, null, ['s', 'e', 'f'], true, false);
 
   console.log(`Second, update with deduped on 'i' field. This may fix dividend date if duplicate was previously deleted.`);
+  const dividendsByRefid = dividends.toBuckets('i');
+  const dedupedDividends = [];
+  for (const dividends of Object.values(dividendsByRefid)) {
+    const sortedDividends = dividends.sorted((l, r) => r.e - l.e);
+    dedupedDividends.push(sortedDividends.shift());
+  }
   await collection.safeUpdateMany(dedupedDividends, null, 'i', true, false);
 
   console.log(`Success refid field update for '${dividends.length}' dividends`);
