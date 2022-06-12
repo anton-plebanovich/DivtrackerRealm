@@ -179,12 +179,7 @@ async function fetch_refid_for_IEX_dividends() {
   await collection.safeUpdateMany(dividends, null, ['s', 'e', 'f'], true, false);
 
   console.log(`Second, update with deduped on 'i' field. This may fix dividend date if duplicate was previously deleted.`);
-  const dividendsByRefid = dividends.toBuckets('i');
-  const dedupedDividends = [];
-  for (const dividends of Object.values(dividendsByRefid)) {
-    const sortedDividends = dividends.sorted((l, r) => r.e - l.e);
-    dedupedDividends.push(sortedDividends.shift());
-  }
+  const dedupedDividends = removeDuplicatedDividends(dividends);
   console.log(`Fixing dividend data for '${dedupedDividends.length}' dividends`);
   await collection.safeUpdateMany(dedupedDividends, null, 'i', true, false);
 
@@ -261,4 +256,30 @@ function fixDividendsWithDuplicates(iexDividends, symbolID) {
     console.error(`Unable to map dividends: ${error}`);
     return [];
   }
+}
+
+function removeDuplicatedDividends(dividends) {
+  const buckets = dividends.toBuckets('i');
+  const result = [];
+  for (const bucket of Object.values(buckets)) {
+    // Prefer the one with payment date and earlier ones (descending order)
+    const sortedBucket = bucket.sorted((l, r) => {
+      if (l.p == null) {
+        return -1;
+      } else if (r.p == null) {
+        return 1;
+      } else {
+        return r.e.localeCompare(l.e);
+      }
+    });
+
+    if (sortedBucket.length > 1) {
+      const duplicate = sortedBucket[0];
+      console.error(`Duplicate dividend for ${duplicate.t}: ${duplicate.stringify()}`);
+    }
+
+    result.push(sortedBucket[sortedBucket.length - 1]);
+  }
+
+  return result;
 }
