@@ -180,7 +180,51 @@ async function fetch_refid_for_IEX_dividends() {
   const collection = db.collection("dividends");
 
   console.log(`First, set refid on existing dividends`);
-  await collection.safeUpdateMany(dividends, null, ['s', 'e', 'f'], true, false);
+  const oldObjects = await collection
+    .fullFind({})
+    .then(x => x.sortedDeletedToTheStart());
+
+  const fields = ['s', 'e'];
+  const buckets = oldObjects.toBuckets(fields);
+  
+  // Try to prevent 'pending promise returned that will never resolve/reject uncaught promise rejection: &{0xc1bac2aa90 0xc1bac2aa80}' error by splitting batch operations to chunks
+  const chunkSize = 1000;
+  const chunkedNewDividends = dividends.chunked(chunkSize);
+  for (const [i, newDividendsChunk] of chunkedNewDividends.entries()) {
+    console.log(`Updating dividends: ${i * chunkSize + newDividendsChunk.length}/${newObjects.length}`);
+    const bulk = this.initializeUnorderedBulkOp();
+    for (const newDividend of newDividendsChunk) {
+      const bucket = fields.reduce((buckets, field) => {
+        if (buckets != null) {
+          return buckets[newDividend[field]];
+        } else {
+          return null;
+        }
+      }, buckets);
+
+      let existingDividend; 
+      if (bucket == null) {
+        existingDividend = null;
+      } else if (bucket.length === 1) {
+        existingDividend = bucket[0];
+      } else {
+        existingDividend = bucket.find(dividend => dividend.f === newDividend.f);
+        if (existingDividend == null) {
+          existingDividend = bucket.find(dividend => dividend.a === newDividend.a);
+        }
+        if (existingDividend == null) {
+          existingDividend = bucket.find(dividend => dividend.p === newDividend.p);
+        }
+        if (existingDividend == null) {
+          throw `Unable to determine existingDividend: ${{ newDividend: newDividend, bucket: bucket }.stringify()}`;
+        }
+      }
+  
+      bulk.findAndUpdateOrInsertIfNeeded(newDividend, existingDividend, fields, true, false);
+    }
+  
+    await bulk.safeExecute();
+  }
 
   console.log(`Second, update with deduped on 'i' field. This may fix dividend date if duplicate was previously deleted.`);
   const dedupedDividends = removeDuplicatedDividends(dividends);
@@ -279,7 +323,7 @@ function removeDuplicatedDividends(dividends) {
 
     if (sortedBucket.length > 1) {
       const duplicate = sortedBucket[0];
-      console.error(`Duplicate dividend for ${duplicate.t}: ${duplicate.stringify()}`);
+      console.error(`Duplicate dividend for ${duplicate.s}: ${duplicate.stringify()}`);
     }
 
     result.push(sortedBucket[sortedBucket.length - 1]);

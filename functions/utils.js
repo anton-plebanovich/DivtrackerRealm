@@ -535,30 +535,64 @@ Array.prototype.dictionaryMapValues = function(arg) {
 
 /**
  * Creates dictionary from objects using provided `key` or function as source for keys and objects with the same keys are collected to an array.
- * @param {function|string} arg Key map function or key.
+ * @param {function|string|array} arg Key map function or key.
  */
 Array.prototype.toBuckets = function(arg) {
   let getKey;
+  let isMultidimensional = false;
   if (typeof arg === 'string' || arg instanceof String) {
     getKey = (value) => value[arg];
   } else if (arg == null) {
     getKey = (value) => value;
+  } else if (Object.prototype.toString.call(arg) === '[object Array]') {
+    isMultidimensional = true;
+    getKey = (object) => arg.map(key => object[key]);
   } else {
     getKey = arg;
   }
 
-  return this.reduce((dictionary, value) => {
-    const key = getKey(value);
-    if (key == null) { return dictionary; }
-
-    const bucket = dictionary[key];
-    if (bucket == null) {
-      dictionary[key] = [value];
-    } else {
-      bucket.push(value);
+  if (isMultidimensional) {
+    const dictionary = {};
+    for (const element of this) {
+      const keys = getKey(element);
+      if (keys == null) { continue; }
+      
+      const lastIndex = keys.length - 1;
+      let currentDictionary = dictionary;
+      for (const [i, key] of keys.entries()) {
+        if (i == lastIndex) {
+          const bucket = currentDictionary[key];
+          if (bucket == null) {
+            currentDictionary[key] = [element];
+          } else {
+            bucket.push(element);
+          }
+          
+        } else {
+          if (currentDictionary[key] == null) {
+            currentDictionary[key] = {};
+          }
+          currentDictionary = currentDictionary[key];
+        }
+      }
     }
+
     return dictionary;
-  }, {});
+
+  } else {
+    return this.reduce((dictionary, value) => {
+      const key = getKey(value);
+      if (key == null) { return dictionary; }
+  
+      const bucket = dictionary[key];
+      if (bucket == null) {
+        dictionary[key] = [value];
+      } else {
+        bucket.push(value);
+      }
+      return dictionary;
+    }, {});
+  }
 };
 
 /**
