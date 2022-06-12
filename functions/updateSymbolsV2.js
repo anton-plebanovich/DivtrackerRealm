@@ -62,11 +62,7 @@ async function updateIEXSymbols() {
   }
 
   const newSymbolIDs = newSymbols.map(x => x.symbol);
-
-  const oldSymbols = await iexCollection.find({}).toArray();
-  if (oldSymbols.length >= 50000) {
-    throw `Old IEX symbols count '${oldSymbols.length}' is huge. Pagination is not supported. Please update the query or logic.`;
-  }
+  const oldSymbols = await iexCollection.fullFind({}).toArray();
 
   // iexId - is always unique, small coverage
   // figi - mostly unique but may have duplicates, big coverage
@@ -163,11 +159,7 @@ async function updateDivtrackerSymbols() {
   console.log(`Updating Divtracker symbols`);
   const iexCollection = iex.collection("symbols");
 
-  const iexSymbols = await iexCollection.find({}).toArray();
-  if (iexSymbols.length >= 50000) {
-    throw `IEX symbols count '${iexSymbols.length}' is huge. Pagination is not supported. Please update the query or logic.`;
-  }
-
+  const iexSymbols = await iexCollection.fullFind({}).toArray();
   const newSymbols = iexSymbols.map(iexSymbol => {
     const symbol = {};
     symbol._id = iexSymbol._id;
@@ -190,10 +182,7 @@ async function updateDivtrackerSymbols() {
     return;
   }
 
-  const oldSymbols = await divtrackerCollection.find({}).toArray();
-  if (oldSymbols.length >= 50000) {
-    throw `Old divtracker symbols count '${oldSymbols.length}' is huge. Pagination is not supported. Please update the query or logic.`;
-  }
+  const oldSymbols = await divtrackerCollection.fullFind({}).toArray();
 
   // Sanity check that allows us to skip removing of excessive documents.
   if (oldSymbols.count > newSymbols.count) {

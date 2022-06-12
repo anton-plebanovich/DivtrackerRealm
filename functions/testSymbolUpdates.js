@@ -379,7 +379,7 @@ async function checkMergedSymbol(testName, iexSymbol, fmpSymbol, mainSymbol, id,
 }
 
 async function getMergedSymbol(testName) {
-  const mergedSymbols = await atlas.db("merged").collection("symbols").find({}).toArray();
+  const mergedSymbols = await atlas.db("merged").collection("symbols").fullFind({}).toArray();
   if (mergedSymbols.length !== 1) {
     throw `[${testName}] Unexpected merged symbols length: ${mergedSymbols.stringify()}`;
   }

@@ -144,13 +144,9 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields,
     } else {
       console.log(`Old objects are undefined. Fetching them by requesting all existing objects.`);
       oldObjects = await this
-        .find({})
+        .fullFind({})
         .sort(sort)
         .toArray();
-
-      if (oldObjects.length >= 50000) {
-        throw `Old objects count '${oldObjects.length}' is huge. Pagination is not supported. Please update the query or logic.`;
-      }
     }
   } else {
     oldObjects = oldObjects.sortedDeletedToTheStart();
@@ -237,6 +233,35 @@ Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, fields, 
       }
     }
   }
+};
+
+/**
+ * Bypass find limit of 50000 objects by fetching all results successively  
+ */
+Object.prototype.fullFind = function(find) {
+  let objectsPage;
+  const objects = [];
+  const pageSize = 50000;
+  do {
+    let compositeFind;
+    if (objectsPage != null) {
+      const pageFind = { _id: { $gt: objectsPage[objectsPage.length - 1]._id } };
+      compositeFind = { $and: [pageFind, find] };
+    } else {
+      compositeFind = find;
+    }
+
+    objectsPage = await this.find(compositeFind).sort({ _id: 1 }).limit(pageSize).toArray();
+    console.log(`Full fetch objects length: ${objectsPage.length}`);
+    if (objectsPage.length) {
+      objects.push(objectsPage);
+    } else {
+      return objects;
+    }
+  
+  } while (objectsPage.length >= pageSize);
+
+  return objectsPage;
 };
 
 /**
