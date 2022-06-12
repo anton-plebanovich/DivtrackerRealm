@@ -807,7 +807,8 @@ function _removeDuplicatedIEXSplits(iexSplits) {
     result.push(sortedBucket[sortedBucket.length - 1]);
   }
 
-  return result;
+  // [MCHP] We may receive splits with different `refid` but the same `exDate`: 
+  return result.uniqueUnordered('exDate');
 }
 
 /** 
