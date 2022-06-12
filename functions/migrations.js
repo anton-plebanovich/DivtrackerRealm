@@ -171,6 +171,8 @@ async function fetch_refid_for_IEX_dividends() {
     .concat(recentDividends)
     .concat(specificDividends);
 
+  console.log(`Updating refid field for '${dividends.length}' dividends`);
+
   const dividendsByRefid = dividends.toBuckets('refid');
   const dedupedDividends = [];
   const dupedDividends = [];
@@ -187,6 +189,8 @@ async function fetch_refid_for_IEX_dividends() {
 
   console.log(`Second, update with deduped on 'i' field. This may fix dividend date if duplicate was previously deleted.`);
   await collection.safeUpdateMany(dedupedDividends, null, 'i', true, false);
+
+  console.log(`Success refid field update for '${dividends.length}' dividends`);
 }
 
 async function fetchDividendsWithDuplicates(shortSymbols, isFuture, range, limit) {
