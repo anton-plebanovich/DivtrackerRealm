@@ -515,6 +515,7 @@ function _fixDividends(iexDividends, symbolID) {
         dividend.d = _getOpenDate(iexDividend.declaredDate);
         dividend.e = _getOpenDate(iexDividend.exDate);
         dividend.p = _getOpenDate(iexDividend.paymentDate);
+        dividend.i = iexDividend.refid;
         dividend.s = symbolID;
 
         if (iexDividend.amount != null) {
