@@ -10,16 +10,24 @@
 // https://docs.mongodb.com/manual/reference/method/Bulk.insert/
 
 exports = async function() {
-  return await fetch_refid_for_IEX_splits();
+  return await refid_migration();
 };
 
-////////////////////////////////////////////////////// 2022-06-XX IEX refid for splits
+////////////////////////////////////////////////////// 2022-06-XX IEX refid for splits and dividends
 
-async function fetch_refid_for_IEX_splits() {
+async function refid_migration() {
   context.functions.execute("iexUtils");
 
   logVerbose = true;
   logData = true;
+
+  return await Promise.all([
+    fetch_refid_for_IEX_splits(),
+    fetch_refid_for_IEX_future_dividends(),
+  ]);
+}
+
+async function fetch_refid_for_IEX_splits() {
 
   const shortSymbols = await getAllShortSymbols();
   const range = '10y';
@@ -27,9 +35,8 @@ async function fetch_refid_for_IEX_splits() {
   const splitsByRefid = splits.toBuckets('refid');
   const dedupedSplits = [];
   const dupedSplits = [];
-  for (const [refid, splits] of Object.entries(splitsByRefid)) {
+  for (const splits of Object.values(splitsByRefid)) {
     const sortedSplits = splits.sorted((l, r) => r.e - l.e);
-    const split = sortedSplits[0];
     dedupedSplits.push(sortedSplits.shift());
     dupedSplits.push(...sortedSplits);
   }
@@ -136,6 +143,100 @@ function fixSplitsWithDuplicates(iexSplits, symbolID) {
 
   } catch (error) {
     console.error(`Unable to map splits: ${error}`);
+    return [];
+  }
+}
+
+async function fetch_refid_for_IEX_future_dividends() {
+  const shortSymbols = await getAllShortSymbols();
+  const range = '10y';
+  const dividends = await fetchDividendsWithDuplicates(shortSymbols, true, range, null);
+  const dividendsByRefid = dividends.toBuckets('refid');
+  const dedupedDividends = [];
+  const dupedDividends = [];
+  for (const dividends of Object.values(dividendsByRefid)) {
+    const sortedDividends = dividends.sorted((l, r) => r.e - l.e);
+    dedupedDividends.push(sortedDividends.shift());
+    dupedDividends.push(...sortedDividends);
+  }
+
+  const collection = db.collection("dividends");
+
+  console.log(`First, set refid on existing dividends`);
+  await collection.safeUpdateMany(dividends, null, ['s', 'e', 'a', 'f'], true, false);
+
+  console.log(`Second, update with deduped on 'i' field. This may fix dividend date if duplicate was previously deleted.`);
+  await collection.safeUpdateMany(dedupedDividends, null, 'i', true, false);
+}
+
+async function fetchDividendsWithDuplicates(shortSymbols, isFuture, range, limit) {
+  throwIfUndefinedOrNull(shortSymbols, `fetchDividends shortSymbols`);
+  throwIfUndefinedOrNull(isFuture, `fetchDividends isFuture`);
+  if (!shortSymbols.length) { return []; }
+
+  if (range == null) {
+    range = defaultRange;
+  }
+
+  const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
+
+  const parameters = { range: range };
+  if (isFuture) {
+    parameters.calendar = 'true';
+  }
+  if (limit != null) {
+    parameters.limit = limit;
+  }
+  
+  // https://cloud.iexapis.com/stable/stock/market/batch?token=pk_9f1d7a2688f24e26bb24335710eae053&types=dividends&symbols=AAPL,AAP&range=6y&calendar=true
+  // https://cloud.iexapis.com/stable/stock/market/batch?token=pk_9f1d7a2688f24e26bb24335710eae053&types=dividends&symbols=AAPL,AAP&range=6y
+  // https://sandbox.iexapis.com/stable/stock/market/batch?token=Tpk_581685f711114d9f9ab06d77506fdd49&types=dividends&symbols=AAPL,AAP&range=6y&calendar=true
+  // https://sandbox.iexapis.com/stable/stock/market/batch?token=Tpk_581685f711114d9f9ab06d77506fdd49&types=dividends&symbols=AAPL,AAP&range=6y
+  return await iexFetchBatchAndMapArray('dividends', tickers, idByTicker, fixDividendsWithDuplicates, parameters);
+}
+
+function fixDividendsWithDuplicates(iexDividends, symbolID) {
+  try {
+    throwIfUndefinedOrNull(iexDividends, `fixDividendsWithDuplicates iexDividends`);
+    throwIfUndefinedOrNull(symbolID, `fixDividendsWithDuplicates uniqueID`);
+    if (!iexDividends.length) { 
+      console.logVerbose(`IEX dividends are empty for ${symbolID}. Nothing to fix.`);
+      return []; 
+    }
+
+    console.logVerbose(`Mapping '${iexDividends.length}' IEX dividends for ${symbolID}`);
+    const dividends = iexDividends
+      .filterNullAndUndefined()
+      .map(iexDividend => {
+        const dividend = {};
+        dividend.d = getOpenDate(iexDividend.declaredDate);
+        dividend.e = getOpenDate(iexDividend.exDate);
+        dividend.p = getOpenDate(iexDividend.paymentDate);
+        dividend.i = iexDividend.refid;
+        dividend.s = symbolID;
+
+        if (iexDividend.amount != null) {
+          dividend.a = BSON.Double(iexDividend.amount);
+        }
+
+        // We add only the first letter of a frequency
+        if (iexDividend.frequency != null) {
+          dividend.f = iexDividend.frequency.charAt(0);
+        }
+    
+        // We do not add `USD` frequencies to the database.
+        if (iexDividend.currency != null && iexDividend.currency !== "USD") {
+          dividend.c = iexDividend.currency.toUpperCase();
+        }
+    
+        return dividend;
+      });
+
+    console.logVerbose(`Returning '${dividends.length}' dividends for ${symbolID}`);
+    return dividends;
+
+  } catch(error) {
+    console.error(`Unable to map dividends: ${error}`);
     return [];
   }
 }
