@@ -159,6 +159,7 @@ fetchSymbols = async function fetchSymbols() {
  */
  fetchCompanies = async function fetchCompanies(shortSymbols) {
   throwIfUndefinedOrNull(shortSymbols, `fetchCompanies shortSymbols`);
+  if (!shortSymbols.length) { return []; }
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
 
   // https://cloud.iexapis.com/stable/stock/market/batch?token=pk_9f1d7a2688f24e26bb24335710eae053&types=company&symbols=AAPL,AAP
@@ -173,9 +174,10 @@ fetchSymbols = async function fetchSymbols() {
  * @param {string} range Range to fetch.
  * @returns {[Dividend]} Array of requested objects.
  */
-fetchDividends = async function fetchDividends(shortSymbols, isFuture, range) {
+fetchDividends = async function fetchDividends(shortSymbols, isFuture, range, limit) {
   throwIfUndefinedOrNull(shortSymbols, `fetchDividends shortSymbols`);
   throwIfUndefinedOrNull(isFuture, `fetchDividends isFuture`);
+  if (!shortSymbols.length) { return []; }
 
   if (range == null) {
     range = defaultRange;
@@ -186,6 +188,9 @@ fetchDividends = async function fetchDividends(shortSymbols, isFuture, range) {
   const parameters = { range: range };
   if (isFuture) {
     parameters.calendar = 'true';
+  }
+  if (limit != null) {
+    parameters.limit = limit;
   }
   
   // https://cloud.iexapis.com/stable/stock/market/batch?token=pk_9f1d7a2688f24e26bb24335710eae053&types=dividends&symbols=AAPL,AAP&range=6y&calendar=true
@@ -202,6 +207,7 @@ fetchDividends = async function fetchDividends(shortSymbols, isFuture, range) {
  */
  async function _fetchPreviousDayPrices(shortSymbols) {
   throwIfUndefinedOrNull(shortSymbols, `fetchPreviousDayPrices shortSymbols`);
+  if (!shortSymbols.length) { return []; }
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
 
   // https://cloud.iexapis.com/stable/stock/market/batch?token=pk_9f1d7a2688f24e26bb24335710eae053&types=previous&symbols=AAPL,AAP
@@ -219,6 +225,7 @@ fetchPreviousDayPrices = _fetchPreviousDayPrices;
  */
  fetchHistoricalPrices = async function fetchHistoricalPrices(shortSymbols, range) {
    throwIfUndefinedOrNull(shortSymbols, `fetchHistoricalPrices shortSymbols`);
+   if (!shortSymbols.length) { return []; }
 
   if (range == null) {
     range = defaultRange;
@@ -243,6 +250,7 @@ fetchPreviousDayPrices = _fetchPreviousDayPrices;
  */
  fetchQuotes = async function fetchQuotes(shortSymbols) {
   throwIfUndefinedOrNull(shortSymbols, `fetchQuotes shortSymbols`);
+  if (!shortSymbols.length) { return []; }
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
 
   // https://cloud.iexapis.com/stable/stock/market/batch?token=pk_9f1d7a2688f24e26bb24335710eae053&types=quote&symbols=AAPL,AAP
@@ -259,6 +267,7 @@ fetchPreviousDayPrices = _fetchPreviousDayPrices;
  fetchSplits = async function fetchSplits(shortSymbols, range, isFuture) {
   throwIfUndefinedOrNull(shortSymbols, `fetchSplits shortSymbols`);
   throwIfUndefinedOrNull(isFuture, `fetchSplits isFuture`);
+  if (!shortSymbols.length) { return []; }
 
   if (range == null) {
     range = defaultRange;
