@@ -40,11 +40,9 @@ exports = async function(migration) {
  */
 async function old_date_format_splits_migration() {
   const splitsCollection = db.collection("splits");
-  const splits = await splitsCollection.fullFind({});
+  const splits = await splitsCollection.fullFind({ $expr: { $eq: [{ $hour: "$e" }, 12] } });
   splits.forEach(split => {
-    if (split.e.getUTCHours() === 12) {
-      split.e.setUTCHours(14);
-    }
+    split.e.setUTCHours(14);
   });
 
   await splitsCollection.safeUpdateMany(splits, null, '_id', true, false);
@@ -52,11 +50,9 @@ async function old_date_format_splits_migration() {
 
 async function old_date_format_dividends_migration() {
   const dividendsCollection = db.collection("dividends");
-  const dividends = await dividendsCollection.fullFind({});
+  const dividends = await dividendsCollection.fullFind({ $expr: { $eq: [{ $hour: "$e" }, 12] } });
   dividends.forEach(dividend => {
-    if (dividend.e.getUTCHours() === 12) {
-      dividend.e.setUTCHours(14);
-    }
+    dividend.e.setUTCHours(14);
     if (dividend.p?.getUTCHours() === 12) {
       dividend.p.setUTCHours(14);
     }

@@ -3,9 +3,9 @@
  
 - Release new server
 - Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument old_date_format_splits_migration --verbose`
-- Check `divtracker-v2.splits` collection using sort operator: `{ e: 1 }`. There should be no `12` hour dates.
+- Check `divtracker-v2.splits` collection using find operator: `{ $expr: { $eq: [{ $hour: "$e" }, 12] } }`. There should be no records.
 - Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument old_date_format_dividends_migration --verbose`
-- Check `divtracker-v2.dividends` collection using sort operator: `{ e: 1 }`. There should be no `12` hour dates.
+- Check `divtracker-v2.dividends` collection using find operator: `{ $expr: { $eq: [{ $hour: "$e" }, 12] } }`. There should be no records.
 - Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument fetch_refid_for_IEX_splits --verbose`
 - Check that all splits are updated using find operator in the `divtracker-v2.splits` collection: `{ i: null }`
 - Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument fetch_refid_for_IEX_dividends --verbose`
