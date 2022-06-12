@@ -807,8 +807,9 @@ function _removeDuplicatedIEXSplits(iexSplits) {
     result.push(sortedBucket[sortedBucket.length - 1]);
   }
 
-  // [MCHP] We may receive splits with different `refid` but the same `exDate`: 
-  return result.uniqueUnordered('exDate');
+  // [MCHP] Different `refid` but the same `exDate`
+  // [NYC] Different `refid` and ratio but the same `exDate`
+  return result.uniqueUnordered(['exDate', 'ratio']);
 }
 
 /** 

@@ -7,7 +7,7 @@
 - Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument old_date_format_dividends_migration --verbose`
 - Check `divtracker-v2.dividends` collection using find operator: `{ $expr: { $eq: [{ $hour: "$e" }, 12] } }`. There should be no records.
 - Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument fetch_refid_for_IEX_splits --verbose`
-- Check that all splits are updated using find operator in the `divtracker-v2.splits` collection: `{ i: null }`
+- Check that most splits are updated _except 4 known_ using find operator in the `divtracker-v2.splits` collection: `{ i: null }`
 - Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument fetch_refid_for_IEX_dividends --verbose`
 - Check that all future dividends are updated using find operator in the `divtracker-v2.dividends` collection: `{ i: null, e: { $gte: new Date() } }`
 - Check that 1 last past dividends are updated using find operator in the `divtracker-v2.dividends` collection: `{ i: { $ne: null }, e: { $lt: new Date() } }`
