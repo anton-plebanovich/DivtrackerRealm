@@ -126,7 +126,7 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields,
   ).length;
 
   if (invalidObjectsLength !== 0) {
-    return await _logAndReject(`${invalidObjectsLength} of ${newObjects.length} new objects do not contain required '${fields}' fields`);
+    _logAndThrow(`${invalidObjectsLength} of ${newObjects.length} new objects do not contain required '${fields}' fields`);
   }
 
   if (oldObjects == null) {
@@ -443,7 +443,8 @@ Array.prototype.compactMap = function(callbackfn) {
 
 /**
  * Creates dictionary from objects using provided `key` or function as source for keys and object as value.
- * If returned key is `null` or `undefined` then value is ignored.
+ * If returned key is `null` or `undefined` then value is ignored for single-dimensional dictionary.
+ * For multi-dimensional dictionary it is used as a key.
  * @param {function|array|string|null} arg Key map function or key.
  */
 Array.prototype.toDictionary = function(arg) {

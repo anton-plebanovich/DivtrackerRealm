@@ -185,6 +185,7 @@ async function fetch_refid_for_IEX_dividends() {
     const sortedDividends = dividends.sorted((l, r) => r.e - l.e);
     dedupedDividends.push(sortedDividends.shift());
   }
+  console.log(`Fixing dividend data for '${dedupedDividends.length}' dividends`);
   await collection.safeUpdateMany(dedupedDividends, null, 'i', true, false);
 
   console.log(`Success refid field update for '${dividends.length}' dividends`);
