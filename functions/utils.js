@@ -237,6 +237,10 @@ Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, fields, 
  * Bypass find limit of 50000 objects by fetching all results successively  
  */
 Object.prototype.fullFind = async function(find) {
+  if (find == null) {
+    find = {};
+  }
+
   let objectsPage;
   const objects = [];
   const pageSize = 50000;
@@ -251,12 +255,7 @@ Object.prototype.fullFind = async function(find) {
 
     objectsPage = await this.find(compositeFind).sort({ _id: 1 }).limit(pageSize).toArray();
     console.log(`Full fetch objects length: ${objectsPage.length}`);
-    if (objectsPage.length) {
-      objects.push(objectsPage);
-    } else {
-      return objects;
-    }
-  
+    objects.push(objectsPage);
   } while (objectsPage.length >= pageSize);
 
   return objectsPage;
