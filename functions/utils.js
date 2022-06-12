@@ -258,7 +258,7 @@ Object.prototype.fullFind = async function(find) {
     objects.push(objectsPage);
   } while (objectsPage.length >= pageSize);
 
-  return objectsPage;
+  return objects;
 };
 
 /**
