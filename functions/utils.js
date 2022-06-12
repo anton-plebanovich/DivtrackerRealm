@@ -319,17 +319,21 @@ Object.prototype.updateFrom = function(_object, setUpdateDate) {
       delete set[key];
     }
   }
-  
+
   // We should not unset deleted flag since it's manual fix operation and has higher priority from updates.
   if (unset.x != null) {
     delete unset.x;
   }
 
-  let update;
+  const update = {};
+  if (Object.keys(set).length) {
+    update.$set = set;
+  }
   if (Object.keys(unset).length) {
-    update = { $set: set, $unset: unset };
-  } else {
-    update = { $set: set };
+    update.$unset = unset;
+  }
+  if (Object.keys(update).length === 0) {
+    return null;
   }
 
   if (setUpdateDate == true) {
