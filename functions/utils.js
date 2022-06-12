@@ -238,7 +238,7 @@ Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, fields, 
 /**
  * Bypass find limit of 50000 objects by fetching all results successively  
  */
-Object.prototype.fullFind = function(find) {
+Object.prototype.fullFind = async function(find) {
   let objectsPage;
   const objects = [];
   const pageSize = 50000;
