@@ -34,10 +34,10 @@ async function old_date_format_migration() {
     if (dividend.e.getUTCHours() === 12) {
       dividend.e.setUTCHours(14);
     }
-    if (dividend?.p.getUTCHours() === 12) {
+    if (dividend.p?.getUTCHours() === 12) {
       dividend.p.setUTCHours(14);
     }
-    if (dividend?.d.getUTCHours() === 12) {
+    if (dividend.d?.getUTCHours() === 12) {
       dividend.d.setUTCHours(14);
     }
   });
