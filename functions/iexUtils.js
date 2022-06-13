@@ -130,6 +130,16 @@ getShortSymbols = _getShortSymbols;
 // pk_fe3251a6a1bc4c99950f2abf60b966bd - nohopenotop+7 - sk_528f243249764a08b7881d0365de635e
 // pk_551db89285a24a358a35848f13d62694 - nohopenotop+8 - sk_920f1d5b1c724a0c845c4246b34b2141
 // pk_e1941a95ed6c4f13b24ec074bda8672d - nohopenotop+9 - sk_7da396205407472fa5bce81872f7f3fe
+// pk_295bd63970924e9eb1cdc07a59c91147 - nohopenotop+10 - sk_b1640b53f07a48b8bd172c7f6217db94
+// pk_5f27f65fd7974e0ba64d4fbe2b5cd06a - nohopenotop+11 - sk_0a0fe3ce6f9641019245b147325cdee3
+// pk_8864dace529b45659db0de405d075c11 - nohopenotop+12 - sk_09b2ba22a5ab410cba1e24bcc51bd9c5
+// pk_5dc68d1aac6742e2af7d888245f365f3 - nohopenotop+13 - sk_5df70a2222c342f08053915c35d04b17
+// pk_b5c465df0bd746fb93330344ed534f03 - nohopenotop+14 - sk_710ca7f71e78454da5334fb03b3d236b
+// pk_57ce0f8e8208435783ad658adb298259 - nohopenotop+15 - sk_792b75aff9a94d9792e881f19ff8aab4
+// pk_310b7715aea844cdbfab6b9917df0b76 - nohopenotop+16 - sk_872c2b1647a041a8b09f0371d5a0c444
+// pk_22bbd8b933994c56a662c907b7d7498d - nohopenotop+17 - sk_5ddabfdf14a94b249951d296beabb026
+// pk_274e6c59abbb41c8a4f88f7d47fe6188 - nohopenotop+18 - sk_2bd619a0fe1a4782997b07c368d336df
+// pk_645bc4f35f4c47dfaa1e49fcb198b714 - nohopenotop+19 - sk_d947df2f25004e8186f2318b4263e71b
 
 // --- Premium
 // pk_01ef04dd60b5404b81d9cc47b2388176 - trackerdividend@gmail.com - sk_de6f102262874cfab3d9a83a6980e1db - 3ff51380e7f3a36ff4e0915e9d781878
