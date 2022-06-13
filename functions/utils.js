@@ -112,6 +112,7 @@ Object.prototype.safeUpsertMany = async function(newObjects, field, setUpdateDat
 
 /**
  * Safely computes and executes update operation from old to new objects on a collection.
+ * @note Marked as deleted records `x === true` can not be restored using this method.
  */
 Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields, setUpdateDate, insertMissing = true) {
   _throwIfNotArray(newObjects, `Please pass new objects array as the first argument. safeUpdateMany`);

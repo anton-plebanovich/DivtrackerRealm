@@ -140,8 +140,9 @@ function fixDividends(dividends, existingDividendsBySymbolID) {
 
     // Check if there is nothing to fix
     if (existingDividends == null) {
-      console.error(`Missing existing dividends for: ${symbolID}`);
-      fixedDividends.concat(dividends);
+      // There were no dividends but we have them now. 
+      // It's hard to say if that's the first record or the whole set was added so asking to fix manually.
+      console.error(`Missing existing dividends for: ${symbolID}. It's better to load missing dividends data for this.`);
       continue;
     }
 
