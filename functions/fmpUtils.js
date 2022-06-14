@@ -662,6 +662,13 @@ function _updateDividendsFrequency(dividends) {
   let foundIrregular = false;
 
   const nonDeletedDividends = dividends.filter(x => x.x != true);
+
+  // We do not try to determine frequency of series lower than 3.
+  if (nonDeletedDividends.length < 3) {
+    nonDeletedDividends.forEach(dividend => dividend.f = 'u');
+    return dividends;
+  }
+
   const mainFrequency = getMainFrequency(nonDeletedDividends);
   for (const [i, dividend] of nonDeletedDividends.entries()) {
     
@@ -770,14 +777,35 @@ function _updateDividendsFrequency(dividends) {
       }
 
     } else if (nextDividend != null) {
-      dividend.f = getFrequencyForMillis(nextDividend.e - dividend.e);
+      const frequency = getFrequencyForMillis(nextDividend.e - dividend.e);
+
+      let nextNextDividend;
+      while (i + iNext < nonDeletedDividends.length && nextNextDividend == null) {
+        nextNextDividend = nonDeletedDividends[i + iNext];
+        iNext++;
+      }
+
+      if (nextNextDividend != null) {
+        const nextFrequency = getFrequencyForMillis(nextNextDividend.e - nextDividend.e);
+        if (frequency === nextFrequency) {
+          dividend.f = frequency;
+        } else {
+          dividend.f = getFrequencyForMillis((nextNextDividend.e - dividend.e) / 2);
+        }
+
+      } else {
+        dividend.f = frequency;
+      }
+
     } else {
       dividend.f = 'u'; // The only record
     }
   }
 
   if (foundIrregular) {
-    return _updateDividendsFrequency(dividends.filter(x => x.f !== 'i'));
+    _updateDividendsFrequency(dividends.filter(x => x.f !== 'i'));
+    return dividends;
+
   } else {
     return dividends;
   }
