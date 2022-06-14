@@ -659,14 +659,11 @@ function _getFmpDividendAmount(fmpDividend) {
 
 // TODO: Improve later by including more cases
 function _updateDividendsFrequency(dividends) {
+  let foundIrregular = false;
+
   const nonDeletedDividends = dividends.filter(x => x.x != true);
   const mainFrequency = getMainFrequency(nonDeletedDividends);
   for (const [i, dividend] of nonDeletedDividends.entries()) {
-    if (dividend.a <= 0) {
-      dividend.f = 'u';
-      continue;
-    }
-
     let prevDividend;
     let j = 1;
     while (i - j > 0 && prevDividend == null) {
@@ -682,10 +679,15 @@ function _updateDividendsFrequency(dividends) {
     const prevDate = prevDividend?.e;
 
     let nextDividend;
-    if (i + 1 >= nonDeletedDividends.length) {
-      nextDividend = null;
-    } else {
-      nextDividend = nonDeletedDividends[i + 1];
+    while (i + j < nonDeletedDividends.length && nextDividend == null) {
+      nextDividend = nonDeletedDividends[i + j];
+
+      // Ignore irregular dividends
+      if (nextDividend.f === 'i') {
+        nextDividend = null;
+      }
+
+      j++;
     }
     const nextDate = nextDividend?.e;
     
@@ -698,6 +700,7 @@ function _updateDividendsFrequency(dividends) {
           const nextDiff = math_bigger_times(nextDividend.a, prevDividend.a);
           const isIrregular = thisDiff > nextDiff;
           if (isIrregular) {
+            foundIrregular = true;
             dividend.f = 'i';
           } else {
             dividend.f = mainFrequency;
@@ -711,6 +714,7 @@ function _updateDividendsFrequency(dividends) {
           const prevDiff = math_bigger_times(prevDividend.a, nextDividend.a);
           const isIrregular = thisDiff > prevDiff;
           if (isIrregular) {
+            foundIrregular = true;
             dividend.f = 'i';
           } else {
             dividend.f = mainFrequency;
@@ -730,7 +734,11 @@ function _updateDividendsFrequency(dividends) {
     }
   }
 
-  return dividends;
+  if (foundIrregular) {
+    return _updateDividendsFrequency(dividends);
+  } else {
+    return dividends;
+  }
 }
 
 updateDividendsFrequency = _updateDividendsFrequency;
@@ -800,6 +808,7 @@ removeDuplicatedDividends = _removeDuplicatedDividends;
 
   // Very raw but should be enough for now
 function getMainFrequency(dividends) {
+  dividends = dividends.filter(dividend => dividend.x != true && dividend.f !== 'i')
   if (dividends.length < 2) {
     return 'u';
   }
