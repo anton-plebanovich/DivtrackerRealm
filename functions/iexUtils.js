@@ -145,9 +145,10 @@ getShortSymbols = _getShortSymbols;
 // pk_01ef04dd60b5404b81d9cc47b2388176 - trackerdividend@gmail.com - sk_de6f102262874cfab3d9a83a6980e1db - 3ff51380e7f3a36ff4e0915e9d781878
 
 /**
- * Default range to fetch.
+ * Default range to fetch. 
+ * The range should include and be close to 2016-01-01 since that's the date where IEX simple dividends start.
  */
-const defaultRange = '10y';
+const defaultRange = '7y';
 
 fetchSymbols = async function fetchSymbols() {
   // https://cloud.iexapis.com/stable/ref-data/symbols?token=pk_9f1d7a2688f24e26bb24335710eae053
