@@ -10,6 +10,7 @@
 // https://docs.mongodb.com/manual/reference/method/Bulk.insert/
 
 exports = async function(migration) {
+  context.functions.execute("fmpUtils");
   context.functions.execute("iexUtils");
 
   logVerbose = true;
