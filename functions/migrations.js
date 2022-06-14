@@ -10,8 +10,7 @@
 // https://docs.mongodb.com/manual/reference/method/Bulk.insert/
 
 exports = async function(migration) {
-  context.functions.execute("fmpUtils");
-  context.functions.execute("iexUtils");
+  context.functions.execute("utils");
 
   logVerbose = true;
   logData = true;
@@ -44,6 +43,8 @@ exports = async function(migration) {
  * Delete dividends, historical prices and splits before 2016-01-01
  */
 async function old_data_delete_migration() {
+  context.functions.execute("iexUtils");
+
   const databaseNames = [
     'divtracker-v2',
     'fmp',
@@ -84,6 +85,8 @@ async function old_data_delete_migration() {
  * 2021-07-08T12:30:00.000+00:00 -> 2021-07-08T14:30:00.000+00:00
  */
 async function old_date_format_splits_migration() {
+  context.functions.execute("iexUtils");
+  
   const splitsCollection = db.collection("splits");
   const splits = await splitsCollection.fullFind({ $expr: { $eq: [{ $hour: "$e" }, 12] } });
   splits.forEach(split => {
@@ -94,6 +97,8 @@ async function old_date_format_splits_migration() {
 }
 
 async function old_date_format_dividends_migration() {
+  context.functions.execute("iexUtils");
+  
   const dividendsCollection = db.collection("dividends");
   const dividends = await dividendsCollection.fullFind({ $expr: { $eq: [{ $hour: "$e" }, 12] } });
   dividends.forEach(dividend => {
@@ -110,10 +115,11 @@ async function old_date_format_dividends_migration() {
 }
 
 async function fetch_refid_for_IEX_splits() {
-
-  const shortSymbols = await getAllShortSymbols();
+  context.functions.execute("iexUtils");
+  
+  const shortSymbols = await get_all_IEX_short_symbols();
   const range = '10y';
-  const splits = await fetchSplitsWithDuplicates(shortSymbols, range, false);
+  const splits = await fetch_IEX_splits_with_duplicates(shortSymbols, range, false);
   const collection = db.collection("splits");
 
   console.log(`First, set refid on existing splits`);
@@ -147,7 +153,7 @@ async function fetch_refid_for_IEX_splits() {
   // return await bulk.safeExecute();
 }
 
-async function getAllShortSymbols() {
+async function get_all_IEX_short_symbols() {
   // We combine transactions and companies distinct IDs. 
   // Idealy, we should be checking all tables but we assume that only two will be enough.
   // All symbols have company record so company DB contains all ever fetched symbols.
@@ -167,7 +173,7 @@ async function getAllShortSymbols() {
   return await getShortSymbols(symbolIDs);
 }
 
-async function fetchSplitsWithDuplicates(shortSymbols, range, isFuture) {
+async function fetch_IEX_splits_with_duplicates(shortSymbols, range, isFuture) {
   throwIfUndefinedOrNull(shortSymbols, `fetchSplitsWithDuplicates shortSymbols`);
   throwIfUndefinedOrNull(isFuture, `fetchSplitsWithDuplicates isFuture`);
 
@@ -183,10 +189,10 @@ async function fetchSplitsWithDuplicates(shortSymbols, range, isFuture) {
 
   // https://cloud.iexapis.com/stable/stock/market/batch?types=splits&token=pk_9f1d7a2688f24e26bb24335710eae053&range=6y&symbols=AAPL,AAP
   // https://sandbox.iexapis.com/stable/stock/market/batch?types=splits&token=Tpk_581685f711114d9f9ab06d77506fdd49&range=6y&symbols=AAPL,AAP
-  return await iexFetchBatchAndMapArray('splits', tickers, idByTicker, fixSplitsWithDuplicates, parameters);
+  return await iexFetchBatchAndMapArray('splits', tickers, idByTicker, fix_IEX_splits_with_duplicates, parameters);
 }
 
-function fixSplitsWithDuplicates(iexSplits, symbolID) {
+function fix_IEX_splits_with_duplicates(iexSplits, symbolID) {
   try {
     throwIfUndefinedOrNull(iexSplits, `fixSplitsWithDuplicates splits`);
     throwIfUndefinedOrNull(symbolID, `fixSplitsWithDuplicates symbolID`);
@@ -222,8 +228,9 @@ async function fetch_refid_for_IEX_dividends() {
   // We can't update all dividends because it will cost more than we can afford.
   // So instead, we update only future dividends and 1 past dividend.
   // There are also some known tickers with drifting value that we also update to fix their amount.
+  context.functions.execute("iexUtils");
 
-  const shortSymbols = await getAllShortSymbols();
+  const shortSymbols = await get_all_IEX_short_symbols();
 
   // TODO: ADD MORE
   const specificTickers = ['BTI', 'QCOM'];
@@ -234,9 +241,9 @@ async function fetch_refid_for_IEX_dividends() {
     recentDividends,
     specificDividends,
   ] = await Promise.all([
-    fetchDividendsWithDuplicates(shortSymbols, true, '10y', null),
-    fetchDividendsWithDuplicates(shortSymbols, false, '1y', 1),
-    fetchDividendsWithDuplicates(specificShortSymbols, false, '10y', null),
+    fetch_IEX_dividends_with_duplicates(shortSymbols, true, '10y', null),
+    fetch_IEX_dividends_with_duplicates(shortSymbols, false, '1y', 1),
+    fetch_IEX_dividends_with_duplicates(specificShortSymbols, false, '10y', null),
   ]);
 
   const dividends = futureDividends
@@ -301,14 +308,14 @@ async function fetch_refid_for_IEX_dividends() {
   }
 
   console.log(`Second, update with deduped on 'i' field. This may fix dividend date if duplicate was previously deleted.`);
-  const dedupedDividends = removeDuplicatedDividends(dividends);
+  const dedupedDividends = remove_duplicated_IEX_Dividends(dividends);
   console.log(`Fixing dividend data for '${dedupedDividends.length}' dividends`);
   await collection.safeUpdateMany(dedupedDividends, null, 'i', true, false);
 
   console.log(`Success refid field update for '${dividends.length}' dividends`);
 }
 
-async function fetchDividendsWithDuplicates(shortSymbols, isFuture, range, limit) {
+async function fetch_IEX_dividends_with_duplicates(shortSymbols, isFuture, range, limit) {
   throwIfUndefinedOrNull(shortSymbols, `fetchDividends shortSymbols`);
   throwIfUndefinedOrNull(isFuture, `fetchDividends isFuture`);
   if (!shortSymbols.length) { return []; }
@@ -331,10 +338,10 @@ async function fetchDividendsWithDuplicates(shortSymbols, isFuture, range, limit
   // https://cloud.iexapis.com/stable/stock/market/batch?token=pk_9f1d7a2688f24e26bb24335710eae053&types=dividends&symbols=AAPL,AAP&range=6y
   // https://sandbox.iexapis.com/stable/stock/market/batch?token=Tpk_581685f711114d9f9ab06d77506fdd49&types=dividends&symbols=AAPL,AAP&range=6y&calendar=true
   // https://sandbox.iexapis.com/stable/stock/market/batch?token=Tpk_581685f711114d9f9ab06d77506fdd49&types=dividends&symbols=AAPL,AAP&range=6y
-  return await iexFetchBatchAndMapArray('dividends', tickers, idByTicker, fixDividendsWithDuplicates, parameters);
+  return await iexFetchBatchAndMapArray('dividends', tickers, idByTicker, fix_IEX_dividends_with_duplicates, parameters);
 }
 
-function fixDividendsWithDuplicates(iexDividends, symbolID) {
+function fix_IEX_dividends_with_duplicates(iexDividends, symbolID) {
   try {
     throwIfUndefinedOrNull(iexDividends, `fixDividendsWithDuplicates iexDividends`);
     throwIfUndefinedOrNull(symbolID, `fixDividendsWithDuplicates uniqueID`);
@@ -380,7 +387,7 @@ function fixDividendsWithDuplicates(iexDividends, symbolID) {
   }
 }
 
-function removeDuplicatedDividends(dividends) {
+function remove_duplicated_IEX_Dividends(dividends) {
   const buckets = dividends.toBuckets('i');
   const result = [];
   for (const bucket of Object.values(buckets)) {
@@ -407,6 +414,8 @@ function removeDuplicatedDividends(dividends) {
 }
 
 async function delete_duplicated_FMP_dividends() {
+  context.functions.execute("fmpUtils");
+
   const collection = fmp.collection('dividends');
 
   const oldDividends = await collection.fullFind();
@@ -427,5 +436,6 @@ async function delete_duplicated_FMP_dividends() {
     newDividends.push(...dividendsToDelete);
   }
 
-  return await collection.safeUpdateMany(newDividends);
+  await collection.safeUpdateMany(newDividends);
+  console.log(`Deleted objects: ${newDividends.filter(x => x.x == true).length}`)
 }
