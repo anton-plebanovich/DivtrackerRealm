@@ -688,6 +688,8 @@ function _updateDividendsFrequency(dividends) {
   return dividends;
 }
 
+updateDividendsFrequency = _updateDividendsFrequency;
+
 function getFrequencyForMillis(millis) {
   const days = Math.abs(millis) / 86400000;
   if (days <= 11) {
@@ -704,8 +706,6 @@ function getFrequencyForMillis(millis) {
     return 'u';
   }
 }
-
-updateDividendsFrequency = _updateDividendsFrequency;
 
 // TODO: Improve later by including more cases
 function _removeDuplicatedDividends(dividends) {

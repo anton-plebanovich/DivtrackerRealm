@@ -418,8 +418,8 @@ async function delete_duplicated_FMP_dividends() {
       .filter(dividend => dividend.x != true)
       .sorted((l, r) => l.e - r.e);
     
-    fixedDividends = _removeDuplicatedDividends(fixedDividends);
-    fixedDividends = _updateDividendsFrequency(fixedDividends);
+    fixedDividends = removeDuplicatedDividends(fixedDividends);
+    fixedDividends = updateDividendsFrequency(fixedDividends);
     newDividends.push(...fixedDividends);
 
     const dividendsToDelete = symbolDividends
