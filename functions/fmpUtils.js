@@ -836,7 +836,8 @@ function getGrade(frequency) {
 
 function getFrequencyForMillis(millis) {
   const days = Math.abs(millis) / 86400000;
-  if (days <= 11) {
+  // Just to have wider range when we catch irregular dividends we use more days.
+  if (days <= 13) {
     return 'w';
   } else if (days <= 45) {
     return 'm';
