@@ -664,8 +664,10 @@ function _updateDividendsFrequency(dividends) {
   const nonDeletedDividends = dividends.filter(x => x.x != true);
   const mainFrequency = getMainFrequency(nonDeletedDividends);
   for (const [i, dividend] of nonDeletedDividends.entries()) {
+    let j;
+    
+    j = 1;
     let prevDividend;
-    let j = 1;
     while (i - j > 0 && prevDividend == null) {
       prevDividend = nonDeletedDividends[i - j];
 
@@ -678,6 +680,7 @@ function _updateDividendsFrequency(dividends) {
     }
     const prevDate = prevDividend?.e;
 
+    j = 1;
     let nextDividend;
     while (i + j < nonDeletedDividends.length && nextDividend == null) {
       nextDividend = nonDeletedDividends[i + j];
