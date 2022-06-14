@@ -405,7 +405,7 @@ function removeDuplicatedDividends(dividends) {
   return result;
 }
 
-function delete_duplicated_FMP_dividends() {
+async function delete_duplicated_FMP_dividends() {
   const collection = fmp.collection('dividends');
 
   const oldDividends = await collection.fullFind();
