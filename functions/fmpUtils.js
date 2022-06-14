@@ -659,23 +659,52 @@ function _getFmpDividendAmount(fmpDividend) {
 // TODO: Improve later by including more cases
 function _updateDividendsFrequency(dividends) {
   const nonDeletedDividends = dividends.filter(x => x.x != true);
+  const mainFrequency = getMainFrequency(nonDeletedDividends);
   for (const [i, dividend] of nonDeletedDividends.entries()) {
-    let prevDate;
+    let prevDividend;
     if (i - 1 < 0) {
-      prevDate = null;
+      prevDividend = null;
     } else {
-      prevDate = nonDeletedDividends[i - 1].e;
+      prevDividend = nonDeletedDividends[i - 1];
     }
+    const prevDate = prevDividend?.e;
 
-    let nextDate;
+    let nextDividend;
     if (i + 1 >= nonDeletedDividends.length) {
-      nextDate = null;
+      nextDividend = null;
     } else {
-      nextDate = nonDeletedDividends[i + 1].e;
+      nextDividend = nonDeletedDividends[i + 1];
     }
+    const nextDate = nextDividend?.e;
     
     if (prevDate != null && nextDate != null) {
+      if (mainFrequency !== 'w') {
+        // Try to identify irregular dividends
+        const nextFrequency = getFrequencyForMillis(nextDate - dividend.e);
+        if (nextFrequency === 'w') {
+          const thisDiff = Match.abs(1 - dividend.a / prevDividend.a);
+          const nextDiff = Match.abs(1 - nextDividend.a / prevDividend.a);
+          const isIrregular = thisDiff > nextDiff;
+          if (isIrregular) {
+            dividend.f = 'i';
+            continue;
+          }
+        }
+
+        const prevFrequency = getFrequencyForMillis(dividend.e - prevDate);
+        if (prevFrequency === 'w') {
+          const thisDiff = Match.abs(1 - dividend.a / nextDividend.a);
+          const prevDiff = Match.abs(1 - prevDividend.a / nextDividend.a);
+          const isIrregular = thisDiff > prevDiff;
+          if (isIrregular) {
+            dividend.f = 'i';
+            continue;
+          }
+        }
+      }
+
       dividend.f = getFrequencyForMillis((nextDate - prevDate) / 2);
+      
     } else if (prevDate != null) {
       dividend.f = nonDeletedDividends[i - 1].f; // Keep previous
     } else if (nextDate != null) {
@@ -713,13 +742,9 @@ function _removeDuplicatedDividends(dividends) {
   if (dividends.length < 3) {
     return dividends;
   }
-
-  // Very raw but should be enough for now
-  const range = dividends[dividends.length - 1].e - dividends[0].e;
-  const period = range / (dividends.length - 1);
-  const mainFrequency = getFrequencyForMillis(period);
-
+  
   // We do not dedupe week frequency dividends atm
+  const mainFrequency = getMainFrequency(dividends);
   if (mainFrequency === 'w') {
     return dividends;
   }
@@ -761,6 +786,14 @@ function _removeDuplicatedDividends(dividends) {
 }
 
 removeDuplicatedDividends = _removeDuplicatedDividends;
+
+  // Very raw but should be enough for now
+function getMainFrequency(dividends) {
+  const range = dividends[dividends.length - 1].e - dividends[0].e;
+  const period = range / (dividends.length - 1);
+
+  return getFrequencyForMillis(period);
+}
 
 /**
  * Fixes historical prices object so it can be added to MongoDB.
@@ -927,6 +960,9 @@ function _fixFMPSymbols(fmpSymbols) {
     return [];
   }
 };
+
+// TODO: Fix FMP and IEX open and close date computations. They should instead of harcoded exchange work with passed exchange. Migrations.
+// TODO: Also check if payment and declared date for dividends **MUST** be adjusted. Leave as is if possible.
 
 /** 
  * First parameter: Date in the "yyyy-mm-dd" or timestamp or Date format, e.g. "2020-03-27" or '1633046400000' or Date.
