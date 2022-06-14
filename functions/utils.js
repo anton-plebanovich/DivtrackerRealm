@@ -175,27 +175,32 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields,
   }
 
   const dictionary = oldObjects.toDictionary(fields);
+  let bulk = this.initializeUnorderedBulkOp();
+  let i = 0;
+  for (const newObject of newObjects) {
+    const existingObject = fields.reduce((dictionary, field) => {
+      if (dictionary != null) {
+        return dictionary[newObject[field]];
+      } else {
+        return null;
+      }
+    }, dictionary);
+
+    const changed = bulk.findAndUpdateOrInsertIfNeeded(newObject, existingObject, fields, setUpdateDate, insertMissing);
+    if (changed) {
+      i++;
+    }
 
   // Try to prevent 'pending promise returned that will never resolve/reject uncaught promise rejection: &{0xc1bac2aa90 0xc1bac2aa80}' error by splitting batch operations to chunks
-  const chunkSize = 1000;
-  const chunkedNewObjects = newObjects.chunked(chunkSize);
-  for (const [i, newObjectsChunk] of chunkedNewObjects.entries()) {
-    console.log(`Updating objects: ${i * chunkSize + newObjectsChunk.length}/${newObjects.length}`);
-    const bulk = this.initializeUnorderedBulkOp();
-    for (const newObject of newObjectsChunk) {
-      const existingObject = fields.reduce((dictionary, field) => {
-        if (dictionary != null) {
-          return dictionary[newObject[field]];
-        } else {
-          return null;
-        }
-      }, dictionary);
-  
-      bulk.findAndUpdateOrInsertIfNeeded(newObject, existingObject, fields, setUpdateDate, insertMissing);
+    if (i === 1000) {
+      console.log('Too much bulk changes. Executing collected 1000.')
+      i = 0
+      await bulk.safeExecute();
+      bulk = this.initializeUnorderedBulkOp();
     }
-  
-    await bulk.safeExecute();
   }
+
+  await bulk.safeExecute();
 };
 
 /**
@@ -214,10 +219,12 @@ Object.prototype.findAndUpdateOrInsertIfNeeded = function(newObject, oldObject, 
     // No old object means we should insert
     if (insertMissing) {
       console.log(`Inserting: ${newObject.stringify()}`);
-      return this.insert(newObject);
+      this.insert(newObject);
+      return true;
+
     } else {
       console.log(`Old object is missing. Skipping insert: ${newObject.stringify()}`);
-      return;
+      return false;
     }
 
   } else {
@@ -249,15 +256,17 @@ Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, fields, 
     const update = newObject.updateFrom(oldObject, setUpdateDate);
     if (update == null) {
       // Update is not needed
-      return;
+      return false;
 
     } else { 
       if (oldObject._id == null) {
         throw `Unable to find old object. '_id' field is missing: ${oldObject.stringify()}`;
       } else {
-        return this
+        this
           .find({ _id: oldObject._id })
           .updateOne(update);
+
+        return true;
       }
     }
   }

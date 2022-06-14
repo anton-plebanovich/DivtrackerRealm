@@ -682,8 +682,8 @@ function _updateDividendsFrequency(dividends) {
         // Try to identify irregular dividends
         const nextFrequency = getFrequencyForMillis(nextDate - dividend.e);
         if (nextFrequency === 'w') {
-          const thisDiff = Match.abs(1 - dividend.a / prevDividend.a);
-          const nextDiff = Match.abs(1 - nextDividend.a / prevDividend.a);
+          const thisDiff = Math.abs(1 - dividend.a / prevDividend.a);
+          const nextDiff = Math.abs(1 - nextDividend.a / prevDividend.a);
           const isIrregular = thisDiff > nextDiff;
           if (isIrregular) {
             dividend.f = 'i';
@@ -693,8 +693,8 @@ function _updateDividendsFrequency(dividends) {
 
         const prevFrequency = getFrequencyForMillis(dividend.e - prevDate);
         if (prevFrequency === 'w') {
-          const thisDiff = Match.abs(1 - dividend.a / nextDividend.a);
-          const prevDiff = Match.abs(1 - prevDividend.a / nextDividend.a);
+          const thisDiff = Math.abs(1 - dividend.a / nextDividend.a);
+          const prevDiff = Math.abs(1 - prevDividend.a / nextDividend.a);
           const isIrregular = thisDiff > prevDiff;
           if (isIrregular) {
             dividend.f = 'i';
