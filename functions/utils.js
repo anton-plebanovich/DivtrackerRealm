@@ -935,6 +935,7 @@ class _NetworkResponse {
           429, // Too Many Requests
           500, // Internal Server Error
           502, // Bad Gateway
+          504, // Gateway Time-out
         ];
 
         if (alwaysRetryableStatusCodes.includes(this.statusCode)) {
