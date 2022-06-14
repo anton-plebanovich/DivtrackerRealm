@@ -719,8 +719,27 @@ function _updateDividendsFrequency(dividends) {
 
       if (prevFrequency === prevDividend.f) {
         dividend.f = prevFrequency;
+
       } else {
-        dividend.f = getFrequencyForMillis((nextDividend.e - prevDividend.e) / 2);
+        let prevPrevDividend;
+        while (i - iPrev >= 0 && prevPrevDividend == null) {
+          prevPrevDividend = nonDeletedDividends[i - iPrev];
+          
+          // Ignore irregular and unspecified dividends
+          if (prevPrevDividend.f === 'i' || prevPrevDividend.f === 'u') {
+            prevPrevDividend = null;
+          }
+          
+          iPrev++;
+        }
+        
+        if (prevPrevDividend != null && prevPrevDividend.f === prevDividend.f) {
+          const frequency = getFrequencyForMillis((dividend.e - prevPrevDividend.e) / 2);
+          dividend.f = frequency;
+          
+        } else {
+          dividend.f = prevFrequency;
+        }
       }
       
     } else if (prevDividend != null) {
