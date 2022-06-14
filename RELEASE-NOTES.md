@@ -16,7 +16,7 @@
 - Check that 1 last past dividends are updated using find operator in the `divtracker-v2.dividends` collection: `{ i: { $ne: null }, e: { $lt: new Date() } }`
 - Check that all specific tickers dividends are updated using find operator in the `divtracker-v2.dividends` collection: `{ i: null, s: { $in: [ObjectId('61c42676a2660ba02db39480'), ObjectId('61c42676a2660ba02db3afb2')] } }`
 - Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument delete_duplicated_FMP_dividends --verbose`
-- Check that duplicated dividend is deleted and frequencies are fixed in the `fmp.dividends` collection using find operator: `{ s: ObjectId('624ca7e44fd65a51c3060213') }` and sort: `{ e: -1}`
+- Check that duplicated dividend is deleted and frequencies are fixed in the `fmp.dividends` collection using find operator: `{ s: ObjectId('624ca7e44fd65a51c3060213') }` and sort: `{ e: -1 }`
 - Execute `dt call-realm-function --environment sandbox-anton --function updateSplitsV2 --verbose`
 - Execute `dt call-realm-function --environment sandbox-anton --function updateDividendsFuture --verbose`
 - Execute `dt call-realm-function --environment sandbox-anton --function updateDividendsPast --verbose`
