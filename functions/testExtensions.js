@@ -144,8 +144,8 @@ function test_FMP_dividends_fix() {
     throw `[test_FMP_duplicate_dividends_remove] Unexpected irregular dividend ex date: ${irregularDividend.e}`;
   }
 
-  if (fixedDividends[2] !== 'a' || fixedDividends[4] !== 'a') {
-    throw `[test_FMP_duplicate_dividends_remove] Unexpected adjacent to irregular dividend frequency: ${fixedDividends[2].a}/${fixedDividends[4].a}`;
+  if (fixedDividends[2].f !== 'a' || fixedDividends[4].f !== 'a') {
+    throw `[test_FMP_duplicate_dividends_remove] Unexpected adjacent to irregular dividend frequency: ${fixedDividends[2].f}/${fixedDividends[4].f}`;
   }
 }
 
