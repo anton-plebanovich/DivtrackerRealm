@@ -735,7 +735,7 @@ function _updateDividendsFrequency(dividends) {
   }
 
   if (foundIrregular) {
-    return _updateDividendsFrequency(dividends);
+    return _updateDividendsFrequency(dividends.filter(x => x.f !== 'i'));
   } else {
     return dividends;
   }
