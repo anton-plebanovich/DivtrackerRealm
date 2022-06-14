@@ -640,6 +640,8 @@ function _fixFMPDividends(fmpDividends, symbolID) {
   }
 }
 
+fixFMPDividends = _fixFMPDividends;
+
 function _getFmpDividendAmount(fmpDividend) {
   if (fmpDividend.dividend != null) {
     return BSON.Double(fmpDividend.dividend);
@@ -710,21 +712,24 @@ function _removeDuplicatedDividends(dividends) {
   const originalLength = dividends.length;
   const newDividends = dividends
     .filter((dividend, i, arr) => {
-      if (i + 2 >= arr.length) {
-        return true
+      if (i === 0) {
+        return true;
+      }
+      if (i + 1 >= arr.length) {
+        return true;
       }
       
+      const prevDividend = arr[i - 1];
       const nextDividend = arr[i + 1];
-      const nextNextDividend = arr[i + 2];
 
       // 80.2744 and 80.27435 for NNSB.ME
       const lhsAmount = dividend.a.valueOf();
       const rhsAmount = nextDividend.a.valueOf();
       const amountEqual = Math.abs(rhsAmount - lhsAmount) <= 0.0001
-      const frequency = getFrequencyForMillis(nextDividend.e - dividend.e);
-      const nextFrequency = getFrequencyForMillis(nextNextDividend.e - nextDividend.e);
+      const frequency = getFrequencyForMillis(dividend.e - prevDividend.e);
+      const nextFrequency = getFrequencyForMillis(nextDividend.e - dividend.e);
 
-      if (frequency !== nextFrequency && frequency === 'w' && amountEqual) {
+      if (frequency !== nextFrequency && nextFrequency === 'w' && amountEqual) {
         console.error(`Duplicate dividend for ${dividend.s}: ${dividend.stringify()}`);
         return false;
       } else {

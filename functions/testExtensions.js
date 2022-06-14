@@ -12,6 +12,7 @@ exports = async function() {
     test_Object_prototype_updateFrom_set_deleted();
     test_Array_prototype_sortedDeletedToTheStart();
     test_Array_prototype_toDictionary_keys_array();
+    test_FMP_duplicate_dividends_remove();
     await test(collection, test_singleKey_known_old_objects);
     await test(collection, test_singleKey_unknown_old_objects);
     await test(collection, test_singleKey_known_old_objects_without_update_date);
@@ -81,6 +82,48 @@ function test_Array_prototype_toDictionary_keys_array() {
   const dic = array.toDictionary(["a", "b"]);
   if (dic.stringify() !== '{"a1":{"b1":{"a":"a1","b":"b1"},"b2":{"a":"a1","b":"b2"}},"a2":{"b2":{"a":"a2","b":"b2"}}}') {
     throw `[test_Array_prototype_toDictionary_keys_array] unexpected result`;
+  }
+}
+
+function test_FMP_duplicate_dividends_remove() {
+  // https://financialmodelingprep.com/api/v3/historical-price-full/stock_dividend/WTCM.ME?apikey=969387165d69a8607f9726e8bb52b901
+  const dividends = EJSON.parse('[{"date":"2022-05-03","label":"May 03, 22","adjDividend":0.562248,"dividend":0.562248,"recordDate":"","paymentDate":"","declarationDate":""},{"date":"2022-04-29","label":"April 29, 22","adjDividend":0.562248,"dividend":0.562248,"recordDate":"","paymentDate":"","declarationDate":""},{"date":"2021-04-27","label":"April 27, 21","adjDividend":0.562248,"dividend":0.562248,"recordDate":"","paymentDate":"","declarationDate":""},{"date":"2020-05-05","label":"May 05, 20","adjDividend":0.562248,"dividend":0.5622489959,"recordDate":"2020-05-06","paymentDate":"2020-06-01","declarationDate":"2020-03-19"},{"date":"2019-05-07","label":"May 07, 19","adjDividend":0.562248,"dividend":0.5622489959,"recordDate":"2019-05-08","paymentDate":"2019-07-01","declarationDate":"2019-03-25"},{"date":"2018-05-03","label":"May 03, 18","adjDividend":0.963855,"dividend":0.963855,"recordDate":"","paymentDate":"","declarationDate":""},{"date":"2018-05-02","label":"May 02, 18","adjDividend":0.481927,"recordDate":"","paymentDate":"","declarationDate":""},{"date":"2017-07-04","label":"July 04, 17","adjDividend":0.32658,"dividend":0.32658,"recordDate":"2017-07-05","paymentDate":"2017-09-01","declarationDate":"2017-05-25"},{"date":"2016-04-20","label":"April 20, 16","adjDividend":0.32658,"dividend":0.32658,"recordDate":"2016-04-21","paymentDate":"2016-07-01","declarationDate":"2016-03-18"}]');
+  /**
+  Duplicates:
+  {
+    "date" : "2022-05-03",
+    "dividend" : 0.562248,
+  }, {
+    "date" : "2022-04-29",
+    "dividend" : 0.562248,
+  }, {
+    "date" : "2021-04-27",
+    "dividend" : 0.562248,
+  }
+   */
+  const originalLength = dividends.length; // 9
+  const fixedDividends = fixFMPDividends(dividends, new BSON.ObjectId('624ca7e44fd65a51c3060213'));
+  const fixedLength = fixedDividends.length; // 8
+  const duplicatesCount = originalLength - fixedLength;
+  if (duplicatesCount !== 1) {
+    throw `[test_FMP_duplicate_dividends_remove] Unexpected duplicated dividends count: ${duplicatesCount}`;
+  }
+
+  // Ascending sort
+  const latestDividend = fixedDividends[fixedDividends.length - 1];
+  if (latestDividend.f !== 'a') {
+    throw `[test_FMP_duplicate_dividends_remove] Unexpected latest dividend frequency: ${latestDividend.f}`;
+  }
+  if (latestDividend.e.getTime() !== new Date('2022-05-03T06:50:00.000+00:00').getTime()) {
+    throw `[test_FMP_duplicate_dividends_remove] Unexpected latest dividend ex date: ${latestDividend.e}`;
+  }
+
+  const beforeLatestDividend = fixedDividends[fixedDividends.length - 2];
+  if (beforeLatestDividend.f !== 'a') {
+    throw `[test_FMP_duplicate_dividends_remove] Unexpected before latest dividend frequency: ${beforeLatestDividend.f}`;
+  }
+  if (beforeLatestDividend.e.getTime() !== new Date('2021-04-27T06:50:00.000+00:00').getTime()) {
+    throw `[test_FMP_duplicate_dividends_remove] Unexpected before latest dividend ex date: ${beforeLatestDividend.e}`;
   }
 }
 

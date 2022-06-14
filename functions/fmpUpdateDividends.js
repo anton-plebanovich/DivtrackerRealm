@@ -142,13 +142,13 @@ function fixDividends(dividends, existingDividendsBySymbolID) {
     if (existingDividends == null) {
       // There were no dividends but we have them now. 
       // It's hard to say if that's the first record or the whole set was added so asking to fix manually.
-      // dt data-status -e <ENV> -d fmp -c dividends --id <ID1> --id <ID2> && dt call-realm-function -e <ENV> -f fmpLoadMissingData --verbose
+      // dt data-status -e <ENV> -d fmp -c dividends --id <ID1> && dt call-realm-function -e <ENV> -f fmpLoadMissingData --verbose
       console.error(`Missing existing dividends for: ${symbolID}. It's better to load missing dividends data for this.`);
       continue;
     }
 
     // We remove new dividends from existing to allow update in case something was changed.
-    // We leave deleted dividends.
+    // We remove deleted dividends from existing to do not count them during frequency computations.
     const deduplicatedExistingDividends = [];
     for (const existingDividend of existingDividends) {
       const matchedDividendIndex = dividends.findIndex(dividend => 
