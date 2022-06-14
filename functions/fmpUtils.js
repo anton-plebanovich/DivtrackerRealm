@@ -659,16 +659,21 @@ function _getFmpDividendAmount(fmpDividend) {
 
 // TODO: Improve later by including more cases
 function _updateDividendsFrequency(dividends) {
-  const nonDeletedDividends = dividends.filter(x => x.x != true && x.a > 0);
+  const nonDeletedDividends = dividends.filter(x => x.x != true);
   const mainFrequency = getMainFrequency(nonDeletedDividends);
   for (const [i, dividend] of nonDeletedDividends.entries()) {
+    if (dividend.a <= 0) {
+      dividend.f = 'u';
+      continue;
+    }
+
     let prevDividend;
     let j = 1;
     while (i - j > 0 && prevDividend == null) {
       prevDividend = nonDeletedDividends[i - j];
 
-      // Ignore irregular dividends
-      if (prevDividend.f === 'i') {
+      // Ignore irregular and unspecified dividends
+      if (prevDividend.f === 'i' || prevDividend.f === 'u') {
         prevDividend = null;
       }
 
