@@ -133,6 +133,13 @@ function test_FMP_dividends_fix() {
   check_dividend_frequency('test_FMP_dividends_fix.TDEYX.semi_annual_2', fixedDividends[6], 's');
   check_dividend_frequency('test_FMP_dividends_fix.TDEYX.unspecified', fixedDividends[7], 'u');
 
+  // https://financialmodelingprep.com/api/v3/historical-price-full/stock_dividend/OTT.L?apikey=969387165d69a8607f9726e8bb52b901
+  dividends = EJSON.parse('[{"date":"2021-09-30","label":"September 30, 21","adjDividend":6,"dividend":6,"recordDate":"","paymentDate":"","declarationDate":""},{"date":"2017-06-29","label":"June 29, 17","adjDividend":4,"dividend":0.04,"recordDate":"2017-06-30","paymentDate":"2017-07-21","declarationDate":"2017-05-10"},{"date":"2016-04-28","label":"April 28, 16","adjDividend":0.15,"dividend":0.15,"recordDate":"2016-04-29","paymentDate":"2016-05-13","declarationDate":"2016-04-21"},{"date":"2016-01-21","label":"January 21, 16","adjDividend":0.07,"dividend":0.07,"recordDate":"2016-01-22","paymentDate":"2016-02-19","declarationDate":"2016-01-12"}]');
+  fixedDividends = fixFMPDividends(dividends, new BSON.ObjectId('628915115422930228d3c414'));
+  check_dividend_frequency('test_FMP_dividends_fix.OTT.L.0', fixedDividends[0], 'q');
+  check_dividend_frequency('test_FMP_dividends_fix.OTT.L.1', fixedDividends[1], 'q');
+  check_dividend_frequency('test_FMP_dividends_fix.OTT.L.2', fixedDividends[2], 'a');
+  check_dividend_frequency('test_FMP_dividends_fix.OTT.L.3', fixedDividends[3], 'u');
 }
 
 function check_dividends_length(testName, dividends, length) {
