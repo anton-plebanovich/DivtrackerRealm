@@ -717,7 +717,7 @@ function _updateDividendsFrequency(dividends) {
       dividend.f = getFrequencyForMillis((nextDate - prevDate) / 2);
       
     } else if (prevDate != null) {
-      dividend.f = nonDeletedDividends[i - 1].f; // Keep previous
+      dividend.f = prevDividend.f; // Keep previous
     } else if (nextDate != null) {
       dividend.f = getFrequencyForMillis(nextDate - dividend.e);
     } else {
