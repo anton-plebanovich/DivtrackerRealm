@@ -733,7 +733,7 @@ function _updateDividendsFrequency(dividends) {
           iPrev++;
         }
         
-        if (prevPrevDividend != null && prevPrevDividend.f === prevDividend.f) {
+        if (prevPrevDividend != null && prevPrevDividend.f === prevDividend.f && getGradeDifference(prevFrequency, prevDividend.f) === 1) {
           const frequency = getFrequencyForMillis((dividend.e - prevPrevDividend.e) / 2);
           dividend.f = frequency;
           
@@ -760,7 +760,7 @@ function _updateDividendsFrequency(dividends) {
           iPrev++;
         }
 
-        if (prevPrevDividend != null && prevPrevDividend.f === prevDividend.f) {
+        if (prevPrevDividend != null && prevPrevDividend.f === prevDividend.f && getGradeDifference(prevFrequency, prevDividend.f) === 1) {
           const frequency = getFrequencyForMillis((dividend.e - prevPrevDividend.e) / 2);
           dividend.f = frequency;
 
@@ -784,6 +784,23 @@ function _updateDividendsFrequency(dividends) {
 }
 
 updateDividendsFrequency = _updateDividendsFrequency;
+
+function getGradeDifference(lFrequency, rFrequency) {
+  const lGrade = getGrade(lFrequency);
+  const rGrade = getGrade(rFrequency);
+  return Math.abs(rGrade - lGrade);
+}
+
+function getGrade(frequency) {
+  switch (frequency) {
+    case 'w': return 1;
+    case 'm': return 2;
+    case 'q': return 3;
+    case 's': return 4;
+    case 'a': return 5;
+    default: return -1;
+  }
+}
 
 function getFrequencyForMillis(millis) {
   const days = Math.abs(millis) / 86400000;
