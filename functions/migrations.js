@@ -416,7 +416,7 @@ async function delete_duplicated_FMP_dividends() {
     let fixedDividends = symbolDividends
       // Remove deleted
       .filter(dividend => dividend.x != true)
-      .sorted((l, r) => l.e.localeCompare(r.e));
+      .sorted((l, r) => l.e - r.e);
     
     fixedDividends = _removeDuplicatedDividends(fixedDividends);
     fixedDividends = _updateDividendsFrequency(fixedDividends);
