@@ -3,6 +3,16 @@
 
 // https://www.mongodb.com/docs/manual/reference/method/cursor.sort/
 
+///////////////////////////////////////////////////////////////////////////////// MATH
+
+math_bigger_times = function(l, r) {
+  if (l > r) {
+    return l / r;
+  } else {
+    return r / l;
+  }
+}
+
 ///////////////////////////////////////////////////////////////////////////////// EXTENSIONS
 
 function normalizeFields(fields) {

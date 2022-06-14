@@ -614,6 +614,7 @@ function _fixFMPDividends(fmpDividends, symbolID) {
         dividend.setIfNotNullOrUndefined('e', _getOpenDate(fmpDividend.date));
         dividend.setIfNotNullOrUndefined('d', _getOpenDate(fmpDividend.declarationDate));
         dividend.setIfNotNullOrUndefined('p', _getOpenDate(fmpDividend.paymentDate));
+        dividend.f = 'u'; // Will be updated later
         dividend.s = symbolID;
 
         const amount = _getFmpDividendAmount(fmpDividend);
@@ -658,7 +659,7 @@ function _getFmpDividendAmount(fmpDividend) {
 
 // TODO: Improve later by including more cases
 function _updateDividendsFrequency(dividends) {
-  const nonDeletedDividends = dividends.filter(x => x.x != true);
+  const nonDeletedDividends = dividends.filter(x => x.x != true && x.a > 0);
   const mainFrequency = getMainFrequency(nonDeletedDividends);
   for (const [i, dividend] of nonDeletedDividends.entries()) {
     let prevDividend;
@@ -688,8 +689,8 @@ function _updateDividendsFrequency(dividends) {
         // Try to identify irregular dividends
         const nextFrequency = getFrequencyForMillis(nextDate - dividend.e);
         if (nextFrequency === 'w') {
-          const thisDiff = Math.abs(1 - dividend.a / prevDividend.a);
-          const nextDiff = Math.abs(1 - nextDividend.a / prevDividend.a);
+          const thisDiff = math_bigger_times(dividend.a, prevDividend.a);
+          const nextDiff = math_bigger_times(nextDividend.a, prevDividend.a);
           const isIrregular = thisDiff > nextDiff;
           if (isIrregular) {
             dividend.f = 'i';
@@ -701,8 +702,8 @@ function _updateDividendsFrequency(dividends) {
 
         const prevFrequency = getFrequencyForMillis(dividend.e - prevDate);
         if (prevFrequency === 'w') {
-          const thisDiff = Math.abs(1 - dividend.a / nextDividend.a);
-          const prevDiff = Math.abs(1 - prevDividend.a / nextDividend.a);
+          const thisDiff = math_bigger_times(dividend.a, nextDividend.a);
+          const prevDiff = math_bigger_times(prevDividend.a, nextDividend.a);
           const isIrregular = thisDiff > prevDiff;
           if (isIrregular) {
             dividend.f = 'i';
