@@ -16,7 +16,9 @@ exports = async function(migration) {
   logData = true;
 
   try {
-    if (migration === 'old_data_delete_migration') {
+    if (migration === 'dividends_null_fields_cleanup_migration') {
+      await dividends_null_fields_cleanup_migration();
+    } else if (migration === 'old_data_delete_migration') {
       await old_data_delete_migration();
     } else if (migration === 'old_date_format_splits_migration') {
       await old_date_format_splits_migration();
@@ -36,6 +38,25 @@ exports = async function(migration) {
     console.error(error);
   }
 };
+
+async function dividends_null_fields_cleanup_migration() {
+  context.functions.execute("iexUtils");
+  context.functions.execute("fmpUtils");
+
+  const databaseNames = [
+    'divtracker-v2',
+    'fmp',
+  ];
+
+  const operations = [];
+  for (const databaseName of databaseNames) {
+    const collection = atlas.db(databaseName).collection('dividends');
+    operations.push(collection.updateMany({ d: null }, { $unset: { d: "" } }));
+    operations.push(collection.updateMany({ p: null }, { $unset: { p: "" } }));
+  }
+
+  await Promise.all(operations);
+}
 
 ////////////////////////////////////////////////////// 2022-06-XX Data range adjust
 
@@ -413,6 +434,7 @@ function remove_duplicated_IEX_Dividends(dividends) {
   return result;
 }
 
+// TODO: Check deleted and with irregular frequency
 async function delete_duplicated_FMP_dividends() {
   context.functions.execute("fmpUtils");
 
