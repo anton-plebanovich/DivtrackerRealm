@@ -327,16 +327,9 @@ Object.prototype.updateFrom = function(_object, setUpdateDate) {
   // Collect keys to unset
   const oldEntries = Object.entries(object);
   for (const [key, oldValue] of oldEntries) {
-    // Ignore 'null' if found
-    if (oldValue == null) { 
-      console.error(`[updateFrom] Unexpected 'null' value for '${key}' key: ${{ this: this, _object: _object }.stringify()}`);
-      continue;
-    }
-
     const newValue = set[key];
-    if (newValue == null) {
+    if (newValue == null || oldValue == null) {
       unset[key] = "";
-
     } else if (newValue.isEqual(oldValue)) {
       delete set[key];
     }
