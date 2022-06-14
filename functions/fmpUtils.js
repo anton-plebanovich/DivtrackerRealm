@@ -709,6 +709,21 @@ function getFrequencyForMillis(millis) {
 
 // TODO: Improve later by including more cases
 function _removeDuplicatedDividends(dividends) {
+  // Unable to determine duplicates when there are less than 3 records
+  if (dividends.length < 3) {
+    return dividends;
+  }
+
+  // Very raw but should be enough for now
+  const range = dividends[dividends.length - 1].e - dividends[0].e;
+  const period = range / (dividends.length - 1);
+  const mainFrequency = getFrequencyForMillis(period);
+
+  // We do not dedupe week frequency dividends atm
+  if (mainFrequency === 'w') {
+    return dividends;
+  }
+
   const originalLength = dividends.length;
   const newDividends = dividends
     .filter((dividend, i, arr) => {
@@ -729,7 +744,7 @@ function _removeDuplicatedDividends(dividends) {
       const frequency = getFrequencyForMillis(dividend.e - prevDividend.e);
       const nextFrequency = getFrequencyForMillis(nextDividend.e - dividend.e);
 
-      if (frequency !== nextFrequency && nextFrequency === 'w' && amountEqual) {
+      if (nextFrequency === 'w' && amountEqual) {
         console.error(`Duplicate dividend for ${dividend.s}: ${dividend.stringify()}`);
         return false;
       } else {

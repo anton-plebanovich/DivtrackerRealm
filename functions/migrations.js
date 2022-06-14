@@ -437,5 +437,5 @@ async function delete_duplicated_FMP_dividends() {
   }
 
   await collection.safeUpdateMany(newDividends);
-  console.log(`Deleted objects: ${newDividends.filter(x => x.x == true).length}`)
+  console.log(`Deleted objects: ${newDividends.filter(x => x.x == true).length}`);
 }
