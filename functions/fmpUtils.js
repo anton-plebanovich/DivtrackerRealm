@@ -668,7 +668,7 @@ function _updateDividendsFrequency(dividends) {
     
     j = 1;
     let prevDividend;
-    while (i - j > 0 && prevDividend == null) {
+    while (i - j >= 0 && prevDividend == null) {
       prevDividend = nonDeletedDividends[i - j];
 
       // Ignore irregular and unspecified dividends
@@ -684,12 +684,6 @@ function _updateDividendsFrequency(dividends) {
     let nextDividend;
     while (i + j < nonDeletedDividends.length && nextDividend == null) {
       nextDividend = nonDeletedDividends[i + j];
-
-      // Ignore irregular dividends
-      if (nextDividend.f === 'i') {
-        nextDividend = null;
-      }
-
       j++;
     }
     const nextDate = nextDividend?.e;
