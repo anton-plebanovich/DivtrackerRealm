@@ -2,6 +2,10 @@
 # 2022-06-XX | Old format date, IEX calendar splits, and refid for dividends
  
 - Release new server
+- Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument old_data_delete_migration --verbose`
+- Check `divtracker-v2.dividends` and `fmp.dividends` collections using find operator: `{ e: { $lt: ISODate('2016-01-01') } }`. There should be no records.
+- Check `divtracker-v2.historical-prices` and `fmp.historical-prices` collections using find operator: `{ d: { $lt: ISODate('2016-01-01') } }`. There should be no records.
+- Check `divtracker-v2.splits` and `fmp.splits` collections using find operator: `{ e: { $lt: ISODate('2016-01-01') } }`. There should be no records.
 - Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument old_date_format_splits_migration --verbose`
 - Check `divtracker-v2.splits` collection using find operator: `{ $expr: { $eq: [{ $hour: "$e" }, 12] } }`. There should be no records.
 - Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument old_date_format_dividends_migration --verbose`

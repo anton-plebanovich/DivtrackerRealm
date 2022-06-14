@@ -16,7 +16,9 @@ exports = async function(migration) {
   logData = true;
 
   try {
-    if (migration === 'old_date_format_splits_migration') {
+    if (migration === 'old_data_delete_migration') {
+      await old_data_delete_migration();
+    } else if (migration === 'old_date_format_splits_migration') {
       await old_date_format_splits_migration();
     } else if (migration === 'old_date_format_dividends_migration') {
       await old_date_format_dividends_migration();
@@ -32,6 +34,46 @@ exports = async function(migration) {
     console.error(error);
   }
 };
+
+////////////////////////////////////////////////////// 2022-06-XX Data range adjust
+
+/**
+ * Delete dividends, historical prices and splits before 2016-01-01
+ */
+async function old_data_delete_migration() {
+  const databaseNames = [
+    'divtracker-v2',
+    'fmp',
+  ];
+
+  const collectionNames = [
+    'dividends',
+    'historical-prices',
+    'splits',
+  ];
+
+  const fieldByCollectionName = {
+    'dividends': 'e',
+    'historical-prices': 'd',
+    'splits': 'e',
+  }
+
+  const operations = [];
+  const lowerDate = new Date('2016-01-01');
+  for (const databaseName of databaseNames) {
+    const atalsDB = atlas.db(databaseName);
+    for (const collectionName of collectionNames) {
+      const collection = atalsDB.collection(collectionName);
+      const field = fieldByCollectionName[collectionName];
+      const find = { [field]: { $lt: lowerDate } };
+      const update = { $set: { x: true }, $currentDate: { u: true } };
+      const operation = collection.updateMany(find, update)
+      operations.push(operation);
+    }
+  }
+
+  return await Promise.all(operations)
+}
 
 ////////////////////////////////////////////////////// 2022-06-XX IEX refid for splits and dividends
 

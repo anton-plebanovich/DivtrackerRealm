@@ -144,11 +144,14 @@ getShortSymbols = _getShortSymbols;
 // --- Premium
 // pk_01ef04dd60b5404b81d9cc47b2388176 - trackerdividend@gmail.com - sk_de6f102262874cfab3d9a83a6980e1db - 3ff51380e7f3a36ff4e0915e9d781878
 
+// We do not need data below that date at the moment.
+const minFetchDate = '2016-01-01';
+
 /**
- * Default range to fetch. 
+ * Default range to fetch.
  * The range should include and be close to 2016-01-01 since that's the date where IEX simple dividends start.
  */
-const defaultRange = '7y';
+const defaultRange = `${(new Date().getUTCFullYear() - new Date(minFetchDate).getUTCFullYear()) * 12 + new Date().getMonth() + 1}m`;
 
 fetchSymbols = async function fetchSymbols() {
   // https://cloud.iexapis.com/stable/ref-data/symbols?token=pk_9f1d7a2688f24e26bb24335710eae053
@@ -516,7 +519,10 @@ function _fixDividends(iexDividends, symbolID) {
     }
   
     console.logVerbose(`Removing duplicates from '${iexDividends.length}' IEX dividends for ${symbolID}`);
-    let dividends = iexDividends.filterNullAndUndefined();
+    let dividends = iexDividends
+      .filterNullAndUndefined()
+      .filter(iexDividend => iexDividend.exDate >= minFetchDate);
+
     dividends = _removeDuplicatedIEXDividends(dividends);
 
     console.logVerbose(`Mapping '${iexDividends.length}' IEX dividends for ${symbolID}`);
@@ -709,6 +715,7 @@ function _fixHistoricalPrices(iexHistoricalPrices, symbolID) {
     console.logVerbose(`Fixing historical prices for ${symbolID}`);
     return iexHistoricalPrices
       .filterNullAndUndefined()
+      .filter(iexHistoricalPrice => iexHistoricalPrice.date >= minFetchDate)
       .map(iexHistoricalPrice => {
         const historicalPrice = {};
         historicalPrice.setIfNotNullOrUndefined('d', _getCloseDate(iexHistoricalPrice.date));
@@ -780,6 +787,7 @@ function _fixSplits(iexSplits, symbolID) {
     iexSplits = _removeDuplicatedIEXSplits(iexSplits);
 
     return iexSplits
+      .filter(iexSplits => iexSplits.exDate >= minFetchDate)
       .map(iexSplit => {
         const split = {};
         split.setIfNotNullOrUndefined('e', _getOpenDate(iexSplit.exDate));
@@ -801,6 +809,7 @@ function _fixSplits(iexSplits, symbolID) {
 
 fixSplits = _fixSplits;
 
+// TODO: Check 'MCHP' and 'NYC' fetches
 function _removeDuplicatedIEXSplits(iexSplits) {
   const buckets = iexSplits.toBuckets('refid');
   const result = [];
