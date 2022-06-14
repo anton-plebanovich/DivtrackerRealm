@@ -93,6 +93,10 @@ Object.prototype.safeUpsertMany = async function(newObjects, field, setUpdateDat
     field = "_id";
   }
 
+  if (setUpdateDate == null) {
+    setUpdateDate = true;
+  }
+
   const bulk = this.initializeUnorderedBulkOp();
   for (const newObject of newObjects) {
     // https://docs.mongodb.com/manual/reference/operator/update/currentDate/
@@ -114,7 +118,7 @@ Object.prototype.safeUpsertMany = async function(newObjects, field, setUpdateDat
  * Safely computes and executes update operation from old to new objects on a collection.
  * @note Marked as deleted records `x === true` can not be restored using this method.
  */
-Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields, setUpdateDate, insertMissing = true) {
+Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields, setUpdateDate, insertMissing) {
   _throwIfNotArray(newObjects, `Please pass new objects array as the first argument. safeUpdateMany`);
   if (newObjects.length === 0) {
     console.log(`New objects array is empty. Nothing to update.`);
@@ -122,6 +126,14 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields,
   }
 
   fields = normalizeFields(fields);
+
+  if (setUpdateDate == null) {
+    setUpdateDate = true;
+  }
+
+  if (insertMissing == null) {
+    insertMissing = true;
+  }
 
   const invalidObjectsLength = newObjects.filter(newObject => 
     fields.contains((field) => newObject[field] == null)
@@ -190,7 +202,11 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields,
  * Executes find by field and update or insert for a new object from an old object.
  * Uses `_id` field by default.
  */
-Object.prototype.findAndUpdateOrInsertIfNeeded = function(newObject, oldObject, fields, setUpdateDate, insertMissing = true) {
+Object.prototype.findAndUpdateOrInsertIfNeeded = function(newObject, oldObject, fields, setUpdateDate, insertMissing) {
+  if (insertMissing == null) {
+    insertMissing = true;
+  }
+
   if (newObject == null) {
     throw new _SystemError(`New object should not be null for insert or update`);
     
@@ -215,6 +231,11 @@ Object.prototype.findAndUpdateOrInsertIfNeeded = function(newObject, oldObject, 
  */
 Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, fields, setUpdateDate) {
   fields = normalizeFields(fields);
+
+  if (setUpdateDate == null) {
+    setUpdateDate = true;
+  }
+  
   if (newObject == null) {
     throw new _SystemError(`New object should not be null for update`);
     

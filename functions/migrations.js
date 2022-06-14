@@ -26,6 +26,8 @@ exports = async function(migration) {
       await fetch_refid_for_IEX_splits();
     } else if (migration === 'fetch_refid_for_IEX_dividends') {
       await fetch_refid_for_IEX_dividends();
+    } else if (migration === 'delete_duplicated_FMP_dividends') {
+      await delete_duplicated_FMP_dividends();
     } else {
       throw `Unexpected migration: ${migration}`;
     }
@@ -401,4 +403,30 @@ function removeDuplicatedDividends(dividends) {
   }
 
   return result;
+}
+
+function delete_duplicated_FMP_dividends() {
+  const collection = fmp.collection('dividends');
+
+  const oldDividends = await collection.fullFind();
+  const dividendsBySymbolID = oldDividends.toBuckets('s');
+  const newDividends = [];
+  for (const symbolDividends of Object.values(dividendsBySymbolID)) {
+    let fixedDividends = symbolDividends
+      // Remove deleted
+      .filter(dividend => dividend.x != true)
+      .sorted((l, r) => l.date.localeCompare(r.date));
+    
+    fixedDividends = _removeDuplicatedDividends(fixedDividends);
+    fixedDividends = _updateDividendsFrequency(fixedDividends);
+    newDividends.push(...fixedDividends);
+
+    const dividendsToDelete = symbolDividends
+      .filter(dividend => !fixedDividends.includes(dividend))
+      .forEach(dividend => dividend.x = true);
+    
+    newDividends.push(...dividendsToDelete);
+  }
+
+  return await collection.safeUpdateMany(newDividends);
 }
