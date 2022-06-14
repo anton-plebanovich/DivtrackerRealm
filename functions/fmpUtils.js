@@ -687,8 +687,10 @@ function _updateDividendsFrequency(dividends) {
           const isIrregular = thisDiff > nextDiff;
           if (isIrregular) {
             dividend.f = 'i';
-            continue;
+          } else {
+            dividend.f = mainFrequency;
           }
+          continue;
         }
 
         const prevFrequency = getFrequencyForMillis(dividend.e - prevDate);
@@ -698,8 +700,10 @@ function _updateDividendsFrequency(dividends) {
           const isIrregular = thisDiff > prevDiff;
           if (isIrregular) {
             dividend.f = 'i';
-            continue;
+          } else {
+            dividend.f = mainFrequency;
           }
+          continue;
         }
       }
 
