@@ -28,8 +28,8 @@ exports = async function(migration) {
       await fetch_refid_for_IEX_splits();
     } else if (migration === 'fetch_refid_for_IEX_dividends') {
       await fetch_refid_for_IEX_dividends();
-    } else if (migration === 'delete_duplicated_FMP_dividends') {
-      await delete_duplicated_FMP_dividends();
+    } else if (migration === 'fix_FMP_dividends') {
+      await fix_FMP_dividends();
     } else {
       throw `Unexpected migration: ${migration}`;
     }
@@ -434,8 +434,10 @@ function remove_duplicated_IEX_Dividends(dividends) {
   return result;
 }
 
-// TODO: Check deleted and with irregular frequency
-async function delete_duplicated_FMP_dividends() {
+/**
+ * Deletes duplicated FMP dividends and fixes frequency where needed
+ */
+async function fix_FMP_dividends() {
   context.functions.execute("fmpUtils");
 
   const collection = fmp.collection('dividends');
