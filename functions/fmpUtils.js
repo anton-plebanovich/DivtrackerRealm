@@ -740,12 +740,16 @@ function _updateDividendsFrequency(dividends) {
           iPrev++;
         }
         
-        if (prevPrevDividend != null && prevPrevDividend.f === prevDividend.f && getGradeDifference(prevFrequency, prevDividend.f) === 1) {
-          const frequency = getFrequencyForMillis((dividend.e - prevPrevDividend.e) / 2);
-          dividend.f = frequency;
+        if (prevPrevDividend != null) {
+          if (prevPrevDividend.f === prevDividend.f && getGradeDifference(prevFrequency, prevDividend.f) === 1) {
+            const frequency = getFrequencyForMillis((dividend.e - prevPrevDividend.e) / 2);
+            dividend.f = frequency;
+          } else {
+            dividend.f = prevFrequency;
+          }
           
         } else {
-          dividend.f = prevFrequency;
+          dividend.f = getFrequencyForMillis((nextDividend.e - prevDividend.e) / 2);
         }
       }
       
