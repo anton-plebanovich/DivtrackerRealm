@@ -756,21 +756,16 @@ function _removeDuplicatedDividends(dividends) {
   const originalLength = dividends.length;
   const newDividends = dividends
     .filter((dividend, i, arr) => {
-      if (i === 0) {
-        return true;
-      }
       if (i + 1 >= arr.length) {
         return true;
       }
       
-      const prevDividend = arr[i - 1];
       const nextDividend = arr[i + 1];
 
       // 80.2744 and 80.27435 for NNSB.ME
       const lhsAmount = dividend.a.valueOf();
       const rhsAmount = nextDividend.a.valueOf();
       const amountEqual = Math.abs(rhsAmount - lhsAmount) <= 0.0001
-      const frequency = getFrequencyForMillis(dividend.e - prevDividend.e);
       const nextFrequency = getFrequencyForMillis(nextDividend.e - dividend.e);
 
       if (nextFrequency === 'w' && amountEqual) {
@@ -793,6 +788,10 @@ removeDuplicatedDividends = _removeDuplicatedDividends;
 
   // Very raw but should be enough for now
 function getMainFrequency(dividends) {
+  if (dividends.length < 2) {
+    return 'u';
+  }
+
   const range = dividends[dividends.length - 1].e - dividends[0].e;
   const period = range / (dividends.length - 1);
 

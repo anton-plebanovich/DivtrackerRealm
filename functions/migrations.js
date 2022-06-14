@@ -442,15 +442,11 @@ async function fix_FMP_dividends() {
 
   const collection = fmp.collection('dividends');
 
-  const oldDividends = await collection.fullFind();
+  const oldDividends = await collection.fullFind({ x: { $ne: true } });
   const dividendsBySymbolID = oldDividends.toBuckets('s');
   const newDividends = [];
   for (const symbolDividends of Object.values(dividendsBySymbolID)) {
-    let fixedDividends = symbolDividends
-      // Remove deleted
-      .filter(dividend => dividend.x != true)
-      .sorted((l, r) => l.e - r.e);
-    
+    let fixedDividends = symbolDividends.sorted((l, r) => l.e - r.e);
     fixedDividends = removeDuplicatedDividends(fixedDividends);
     fixedDividends = updateDividendsFrequency(fixedDividends);
     newDividends.push(...fixedDividends);
