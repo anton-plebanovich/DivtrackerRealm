@@ -663,6 +663,7 @@ const possiblyIrregularMinTimeInterval = 7 * 24 * 3600 * 1000;
 // 13 days
 const possiblyIrregularMaxTimeInterval = 13 * 24 * 3600 * 1000;
 
+// TODO: Improve that logic to take into account whole context and so better series detection instead of just compare adjacent dividends.
 function _updateDividendsFrequency(dividends) {
   let foundIrregular = false;
 
