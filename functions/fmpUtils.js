@@ -664,6 +664,7 @@ const possiblyIrregularMinTimeInterval = 7 * 24 * 3600 * 1000;
 const possiblyIrregularMaxTimeInterval = 13 * 24 * 3600 * 1000;
 
 // TODO: Improve that logic to take into account whole context and so better series detection instead of just compare adjacent dividends.
+// TODO: We should use parser approach here the same way we did for CSV normalizer to have better flexibility.
 function _updateDividendsFrequency(dividends) {
   let foundIrregular = false;
 

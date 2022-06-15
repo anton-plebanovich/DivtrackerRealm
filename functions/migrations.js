@@ -90,7 +90,7 @@ async function old_data_delete_migration() {
     for (const collectionName of collectionNames) {
       const collection = atalsDB.collection(collectionName);
       const field = fieldByCollectionName[collectionName];
-      const find = { [field]: { $lt: lowerDate } };
+      const find = { [field]: { $lt: lowerDate }, x: { $ne: true } };
       const update = { $set: { x: true }, $currentDate: { u: true } };
       const operation = collection.updateMany(find, update)
       operations.push(operation);
