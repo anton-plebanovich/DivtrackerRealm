@@ -817,7 +817,7 @@ function _updateDividendsFrequency(dividends) {
 
       if (nextNextDividend != null) {
         const nextNextFrequency = getFrequencyForMillis(nextNextDividend.e - nextDividend.e);
-        if (nextNextFrequency === nextNextFrequency) {
+        if (nextFrequency === nextNextFrequency) {
           dividend.f = nextNextFrequency;
         } else {
           dividend.f = getFrequencyForMillis((nextNextDividend.e - dividend.e) / 2);
