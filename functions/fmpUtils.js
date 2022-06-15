@@ -657,6 +657,12 @@ function _getFmpDividendAmount(fmpDividend) {
   }
 }
 
+// 7 days
+const possiblyIrregularMinTimeInterval = 7 * 24 * 3600 * 1000;
+
+// 13 days
+const possiblyIrregularMaxTimeInterval = 13 * 24 * 3600 * 1000;
+
 function _updateDividendsFrequency(dividends) {
   let foundIrregular = false;
 
@@ -692,10 +698,25 @@ function _updateDividendsFrequency(dividends) {
     }
     
     if (prevDividend != null && nextDividend != null) {
-      const nextFrequency = getFrequencyForMillis(nextDividend.e - dividend.e);
-      const prevFrequency = getFrequencyForMillis(dividend.e - prevDividend.e);
-      if (mainFrequency !== 'w') {
+      const nextTimeInterval = Math.abs(nextDividend.e - dividend.e);
+      const nextFrequency = getFrequencyForMillis(nextTimeInterval);
+      
+      const timeInterval = Math.abs(dividend.e - prevDividend.e);
+      const frequency = getFrequencyForMillis(timeInterval);
+      
+      // We use shorter range when we have 'm' main frequency and longer when it's 'q' and above
+      let isPossiblyIrregular;
+      if (mainFrequency === 'm') {
+        isPossiblyIrregular = nextTimeInterval <= possiblyIrregularMinTimeInterval || timeInterval <= possiblyIrregularMinTimeInterval;
+      } else if (mainFrequency !== 'w') {
+        isPossiblyIrregular = nextTimeInterval <= possiblyIrregularMaxTimeInterval || timeInterval <= possiblyIrregularMaxTimeInterval;
+      } else {
+        isPossiblyIrregular = false;
+      }
+
+      if (isPossiblyIrregular) {
         // Try to identify irregular dividends
+        // TODO: if main frequency is 'm' we need to lower weekly range
         if (nextFrequency === 'w') {
           const thisDiff = math_bigger_times(dividend.a, prevDividend.a);
           const nextDiff = math_bigger_times(nextDividend.a, prevDividend.a);
@@ -704,12 +725,12 @@ function _updateDividendsFrequency(dividends) {
             foundIrregular = true;
             dividend.f = 'i';
           } else {
-            dividend.f = prevFrequency;
+            dividend.f = frequency;
           }
           continue;
         }
 
-        if (prevFrequency === 'w') {
+        if (frequency === 'w') {
           const thisDiff = math_bigger_times(dividend.a, nextDividend.a);
           const prevDiff = math_bigger_times(prevDividend.a, nextDividend.a);
           const isIrregular = thisDiff > prevDiff;
@@ -723,8 +744,8 @@ function _updateDividendsFrequency(dividends) {
         }
       }
 
-      if (prevFrequency === prevDividend.f) {
-        dividend.f = prevFrequency;
+      if (frequency === prevDividend.f) {
+        dividend.f = frequency;
 
       } else {
         let prevPrevDividend;
@@ -744,13 +765,13 @@ function _updateDividendsFrequency(dividends) {
             // Missing dividends case. If two previous frequencies and one next is the same we just use it.
             dividend.f = nextFrequency;
 
-          } else if (prevPrevDividend.f === prevDividend.f && getGradeDifference(prevFrequency, prevDividend.f) === 1) {
+          } else if (prevPrevDividend.f === prevDividend.f && getGradeDifference(frequency, prevDividend.f) === 1) {
             // 3-9 semi-annual or 1-5 quarterly case
             const frequency = getFrequencyForMillis((dividend.e - prevPrevDividend.e) / 2);
             dividend.f = frequency;
 
           } else {
-            dividend.f = prevFrequency;
+            dividend.f = frequency;
           }
           
         } else {
@@ -759,9 +780,9 @@ function _updateDividendsFrequency(dividends) {
       }
       
     } else if (prevDividend != null) {
-      const prevFrequency = getFrequencyForMillis(dividend.e - prevDividend.e);
-      if (prevFrequency === prevDividend.f) {
-        dividend.f = prevFrequency;
+      const frequency = getFrequencyForMillis(dividend.e - prevDividend.e);
+      if (frequency === prevDividend.f) {
+        dividend.f = frequency;
 
       } else {
         let prevPrevDividend;
@@ -776,17 +797,17 @@ function _updateDividendsFrequency(dividends) {
           iPrev++;
         }
 
-        if (prevPrevDividend != null && prevPrevDividend.f === prevDividend.f && getGradeDifference(prevFrequency, prevDividend.f) === 1) {
+        if (prevPrevDividend != null && prevPrevDividend.f === prevDividend.f && getGradeDifference(frequency, prevDividend.f) === 1) {
           const frequency = getFrequencyForMillis((dividend.e - prevPrevDividend.e) / 2);
           dividend.f = frequency;
 
         } else {
-          dividend.f = prevFrequency;
+          dividend.f = frequency;
         }
       }
 
     } else if (nextDividend != null) {
-      const frequency = getFrequencyForMillis(nextDividend.e - dividend.e);
+      const nextFrequency = getFrequencyForMillis(nextDividend.e - dividend.e);
 
       let nextNextDividend;
       while (i + iNext < nonDeletedDividends.length && nextNextDividend == null) {
@@ -795,15 +816,15 @@ function _updateDividendsFrequency(dividends) {
       }
 
       if (nextNextDividend != null) {
-        const nextFrequency = getFrequencyForMillis(nextNextDividend.e - nextDividend.e);
-        if (frequency === nextFrequency) {
-          dividend.f = frequency;
+        const nextNextFrequency = getFrequencyForMillis(nextNextDividend.e - nextDividend.e);
+        if (nextNextFrequency === nextNextFrequency) {
+          dividend.f = nextNextFrequency;
         } else {
           dividend.f = getFrequencyForMillis((nextNextDividend.e - dividend.e) / 2);
         }
 
       } else {
-        dividend.f = frequency;
+        dividend.f = nextFrequency;
       }
 
     } else {
@@ -841,8 +862,7 @@ function getGrade(frequency) {
 
 function getFrequencyForMillis(millis) {
   const days = Math.abs(millis) / 86400000;
-  // Just to have wider range when we catch irregular dividends we use more days.
-  if (days <= 13) {
+  if (days <= 11) {
     return 'w';
   } else if (days <= 45) {
     return 'm';
