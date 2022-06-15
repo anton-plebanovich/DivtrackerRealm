@@ -167,8 +167,8 @@ function test_FMP_dividends_fix() {
     .filter(x => x.e <= max_FNARX_Date)
     .forEach((dividend, i) => check_dividend_frequency(`test_FMP_dividends_fix.FNARX.${i}`, dividend, 's'));
 
-  check_dividend_frequency('test_FMP_dividends_fix.FNARX.10', fixedDividends[2], 'a');
-  check_dividend_frequency('test_FMP_dividends_fix.FNARX.11', fixedDividends[3], 'u');
+  check_dividend_frequency('test_FMP_dividends_fix.FNARX.10', fixedDividends[10], 'a');
+  check_dividend_frequency('test_FMP_dividends_fix.FNARX.11', fixedDividends[11], 'u');
 }
 
 function check_dividends_length(testName, dividends, length) {
