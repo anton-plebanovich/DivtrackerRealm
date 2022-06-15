@@ -801,10 +801,16 @@ function _updateDividendsFrequency(dividends) {
 
         if (prevPrevDividend != null && prevPrevDividend.f === prevDividend.f && getGradeDifference(frequency, prevDividend.f) === 1) {
           const frequency = getFrequencyForMillis((dividend.e - prevPrevDividend.e) / 2);
-          dividend.f = frequency;
+          if (frequency === prevDividend.f) {
+            dividend.f = frequency;
+          } else {
+            // Probably new series start but we can't predict with just one record
+            dividend.f = 'u';
+          }
 
         } else {
-          dividend.f = frequency;
+          // Probably new series start but we can't predict with just one record
+          dividend.f = 'u';
         }
       }
 
