@@ -657,7 +657,6 @@ function _getFmpDividendAmount(fmpDividend) {
   }
 }
 
-// TODO: Improve later by including more cases
 function _updateDividendsFrequency(dividends) {
   let foundIrregular = false;
 
@@ -741,9 +740,15 @@ function _updateDividendsFrequency(dividends) {
         }
         
         if (prevPrevDividend != null) {
-          if (prevPrevDividend.f === prevDividend.f && getGradeDifference(prevFrequency, prevDividend.f) === 1) {
+          if (prevPrevDividend.f === prevDividend.f && prevDividend.f === nextFrequency) {
+            // Missing dividends case. If two previous frequencies and one next is the same we just use it.
+            dividend.f = nextFrequency;
+
+          } else if (prevPrevDividend.f === prevDividend.f && getGradeDifference(prevFrequency, prevDividend.f) === 1) {
+            // 3-9 semi-annual or 1-5 quarterly case
             const frequency = getFrequencyForMillis((dividend.e - prevPrevDividend.e) / 2);
             dividend.f = frequency;
+
           } else {
             dividend.f = prevFrequency;
           }
