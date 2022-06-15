@@ -636,7 +636,7 @@ function _fixFMPDividends(fmpDividends, symbolID) {
     return dividends;
 
   } catch(error) {
-    console.error(`Unable to fix dividends ${fmpDividends.stringify()}: ${error}`);
+    console.error(`Unable to fix dividends: ${error} | Dividends: ${fmpDividends.stringify()}`);
     return [];
   }
 }
