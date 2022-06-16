@@ -253,29 +253,17 @@ async function fetch_refid_for_IEX_dividends() {
 
   const shortSymbols = await get_all_IEX_short_symbols();
 
-  // TODO: ADD MORE
-  const specificTickers = ['BTI', 'QCOM'];
-  const specificShortSymbols = shortSymbols.filter(x => specificTickers.includes(x.t));
-
-  const [
-    futureDividends,
-    recentDividends,
-    specificDividends,
-  ] = await Promise.all([
+  // We released to production on 2021-08-21 so we also cover all special tickers like 'BTI' and 'QCOM' with our 1 year behind refetch
+  const [futureDividends, recentDividends] = await Promise.all([
     fetch_IEX_dividends_with_duplicates(shortSymbols, true, '10y', null),
     fetch_IEX_dividends_with_duplicates(shortSymbols, false, '1y', 1),
-    fetch_IEX_dividends_with_duplicates(specificShortSymbols, false, '10y', null),
   ]);
 
-  const dividends = futureDividends
-    .concat(recentDividends)
-    .concat(specificDividends);
-
+  const dividends = futureDividends.concat(recentDividends);
   console.log(`Updating refid field for '${dividends.length}' dividends`);
 
-  const collection = db.collection("dividends");
-
   console.log(`First, set refid on existing dividends`);
+  const collection = db.collection("dividends");
   const oldDividends = await collection
     .fullFind({})
     .then(x => x.sortedDeletedToTheStart());
