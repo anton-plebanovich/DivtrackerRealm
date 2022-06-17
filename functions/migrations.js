@@ -332,7 +332,7 @@ async function update_IEX_dividends(dividends, oldDividends) {
       }, buckets);
       
       let existingDividend; 
-      if (bucket == null) {
+      if (!bucket?.length) {
         existingDividend = null;
       } else if (bucket.length === 1) {
         existingDividend = bucket[0];
@@ -360,6 +360,9 @@ async function update_IEX_dividends(dividends, oldDividends) {
       }
   
       if (existingDividend != null) {
+        // Remove, so it won't be used by some other record
+        bucket.remove(existingDividend);
+
         bulk.findAndUpdateOrInsertIfNeeded(newDividend, existingDividend, fields, true, false);
       }
     }
