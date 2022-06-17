@@ -256,7 +256,7 @@ async function fetch_refid_for_IEX_dividends() {
   // We released to production on 2021-08-21 so we also cover all special tickers like 'BTI' and 'QCOM' with our 1 year behind refetch
   const [futureDividends, recentDividends] = await Promise.all([
     fetch_IEX_dividends_with_duplicates(shortSymbols, true, '10y', null),
-    fetch_IEX_dividends_with_duplicates(shortSymbols, false, '1y', 1),
+    fetch_IEX_dividends_with_duplicates(shortSymbols, false, '1y', null),
   ]);
 
   const dividends = futureDividends.concat(recentDividends);
