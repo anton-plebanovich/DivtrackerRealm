@@ -259,15 +259,30 @@ async function fetch_refid_for_IEX_dividends() {
     fetch_IEX_dividends_with_duplicates(shortSymbols, false, '1y', null),
   ]);
 
-  const dividends = futureDividends.concat(recentDividends);
-  console.log(`Updating refid field for '${dividends.length}' dividends`);
-
   console.log(`First, set refid on existing dividends`);
   const collection = db.collection("dividends");
   const oldDividends = await collection
     .fullFind({})
     .then(x => x.sortedDeletedToTheStart());
 
+  // In two calls to prevent conflict on duplicated records which came from both future and past dividends
+  await update_dividends(futureDividends, oldDividends);
+  await update_dividends(recentDividends, oldDividends);
+
+  console.log(`Second, update with deduped on 'i' field. This may fix dividend date if duplicate was previously deleted.`);
+  const dividends = futureDividends.concat(recentDividends);
+  const dedupedDividends = remove_duplicated_IEX_Dividends(dividends);
+  
+  console.log(`Fixing dividend data for '${dedupedDividends.length}' dividends`);
+  await collection.safeUpdateMany(dedupedDividends, null, 'i', true, false);
+
+  console.log(`Success refid field update for '${dividends.length}' dividends`);
+}
+
+async function update_dividends(dividends, oldDividends) {
+  console.log(`Updating refid field for '${dividends.length}' dividends`);
+
+  const collection = db.collection("dividends");
   const fields = ['s', 'e'];
   const buckets = oldDividends.toBuckets(fields);
   
@@ -315,13 +330,6 @@ async function fetch_refid_for_IEX_dividends() {
   
     await bulk.safeExecute();
   }
-
-  console.log(`Second, update with deduped on 'i' field. This may fix dividend date if duplicate was previously deleted.`);
-  const dedupedDividends = remove_duplicated_IEX_Dividends(dividends);
-  console.log(`Fixing dividend data for '${dedupedDividends.length}' dividends`);
-  await collection.safeUpdateMany(dedupedDividends, null, 'i', true, false);
-
-  console.log(`Success refid field update for '${dividends.length}' dividends`);
 }
 
 async function fetch_IEX_dividends_with_duplicates(shortSymbols, isFuture, range, limit) {
