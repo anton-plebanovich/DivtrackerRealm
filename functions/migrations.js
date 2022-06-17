@@ -459,6 +459,7 @@ function get_duplicated_IEX_dividend_IDs(dividends) {
 }
 
 async function delete_duplicated_IEX_dividends() {
+  const collection = db.collection("dividends");
   const dividends = await collection.fullFind({ x: { $ne: true }, i: { $ne: null } });
   const duplicatedIDs = get_duplicated_IEX_dividend_IDs(dividends);
 
