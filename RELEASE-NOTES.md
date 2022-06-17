@@ -11,9 +11,11 @@
 - Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument old_date_format_dividends_migration --verbose`
 - Check `divtracker-v2.dividends` collection using find operator: `{ $expr: { $eq: [{ $hour: "$e" }, 12] } }`. There should be no records.
 - Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument fetch_refid_for_IEX_splits --verbose`
-- Check that most splits are updated _except 4 known_ using find operator in the `divtracker-v2.splits` collection: `{ i: null }`
-- Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument fetch_refid_for_IEX_dividends --verbose`
-- Check that all future dividends are updated using find operator in the `divtracker-v2.dividends` collection: `{ i: null, e: { $gte: new Date() } }`
+- Manually update `AMZN` split ration to `1` on `2022-06-12`: `{ _id: ObjectId('628f411c39c239eff0f30f7e') }`
+- Check that most splits are updated _except 4 known (IEX no longer return data for them)_ using find operator in the `divtracker-v2.splits` collection: `{ i: null }`
+- Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument fetch_refid_for_future_IEX_dividends --verbose`
+- Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument fetch_refid_for_past_IEX_dividends --verbose`
+- Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument delete_duplicated_IEX_dividends --verbose`
 - Check that 1 last past dividends are updated using find operator in the `divtracker-v2.dividends` collection: `{ i: { $ne: null }, e: { $lt: new Date() } }`
 - Check that all specific tickers dividends are updated using find operator in the `divtracker-v2.dividends` collection: `{ i: null, s: { $in: [ObjectId('61c42676a2660ba02db39480'), ObjectId('61c42676a2660ba02db3afb2')] } }`
 - Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument fix_FMP_dividends --verbose`

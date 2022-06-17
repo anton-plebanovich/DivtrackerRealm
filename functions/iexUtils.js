@@ -570,9 +570,16 @@ function _removeDuplicatedIEXDividends(iexDividends) {
   const buckets = iexDividends.toBuckets('refid');
   const result = [];
   for (const bucket of Object.values(buckets)) {
-    // Prefer the one with payment date and earlier ones (descending order)
+    // Prefer:
+    // - Amount greater than zero
+    // - Payment date not null
+    // - Earlier ones (descending order)
     const sortedBucket = bucket.sorted((l, r) => {
-      if (l.paymentDate == null || l.paymentDate === "0000-00-00") {
+      if (l.amount <= 0) {
+        return -1;
+      } else if (r.amount <= 0) {
+        return 1;
+      } else if (l.paymentDate == null || l.paymentDate === "0000-00-00") {
         return -1;
       } else if (r.paymentDate == null || r.paymentDate === "0000-00-00") {
         return 1;

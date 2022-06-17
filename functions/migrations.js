@@ -26,8 +26,12 @@ exports = async function(migration) {
       await old_date_format_dividends_migration();
     } else if (migration === 'fetch_refid_for_IEX_splits') {
       await fetch_refid_for_IEX_splits();
-    } else if (migration === 'fetch_refid_for_IEX_dividends') {
-      await fetch_refid_for_IEX_dividends();
+    } else if (migration === 'fetch_refid_for_future_IEX_dividends') {
+      await fetch_refid_for_future_IEX_dividends();
+    } else if (migration === 'fetch_refid_for_past_IEX_dividends') {
+      await fetch_refid_for_past_IEX_dividends();
+    } else if (migration === 'delete_duplicated_IEX_dividends') {
+      await delete_duplicated_IEX_dividends();
     } else if (migration === 'fix_FMP_dividends') {
       await fix_FMP_dividends();
     } else {
@@ -258,7 +262,7 @@ function fix_IEX_splits_with_duplicates(iexSplits, symbolID) {
   }
 }
 
-async function fetch_refid_for_IEX_dividends() {
+async function fetch_refid_for_future_IEX_dividends() {
   // We can't update all dividends because it will cost more than we can afford.
   // So instead, we update only future dividends and 1 past dividend.
   // There are also some known tickers with drifting value that we also update to fix their amount.
@@ -267,12 +271,26 @@ async function fetch_refid_for_IEX_dividends() {
   const shortSymbols = await get_all_IEX_short_symbols();
 
   // We released to production on 2021-08-21 so we also cover all special tickers like 'BTI' and 'QCOM' with our 1 year behind refetch
-  const [futureDividends, recentDividends] = await Promise.all([
-    fetch_IEX_dividends_with_duplicates(shortSymbols, true, '10y', null),
-    fetch_IEX_dividends_with_duplicates(shortSymbols, false, '1y', null),
-  ]);
+  const futureDividends = await fetch_IEX_dividends_with_duplicates(shortSymbols, true, '10y', null);
 
-  const dividends = futureDividends.concat(recentDividends);
+  await update_IEX_dividends(futureDividends);
+}
+
+async function fetch_refid_for_past_IEX_dividends() {
+  // We can't update all dividends because it will cost more than we can afford.
+  // So instead, we update only future dividends and 1 past dividend.
+  // There are also some known tickers with drifting value that we also update to fix their amount.
+  context.functions.execute("iexUtils");
+
+  const shortSymbols = await get_all_IEX_short_symbols();
+
+  // We released to production on 2021-08-21 so we also cover all special tickers like 'BTI' and 'QCOM' with our 1 year behind refetch
+  const recentDividends = await fetch_IEX_dividends_with_duplicates(shortSymbols, false, '1y', null);
+
+  await update_IEX_dividends(recentDividends);
+}
+
+async function update_IEX_dividends() {
   console.log(`Updating refid field for '${dividends.length}' dividends`);
 
   console.log(`First, set refid on existing dividends`);
@@ -328,11 +346,6 @@ async function fetch_refid_for_IEX_dividends() {
   
     await bulk.safeExecute();
   }
-
-  console.log(`Second, update with deduped on 'i' field. This may fix dividend date if duplicate was previously deleted.`);
-  const dedupedDividends = remove_duplicated_IEX_Dividends(dividends);
-  console.log(`Fixing dividend data for '${dedupedDividends.length}' dividends`);
-  await collection.safeUpdateMany(dedupedDividends, null, 'i', true, false);
 
   console.log(`Success refid field update for '${dividends.length}' dividends`);
 }
@@ -409,13 +422,20 @@ function fix_IEX_dividends_with_duplicates(iexDividends, symbolID) {
   }
 }
 
-function remove_duplicated_IEX_Dividends(dividends) {
+function get_duplicated_IEX_dividend_IDs(dividends) {
   const buckets = dividends.toBuckets('i');
-  const result = [];
+  const duplicateIDs = [];
   for (const bucket of Object.values(buckets)) {
-    // Prefer the one with payment date and earlier ones (descending order)
+    // Prefer:
+    // - Amount greater than zero
+    // - Payment date not null
+    // - Earlier ones (descending order)
     const sortedBucket = bucket.sorted((l, r) => {
-      if (l.p == null) {
+      if (l.a <= 0) {
+        return -1;
+      } else if (r.a <= 0) {
+        return 1;
+      } else if (l.p == null) {
         return -1;
       } else if (r.p == null) {
         return 1;
@@ -424,15 +444,28 @@ function remove_duplicated_IEX_Dividends(dividends) {
       }
     });
 
-    if (sortedBucket.length > 1) {
-      const duplicate = sortedBucket[0];
-      console.error(`Duplicate dividend for ${duplicate.s}: ${duplicate.stringify()}`);
+    // Different frequency dividends are not duplicates
+    const bucketByFrequency = bucket.toBuckets('f');
+    for (const frequencyBucket of Object.values(bucketByFrequency)) {
+      if (frequencyBucket.length > 1) {
+        const duplicate = frequencyBucket[0];
+        console.error(`Duplicate dividend for ${duplicate.s}: ${duplicate.stringify()}`);
+        duplicateIDs.push(duplicate._id);
+      }
     }
-
-    result.push(sortedBucket[sortedBucket.length - 1]);
   }
 
-  return result;
+  return duplicateIDs;
+}
+
+async function delete_duplicated_IEX_dividends() {
+  const duplicatedIDs = get_duplicated_IEX_dividend_IDs(dividends);
+
+  console.log(`Deleting '${duplicatedIDs.length}' duplicate dividends`);
+  console.logData(`duplicatedIDs`, duplicatedIDs);
+  const find = { _id: { $in: duplicatedIDs } };
+  const set = { $set: { x: true } };
+  await collection.updateMany(find, set);
 }
 
 /**
