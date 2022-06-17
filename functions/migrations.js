@@ -317,36 +317,31 @@ async function update_IEX_dividends(dividends) {
         }
       }, buckets);
       
-      let existingDividends; 
+      let existingDividend; 
       if (bucket == null) {
-        existingDividends = null;
+        existingDividend = null;
       } else if (bucket.length === 1) {
-        existingDividends = bucket;
+        existingDividend = bucket[0];
       } else {
-        existingDividends = bucket.filter(dividend => dividend.a === newDividend.a);
-        if (!existingDividends.length) {
-          existingDividends = bucket.find(dividend => dividend.f === newDividend.f);
-        }
-        if (!existingDividends.length) {
+        existingDividend = bucket.find(dividend => dividend.f === newDividend.f);
+        if (existingDividend == null) {
           const lowerAmount = newDividend.a * 0.9;
           const upperAmount = newDividend.a * 1.1;
-          existingDividends = bucket.find(dividend => dividend.a > lowerAmount && dividend.a < upperAmount);
+          existingDividend = bucket.find(dividend => dividend.a > lowerAmount && dividend.a < upperAmount);
         }
-        if (!existingDividends.length) {
-          existingDividends = bucket.find(dividend => compareOptionalDates(dividend.p, newDividend.p));
+        if (existingDividend == null) {
+          existingDividend = bucket.find(dividend => compareOptionalDates(dividend.p, newDividend.p));
         }
-        if (!existingDividends.length) {
+        if (existingDividend == null) {
           console.error(`Bucket`);
           for (const dividend of bucket) {
             console.error(dividend.stringify());
           }
-          throw `Unable to determine existingDividends for newDividend: ${newDividend.stringify()}`;
+          throw `Unable to determine existingDividend for newDividend: ${newDividend.stringify()}`;
         }
       }
   
-      if (existingDividends != null) {
-        existingDividends.forEach(x => bulk.findAndUpdateOrInsertIfNeeded(newDividend, x, fields, true, false));
-      }
+      bulk.findAndUpdateOrInsertIfNeeded(newDividend, existingDividend, fields, true, false);
     }
   
     await bulk.safeExecute();
