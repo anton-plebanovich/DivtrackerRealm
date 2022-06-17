@@ -14,7 +14,7 @@
   - Enable sync back using default parameters. Use `{"%%partition":{"%in":["%%user.id",null]}}` for `Read Permissions` and `{"%%partition":"%%user.id"}` for `Write Permissions`
   - Go to `Deployment` -> `Configuration` and tap `Enable Automatic Deployment`
 - If migrations looks good we also perform the last round of manual testing with the `release` app version here.
-- If manual testing succeeded and we no longer need the `stage` environment we should erase data using `dt backup --environment sandbox --verbose && dt erase-environment --environment stage && dt restore --environment stage --backup-source-environment sandbox --minimum --do-not-drop --yes --verbose`.
+- If manual testing succeeded and we no longer need the `stage` environment we should erase data.
 - We prepare to deploy to the `production` but we must stick to the 9-12 GMT time window on weekends.
 
 # Hotfix release flow
@@ -28,6 +28,7 @@ All the same as for normal flow except we don't have the required time window an
 - Anton is the owner and we should not have any other developers working here.
 - Data may be corrupted since various debug and testing activities are regularly performed.
 - Data may be restored from other enviroments like `production` for test purposes.
+- Erase command: `dt backup --environment production --verbose && dt erase-environment --environment sandbox-anton dt restore --environment sandbox-anton --backup-source-environment production --minimum --do-not-drop --yes --verbose`. We need to perform FMP migrations after `restore` if needed.
 
 ### Tests
 
@@ -45,6 +46,7 @@ All the same as for normal flow except we don't have the required time window an
 ### Stage
 
 - Migrations are tested here just before we are ready to deploy to the production. Otherwise, this environment is rarely used.
+- Erase command: `dt backup --environment sandbox --verbose && dt erase-environment --environment stage && dt restore --environment stage --backup-source-environment sandbox --minimum --do-not-drop --yes --verbose`
 
 ### Production
 
