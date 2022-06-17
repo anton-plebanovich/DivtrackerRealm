@@ -347,8 +347,12 @@ Object.prototype.updateFrom = function(_object, setUpdateDate) {
   const oldEntries = Object.entries(object);
   for (const [key, oldValue] of oldEntries) {
     const newValue = set[key];
-    if (newValue == null || oldValue == null) {
+    if (newValue == null) {
       unset[key] = "";
+
+    } else if (oldValue == null) {
+      continue;
+      
     } else if (newValue.isEqual(oldValue)) {
       delete set[key];
     }
