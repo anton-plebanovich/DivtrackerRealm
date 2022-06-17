@@ -343,9 +343,9 @@ async function update_IEX_dividends(dividends, oldDividends) {
           existingDividend = bucket.find(dividend => dividend.f === newDividend.f);
         }
         if (existingDividend == null) {
-          const lowerAmount = newDividend.a * 0.9;
-          const upperAmount = newDividend.a * 1.1;
-          existingDividend = bucket.find(dividend => dividend.a > lowerAmount && dividend.a < upperAmount);
+          const lowerAmount = newDividend.a.valueOf() * 0.9;
+          const upperAmount = newDividend.a.valueOf() * 1.1;
+          existingDividend = bucket.find(dividend => dividend.a.valueOf() > lowerAmount && dividend.a.valueOf() < upperAmount);
         }
         if (existingDividend == null) {
           existingDividend = bucket.find(dividend => compareOptionalDates(dividend.p, newDividend.p));
@@ -442,6 +442,18 @@ function fix_IEX_dividends_with_duplicates(iexDividends, symbolID) {
   }
 }
 
+async function delete_duplicated_IEX_dividends() {
+  const collection = db.collection("dividends");
+  const dividends = await collection.fullFind({ x: { $ne: true }, i: { $ne: null } });
+  const duplicatedIDs = get_duplicated_IEX_dividend_IDs(dividends);
+
+  console.log(`Deleting '${duplicatedIDs.length}' duplicate dividends`);
+  console.logData(`duplicatedIDs`, duplicatedIDs);
+  const find = { _id: { $in: duplicatedIDs } };
+  const set = { $set: { x: true } };
+  await collection.updateMany(find, set);
+}
+
 function get_duplicated_IEX_dividend_IDs(dividends) {
   const buckets = dividends.toBuckets('i');
   const duplicateIDs = [];
@@ -451,9 +463,9 @@ function get_duplicated_IEX_dividend_IDs(dividends) {
     // - Payment date not null
     // - Earlier ones (descending order)
     const sortedBucket = bucket.sorted((l, r) => {
-      if (l.a <= 0) {
+      if (l.a.valueOf() <= 0) {
         return -1;
-      } else if (r.a <= 0) {
+      } else if (r.a.valueOf() <= 0) {
         return 1;
       } else if (l.p == null) {
         return -1;
@@ -465,7 +477,7 @@ function get_duplicated_IEX_dividend_IDs(dividends) {
     });
 
     // Different frequency dividends are not duplicates
-    const bucketByFrequency = bucket.toBuckets('f');
+    const bucketByFrequency = sortedBucket.toBuckets('f');
     for (const frequencyBucket of Object.values(bucketByFrequency)) {
       if (frequencyBucket.length > 1) {
         const duplicates = frequencyBucket.slice(0, frequencyBucket.length - 1);
@@ -477,18 +489,6 @@ function get_duplicated_IEX_dividend_IDs(dividends) {
   }
 
   return duplicateIDs;
-}
-
-async function delete_duplicated_IEX_dividends() {
-  const collection = db.collection("dividends");
-  const dividends = await collection.fullFind({ x: { $ne: true }, i: { $ne: null } });
-  const duplicatedIDs = get_duplicated_IEX_dividend_IDs(dividends);
-
-  console.log(`Deleting '${duplicatedIDs.length}' duplicate dividends`);
-  console.logData(`duplicatedIDs`, duplicatedIDs);
-  const find = { _id: { $in: duplicatedIDs } };
-  const set = { $set: { x: true } };
-  await collection.updateMany(find, set);
 }
 
 /**
