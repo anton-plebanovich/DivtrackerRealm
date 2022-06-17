@@ -267,13 +267,19 @@ async function fetch_refid_for_future_IEX_dividends() {
   // So instead, we update only future dividends and 1 past dividend.
   // There are also some known tickers with drifting value that we also update to fix their amount.
   context.functions.execute("iexUtils");
-
+  
   const shortSymbols = await get_all_IEX_short_symbols();
 
   // We released to production on 2021-08-21 so we also cover all special tickers like 'BTI' and 'QCOM' with our 1 year behind refetch
   const futureDividends = await fetch_IEX_dividends_with_duplicates(shortSymbols, true, '10y', null);
 
-  await update_IEX_dividends(futureDividends);
+  const collection = db.collection("dividends");
+  const oldDividends = await collection.fullFind({ e: { $gt: new Date() } });
+  await update_IEX_dividends(futureDividends, oldDividends);
+
+  // Secondary update because we might have duplicates created by update which we can not distinguish during first run
+  const withoutRefidOldDividends = await collection.fullFind({ i: null, e: { $gt: new Date() } });
+  await update_IEX_dividends(futureDividends, withoutRefidOldDividends);
 }
 
 async function fetch_refid_for_past_IEX_dividends() {
@@ -287,18 +293,21 @@ async function fetch_refid_for_past_IEX_dividends() {
   // We released to production on 2021-08-21 so we also cover all special tickers like 'BTI' and 'QCOM' with our 1 year behind refetch
   const recentDividends = await fetch_IEX_dividends_with_duplicates(shortSymbols, false, '1y', null);
 
-  await update_IEX_dividends(recentDividends);
+  const collection = db.collection("dividends");
+  const exDateFind = { $lt: new Date(), $gt: new Date('2021-08-21') };
+  const oldDividends = await collection.fullFind({ e: exDateFind });
+  await update_IEX_dividends(recentDividends, oldDividends);
+
+  // Secondary update because we might have duplicates created by update which we can not distinguish during first run
+  const withoutRefidOldDividends = await collection.fullFind({ i: null, e: exDateFind });
+  await update_IEX_dividends(recentDividends, withoutRefidOldDividends);
 }
 
-async function update_IEX_dividends(dividends) {
+async function update_IEX_dividends(dividends, oldDividends) {
   console.log(`Updating refid field for '${dividends.length}' dividends`);
 
   console.log(`First, set refid on existing dividends`);
   const collection = db.collection("dividends");
-  const oldDividends = await collection
-    .fullFind({})
-    .then(x => x.sortedDeletedToTheStart());
-
   const fields = ['s', 'e'];
   const buckets = oldDividends.toBuckets(fields);
   
@@ -341,7 +350,9 @@ async function update_IEX_dividends(dividends) {
         }
       }
   
-      bulk.findAndUpdateOrInsertIfNeeded(newDividend, existingDividend, fields, true, false);
+      if (existingDividend != null) {
+        bulk.findAndUpdateOrInsertIfNeeded(newDividend, existingDividend, fields, true, false);
+      }
     }
   
     await bulk.safeExecute();
