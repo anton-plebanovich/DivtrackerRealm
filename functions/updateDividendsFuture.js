@@ -25,7 +25,7 @@ exports = async function() {
   // We remove symbols that already have future dividends and update only those that don't.
   const upToDateSymbolIDs = await collection.distinct("s", { "e" : { $gte : new Date() }});
   const upToDateSymbolIDByID = upToDateSymbolIDs.toDictionary();
-  const shortSymbolsToUpdate = shortSymbols.filter(x => upToDateSymbolIDByID[x.s] == null);
+  const shortSymbolsToUpdate = shortSymbols.filter(x => upToDateSymbolIDByID[x._id] == null);
 
   console.log(`Fetching future dividends (${shortSymbolsToUpdate.length}) for '${shortSymbolsToUpdate.stringify()}' IDs`);
   const futureDividends = await fetchDividends(shortSymbolsToUpdate, true);
