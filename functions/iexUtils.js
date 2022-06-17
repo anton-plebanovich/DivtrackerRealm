@@ -130,14 +130,28 @@ getShortSymbols = _getShortSymbols;
 // pk_fe3251a6a1bc4c99950f2abf60b966bd - nohopenotop+7 - sk_528f243249764a08b7881d0365de635e
 // pk_551db89285a24a358a35848f13d62694 - nohopenotop+8 - sk_920f1d5b1c724a0c845c4246b34b2141
 // pk_e1941a95ed6c4f13b24ec074bda8672d - nohopenotop+9 - sk_7da396205407472fa5bce81872f7f3fe
+// pk_295bd63970924e9eb1cdc07a59c91147 - nohopenotop+10 - sk_b1640b53f07a48b8bd172c7f6217db94
+// pk_5f27f65fd7974e0ba64d4fbe2b5cd06a - nohopenotop+11 - sk_0a0fe3ce6f9641019245b147325cdee3
+// pk_8864dace529b45659db0de405d075c11 - nohopenotop+12 - sk_09b2ba22a5ab410cba1e24bcc51bd9c5
+// pk_5dc68d1aac6742e2af7d888245f365f3 - nohopenotop+13 - sk_5df70a2222c342f08053915c35d04b17
+// pk_b5c465df0bd746fb93330344ed534f03 - nohopenotop+14 - sk_710ca7f71e78454da5334fb03b3d236b
+// pk_57ce0f8e8208435783ad658adb298259 - nohopenotop+15 - sk_792b75aff9a94d9792e881f19ff8aab4
+// pk_310b7715aea844cdbfab6b9917df0b76 - nohopenotop+16 - sk_872c2b1647a041a8b09f0371d5a0c444
+// pk_22bbd8b933994c56a662c907b7d7498d - nohopenotop+17 - sk_5ddabfdf14a94b249951d296beabb026
+// pk_274e6c59abbb41c8a4f88f7d47fe6188 - nohopenotop+18 - sk_2bd619a0fe1a4782997b07c368d336df
+// pk_645bc4f35f4c47dfaa1e49fcb198b714 - nohopenotop+19 - sk_d947df2f25004e8186f2318b4263e71b
 
 // --- Premium
 // pk_01ef04dd60b5404b81d9cc47b2388176 - trackerdividend@gmail.com - sk_de6f102262874cfab3d9a83a6980e1db - 3ff51380e7f3a36ff4e0915e9d781878
 
+// We do not need data below that date at the moment.
+const minFetchDate = '2016-01-01';
+
 /**
  * Default range to fetch.
+ * The range should include and be close to 2016-01-01 since that's the date where IEX simple dividends start.
  */
-const defaultRange = '10y';
+const defaultRange = `${(new Date().getUTCFullYear() - new Date(minFetchDate).getUTCFullYear()) * 12 + new Date().getMonth() + 1}m`;
 
 fetchSymbols = async function fetchSymbols() {
   // https://cloud.iexapis.com/stable/ref-data/symbols?token=pk_9f1d7a2688f24e26bb24335710eae053
@@ -159,6 +173,7 @@ fetchSymbols = async function fetchSymbols() {
  */
  fetchCompanies = async function fetchCompanies(shortSymbols) {
   throwIfUndefinedOrNull(shortSymbols, `fetchCompanies shortSymbols`);
+  if (!shortSymbols.length) { return []; }
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
 
   // https://cloud.iexapis.com/stable/stock/market/batch?token=pk_9f1d7a2688f24e26bb24335710eae053&types=company&symbols=AAPL,AAP
@@ -173,9 +188,10 @@ fetchSymbols = async function fetchSymbols() {
  * @param {string} range Range to fetch.
  * @returns {[Dividend]} Array of requested objects.
  */
-fetchDividends = async function fetchDividends(shortSymbols, isFuture, range) {
+fetchDividends = async function fetchDividends(shortSymbols, isFuture, range, limit) {
   throwIfUndefinedOrNull(shortSymbols, `fetchDividends shortSymbols`);
   throwIfUndefinedOrNull(isFuture, `fetchDividends isFuture`);
+  if (!shortSymbols.length) { return []; }
 
   if (range == null) {
     range = defaultRange;
@@ -186,6 +202,9 @@ fetchDividends = async function fetchDividends(shortSymbols, isFuture, range) {
   const parameters = { range: range };
   if (isFuture) {
     parameters.calendar = 'true';
+  }
+  if (limit != null) {
+    parameters.limit = limit;
   }
   
   // https://cloud.iexapis.com/stable/stock/market/batch?token=pk_9f1d7a2688f24e26bb24335710eae053&types=dividends&symbols=AAPL,AAP&range=6y&calendar=true
@@ -202,6 +221,7 @@ fetchDividends = async function fetchDividends(shortSymbols, isFuture, range) {
  */
  async function _fetchPreviousDayPrices(shortSymbols) {
   throwIfUndefinedOrNull(shortSymbols, `fetchPreviousDayPrices shortSymbols`);
+  if (!shortSymbols.length) { return []; }
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
 
   // https://cloud.iexapis.com/stable/stock/market/batch?token=pk_9f1d7a2688f24e26bb24335710eae053&types=previous&symbols=AAPL,AAP
@@ -219,6 +239,7 @@ fetchPreviousDayPrices = _fetchPreviousDayPrices;
  */
  fetchHistoricalPrices = async function fetchHistoricalPrices(shortSymbols, range) {
    throwIfUndefinedOrNull(shortSymbols, `fetchHistoricalPrices shortSymbols`);
+   if (!shortSymbols.length) { return []; }
 
   if (range == null) {
     range = defaultRange;
@@ -243,6 +264,7 @@ fetchPreviousDayPrices = _fetchPreviousDayPrices;
  */
  fetchQuotes = async function fetchQuotes(shortSymbols) {
   throwIfUndefinedOrNull(shortSymbols, `fetchQuotes shortSymbols`);
+  if (!shortSymbols.length) { return []; }
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
 
   // https://cloud.iexapis.com/stable/stock/market/batch?token=pk_9f1d7a2688f24e26bb24335710eae053&types=quote&symbols=AAPL,AAP
@@ -259,6 +281,7 @@ fetchPreviousDayPrices = _fetchPreviousDayPrices;
  fetchSplits = async function fetchSplits(shortSymbols, range, isFuture) {
   throwIfUndefinedOrNull(shortSymbols, `fetchSplits shortSymbols`);
   throwIfUndefinedOrNull(isFuture, `fetchSplits isFuture`);
+  if (!shortSymbols.length) { return []; }
 
   if (range == null) {
     range = defaultRange;
@@ -461,14 +484,14 @@ function _fixCompany(iexCompany, symbolID) {
     console.logVerbose(`Company data fix start`);
     const company = {};
     company._id = symbolID;
-    company.i = iexCompany.industry;
+    company.setIfNotNullOrUndefined('i', iexCompany.industry);
 
     if  (iexCompany.issueType) {
-      company.t = iexCompany.issueType.trim();
+      company.setIfNotNullOrUndefined('t', iexCompany.issueType.trim());
     }
 
     if  (iexCompany.companyName) {
-      company.n = iexCompany.companyName.trim();
+      company.setIfNotNullOrUndefined('n', iexCompany.securityName.trim());
     }
   
     return company;
@@ -496,30 +519,34 @@ function _fixDividends(iexDividends, symbolID) {
     }
   
     console.logVerbose(`Removing duplicates from '${iexDividends.length}' IEX dividends for ${symbolID}`);
-    let dividends = iexDividends.filterNullAndUndefined();
+    let dividends = iexDividends
+      .filterNullAndUndefined()
+      .filter(iexDividend => iexDividend.exDate >= minFetchDate);
+
     dividends = _removeDuplicatedIEXDividends(dividends);
 
     console.logVerbose(`Mapping '${iexDividends.length}' IEX dividends for ${symbolID}`);
     dividends = dividends
       .map(iexDividend => {
         const dividend = {};
-        dividend.d = _getOpenDate(iexDividend.declaredDate);
-        dividend.e = _getOpenDate(iexDividend.exDate);
-        dividend.p = _getOpenDate(iexDividend.paymentDate);
+        dividend.setIfNotNullOrUndefined('d', _getOpenDate(iexDividend.declaredDate));
+        dividend.setIfNotNullOrUndefined('e', _getOpenDate(iexDividend.exDate));
+        dividend.setIfNotNullOrUndefined('p', _getOpenDate(iexDividend.paymentDate));
+        dividend.setIfNotNullOrUndefined('i', iexDividend.refid);
         dividend.s = symbolID;
 
         if (iexDividend.amount != null) {
-          dividend.a = BSON.Double(iexDividend.amount);
+          dividend.setIfNotNullOrUndefined('a', BSON.Double(iexDividend.amount));
         }
 
         // We add only the first letter of a frequency
         if (iexDividend.frequency != null) {
-          dividend.f = iexDividend.frequency.charAt(0);
+          dividend.setIfNotNullOrUndefined('f', iexDividend.frequency.charAt(0));
         }
     
         // We do not add `USD` frequencies to the database.
         if (iexDividend.currency != null && iexDividend.currency !== "USD") {
-          dividend.c = iexDividend.currency.toUpperCase();
+          dividend.setIfNotNullOrUndefined('c', iexDividend.currency.toUpperCase());
         }
     
         return dividend;
@@ -543,9 +570,16 @@ function _removeDuplicatedIEXDividends(iexDividends) {
   const buckets = iexDividends.toBuckets('refid');
   const result = [];
   for (const bucket of Object.values(buckets)) {
-    // Prefer the one with payment date and earlier ones (descending order)
+    // Prefer:
+    // - Amount greater than zero
+    // - Payment date not null
+    // - Earlier ones (descending order)
     const sortedBucket = bucket.sorted((l, r) => {
-      if (l.paymentDate == null || l.paymentDate === "0000-00-00") {
+      if (l.amount <= 0) {
+        return -1;
+      } else if (r.amount <= 0) {
+        return 1;
+      } else if (l.paymentDate == null || l.paymentDate === "0000-00-00") {
         return -1;
       } else if (r.paymentDate == null || r.paymentDate === "0000-00-00") {
         return 1;
@@ -655,7 +689,7 @@ function _fixPreviousDayPrice(iexPreviousDayPrice, symbolID) {
     previousDayPrice._id = symbolID;
 
     if (iexPreviousDayPrice.close != null) {
-      previousDayPrice.c = BSON.Double(iexPreviousDayPrice.close);
+      previousDayPrice.setIfNotNullOrUndefined('c', BSON.Double(iexPreviousDayPrice.close));
     }
   
     return previousDayPrice;
@@ -688,13 +722,14 @@ function _fixHistoricalPrices(iexHistoricalPrices, symbolID) {
     console.logVerbose(`Fixing historical prices for ${symbolID}`);
     return iexHistoricalPrices
       .filterNullAndUndefined()
+      .filter(iexHistoricalPrice => iexHistoricalPrice.date >= minFetchDate)
       .map(iexHistoricalPrice => {
         const historicalPrice = {};
-        historicalPrice.d = _getCloseDate(iexHistoricalPrice.date);
+        historicalPrice.setIfNotNullOrUndefined('d', _getCloseDate(iexHistoricalPrice.date));
         historicalPrice.s = symbolID;
 
         if (iexHistoricalPrice.close != null) {
-          historicalPrice.c = BSON.Double(iexHistoricalPrice.close);
+          historicalPrice.setIfNotNullOrUndefined('c', BSON.Double(iexHistoricalPrice.close));
         }
 
         return historicalPrice;
@@ -722,10 +757,10 @@ function _fixQuote(iexQuote, symbolID) {
     console.logVerbose(`Previous day price data fix start`);
     const quote = {};
     quote._id = symbolID;
-    quote.l = iexQuote.latestPrice;
+    quote.setIfNotNullOrUndefined('l', iexQuote.latestPrice);
 
     if (iexQuote.peRatio != null) {
-      quote.p = BSON.Double(iexQuote.peRatio);
+      quote.setIfNotNullOrUndefined('p', BSON.Double(iexQuote.peRatio));
     }
 
     return quote;
@@ -759,14 +794,15 @@ function _fixSplits(iexSplits, symbolID) {
     iexSplits = _removeDuplicatedIEXSplits(iexSplits);
 
     return iexSplits
+      .filter(iexSplits => iexSplits.exDate >= minFetchDate)
       .map(iexSplit => {
         const split = {};
-        split.e = _getOpenDate(iexSplit.exDate);
-        split.i = iexSplit.refid;
+        split.setIfNotNullOrUndefined('e', _getOpenDate(iexSplit.exDate));
+        split.setIfNotNullOrUndefined('i', iexSplit.refid);
         split.s = symbolID;
 
         if (iexSplit.ratio != null) {
-          split.r = BSON.Double(iexSplit.ratio);
+          split.setIfNotNullOrUndefined('r', BSON.Double(iexSplit.ratio));
         }
 
         return split;
@@ -780,6 +816,7 @@ function _fixSplits(iexSplits, symbolID) {
 
 fixSplits = _fixSplits;
 
+// TODO: Check 'MCHP' and 'NYC' fetches
 function _removeDuplicatedIEXSplits(iexSplits) {
   const buckets = iexSplits.toBuckets('refid');
   const result = [];
@@ -797,7 +834,9 @@ function _removeDuplicatedIEXSplits(iexSplits) {
     result.push(sortedBucket[sortedBucket.length - 1]);
   }
 
-  return result;
+  // [MCHP] Different `refid` but the same `exDate`
+  // [NYC] Different `refid` and ratio but the same `exDate`
+  return result.uniqueUnordered(['exDate', 'ratio']);
 }
 
 /** 

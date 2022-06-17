@@ -3,6 +3,16 @@
 
 // https://www.mongodb.com/docs/manual/reference/method/cursor.sort/
 
+///////////////////////////////////////////////////////////////////////////////// MATH
+
+math_bigger_times = function(l, r) {
+  if (l > r) {
+    return l / r;
+  } else {
+    return r / l;
+  }
+}
+
 ///////////////////////////////////////////////////////////////////////////////// EXTENSIONS
 
 function normalizeFields(fields) {
@@ -47,6 +57,7 @@ function getFindOperation(objects, fields) {
  */
 Object.prototype.safeExecute = async function() {
   try {
+    // 100.000 operations max
     return await this.execute();
   } catch(error) {
     if (error.message === 'Failed to execute bulk writes: no operations specified') {
@@ -92,6 +103,10 @@ Object.prototype.safeUpsertMany = async function(newObjects, field, setUpdateDat
     field = "_id";
   }
 
+  if (setUpdateDate == null) {
+    setUpdateDate = true;
+  }
+
   const bulk = this.initializeUnorderedBulkOp();
   for (const newObject of newObjects) {
     // https://docs.mongodb.com/manual/reference/operator/update/currentDate/
@@ -111,8 +126,9 @@ Object.prototype.safeUpsertMany = async function(newObjects, field, setUpdateDat
 
 /**
  * Safely computes and executes update operation from old to new objects on a collection.
+ * @note Marked as deleted records `x === true` can not be restored using this method.
  */
-Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields, setUpdateDate, insertMissing = true) {
+Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields, setUpdateDate, insertMissing) {
   _throwIfNotArray(newObjects, `Please pass new objects array as the first argument. safeUpdateMany`);
   if (newObjects.length === 0) {
     console.log(`New objects array is empty. Nothing to update.`);
@@ -121,12 +137,20 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields,
 
   fields = normalizeFields(fields);
 
+  if (setUpdateDate == null) {
+    setUpdateDate = true;
+  }
+
+  if (insertMissing == null) {
+    insertMissing = true;
+  }
+
   const invalidObjectsLength = newObjects.filter(newObject => 
     fields.contains((field) => newObject[field] == null)
   ).length;
 
   if (invalidObjectsLength !== 0) {
-    return await _logAndReject(`${invalidObjectsLength} of ${newObjects.length} new objects do not contain required '${fields}' fields`);
+    _logAndThrow(`${invalidObjectsLength} of ${newObjects.length} new objects do not contain required '${fields}' fields`);
   }
 
   if (oldObjects == null) {
@@ -135,7 +159,7 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields,
 
     if (newObjects.length < 1000) {
       console.log(`Old objects are undefined. Fetching them by '${fields}'.`);
-      const find = getFindOperation(newObjects, fields)
+      const find = getFindOperation(newObjects, fields);
       oldObjects = await this
         .find(find)
         .sort(sort)
@@ -143,20 +167,14 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields,
 
     } else {
       console.log(`Old objects are undefined. Fetching them by requesting all existing objects.`);
-      oldObjects = await this
-        .find({})
-        .sort(sort)
-        .toArray();
-
-      if (oldObjects.length >= 50000) {
-        throw `Old objects count '${oldObjects.length}' is huge. Pagination is not supported. Please update the query or logic.`;
-      }
+      oldObjects = await this.fullFind({});
+      oldObjects = oldObjects.sortedDeletedToTheStart();
     }
   } else {
     oldObjects = oldObjects.sortedDeletedToTheStart();
   }
 
-  if (oldObjects == null || oldObjects === []) {
+  if (!oldObjects?.length) {
     if (insertMissing) {
       console.log(`No old objects. Just inserting new objects.`);
       return await this.insertMany(newObjects);
@@ -166,8 +184,9 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields,
     }
   }
 
-  const bulk = this.initializeUnorderedBulkOp();
   const dictionary = oldObjects.toDictionary(fields);
+  let bulk = this.initializeUnorderedBulkOp();
+  let i = 0;
   for (const newObject of newObjects) {
     const existingObject = fields.reduce((dictionary, field) => {
       if (dictionary != null) {
@@ -177,17 +196,32 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields,
       }
     }, dictionary);
 
-    bulk.findAndUpdateOrInsertIfNeeded(newObject, existingObject, fields, setUpdateDate, insertMissing);
+    const changed = bulk.findAndUpdateOrInsertIfNeeded(newObject, existingObject, fields, setUpdateDate, insertMissing);
+    if (changed) {
+      i++;
+    }
+
+  // Try to prevent 'pending promise returned that will never resolve/reject uncaught promise rejection: &{0xc1bac2aa90 0xc1bac2aa80}' error by splitting batch operations to chunks
+    if (i === 1000) {
+      console.log('Too much bulk changes. Executing collected 1000.')
+      i = 0
+      await bulk.safeExecute();
+      bulk = this.initializeUnorderedBulkOp();
+    }
   }
 
-  return await bulk.safeExecute();
+  await bulk.safeExecute();
 };
 
 /**
  * Executes find by field and update or insert for a new object from an old object.
  * Uses `_id` field by default.
  */
-Object.prototype.findAndUpdateOrInsertIfNeeded = function(newObject, oldObject, fields, setUpdateDate, insertMissing = true) {
+Object.prototype.findAndUpdateOrInsertIfNeeded = function(newObject, oldObject, fields, setUpdateDate, insertMissing) {
+  if (insertMissing == null) {
+    insertMissing = true;
+  }
+
   if (newObject == null) {
     throw new _SystemError(`New object should not be null for insert or update`);
     
@@ -195,10 +229,12 @@ Object.prototype.findAndUpdateOrInsertIfNeeded = function(newObject, oldObject, 
     // No old object means we should insert
     if (insertMissing) {
       console.log(`Inserting: ${newObject.stringify()}`);
-      return this.insert(newObject);
+      this.insert(newObject);
+      return true;
+
     } else {
       console.log(`Old object is missing. Skipping insert: ${newObject.stringify()}`);
-      return;
+      return false;
     }
 
   } else {
@@ -212,6 +248,11 @@ Object.prototype.findAndUpdateOrInsertIfNeeded = function(newObject, oldObject, 
  */
 Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, fields, setUpdateDate) {
   fields = normalizeFields(fields);
+
+  if (setUpdateDate == null) {
+    setUpdateDate = true;
+  }
+  
   if (newObject == null) {
     throw new _SystemError(`New object should not be null for update`);
     
@@ -225,18 +266,48 @@ Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, fields, 
     const update = newObject.updateFrom(oldObject, setUpdateDate);
     if (update == null) {
       // Update is not needed
-      return;
+      return false;
 
     } else { 
       if (oldObject._id == null) {
         throw `Unable to find old object. '_id' field is missing: ${oldObject.stringify()}`;
       } else {
-        return this
+        this
           .find({ _id: oldObject._id })
           .updateOne(update);
+
+        return true;
       }
     }
   }
+};
+
+/**
+ * Bypass find limit of 50000 objects by fetching all results successively  
+ */
+Object.prototype.fullFind = async function(find) {
+  if (find == null) {
+    find = {};
+  }
+
+  let objectsPage;
+  const objects = [];
+  const pageSize = 50000;
+  do {
+    let compositeFind;
+    if (objectsPage != null) {
+      const pageFind = { _id: { $gt: objectsPage[objectsPage.length - 1]._id } };
+      compositeFind = { $and: [find, pageFind] };
+    } else {
+      compositeFind = find;
+    }
+
+    objectsPage = await this.find(compositeFind).sort({ _id: 1 }).limit(pageSize).toArray();
+    objects.push(...objectsPage);
+    console.logVerbose(`Full fetch objects length: ${objects.length}`);
+  } while (objectsPage.length >= pageSize);
+
+  return objects;
 };
 
 /**
@@ -245,13 +316,14 @@ Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, fields, 
  * Only non-equal fields are added to `$set` and missing fields
  * are added to `$unset`.
  */
-Object.prototype.updateFrom = function(object, setUpdateDate) {
-  object = Object.assign({}, object);
+Object.prototype.updateFrom = function(_object, setUpdateDate) {
+  if (_object == null) {
+    _logAndThrow(`Unable to compute update from 'null'. This: ${this}`);
+  }
+
+  const object = Object.assign({}, _object);
   delete object._id;
   delete object.u;
-
-  // We should not unset deleted flag since it's manual fix operation and has higher priority from updates.
-  delete object.x;
 
   const set = Object.assign({}, this);
   delete set._id;
@@ -272,31 +344,41 @@ Object.prototype.updateFrom = function(object, setUpdateDate) {
   }
 
   // Collect keys to unset
-  let hasUnsets = false;
   const oldEntries = Object.entries(object);
   for (const [key, oldValue] of oldEntries) {
     const newValue = set[key];
     if (newValue == null) {
       unset[key] = "";
-      hasUnsets = true;
 
+    } else if (oldValue == null) {
+      continue;
+      
     } else if (newValue.isEqual(oldValue)) {
       delete set[key];
     }
   }
 
-  let update;
-  if (hasUnsets) {
-    update = { $set: set, $unset: unset };
-  } else {
-    update = { $set: set };
+  // We should not unset deleted flag since it's manual fix operation and has higher priority from updates.
+  if (unset.x != null) {
+    delete unset.x;
+  }
+
+  const update = {};
+  if (Object.keys(set).length) {
+    update.$set = set;
+  }
+  if (Object.keys(unset).length) {
+    update.$unset = unset;
+  }
+  if (Object.keys(update).length === 0) {
+    return null;
   }
 
   if (setUpdateDate == true) {
     update.$currentDate = { u: true };
   }
 
-  console.logData(`Updating`, { from: object, to: this, update: update });
+  console.logData(`Updating`, { from: _object, to: this, update: update });
 
   return update;
 };
@@ -421,7 +503,8 @@ Array.prototype.compactMap = function(callbackfn) {
 
 /**
  * Creates dictionary from objects using provided `key` or function as source for keys and object as value.
- * If returned key is `null` or `undefined` then value is ignored.
+ * If returned key is `null` or `undefined` then value is ignored for single-dimensional dictionary.
+ * For multi-dimensional dictionary it is used as a key.
  * @param {function|array|string|null} arg Key map function or key.
  */
 Array.prototype.toDictionary = function(arg) {
@@ -494,30 +577,64 @@ Array.prototype.dictionaryMapValues = function(arg) {
 
 /**
  * Creates dictionary from objects using provided `key` or function as source for keys and objects with the same keys are collected to an array.
- * @param {function|string} arg Key map function or key.
+ * @param {function|string|array} arg Key map function or key.
  */
 Array.prototype.toBuckets = function(arg) {
   let getKey;
+  let isMultidimensional = false;
   if (typeof arg === 'string' || arg instanceof String) {
     getKey = (value) => value[arg];
   } else if (arg == null) {
     getKey = (value) => value;
+  } else if (Object.prototype.toString.call(arg) === '[object Array]') {
+    isMultidimensional = true;
+    getKey = (object) => arg.map(key => object[key]);
   } else {
     getKey = arg;
   }
 
-  return this.reduce((dictionary, value) => {
-    const key = getKey(value);
-    if (key == null) { return dictionary; }
-
-    const bucket = dictionary[key];
-    if (bucket == null) {
-      dictionary[key] = [value];
-    } else {
-      bucket.push(value);
+  if (isMultidimensional) {
+    const dictionary = {};
+    for (const element of this) {
+      const keys = getKey(element);
+      if (keys == null) { continue; }
+      
+      const lastIndex = keys.length - 1;
+      let currentDictionary = dictionary;
+      for (const [i, key] of keys.entries()) {
+        if (i == lastIndex) {
+          const bucket = currentDictionary[key];
+          if (bucket == null) {
+            currentDictionary[key] = [element];
+          } else {
+            bucket.push(element);
+          }
+          
+        } else {
+          if (currentDictionary[key] == null) {
+            currentDictionary[key] = {};
+          }
+          currentDictionary = currentDictionary[key];
+        }
+      }
     }
+
     return dictionary;
-  }, {});
+
+  } else {
+    return this.reduce((dictionary, value) => {
+      const key = getKey(value);
+      if (key == null) { return dictionary; }
+  
+      const bucket = dictionary[key];
+      if (bucket == null) {
+        dictionary[key] = [value];
+      } else {
+        bucket.push(value);
+      }
+      return dictionary;
+    }, {});
+  }
 };
 
 /**
@@ -683,12 +800,25 @@ Object.prototype.stringify = function() {
 };
 
 /**
+ * Sets value for a key only if it is not null or undefined.
+ */
+Object.prototype.setIfNotNullOrUndefined = function(key, value) {
+  if (value != null) {
+    this[key] = value;
+  }
+}
+
+/**
  * Checks database objects for equality. 
  * Objects are considered equal if all non-null values are equal.
  * Object values are compared using `toString()` comparison.
  * @returns {boolean} Comparison result.
  */
 Object.prototype.isEqual = function(rhs) {
+  if (rhs == null) {
+    return false;
+  }
+  
   const lhsEntries = Object.entries(this).filter(([key, value]) => value != null);
   const rhsEntries = Object.entries(rhs).filter(([key, value]) => value != null);
 
@@ -842,6 +972,7 @@ class _NetworkResponse {
           429, // Too Many Requests
           500, // Internal Server Error
           502, // Bad Gateway
+          504, // Gateway Time-out
         ];
 
         if (alwaysRetryableStatusCodes.includes(this.statusCode)) {

@@ -13,10 +13,6 @@
         "private": true
     },
     {
-        "name": "eraseData",
-        "private": true
-    },
-    {
         "name": "fmpDelete",
         "private": true
     },
