@@ -16,8 +16,8 @@ exports = async function(migration) {
   logData = true;
 
   try {
-    if (migration === 'dividends_null_fields_cleanup_migration') {
-      await dividends_null_fields_cleanup_migration();
+    if (migration === 'null_fields_cleanup_migration') {
+      await null_fields_cleanup_migration();
     } else if (migration === 'old_data_delete_migration') {
       await old_data_delete_migration();
     } else if (migration === 'old_date_format_splits_migration') {
@@ -39,7 +39,7 @@ exports = async function(migration) {
   }
 };
 
-async function dividends_null_fields_cleanup_migration() {
+async function null_fields_cleanup_migration() {
   context.functions.execute("iexUtils");
   context.functions.execute("fmpUtils");
 
@@ -50,8 +50,21 @@ async function dividends_null_fields_cleanup_migration() {
 
   const operations = [];
   for (const databaseName of databaseNames) {
+    const collection = atlas.db(databaseName).collection('companies');
+    operations.push(collection.updateMany({ i: null }, { $unset: { i: "" } }));
+    operations.push(collection.updateMany({ t: null }, { $unset: { t: "" } }));
+  }
+
+  for (const databaseName of databaseNames) {
     const collection = atlas.db(databaseName).collection('dividends');
+    operations.push(collection.updateMany({ c: null }, { $unset: { c: "" } }));
     operations.push(collection.updateMany({ d: null }, { $unset: { d: "" } }));
+    operations.push(collection.updateMany({ f: null }, { $unset: { f: "" } }));
+    operations.push(collection.updateMany({ p: null }, { $unset: { p: "" } }));
+  }
+
+  for (const databaseName of databaseNames) {
+    const collection = atlas.db(databaseName).collection('quotes');
     operations.push(collection.updateMany({ p: null }, { $unset: { p: "" } }));
   }
 
@@ -272,7 +285,7 @@ async function fetch_refid_for_IEX_dividends() {
   console.log(`Second, update with deduped on 'i' field. This may fix dividend date if duplicate was previously deleted.`);
   const dividends = futureDividends.concat(recentDividends);
   const dedupedDividends = remove_duplicated_IEX_Dividends(dividends);
-  
+
   console.log(`Fixing dividend data for '${dedupedDividends.length}' dividends`);
   await collection.safeUpdateMany(dedupedDividends, null, 'i', true, false);
 
