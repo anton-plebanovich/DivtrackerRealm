@@ -22,10 +22,10 @@
 - Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument fix_FMP_dividends --verbose`
 - Check that duplicated dividend is deleted and frequencies are fixed in the `fmp.dividends` collection using find operator: `{ s: ObjectId('624ca7e44fd65a51c3060213') }` and sort: `{ e: -1 }`
 - Execute `dt call-realm-function --environment sandbox-anton --function updateSplitsV2 --verbose`
+- Execute `dt check-splits --environment sandbox-anton`
 - Execute `dt call-realm-function --environment sandbox-anton --function updateDividendsFuture --verbose`
 - Execute `dt call-realm-function --environment sandbox-anton --function updateDividendsPast --verbose`
-- Execute `dt check-splits --environment sandbox-anton`
-- Check future splits using sort operator: `{ e: -1 }`
+- Execute `dt check-dividends --environment sandbox-anton`
 
 # 2022-06-XX | FMP ETF support
 
