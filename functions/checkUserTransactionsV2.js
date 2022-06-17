@@ -36,7 +36,7 @@
   ];
 
   const supportedSymbolIDs = await getSupportedSymbolIDs();
-  const symbolIDBySymbolID = Object.assign({}, ...supportedSymbolIDs.map(x => ({ [x]: x })));
+  const symbolIDBySymbolID = supportedSymbolIDs.toDictionary();
   const transactionsCollection = db.collection("transactions");
   // Check transactions
   for (const transaction of transactions) {
