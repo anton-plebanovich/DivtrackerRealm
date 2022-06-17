@@ -337,7 +337,11 @@ async function update_IEX_dividends(dividends, oldDividends) {
       } else if (bucket.length === 1) {
         existingDividend = bucket[0];
       } else {
-        existingDividend = bucket.find(dividend => dividend.f === newDividend.f);
+        // Using the most strict validation first and then lower our expectations
+        existingDividend = bucket.find(dividend => dividend.f === newDividend.f && dividend.a.valueOf() === newDividend.a.valueOf());
+        if (existingDividend == null) {
+          existingDividend = bucket.find(dividend => dividend.f === newDividend.f);
+        }
         if (existingDividend == null) {
           const lowerAmount = newDividend.a * 0.9;
           const upperAmount = newDividend.a * 1.1;
