@@ -491,7 +491,7 @@ function _fixCompany(iexCompany, symbolID) {
     }
 
     if  (iexCompany.companyName) {
-      company.setIfNotNullOrUndefined('n', iexCompany.companyName.trim());
+      company.setIfNotNullOrUndefined('n', iexCompany.securityName.trim());
     }
   
     return company;
