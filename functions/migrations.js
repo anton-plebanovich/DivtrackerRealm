@@ -304,7 +304,7 @@ async function find_and_update_IEX_dividends(dividends, find) {
   while (oldLength !== oldDividends.length) {
     oldLength = oldDividends.length;
     await update_IEX_dividends(dividends, oldDividends);
-    oldDividends = await collection.fullFind(find)
+    oldDividends = await collection.fullFind(find);
   }
 }
 
