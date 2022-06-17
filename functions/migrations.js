@@ -290,7 +290,7 @@ async function fetch_refid_for_past_IEX_dividends() {
   await update_IEX_dividends(recentDividends);
 }
 
-async function update_IEX_dividends() {
+async function update_IEX_dividends(dividends) {
   console.log(`Updating refid field for '${dividends.length}' dividends`);
 
   console.log(`First, set refid on existing dividends`);
