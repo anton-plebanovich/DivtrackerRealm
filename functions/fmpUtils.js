@@ -537,18 +537,18 @@ function _fixFMPCompany(fmpCompany, symbolID) {
     company._id = symbolID;
 
     if (fmpCompany.currency) {
-      company.c = fmpCompany.currency.toUpperCase();
+      company.setIfNotNullOrUndefined('c', fmpCompany.currency.toUpperCase());
     } else {
       console.error(`No currency '${symbolID}': ${fmpCompany.stringify()}`)
-      company.c = "NONE";
+      company.c = "-";
     }
 
     if (fmpCompany.industry) {
-      company.i = fmpCompany.industry;
+      company.setIfNotNullOrUndefined('i', fmpCompany.industry);
     }
 
     if (fmpCompany.companyName) {
-      company.n = fmpCompany.companyName;
+      company.setIfNotNullOrUndefined('n', fmpCompany.companyName);
     } else {
       console.error(`No company name '${symbolID}': ${fmpCompany.stringify()}`)
       company.n = "N/A";
@@ -611,9 +611,10 @@ function _fixFMPDividends(fmpDividends, symbolID) {
       .sorted((l, r) => l.date.localeCompare(r.date))
       .map(fmpDividend => {
         const dividend = {};
-        dividend.e = _getOpenDate(fmpDividend.date);
-        dividend.d = _getOpenDate(fmpDividend.declarationDate);
-        dividend.p = _getOpenDate(fmpDividend.paymentDate);
+        dividend.setIfNotNullOrUndefined('e', _getOpenDate(fmpDividend.date));
+        dividend.setIfNotNullOrUndefined('d', _getOpenDate(fmpDividend.declarationDate));
+        dividend.setIfNotNullOrUndefined('p', _getOpenDate(fmpDividend.paymentDate));
+        dividend.f = 'u'; // Will be updated later
         dividend.s = symbolID;
 
         const amount = _getFmpDividendAmount(fmpDividend);
@@ -635,10 +636,12 @@ function _fixFMPDividends(fmpDividends, symbolID) {
     return dividends;
 
   } catch(error) {
-    console.error(`Unable to fix dividends ${fmpDividends.stringify()}: ${error}`);
+    console.error(`Unable to fix dividends: ${error} | Dividends: ${fmpDividends.stringify()}`);
     return [];
   }
 }
+
+fixFMPDividends = _fixFMPDividends;
 
 function _getFmpDividendAmount(fmpDividend) {
   if (fmpDividend.dividend != null) {
@@ -654,36 +657,215 @@ function _getFmpDividendAmount(fmpDividend) {
   }
 }
 
-// TODO: Improve later by including more cases
+// 7 days
+const possiblyIrregularMinTimeInterval = 7 * 24 * 3600 * 1000;
+
+// 13 days
+const possiblyIrregularMaxTimeInterval = 13 * 24 * 3600 * 1000;
+
+// TODO: Improve that logic to take into account whole context and so better series detection instead of just compare adjacent dividends.
+// TODO: We should use parser approach here the same way we did for CSV normalizer to have better flexibility.
 function _updateDividendsFrequency(dividends) {
+  let foundIrregular = false;
+
   const nonDeletedDividends = dividends.filter(x => x.x != true);
+
+  // We do not try to determine frequency of series lower than 3.
+  if (nonDeletedDividends.length < 3) {
+    nonDeletedDividends.forEach(dividend => dividend.f = 'u');
+    return dividends;
+  }
+
+  const mainFrequency = getMainFrequency(nonDeletedDividends);
   for (const [i, dividend] of nonDeletedDividends.entries()) {
-    let prevDate;
-    if (i - 1 < 0) {
-      prevDate = null;
-    } else {
-      prevDate = nonDeletedDividends[i - 1].e;
+    
+    let iPrev = 1;
+    let prevDividend;
+    while (i - iPrev >= 0 && prevDividend == null) {
+      prevDividend = nonDeletedDividends[i - iPrev];
+
+      // Ignore irregular and unspecified dividends
+      if (prevDividend.f === 'i' || prevDividend.f === 'u') {
+        prevDividend = null;
+      }
+
+      iPrev++;
     }
 
-    let nextDate;
-    if (i + 1 >= nonDeletedDividends.length) {
-      nextDate = null;
-    } else {
-      nextDate = nonDeletedDividends[i + 1].e;
+    let iNext = 1;
+    let nextDividend;
+    while (i + iNext < nonDeletedDividends.length && nextDividend == null) {
+      nextDividend = nonDeletedDividends[i + iNext];
+      iNext++;
     }
     
-    if (prevDate != null && nextDate != null) {
-      dividend.f = getFrequencyForMillis((nextDate - prevDate) / 2);
-    } else if (prevDate != null) {
-      dividend.f = nonDeletedDividends[i - 1].f; // Keep previous
-    } else if (nextDate != null) {
-      dividend.f = getFrequencyForMillis(nextDate - dividend.e);
+    if (prevDividend != null && nextDividend != null) {
+      const nextTimeInterval = Math.abs(nextDividend.e - dividend.e);
+      const nextFrequency = getFrequencyForMillis(nextTimeInterval);
+      
+      const timeInterval = Math.abs(dividend.e - prevDividend.e);
+      const frequency = getFrequencyForMillis(timeInterval);
+      
+      // We use shorter range when we have 'm' main frequency and longer when it's 'q' and above
+      let isPossiblyIrregular;
+      if (mainFrequency === 'm') {
+        isPossiblyIrregular = nextTimeInterval <= possiblyIrregularMinTimeInterval || timeInterval <= possiblyIrregularMinTimeInterval;
+      } else if (mainFrequency !== 'w') {
+        isPossiblyIrregular = nextTimeInterval <= possiblyIrregularMaxTimeInterval || timeInterval <= possiblyIrregularMaxTimeInterval;
+      } else {
+        isPossiblyIrregular = false;
+      }
+
+      if (isPossiblyIrregular) {
+        // Try to identify irregular dividends
+        // TODO: if main frequency is 'm' we need to lower weekly range
+        if (nextFrequency === 'w') {
+          const thisDiff = math_bigger_times(dividend.a, prevDividend.a);
+          const nextDiff = math_bigger_times(nextDividend.a, prevDividend.a);
+          const isIrregular = thisDiff > nextDiff;
+          if (isIrregular) {
+            foundIrregular = true;
+            dividend.f = 'i';
+          } else {
+            dividend.f = frequency;
+          }
+          continue;
+        }
+
+        if (frequency === 'w') {
+          const thisDiff = math_bigger_times(dividend.a, nextDividend.a);
+          const prevDiff = math_bigger_times(prevDividend.a, nextDividend.a);
+          const isIrregular = thisDiff > prevDiff;
+          if (isIrregular) {
+            foundIrregular = true;
+            dividend.f = 'i';
+          } else {
+            dividend.f = nextFrequency;
+          }
+          continue;
+        }
+      }
+
+      if (frequency === prevDividend.f) {
+        dividend.f = frequency;
+
+      } else {
+        let prevPrevDividend;
+        while (i - iPrev >= 0 && prevPrevDividend == null) {
+          prevPrevDividend = nonDeletedDividends[i - iPrev];
+          
+          // Ignore irregular and unspecified dividends
+          if (prevPrevDividend.f === 'i' || prevPrevDividend.f === 'u') {
+            prevPrevDividend = null;
+          }
+          
+          iPrev++;
+        }
+        
+        if (prevPrevDividend != null) {
+          if (prevPrevDividend.f === prevDividend.f && prevDividend.f === nextFrequency) {
+            // Missing dividends case. If two previous frequencies and one next is the same we just use it.
+            dividend.f = nextFrequency;
+
+          } else if (prevPrevDividend.f === prevDividend.f && getGradeDifference(frequency, prevDividend.f) === 1) {
+            // 3-9 semi-annual or 1-5 quarterly case
+            const frequency = getFrequencyForMillis((dividend.e - prevPrevDividend.e) / 2);
+            dividend.f = frequency;
+
+          } else {
+            dividend.f = frequency;
+          }
+          
+        } else {
+          dividend.f = getFrequencyForMillis((nextDividend.e - prevDividend.e) / 2);
+        }
+      }
+      
+    } else if (prevDividend != null) {
+      const frequency = getFrequencyForMillis(dividend.e - prevDividend.e);
+      if (frequency === prevDividend.f) {
+        dividend.f = frequency;
+
+      } else {
+        let prevPrevDividend;
+        while (i - iPrev >= 0 && prevPrevDividend == null) {
+          prevPrevDividend = nonDeletedDividends[i - iPrev];
+    
+          // Ignore irregular and unspecified dividends
+          if (prevPrevDividend.f === 'i' || prevPrevDividend.f === 'u') {
+            prevPrevDividend = null;
+          }
+    
+          iPrev++;
+        }
+
+        if (prevPrevDividend != null && prevPrevDividend.f === prevDividend.f && getGradeDifference(frequency, prevDividend.f) === 1) {
+          const frequency = getFrequencyForMillis((dividend.e - prevPrevDividend.e) / 2);
+          if (frequency === prevDividend.f) {
+            dividend.f = frequency;
+          } else {
+            // Probably new series start but we can't predict with just one record
+            dividend.f = 'u';
+          }
+
+        } else {
+          // Probably new series start but we can't predict with just one record
+          dividend.f = 'u';
+        }
+      }
+
+    } else if (nextDividend != null) {
+      const nextFrequency = getFrequencyForMillis(nextDividend.e - dividend.e);
+
+      let nextNextDividend;
+      while (i + iNext < nonDeletedDividends.length && nextNextDividend == null) {
+        nextNextDividend = nonDeletedDividends[i + iNext];
+        iNext++;
+      }
+
+      if (nextNextDividend != null) {
+        const nextNextFrequency = getFrequencyForMillis(nextNextDividend.e - nextDividend.e);
+        if (nextFrequency === nextNextFrequency) {
+          dividend.f = nextNextFrequency;
+        } else {
+          dividend.f = getFrequencyForMillis((nextNextDividend.e - dividend.e) / 2);
+        }
+
+      } else {
+        dividend.f = nextFrequency;
+      }
+
     } else {
       dividend.f = 'u'; // The only record
     }
   }
 
-  return dividends;
+  if (foundIrregular) {
+    _updateDividendsFrequency(dividends.filter(x => x.f !== 'i'));
+    return dividends;
+
+  } else {
+    return dividends;
+  }
+}
+
+updateDividendsFrequency = _updateDividendsFrequency;
+
+function getGradeDifference(lFrequency, rFrequency) {
+  const lGrade = getGrade(lFrequency);
+  const rGrade = getGrade(rFrequency);
+  return Math.abs(rGrade - lGrade);
+}
+
+function getGrade(frequency) {
+  switch (frequency) {
+    case 'w': return 1;
+    case 'm': return 2;
+    case 'q': return 3;
+    case 's': return 4;
+    case 'a': return 5;
+    default: return -1;
+  }
 }
 
 function getFrequencyForMillis(millis) {
@@ -703,28 +885,35 @@ function getFrequencyForMillis(millis) {
   }
 }
 
-updateDividendsFrequency = _updateDividendsFrequency;
-
 // TODO: Improve later by including more cases
 function _removeDuplicatedDividends(dividends) {
+  // Unable to determine duplicates when there are less than 3 records
+  if (dividends.length < 3) {
+    return dividends;
+  }
+  
+  // We do not dedupe week frequency dividends atm
+  const mainFrequency = getMainFrequency(dividends);
+  if (mainFrequency === 'w') {
+    return dividends;
+  }
+
   const originalLength = dividends.length;
   const newDividends = dividends
     .filter((dividend, i, arr) => {
-      if (i + 2 >= arr.length) {
-        return true
+      if (i + 1 >= arr.length) {
+        return true;
       }
       
       const nextDividend = arr[i + 1];
-      const nextNextDividend = arr[i + 2];
 
       // 80.2744 and 80.27435 for NNSB.ME
       const lhsAmount = dividend.a.valueOf();
       const rhsAmount = nextDividend.a.valueOf();
       const amountEqual = Math.abs(rhsAmount - lhsAmount) <= 0.0001
-      const frequency = getFrequencyForMillis(nextDividend.e - dividend.e);
-      const nextFrequency = getFrequencyForMillis(nextNextDividend.e - nextDividend.e);
+      const nextFrequency = getFrequencyForMillis(nextDividend.e - dividend.e);
 
-      if (frequency !== nextFrequency && frequency === 'w' && amountEqual) {
+      if (nextFrequency === 'w' && amountEqual) {
         console.error(`Duplicate dividend for ${dividend.s}: ${dividend.stringify()}`);
         return false;
       } else {
@@ -741,6 +930,19 @@ function _removeDuplicatedDividends(dividends) {
 }
 
 removeDuplicatedDividends = _removeDuplicatedDividends;
+
+  // Very raw but should be enough for now
+function getMainFrequency(dividends) {
+  dividends = dividends.filter(dividend => dividend.x != true && dividend.f !== 'i')
+  if (dividends.length < 2) {
+    return 'u';
+  }
+
+  const range = dividends[dividends.length - 1].e - dividends[0].e;
+  const period = range / (dividends.length - 1);
+
+  return getFrequencyForMillis(period);
+}
 
 /**
  * Fixes historical prices object so it can be added to MongoDB.
@@ -785,8 +987,8 @@ function _fixFMPHistoricalPrices(fmpHistoricalPrices, symbolID) {
       .map(month => {
         const averagePrice = averagePriceByMonth[month]
         const historicalPrice = {};
-        historicalPrice.c = BSON.Double(averagePrice);
-        historicalPrice.d = _getCloseDate(month);
+        historicalPrice.setIfNotNullOrUndefined('c', BSON.Double(averagePrice));
+        historicalPrice.setIfNotNullOrUndefined('d', _getCloseDate(month));
         historicalPrice.s = symbolID;
 
         return historicalPrice;
@@ -814,14 +1016,14 @@ function _fixFMPQuote(fmpQuote, symbolID) {
     quote._id = symbolID;
 
     if (fmpQuote.price != null) {
-      quote.l = fmpQuote.price;
+      quote.setIfNotNullOrUndefined('l', fmpQuote.price);
     } else {
       console.error(`No quote price for '${symbolID}': ${fmpQuote.stringify()}`)
       return null
     }
 
     if (fmpQuote.pe != null) {
-      quote.p = BSON.Double(fmpQuote.pe);
+      quote.setIfNotNullOrUndefined('p', BSON.Double(fmpQuote.pe));
     }
 
     return quote;
@@ -854,11 +1056,12 @@ function _fixFMPSplits(fmpSplits, symbolID) {
       .filterNullAndUndefined()
       .map(fmpSplit => {
         const split = {};
-        split.e = _getOpenDate(fmpSplit.date);
+        split.setIfNotNullOrUndefined('e', _getOpenDate(fmpSplit.date));
         split.s = symbolID;
 
         if (fmpSplit.denominator > 0 && fmpSplit.numerator > 0) {
-          split.r = BSON.Double(fmpSplit.denominator / fmpSplit.numerator);
+          const ratio = BSON.Double(fmpSplit.denominator / fmpSplit.numerator);
+          split.setIfNotNullOrUndefined('r', ratio);
         } else {
           console.error(`No ratio for split '${symbolID}': ${fmpSplit.stringify()}`)
           return null
@@ -894,9 +1097,9 @@ function _fixFMPSymbols(fmpSymbols) {
       .filter(fmpSymbol => fmpSymbol.exchangeShortName === "MCX" || fmpSymbol.type === "fund")
       .map(fmpSymbol => {
         const symbol = {};
-        symbol.c = fmpSymbol.exchangeShortName;
-        symbol.n = fmpSymbol.name;
-        symbol.t = fmpSymbol.symbol;
+        symbol.setIfNotNullOrUndefined('c', fmpSymbol.exchangeShortName);
+        symbol.setIfNotNullOrUndefined('n', fmpSymbol.name);
+        symbol.setIfNotNullOrUndefined('t', fmpSymbol.symbol);
 
         return symbol;
       });
@@ -906,6 +1109,9 @@ function _fixFMPSymbols(fmpSymbols) {
     return [];
   }
 };
+
+// TODO: Fix FMP and IEX open and close date computations. They should instead of harcoded exchange work with passed exchange. Migrations.
+// TODO: Also check if payment and declared date for dividends **MUST** be adjusted. Leave as is if possible.
 
 /** 
  * First parameter: Date in the "yyyy-mm-dd" or timestamp or Date format, e.g. "2020-03-27" or '1633046400000' or Date.
