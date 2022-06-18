@@ -32,6 +32,8 @@
 
 # ################################################## O N G O I N G ##############################################################
 
+# ################################################## D O N E ##############################################################
+
 # 2022-06-18 | Old format date, IEX calendar splits, and refid for dividends
  
 - Release new server
@@ -59,8 +61,6 @@
 - Execute `dt call-realm-function --environment sandbox-anton --function updateDividendsFuture --verbose`
 - Execute `dt call-realm-function --environment sandbox-anton --function updateDividendsPast --verbose`
 - Execute `dt check-dividends --environment sandbox-anton`
-
-# ################################################## D O N E ##############################################################
 
 # 2022-06-11 | Merged symbols, getDataV2, IEX refid for splits and dedupe
 
