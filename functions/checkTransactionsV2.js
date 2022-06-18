@@ -8,43 +8,31 @@
   context.functions.execute("iexUtils");
   const transactionsCollection = db.collection("transactions");
 
-  let transactions;
-  const pageSize = 50000;
-  do {
-    let find;
-    if (transactions != null) {
-      find = { _id: { $gt: transactions[transactions.length - 1]._id } };
-    } else {
-      find = {};
+  const transactions = transactionsCollection.fullFind({});
+  if (!transactions.length) {
+    console.log(`Nothing to verify. Transactions are empty.`);
+    return;
+  } else {
+    console.log(`Checking transactions with filter: ${find.stringify()}`);
+  }
+  
+  // Check transactions
+  const existingSymbolIDs = await getExistingSymbolIDs();
+  const symbolIDBySymbolID = existingSymbolIDs.toDictionary();
+  const errors = [];
+  for (const transaction of transactions) {
+    try {
+      checkTransaction(transaction, symbolIDBySymbolID);
+    } catch(error) {
+      errors.push(error);
     }
+  }
 
-    transactions = await transactionsCollection.find(find).sort({ _id: 1 }).limit(pageSize).toArray();
-    if (!transactions.length) {
-      console.log(`Nothing to verify. Transactions are empty.`);
-      return;
-    } else {
-      console.log(`Checking transactions with filter: ${find.stringify()}`);
-    }
-  
-    // Check transactions
-    const existingSymbolIDs = await getExistingSymbolIDs();
-    const symbolIDBySymbolID = Object.assign({}, ...existingSymbolIDs.map(x => ({ [x]: x })));
-    const errors = [];
-    for (const transaction of transactions) {
-      try {
-        checkTransaction(transaction, symbolIDBySymbolID);
-      } catch(error) {
-        errors.push(error);
-      }
-    }
-  
-    if (errors.length) {
-      throw(errors);
-  
-    } else {
-      console.log(`All trasactions are valid!`);
-    }
-  } while (transactions.length >= pageSize);
+  if (errors.length) {
+    throw(errors);
+  } else {
+    console.log(`All trasactions are valid!`);
+  }
 };
 
 const requiredTransactionKeys = [
