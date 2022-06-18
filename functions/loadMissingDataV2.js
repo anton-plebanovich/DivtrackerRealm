@@ -235,7 +235,7 @@ async function loadMissingSplits(shortSymbols, symbolIDs) {
 
   const bulk = collection.initializeUnorderedBulkOp();
   for (const split of splits) {
-    const query = { e: split.e, s: split.s };
+    const query = { s: split.s, e: split.e, r: split.r };
     const update = { $setOnInsert: split };
     bulk.find(query).upsert().updateOne(update);
   }
