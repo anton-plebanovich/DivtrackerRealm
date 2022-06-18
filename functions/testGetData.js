@@ -9,7 +9,9 @@ exports = async function() {
 
   await prepareFMPData();
 
-  const transactions = await generateRandomTransactions(1);
+  // Using 5 to prevent case when we have no historical prices. Sill, gambling. 
+  // We need to just have some predefined ticker or something like that.
+  const transactions = await generateRandomTransactions(5);
   const symbolIDs = transactions.map(x => x.s);
   await context.functions.execute("addTransactionsV2", transactions);
   
