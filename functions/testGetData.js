@@ -341,6 +341,15 @@ function verifyResponseV2(response, timestamp, collections, symbolIDs, fullFetch
     });
   }
 
+  // Check that system fields do not returned
+  refidCollections.forEach(refidCollection => {
+    response.updates?.[refidCollection]?.forEach(object => {
+      if (object.i != null) {
+        throw `Unexpected system field 'i' is returned for '${refidCollection}' collection`;
+      }
+    });
+  });
+
   // TODO: Add more data verifications
 }
 
@@ -407,4 +416,9 @@ const singularSymbolCollections = [
 const nonSearchableIDCollections = [
   'exchange-rates',
   'updates',
+];
+
+const refidCollections = [
+  'dividends',
+  'splits',
 ];
