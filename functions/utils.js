@@ -417,10 +417,23 @@ Array.prototype.distinct = function(arg) {
   return result;
 };
 
+/**
+ * @param {array|string|null} arg Key(s) to use for comparison.
+ */
 Array.prototype.uniqueUnordered = function(key) {
   if (key != null) {
     const dictionary = this.toDictionary(key);
-    return Object.values(dictionary);
+    let result = Object.values(dictionary);
+    if (Object.prototype.toString.call(key) === '[object Array]') {
+      for (i = 1; i < key.length; i++) {
+        result = result
+          .map(x => Object.values(x))
+          .flat();
+      }
+    }
+
+    return result
+
   } else {
     const dictionary = this.toDictionary(x => x.toString());
     return Object.values(dictionary);
