@@ -30,7 +30,7 @@ async function _getShortSymbols() {
   const shortSymbols = await symbolsCollection
     .find(
       { e: null },
-      { _id: 1, t: 1, c: 1 }
+      { _id: 1, c: 1, t: 1 }
     )
     .toArray();
 

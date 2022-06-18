@@ -93,7 +93,7 @@ async function _getShortSymbols(symbolIDs) {
   const shortSymbols = await symbolsCollection
     .find(
       { _id: { $in: symbolIDs } }, 
-      { _id: 1, t: 1 }
+      { _id: 1, c: 1, t: 1 }
     )
     .toArray();
 
