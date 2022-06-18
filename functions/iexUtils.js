@@ -816,7 +816,6 @@ function _fixSplits(iexSplits, symbolID) {
 
 fixSplits = _fixSplits;
 
-// TODO: Check 'MCHP' and 'NYC' fetches
 function _removeDuplicatedIEXSplits(iexSplits) {
   const buckets = iexSplits.toBuckets('refid');
   const result = [];
