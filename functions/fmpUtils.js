@@ -1093,7 +1093,7 @@ function _fixFMPSymbols(fmpSymbols) {
     return fmpSymbols
       .filterNullAndUndefined()
       // Limit to only supported types
-      .filter(fmpSymbol => fmpSymbol.exchangeShortName === "MCX" || fmpSymbol.type === "fund")
+      .filter(fmpSymbol => fmpSymbol.exchangeShortName === "MCX" || fmpSymbol.type === "fund" || fmpSymbol.type === "etf")
       .map(fmpSymbol => {
         const symbol = {};
         symbol.setIfNotNullOrUndefined('c', fmpSymbol.exchangeShortName);
