@@ -24,10 +24,10 @@
 - Execute `dt call-realm-function --environment sandbox-anton --function fmpUpdateSplits --argument fmp-tmp --verbose`
 - Check data counts
 - Execute `dt backup --environment sandbox-anton --database fmp-tmp --verbose`
-- Execute `dt restore --environment sandbox-anton --database fmp-tmp --to-database fmp --ye --verbose`
+- Execute `dt restore --environment sandbox-anton --database fmp-tmp --to-database fmp --yes --verbose`
 - Execute `dt call-realm-function --environment sandbox-anton --function mergedUpdateSymbols --verbose`
 - Execute `dt call-realm-function --environment sandbox-anton --function checkTransactionsV2 --verbose`
-- Drop fmp-tmp database
+- Drop `fmp-tmp` database
 - Enable all previously disabled triggers
 
 # ################################################## O N G O I N G ##############################################################
