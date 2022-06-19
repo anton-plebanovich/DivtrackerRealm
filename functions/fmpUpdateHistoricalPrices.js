@@ -1,5 +1,5 @@
 
-// fmpUpdatePrices.js
+// fmpUpdateHistoricalPrices.js
 
 // https://docs.mongodb.com/manual/reference/method/js-collection/
 // https://docs.mongodb.com/manual/reference/method/js-bulk/
@@ -18,9 +18,10 @@
   }
 
   const previousMonthStart = Date.previousMonthStart().dayString();
-  const historicalPrices = await fetchHistoricalPrices(shortSymbols, { from: previousMonthStart });
+  const previousMonthEnd = Date.previousMonthEnd().dayString();
+  const historicalPrices = await fetchHistoricalPrices(shortSymbols, { from: previousMonthStart, to: previousMonthEnd });
   const collection = fmp.collection('historical-prices');
-  collection.safeInsertMissing(historicalPrices, ['s', 'd']);
+  collection.safeUpdateMany(historicalPrices, null, ['s', 'd']);
   
   await setUpdateDate(`${database}-prices`);
 };
