@@ -38,7 +38,7 @@ async function fetch_new_symbols_for_fmp_tmp() {
   context.functions.execute("fmpUtils");
   
   const collection = fmp.collection("symbols");
-  const symbols = collection.fullFind();
+  const symbols = await collection.fullFind();
   const symbolByID = symbols.toDictionary('_id');
   console.log(`Existing symbols: ${symbols.length}`);
 
