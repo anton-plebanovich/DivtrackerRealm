@@ -1,7 +1,36 @@
 
 # ################################################## P L A N N E D ##############################################################
 
+# 2022-06-XX | FMP OTCs support
 
+- Deploy the new server with all FMP triggers disabled
+- Execute `dt backup --environment sandbox-anton --database fmp --verbose`
+- Execute `dt restore --environment sandbox-anton --database fmp --to-database fmp-tmp --yes --verbose`
+- Execute `dt call-realm-function --environment sandbox-anton --function fmpUpdateSymbols --argument fmp-tmp --verbose`
+- Execute `dt call-realm-function --environment sandbox-anton --function fmpLoadMissingData --argument fmp-tmp --retry-on-error 'execution time limit exceeded'`
+- Execute `dt backup --environment sandbox-anton --database fmp-tmp --verbose`
+- Execute `dt restore --environment local --backup-source-environment sandbox-anton --database fmp-tmp --yes --verbose`
+- Execute symbols migration on the local environment
+- Start `55` minutes timer. If we won't be able to finish our checks in that time we will need to go back to the previous migration step - local symbols migration.
+- Execute `dt backup --environment local --database fmp-tmp --verbose`
+- Execute `dt restore --environment sandbox-anton --backup-source-environment local --database fmp-tmp --yes --verbose`
+- Check data counts
+- Execute `dt call-realm-function --environment sandbox-anton --function fmpLoadMissingData --argument fmp-tmp --verbose`
+- Execute `dt call-realm-function --environment sandbox-anton --function fmpUpdateSymbols --argument fmp-tmp --verbose`
+- Execute `dt call-realm-function --environment sandbox-anton --function fmpUpdateCompanies --argument fmp-tmp --verbose`
+- Execute `dt call-realm-function --environment sandbox-anton --function fmpUpdateDividends --argument fmp-tmp --verbose`
+- Execute `dt call-realm-function --environment sandbox-anton --function fmpUpdatePrices --argument fmp-tmp --verbose`
+- Execute `dt call-realm-function --environment sandbox-anton --function fmpUpdateQuotes --argument fmp-tmp --verbose`
+- Execute `dt call-realm-function --environment sandbox-anton --function fmpUpdateSplits --argument fmp-tmp --verbose`
+- Check data counts
+- Execute `dt backup --environment sandbox-anton --database fmp-tmp --verbose`
+- Execute `dt restore --environment sandbox-anton --database fmp-tmp --to-database fmp --yes --verbose`
+- Open the app and add `<IEX_AND_FMP_OTC_TICKER>` ticker
+- Execute `dt call-realm-function --environment sandbox-anton --function mergedUpdateSymbols --verbose`
+- Background/foreground the app and check that `<IEX_AND_FMP_OTC_TICKER>` ticker data is refetched
+- Execute `dt call-realm-function --environment sandbox-anton --function checkTransactionsV2 --verbose`
+- Drop `fmp-tmp` database
+- Enable all previously disabled triggers
 
 # ################################################## O N G O I N G ##############################################################
 
