@@ -42,6 +42,7 @@ All the same as for normal flow except we don't have the required time window an
 - We should not have any `testXXX` function deployed here so they should be removed during merge if needed.
 - IEX data comes from the IEX Production so we should have the same data as in the `production` environment but in less volume.
 - The team is working here so if something looks wrong it should be reported immediately and fixed.
+- Erase command: `dt backup --environment sandbox-anton --verbose && dt erase-environment --environment sandbox && dt restore --environment sandbox --backup-source-environment sandbox-anton --minimum --do-not-drop --yes --verbose`
 
 ### Stage
 

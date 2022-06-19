@@ -574,7 +574,7 @@ async function checkSameTickers() {
 // dt call-realm-function --environment production --function fmpUpdateSymbols --argument fmp-tmp --verbose
 // dt call-realm-function --environment production --function fmpUpdateCompanies --argument fmp-tmp --verbose
 // dt call-realm-function --environment production --function fmpUpdateDividends --argument fmp-tmp --verbose
-// dt call-realm-function --environment production --function fmpUpdatePrices --argument fmp-tmp --verbose
+// dt call-realm-function --environment production --function fmpUpdateHistoricalPrices --argument fmp-tmp --verbose
 // dt call-realm-function --environment production --function fmpUpdateQuotes --argument fmp-tmp --verbose
 // dt call-realm-function --environment production --function fmpUpdateSplits --argument fmp-tmp --verbose
 // Check data count

@@ -22,7 +22,7 @@ async function test() {
   await Promise.all([
     context.functions.execute("fmpUpdateCompanies"),
     context.functions.execute("fmpUpdateDividends"),
-    context.functions.execute("fmpUpdatePrices"),
+    context.functions.execute("fmpUpdateHistoricalPrices"),
     context.functions.execute("fmpUpdateQuotes"),
     context.functions.execute("fmpUpdateSplits"),
   ]);
