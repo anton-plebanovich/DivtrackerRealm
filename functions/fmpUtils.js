@@ -663,6 +663,9 @@ const possiblyIrregularMinTimeInterval = 7 * 24 * 3600 * 1000;
 // 13 days
 const possiblyIrregularMaxTimeInterval = 13 * 24 * 3600 * 1000;
 
+// Dividend series min length. Lower length series frequency will be set to undefiend
+const minDividendSeriesLenght = 3;
+
 // TODO: Improve that logic to take into account whole context and so better series detection instead of just compare adjacent dividends.
 // TODO: We should use parser approach here the same way we did for CSV normalizer to have better flexibility.
 function _updateDividendsFrequency(dividends) {
@@ -670,15 +673,29 @@ function _updateDividendsFrequency(dividends) {
 
   const nonDeletedDividends = dividends.filter(x => x.x != true);
 
-  // We do not try to determine frequency of series lower than 3.
-  if (nonDeletedDividends.length < 3) {
+  // We do not try to determine frequency of series lower than min.
+  if (nonDeletedDividends.length < minDividendSeriesLenght) {
     nonDeletedDividends.forEach(dividend => dividend.f = 'u');
     return dividends;
   }
 
+  const series = [];
+  function updateSeries(dividend) {
+    const isSeriesEnd = dividend == null || dividend.f != series[0]?.f;
+    if (isSeriesEnd) {
+      if (series.length < minDividendSeriesLenght) {
+        series.forEach(x => x.f = 'u');
+      }
+      series = [];
+    }
+
+    if (dividend != null) {
+      series.push(dividend);
+    }
+  }
+
   const mainFrequency = getMainFrequency(nonDeletedDividends);
   for (const [i, dividend] of nonDeletedDividends.entries()) {
-    
     let iPrev = 1;
     let prevDividend;
     while (i - iPrev >= 0 && prevDividend == null) {
@@ -691,6 +708,9 @@ function _updateDividendsFrequency(dividends) {
 
       iPrev++;
     }
+
+    // Prev dividend has computed frequency so we use it
+    updateSeries(prevDividend);
 
     let iNext = 1;
     let nextDividend;
@@ -838,6 +858,10 @@ function _updateDividendsFrequency(dividends) {
       dividend.f = 'u'; // The only record
     }
   }
+
+  // Add last and finish series
+  updateSeries(nonDeletedDividends[nonDeletedDividends.length - 1]);
+  updateSeries(null);
 
   if (foundIrregular) {
     _updateDividendsFrequency(dividends.filter(x => x.f !== 'i'));
