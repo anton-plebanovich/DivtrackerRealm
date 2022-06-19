@@ -32,11 +32,12 @@
 
 # ################################################## O N G O I N G ##############################################################
 
-# 2022-06-XX | Missing IEX splits
+# 2022-06-XX | Missing IEX splits and FMP historical prices
 
 - Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument refetch_IEX_splits --verbose`
 - Check that there are 2 splits for `NYC` ticker using `{ s: ObjectId('61c42676a2660ba02db3abc2') }`
 - Execute `dt check-splits --environment sandbox-anton`
+- Execute `dt call-realm-function --environment sandbox-anton --function fmpUpdatePrices --verbose`
 
 # ################################################## D O N E ##############################################################
 
