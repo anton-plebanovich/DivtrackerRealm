@@ -39,13 +39,13 @@ async function fetch_new_symbols_for_fmp_tmp() {
   
   const collection = fmp.collection("symbols");
   const symbols = await collection.fullFind();
-  const symbolByID = symbols.toDictionary('_id');
+  const symbolByTicker = symbols.toDictionary('t');
   console.log(`Existing symbols: ${symbols.length}`);
 
   const fetchedSymbols = await fetchSymbols();
   console.log(`Fetched symbols: ${fetchedSymbols.length}`);
 
-  const newSymbols = fetchedSymbols.filter(x => symbolByID[x._id] == null);
+  const newSymbols = fetchedSymbols.filter(x => symbolByTicker[x.t] == null);
   console.log(`New symbols: ${newSymbols.length}`);
 
   const tmpCollection = atlas.db('fmp-tmp').collection("symbols");
