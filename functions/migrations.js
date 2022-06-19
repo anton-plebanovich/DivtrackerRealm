@@ -9,7 +9,7 @@
 // https://docs.mongodb.com/manual/reference/method/Bulk.find.removeOne/
 // https://docs.mongodb.com/manual/reference/method/Bulk.insert/
 
-exports = async function(migration) {
+exports = async function(migration, arg) {
   context.functions.execute("utils");
 
   logVerbose = true;
@@ -19,7 +19,7 @@ exports = async function(migration) {
     if (migration === 'refetch_IEX_splits') {
       await refetch_IEX_splits();
     } else if (migration === 'fix_FMP_dividends') {
-      await fix_FMP_dividends();
+      await fix_FMP_dividends(arg);
     } else {
       throw `Unexpected migration: ${migration}`;
     }
@@ -55,12 +55,23 @@ async function refetch_IEX_splits() {
 /**
  * Deletes duplicated FMP dividends and fixes frequency where needed
  */
- async function fix_FMP_dividends() {
+ async function fix_FMP_dividends(iteration) {
   context.functions.execute("fmpUtils");
 
   const collection = fmp.collection('dividends');
 
-  const oldDividends = await collection.fullFind({ x: { $ne: true } });
+  const symbols = await collection
+    .distinct('s', { x: { $ne: true } })
+    .then(symbols => symbols.sorted((l, r) => l.toString().localeCompare(r.toString())));
+  
+  const iterationSize = 1000;
+  const iterationSymbols = symbols.splice(iteration * iterationSize, iterationSize);
+  if (!iterationSymbols.length) {
+    console.error(`No symbols to iterate for '${iteration}' iteration. Symbols length: ${symbols.length}`);
+    return;
+  }
+
+  const oldDividends = await collection.fullFind({ s: { $in: iterationSymbols }, x: { $ne: true } });
   const dividendsBySymbolID = oldDividends.toBuckets('s');
   const newDividends = [];
   for (const symbolDividends of Object.values(dividendsBySymbolID)) {

@@ -1294,6 +1294,15 @@ function extendRuntime() {
     return this.toString().substring(8);
   }
 
+  /**
+   * Returns time part from `BSON.ObjectId` as `Date`.
+   */
+  BSON.ObjectId.prototype.date = function() {
+    const timeHexString = this.toString().substring(0, 8);
+    const timestamp = parseInt(timeHexString, 16) * 1000;
+    return new Date(timestamp);
+  }
+
   runtimeExtended = true;
 }
 
