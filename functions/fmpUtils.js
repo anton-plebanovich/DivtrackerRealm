@@ -684,7 +684,7 @@ function _updateDividendsFrequency(dividends) {
     const newFrequency = dividend?.f;
 
     // Ignore irregular frequency in series
-    if (newFrequency == 'i') {
+    if (newFrequency === 'i') {
       return;
     }
 
