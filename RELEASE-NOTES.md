@@ -1,9 +1,18 @@
 
 # ################################################## P L A N N E D ##############################################################
 
-# 2022-06-XX | FMP ETF support
+
+
+# ################################################## O N G O I N G ##############################################################
+
+# 2022-06-XX | Missing IEX splits, FMP historical prices, FMP ETFs support
 
 - Deploy the new server with all FMP triggers disabled
+- Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument refetch_IEX_splits --verbose`
+- Check that there are 2 splits for `NYC` ticker using `{ s: ObjectId('61c42676a2660ba02db3abc2') }`
+- Execute `dt check-splits --environment sandbox-anton`
+- Execute `dt call-realm-function --environment sandbox-anton --function fmpUpdatePrices --verbose`
+- Execute `for i in {0..1}; do dt call-realm-function --environment sandbox-anton --function migrations --argument fix_FMP_dividends --argument ${i} --verbose; done`
 - Execute `dt backup --environment sandbox-anton --database fmp --verbose`
 - Execute `dt restore --environment sandbox-anton --database fmp --to-database fmp-tmp --yes --verbose`
 - Execute `dt call-realm-function --environment sandbox-anton --function fmpUpdateSymbols --argument fmp-tmp --verbose`
@@ -31,16 +40,6 @@
 - Execute `dt call-realm-function --environment sandbox-anton --function checkTransactionsV2 --verbose`
 - Drop `fmp-tmp` database
 - Enable all previously disabled triggers
-
-# ################################################## O N G O I N G ##############################################################
-
-# 2022-06-XX | Missing IEX splits and FMP historical prices
-
-- Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument refetch_IEX_splits --verbose`
-- Check that there are 2 splits for `NYC` ticker using `{ s: ObjectId('61c42676a2660ba02db3abc2') }`
-- Execute `dt check-splits --environment sandbox-anton`
-- Execute `dt call-realm-function --environment sandbox-anton --function fmpUpdatePrices --verbose`
-- Execute `for i in {0..4}; do dt call-realm-function --environment sandbox-anton --function migrations --argument fix_FMP_dividends --argument ${i} --verbose; done`
 
 # ################################################## D O N E ##############################################################
 
