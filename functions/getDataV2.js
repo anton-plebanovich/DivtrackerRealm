@@ -262,22 +262,22 @@ exports = async function(timestamp, collectionNames, symbolIDs, fullFetchCollect
     return [deletions, updates];
   }, [{}, {}]);
 
-  const result = {};
-  result.lastUpdateTimestamp = lastUpdateTimestamp;
+  const response = {};
+  response.lastUpdateTimestamp = lastUpdateTimestamp;
 
   if (refetchMergedSymbolIDs.length) {
-    result.cleanups = refetchMergedSymbolIDs;
+    response.cleanups = refetchMergedSymbolIDs;
   }
 
   if (Object.keys(deletions).length) {
-    result.deletions = deletions;
+    response.deletions = deletions;
   }
 
   if (Object.keys(updates).length) {
-    result.updates = updates;
+    response.updates = updates;
   }
 
-  return result;
+  return response;
 };
 
 //////////////////////////// HELPER FUNCTIONS
@@ -307,6 +307,12 @@ async function getCollectionData(source, collectionName, previousUpdateDate, sym
   const collection = source.db.collection(collectionName);
   const find = {};
   const projection = { u: false };
+
+  // Remove system data from response
+  const systemFields = systemFieldsByCollectionNameBySourceName[source.name]?.[collectionName];
+  if (systemFields != null) {
+    systemFields.forEach(x => projection[x] = false);
+  }
 
   if (symbolIDs != null && !fullFetchCollections.includes(collectionName)) {
     if (symbolIDs.length === 0) {
@@ -424,3 +430,10 @@ const singularSourceCollections = [
   'exchange-rates',
   'updates',
 ];
+
+const systemFieldsByCollectionNameBySourceName = {
+  iex: {
+    dividends: ['i'], // refid
+    splits: ['i'], // refid
+  }
+};

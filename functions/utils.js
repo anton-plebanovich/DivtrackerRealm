@@ -759,6 +759,20 @@ Date.previousMonthStart = function() {
 };
 
 /**
+ * @returns {Date} Previous month end date in UTC.
+ */
+Date.previousMonthEnd = function() {
+  const date = new Date();
+  date.setUTCDate(0);
+  date.setUTCHours(23);
+  date.setUTCMinutes(59);
+  date.setUTCSeconds(59);
+  date.setUTCMilliseconds(999);
+
+  return date;
+};
+
+/**
  * @param {Date} otherDate Other date.
  * @returns {number} absolute amount of days between source date and other date.
  */

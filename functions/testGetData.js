@@ -9,7 +9,9 @@ exports = async function() {
 
   await prepareFMPData();
 
-  const transactions = await generateRandomTransactions(1);
+  // Using 5 to prevent case when we have no historical prices. Sill, gambling. 
+  // We need to just have some predefined ticker or something like that.
+  const transactions = await generateRandomTransactions(5);
   const symbolIDs = transactions.map(x => x.s);
   await context.functions.execute("addTransactionsV2", transactions);
   
@@ -341,6 +343,15 @@ function verifyResponseV2(response, timestamp, collections, symbolIDs, fullFetch
     });
   }
 
+  // Check that system fields do not returned
+  refidCollections.forEach(refidCollection => {
+    response.updates?.[refidCollection]?.forEach(object => {
+      if (object.i != null) {
+        throw `Unexpected system field 'i' is returned for '${refidCollection}' collection`;
+      }
+    });
+  });
+
   // TODO: Add more data verifications
 }
 
@@ -407,4 +418,9 @@ const singularSymbolCollections = [
 const nonSearchableIDCollections = [
   'exchange-rates',
   'updates',
+];
+
+const refidCollections = [
+  'dividends',
+  'splits',
 ];

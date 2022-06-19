@@ -30,7 +30,7 @@ async function _getShortSymbols() {
   const shortSymbols = await symbolsCollection
     .find(
       { e: null },
-      { _id: 1, t: 1, c: 1 }
+      { _id: 1, c: 1, t: 1 }
     )
     .toArray();
 
@@ -718,7 +718,6 @@ function _updateDividendsFrequency(dividends) {
 
       if (isPossiblyIrregular) {
         // Try to identify irregular dividends
-        // TODO: if main frequency is 'm' we need to lower weekly range
         if (nextFrequency === 'w') {
           const thisDiff = math_bigger_times(dividend.a, prevDividend.a);
           const nextDiff = math_bigger_times(nextDividend.a, prevDividend.a);
@@ -1094,7 +1093,7 @@ function _fixFMPSymbols(fmpSymbols) {
     return fmpSymbols
       .filterNullAndUndefined()
       // Limit to only supported types
-      .filter(fmpSymbol => fmpSymbol.exchangeShortName === "MCX" || fmpSymbol.type === "fund")
+      .filter(fmpSymbol => fmpSymbol.exchangeShortName === "MCX" || fmpSymbol.type === "fund" || fmpSymbol.type === "etf")
       .map(fmpSymbol => {
         const symbol = {};
         symbol.setIfNotNullOrUndefined('c', fmpSymbol.exchangeShortName);
@@ -1109,9 +1108,6 @@ function _fixFMPSymbols(fmpSymbols) {
     return [];
   }
 };
-
-// TODO: Fix FMP and IEX open and close date computations. They should instead of harcoded exchange work with passed exchange. Migrations.
-// TODO: Also check if payment and declared date for dividends **MUST** be adjusted. Leave as is if possible.
 
 /** 
  * First parameter: Date in the "yyyy-mm-dd" or timestamp or Date format, e.g. "2020-03-27" or '1633046400000' or Date.
