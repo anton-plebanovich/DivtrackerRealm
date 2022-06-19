@@ -16,76 +16,38 @@ exports = async function(migration, arg) {
   logData = true;
 
   try {
-    if (migration === 'refetch_IEX_splits') {
-      await refetch_IEX_splits();
-    } else if (migration === 'fix_FMP_dividends') {
-      await fix_FMP_dividends(arg);
+    console.log(`Performing '${migration}' migration`);
+
+    if (migration === 'fetch_new_symbols_for_fmp_tmp') {
+      await fetch_new_symbols_for_fmp_tmp();
     } else {
       throw `Unexpected migration: ${migration}`;
     }
+
+    console.log(`SUCCESS!`);
     
   } catch(error) {
     console.error(error);
+    console.error(`FAILURE!`);
   }
 };
 
 ////////////////////////////////////////////////////// 2022-06-XX
 
-async function refetch_IEX_splits() {
-  context.functions.execute("iexUtils");
-  const shortSymbols = await getInUseShortSymbols();
-  if (shortSymbols.length <= 0) {
-    console.log(`No symbols. Skipping update.`);
-    return;
-  }
-
-  const collection = db.collection("splits");
-  const splits = await fetchSplits(shortSymbols, null, false);
-  if (splits.length) {
-    console.log(`Inserting missed`);
-    await collection.safeInsertMissing(splits, 'i');
-    console.log(`SUCCESS`);
-  } else {
-    console.log(`Historical splits are empty for symbols: '${shortSymbols.map(x => x.t)}'`);
-  }
-
-  await setUpdateDate("splits");
-}
-
-/**
- * Deletes duplicated FMP dividends and fixes frequency where needed
- */
- async function fix_FMP_dividends(iteration) {
+async function fetch_new_symbols_for_fmp_tmp() {
   context.functions.execute("fmpUtils");
-  throwIfNotNumber(iteration, `Iteration should be a number parameter with proper iteration value`);
-
-  const collection = fmp.collection('dividends');
-
-  const symbols = await collection
-    .distinct('s', { x: { $ne: true } })
-    .then(symbols => symbols.sorted((l, r) => l.toString().localeCompare(r.toString())));
   
-  const iterationSize = 1000;
-  const iterationSymbols = symbols.splice(iteration * iterationSize, iterationSize);
-  if (!iterationSymbols.length) {
-    console.error(`No symbols to iterate for '${iteration}' iteration. Symbols length: ${symbols.length}`);
-    return;
-  }
+  const collection = fmp.collection("symbols");
+  const symbols = collection.fullFind();
+  const symbolByID = symbols.toDictionary('_id');
+  console.log(`Existing symbols: ${symbols.length}`);
 
-  const oldDividends = await collection.fullFind({ s: { $in: iterationSymbols }, x: { $ne: true } });
-  const dividendsBySymbolID = oldDividends.toBuckets('s');
-  const newDividends = [];
-  for (const symbolDividends of Object.values(dividendsBySymbolID)) {
-    let fixedDividends = symbolDividends.sorted((l, r) => l.e - r.e);
-    fixedDividends = removeDuplicatedDividends(fixedDividends);
-    fixedDividends = updateDividendsFrequency(fixedDividends);
-    newDividends.push(...fixedDividends);
+  const fetchedSymbols = await fetchSymbols();
+  console.log(`Fetched symbols: ${fetchedSymbols.length}`);
 
-    const dividendsToDelete = symbolDividends.filter(dividend => !fixedDividends.includes(dividend))
-    dividendsToDelete.forEach(dividend => dividend.x = true);
-    newDividends.push(...dividendsToDelete);
-  }
+  const newSymbols = fetchedSymbols.filter(x => symbolByID[x._id] == null);
+  console.log(`New symbols: ${newSymbols.length}`);
 
-  await collection.safeUpdateMany(newDividends);
-  console.log(`Deleted objects: ${newDividends.filter(x => x.x == true).length}`);
+  const tmpCollection = atlas.db('fmp-tmp').collection("symbols");
+  await tmpCollection.insertMany(newSymbols);
 }

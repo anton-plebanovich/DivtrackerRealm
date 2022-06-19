@@ -4,9 +4,7 @@
 # 2022-06-XX | FMP OTCs support
 
 - Deploy the new server with all FMP triggers disabled
-- Execute `dt backup --environment sandbox-anton --database fmp --verbose`
-- Execute `dt restore --environment sandbox-anton --database fmp --to-database fmp-tmp --yes --verbose`
-- Execute `dt call-realm-function --environment sandbox-anton --function fmpUpdateSymbols --argument fmp-tmp --verbose`
+- Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument fetch_new_symbols_for_fmp_tmp --verbose`
 - Execute `dt call-realm-function --environment sandbox-anton --function fmpLoadMissingData --argument fmp-tmp --retry-on-error 'execution time limit exceeded'`
 - Execute `dt backup --environment sandbox-anton --database fmp-tmp --verbose`
 - Execute `dt restore --environment local --backup-source-environment sandbox-anton --database fmp-tmp --yes --verbose`
@@ -24,7 +22,7 @@
 - Execute `dt call-realm-function --environment sandbox-anton --function fmpUpdateSplits --argument fmp-tmp --verbose`
 - Check data counts
 - Execute `dt backup --environment sandbox-anton --database fmp-tmp --verbose`
-- Execute `dt restore --environment sandbox-anton --database fmp-tmp --to-database fmp --yes --verbose`
+- Execute `dt restore --environment sandbox-anton --database fmp-tmp --to-database fmp --do-not-drop --yes --verbose`
 - Open the app and add `<IEX_AND_FMP_OTC_TICKER>` ticker
 - Execute `dt call-realm-function --environment sandbox-anton --function mergedUpdateSymbols --verbose`
 - Background/foreground the app and check that `<IEX_AND_FMP_OTC_TICKER>` ticker data is refetched

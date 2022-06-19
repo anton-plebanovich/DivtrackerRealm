@@ -7,6 +7,10 @@
 // https://docs.mongodb.com/manual/reference/method/Bulk.insert/
 
 exports = function() {
+  // 2022-06-25
+  refetch_IEX_splits;
+  fix_FMP_dividends_v2;
+
   // 2022-06-18
   null_fields_cleanup_migration;
   old_data_delete_migration;
@@ -43,6 +47,67 @@ exports = function() {
   // 2021-04-15
   executeTransactionsMigration_15042021;
 };
+
+////////////////////////////////////////////////////// 2022-06-25
+
+async function refetch_IEX_splits() {
+  context.functions.execute("iexUtils");
+  const shortSymbols = await getInUseShortSymbols();
+  if (shortSymbols.length <= 0) {
+    console.log(`No symbols. Skipping update.`);
+    return;
+  }
+
+  const collection = db.collection("splits");
+  const splits = await fetchSplits(shortSymbols, null, false);
+  if (splits.length) {
+    console.log(`Inserting missed`);
+    await collection.safeInsertMissing(splits, 'i');
+    console.log(`SUCCESS`);
+  } else {
+    console.log(`Historical splits are empty for symbols: '${shortSymbols.map(x => x.t)}'`);
+  }
+
+  await setUpdateDate("splits");
+}
+
+/**
+ * Deletes duplicated FMP dividends and fixes frequency where needed
+ */
+ async function fix_FMP_dividends_v2(iteration) {
+  context.functions.execute("fmpUtils");
+  throwIfNotNumber(iteration, `Iteration should be a number parameter with proper iteration value`);
+
+  const collection = fmp.collection('dividends');
+
+  const symbols = await collection
+    .distinct('s', { x: { $ne: true } })
+    .then(symbols => symbols.sorted((l, r) => l.toString().localeCompare(r.toString())));
+  
+  const iterationSize = 1000;
+  const iterationSymbols = symbols.splice(iteration * iterationSize, iterationSize);
+  if (!iterationSymbols.length) {
+    console.error(`No symbols to iterate for '${iteration}' iteration. Symbols length: ${symbols.length}`);
+    return;
+  }
+
+  const oldDividends = await collection.fullFind({ s: { $in: iterationSymbols }, x: { $ne: true } });
+  const dividendsBySymbolID = oldDividends.toBuckets('s');
+  const newDividends = [];
+  for (const symbolDividends of Object.values(dividendsBySymbolID)) {
+    let fixedDividends = symbolDividends.sorted((l, r) => l.e - r.e);
+    fixedDividends = removeDuplicatedDividends(fixedDividends);
+    fixedDividends = updateDividendsFrequency(fixedDividends);
+    newDividends.push(...fixedDividends);
+
+    const dividendsToDelete = symbolDividends.filter(dividend => !fixedDividends.includes(dividend))
+    dividendsToDelete.forEach(dividend => dividend.x = true);
+    newDividends.push(...dividendsToDelete);
+  }
+
+  await collection.safeUpdateMany(newDividends);
+  console.log(`Deleted objects: ${newDividends.filter(x => x.x == true).length}`);
+}
 
 ////////////////////////////////////////////////////// 2022-06-18 Null and undefined fields cleanup
 
