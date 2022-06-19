@@ -25,7 +25,9 @@
 - Check data counts
 - Execute `dt backup --environment sandbox-anton --database fmp-tmp --verbose`
 - Execute `dt restore --environment sandbox-anton --database fmp-tmp --to-database fmp --yes --verbose`
+- Open the app and add `ABEQ` ticker
 - Execute `dt call-realm-function --environment sandbox-anton --function mergedUpdateSymbols --verbose`
+- Background/foreground the app and check that `ABEQ` ticker data is refetched
 - Execute `dt call-realm-function --environment sandbox-anton --function checkTransactionsV2 --verbose`
 - Drop `fmp-tmp` database
 - Enable all previously disabled triggers
