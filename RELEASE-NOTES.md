@@ -40,6 +40,7 @@
 - Check that there are 2 splits for `NYC` ticker using `{ s: ObjectId('61c42676a2660ba02db3abc2') }`
 - Execute `dt check-splits --environment sandbox-anton`
 - Execute `dt call-realm-function --environment sandbox-anton --function fmpUpdatePrices --verbose`
+- Execute `for i in {0..4}; do dt call-realm-function --environment sandbox-anton --function migrations --argument fix_FMP_dividends --argument ${i} --verbose; done`
 
 # ################################################## D O N E ##############################################################
 
