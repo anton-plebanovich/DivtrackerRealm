@@ -4,15 +4,16 @@
 # 2022-06-XX | FMP ETF support
 
 - Deploy the new server with all FMP triggers disabled
-- Execute `dt backup --environment sandbox-anton --database fmp`
-- Execute `dt restore --environment sandbox-anton --database fmp --to-database fmp-tmp`
+- Execute `dt backup --environment sandbox-anton --database fmp --verbose`
+- Execute `dt restore --environment sandbox-anton --database fmp --to-database fmp-tmp --yes --verbose`
 - Execute `dt call-realm-function --environment sandbox-anton --function fmpUpdateSymbols --argument fmp-tmp --verbose`
 - Execute `dt call-realm-function --environment sandbox-anton --function fmpLoadMissingData --argument fmp-tmp --retry-on-error 'execution time limit exceeded'`
-- Execute `dt backup --environment sandbox-anton --database fmp-tmp`
-- Execute `dt restore --environment local --backup-source-environment sandbox-anton --database fmp-tmp`
+- Execute `dt backup --environment sandbox-anton --database fmp-tmp --verbose`
+- Execute `dt restore --environment local --backup-source-environment sandbox-anton --database fmp-tmp --yes --verbose`
 - Execute symbols migration on the local environment
-- Execute `dt backup --environment local --database fmp-tmp`
-- Execute `dt restore --environment sandbox-anton --backup-source-environment local --database fmp-tmp`
+- Start `55` minutes timer. If we won't be able to finish our checks in that time we will need to go back to the previous migration step - local symbols migration.
+- Execute `dt backup --environment local --database fmp-tmp --verbose`
+- Execute `dt restore --environment sandbox-anton --backup-source-environment local --database fmp-tmp --yes --verbose`
 - Check data counts
 - Execute `dt call-realm-function --environment sandbox-anton --function fmpLoadMissingData --argument fmp-tmp --verbose`
 - Execute `dt call-realm-function --environment sandbox-anton --function fmpUpdateSymbols --argument fmp-tmp --verbose`
@@ -22,8 +23,8 @@
 - Execute `dt call-realm-function --environment sandbox-anton --function fmpUpdateQuotes --argument fmp-tmp --verbose`
 - Execute `dt call-realm-function --environment sandbox-anton --function fmpUpdateSplits --argument fmp-tmp --verbose`
 - Check data counts
-- Execute `dt backup --environment sandbox-anton --database fmp-tmp`
-- Execute `dt restore --environment sandbox-anton --database fmp-tmp --to-database fmp`
+- Execute `dt backup --environment sandbox-anton --database fmp-tmp --verbose`
+- Execute `dt restore --environment sandbox-anton --database fmp-tmp --to-database fmp --ye --verbose`
 - Execute `dt call-realm-function --environment sandbox-anton --function mergedUpdateSymbols --verbose`
 - Execute `dt call-realm-function --environment sandbox-anton --function checkTransactionsV2 --verbose`
 - Drop fmp-tmp database
