@@ -3,30 +3,29 @@
 
 # 2022-06-XX | FMP ETF support
 
-- Disable all FMP triggers
-- dt backup --environment sandbox-anton --database fmp
-- dt restore --environment sandbox-anton --database fmp --to-database fmp-tmp
-- dt call-realm-function --environment sandbox-anton --function fmpUpdateSymbols --argument fmp-tmp --verbose
-- dt call-realm-function --environment sandbox-anton --function fmpLoadMissingData --argument fmp-tmp --retry-on-error 'execution time limit exceeded'
-- dt backup --environment sandbox-anton --database fmp-tmp
-- dt restore --environment local --backup-source-environment sandbox-anton --database fmp-tmp
-- Execute symbols migration
-- dt backup --environment local --database fmp-tmp
-- dt restore --environment sandbox-anton --backup-source-environment local --database fmp-tmp
-- Check data count
-- dt call-realm-function --environment sandbox-anton --function fmpLoadMissingData --argument fmp-tmp --verbose
-- dt call-realm-function --environment sandbox-anton --function fmpUpdateSymbols --argument fmp-tmp --verbose
-- dt call-realm-function --environment sandbox-anton --function fmpUpdateCompanies --argument fmp-tmp --verbose
-- dt call-realm-function --environment sandbox-anton --function fmpUpdateDividends --argument fmp-tmp --verbose
-- dt call-realm-function --environment sandbox-anton --function fmpUpdatePrices --argument fmp-tmp --verbose
-- dt call-realm-function --environment sandbox-anton --function fmpUpdateQuotes --argument fmp-tmp --verbose
-- dt call-realm-function --environment sandbox-anton --function fmpUpdateSplits --argument fmp-tmp --verbose
-- Check data count
-- dt backup --environment sandbox-anton --database fmp-tmp
-- dt restore --environment sandbox-anton --database fmp-tmp --to-database fmp
-- dt call-realm-function --environment sandbox-anton --function mergedUpdateSymbols --verbose
-- dt call-realm-function --environment sandbox-anton --function checkTransactionsV2 --verbose
-- Enable FMP symbols update
+- Deploy the new server with all FMP triggers disabled
+- Execute `dt backup --environment sandbox-anton --database fmp`
+- Execute `dt restore --environment sandbox-anton --database fmp --to-database fmp-tmp`
+- Execute `dt call-realm-function --environment sandbox-anton --function fmpUpdateSymbols --argument fmp-tmp --verbose`
+- Execute `dt call-realm-function --environment sandbox-anton --function fmpLoadMissingData --argument fmp-tmp --retry-on-error 'execution time limit exceeded'`
+- Execute `dt backup --environment sandbox-anton --database fmp-tmp`
+- Execute `dt restore --environment local --backup-source-environment sandbox-anton --database fmp-tmp`
+- Execute symbols migration on the local environment
+- Execute `dt backup --environment local --database fmp-tmp`
+- Execute `dt restore --environment sandbox-anton --backup-source-environment local --database fmp-tmp`
+- Check data counts
+- Execute `dt call-realm-function --environment sandbox-anton --function fmpLoadMissingData --argument fmp-tmp --verbose`
+- Execute `dt call-realm-function --environment sandbox-anton --function fmpUpdateSymbols --argument fmp-tmp --verbose`
+- Execute `dt call-realm-function --environment sandbox-anton --function fmpUpdateCompanies --argument fmp-tmp --verbose`
+- Execute `dt call-realm-function --environment sandbox-anton --function fmpUpdateDividends --argument fmp-tmp --verbose`
+- Execute `dt call-realm-function --environment sandbox-anton --function fmpUpdatePrices --argument fmp-tmp --verbose`
+- Execute `dt call-realm-function --environment sandbox-anton --function fmpUpdateQuotes --argument fmp-tmp --verbose`
+- Execute `dt call-realm-function --environment sandbox-anton --function fmpUpdateSplits --argument fmp-tmp --verbose`
+- Check data counts
+- Execute `dt backup --environment sandbox-anton --database fmp-tmp`
+- Execute `dt restore --environment sandbox-anton --database fmp-tmp --to-database fmp`
+- Execute `dt call-realm-function --environment sandbox-anton --function mergedUpdateSymbols --verbose`
+- Execute `dt call-realm-function --environment sandbox-anton --function checkTransactionsV2 --verbose`
 - Drop fmp-tmp database
 - Enable all previously disabled triggers
 
