@@ -57,6 +57,7 @@ async function refetch_IEX_splits() {
  */
  async function fix_FMP_dividends(iteration) {
   context.functions.execute("fmpUtils");
+  throwIfNotNumber(iteration, `Iteration should be a number parameter with proper iteration value`);
 
   const collection = fmp.collection('dividends');
 

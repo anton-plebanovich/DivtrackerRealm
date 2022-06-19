@@ -681,7 +681,14 @@ function _updateDividendsFrequency(dividends) {
 
   const series = [];
   function updateSeries(dividend) {
-    const isSeriesEnd = dividend == null || dividend.f != series[0]?.f;
+    const newFrequency = dividend?.f;
+
+    // Ignore irregular frequency in series
+    if (newFrequency == 'i') {
+      return;
+    }
+
+    const isSeriesEnd = newFrequency != series[0]?.f;
     if (isSeriesEnd) {
       if (series.length < minDividendSeriesLenght) {
         series.forEach(x => x.f = 'u');
