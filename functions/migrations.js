@@ -18,6 +18,8 @@ exports = async function(migration) {
   try {
     if (migration === 'refetch_IEX_splits') {
       await refetch_IEX_splits();
+    } else if (migration === 'fix_FMP_dividends') {
+      await fix_FMP_dividends();
     } else {
       throw `Unexpected migration: ${migration}`;
     }
@@ -26,6 +28,8 @@ exports = async function(migration) {
     console.error(error);
   }
 };
+
+////////////////////////////////////////////////////// 2022-06-XX
 
 async function refetch_IEX_splits() {
   context.functions.execute("iexUtils");
@@ -46,4 +50,30 @@ async function refetch_IEX_splits() {
   }
 
   await setUpdateDate("splits");
+}
+
+/**
+ * Deletes duplicated FMP dividends and fixes frequency where needed
+ */
+ async function fix_FMP_dividends() {
+  context.functions.execute("fmpUtils");
+
+  const collection = fmp.collection('dividends');
+
+  const oldDividends = await collection.fullFind({ x: { $ne: true } });
+  const dividendsBySymbolID = oldDividends.toBuckets('s');
+  const newDividends = [];
+  for (const symbolDividends of Object.values(dividendsBySymbolID)) {
+    let fixedDividends = symbolDividends.sorted((l, r) => l.e - r.e);
+    fixedDividends = removeDuplicatedDividends(fixedDividends);
+    fixedDividends = updateDividendsFrequency(fixedDividends);
+    newDividends.push(...fixedDividends);
+
+    const dividendsToDelete = symbolDividends.filter(dividend => !fixedDividends.includes(dividend))
+    dividendsToDelete.forEach(dividend => dividend.x = true);
+    newDividends.push(...dividendsToDelete);
+  }
+
+  await collection.safeUpdateMany(newDividends);
+  console.log(`Deleted objects: ${newDividends.filter(x => x.x == true).length}`);
 }

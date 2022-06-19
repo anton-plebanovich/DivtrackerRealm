@@ -686,7 +686,7 @@ function _updateDividendsFrequency(dividends) {
       if (series.length < minDividendSeriesLenght) {
         series.forEach(x => x.f = 'u');
       }
-      series = [];
+      series.length = 0;
     }
 
     if (dividend != null) {
