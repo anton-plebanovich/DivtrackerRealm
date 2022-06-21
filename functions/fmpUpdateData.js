@@ -34,20 +34,16 @@ async function run() {
   console.log(`Updating data for tickers (${tickers.length}): ${tickers}`);
 
   // await loadMissingSplits(shortSymbols)
-  // .mapErrorToSystem();
-  if (checkExecutionTimeout()) { return; }
+  //   .mapErrorToSystem();
 
   // await loadMissingDividends(shortSymbols)
   // .mapErrorToSystem();
-  if (checkExecutionTimeout()) { return; }
 
   await updateCompaniesDaily(shortSymbols)
     .mapErrorToSystem();
-  if (checkExecutionTimeout()) { return; }
 
   // await loadMissingHistoricalPrices(shortSymbols)
   // .mapErrorToSystem();
-  if (checkExecutionTimeout()) { return; }
 }
 
 //////////////////////////////////////////////////////////////////// Symbols
@@ -82,12 +78,6 @@ async function updateCompaniesDaily(shortSymbols) {
   
   const collection = fmp.collection(collectionName);
   await fetchCompanies(outdatedShortSymbols, async (companies, symbolIDs) => {
-    if (!companies.length) {
-      console.log(`No companies. Skipping update.`);
-      await updateStatus(collectionName, symbolIDs);
-      return;
-    }
-
     await collection.safeUpdateMany(companies, undefined, '_id');
     await updateStatus(collectionName, symbolIDs);
     checkExecutionTimeoutAndThrow();
@@ -239,21 +229,9 @@ async function loadMissingSplits(shortSymbols) {
   
   const collection = fmp.collection(collectionName);
   await fetchSplits(outdatedShortSymbols, async (splits, symbolIDs) => {
-    if (!splits.length) {
-      console.log(`No splits. Skipping update.`);
-      await updateStatus(collectionName, symbolIDs);
-      return;
-    }
-  
-    const bulk = collection.initializeUnorderedBulkOp();
-    for (const split of splits) {
-      const query = { e: split.e, s: split.s };
-      const update = { $set: split };
-      bulk.find(query).upsert().updateOne(update);
-    }
-  
-    await bulk.execute();
+    await collection.safeUpdateMany(splits, null, ['s', 'e']);
     await updateStatus(collectionName, symbolIDs);
+    checkExecutionTimeoutAndThrow();
   });
 
   await setUpdateDate(`${databaseName}-${collectionName}`);
@@ -284,15 +262,15 @@ async function checkIfUpToDate(collectionName, minDate) {
  */
 async function getOutdatedShortSymbols(collectionName, shortSymbols, minDate) {
   const statusCollection = fmp.collection(statusCollectionName)
-  const outdatedIDs = await statusCollection
+  const upToDateIDs = await statusCollection
   // We do not check for `null` here because date should be always set by `fmpLoadMissingData` first.
   // If the date is missing it means the data is not loaded and we can't update yet or we'll prevent missing data from load.
-    .find({ [collectionName]: { $lt: minDate } }, { _id: 1 })
+    .find({ [collectionName]: { $gte: minDate } }, { _id: 1 })
     .toArray()
 
-  const idByID = outdatedIDs.toDictionary('_id');
+  const upToDateIDByID = upToDateIDs.toDictionary('_id');
   const outdatedShortSymbols = shortSymbols.filter(
-    x => idByID[x._id] == null
+    x => upToDateIDByID[x._id] == null
   );
   
   return outdatedShortSymbols;
