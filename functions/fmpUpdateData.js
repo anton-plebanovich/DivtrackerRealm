@@ -41,8 +41,8 @@ async function run() {
   await updateSplitsDaily(shortSymbols)
     .mapErrorToSystem();
 
-  // await loadMissingDividends(shortSymbols)
-  // .mapErrorToSystem();
+  await updateDividends(shortSymbols)
+    .mapErrorToSystem();
 
   await updateHistoricalPricesDaily(shortSymbols)
     .mapErrorToSystem();
@@ -93,7 +93,7 @@ async function updateCompaniesDaily(shortSymbols) {
 /**
  * @param {[ShortSymbol]} shortSymbols
  */
-async function loadMissingDividends(shortSymbols) {
+async function updateDividends(shortSymbols) {
   const collectionName = 'dividends';
   const minDate = Date.today();
   const isUpToDate = await checkIfUpToDate(collectionName, minDate);
@@ -109,45 +109,9 @@ async function loadMissingDividends(shortSymbols) {
 
   const collection = fmp.collection(collectionName);
   const callbackBase = async (historical, dividends, symbolIDs) => {
-    if (!dividends.length) {
-      if (historical) {
-        console.log(`No historical dividends. Skipping update.`);
-        await updateStatus(collectionName, symbolIDs);
-      } else {
-        // We should not update status for calendar dividends and instead rely on historical dividends.
-        console.log(`No calendar dividends. Skipping update.`);
-      }
-      return;
-    }
-  
-    const bulk = collection.initializeUnorderedBulkOp();
-    for (const dividend of dividends) {
-      const query = {};
-      if (dividend.e != null) {
-        query.e = dividend.e;
-      } else {
-        console.error(`Invalid ex date: ${dividend.stringify()}`);
-      }
-  
-      if (dividend.a != null) {
-        query.a = dividend.a;
-      } else {
-        console.error(`Invalid amount: ${dividend.stringify()}`);
-      }
+    dividends = await fixDividends(collection, dividends);
+    await collection.safeUpdateMany(dividends, null, ['s', 'e', 'a']);
 
-      // We do not check frequency because it might be changed when we delete dividends and recompute it for all of them
-  
-      if (dividend.s != null) {
-        query.s = dividend.s;
-      } else {
-        console.error(`Invalid symbol: ${dividend.stringify()}`);
-      }
-  
-      const update = { $set: dividend };
-      bulk.find(query).upsert().updateOne(update);
-    }
-  
-    await bulk.execute();
     if (historical) {
       await updateStatus(collectionName, symbolIDs);
     }
@@ -167,6 +131,75 @@ async function loadMissingDividends(shortSymbols) {
   ]);
 
   await setUpdateDate(`${databaseName}-${collectionName}`);
+}
+
+async function fixDividends(collection, dividends) {
+  if (!dividends.length) { return []; }
+
+  const dividendsBySymbolID = dividends.toBuckets(x => x.s);
+  const symbolIDs = Object.keys(dividendsBySymbolID);
+  const existingDividends = await collection({ s: { $in: symbolIDs } });
+  const existingDividendsBySymbolID = existingDividends.toBuckets('s');
+  const fixedDividends = [];
+  for (const [symbolID, dividends] of Object.entries(dividendsBySymbolID)) {
+    const existingDividends = existingDividendsBySymbolID[symbolID];
+
+    // Check if there is nothing to fix
+    if (existingDividends == null) {
+      // There were no dividends but we have them now. 
+      // It's hard to say if that's the first record or the whole set was added so asking to fix manually.
+      // dt data-status -e <ENV> -d fmp -c dividends --id <ID1> && dt call-realm-function -e <ENV> -f fmpLoadMissingData --verbose
+      console.error(`Missing existing dividends for: ${symbolID}. It's better to load missing dividends data for this.`);
+      continue;
+    }
+
+    // We remove new dividends from existing to allow update in case something was changed.
+    // We remove deleted dividends from existing to do not count them during frequency computations.
+    const deduplicatedExistingDividends = [];
+    for (const existingDividend of existingDividends) {
+      const matchedDividendIndex = dividends.findIndex(dividend => 
+        existingDividend.a == dividend.a && compareOptionalDates(existingDividend.e, dividend.e)
+      );
+      
+      if (matchedDividendIndex === -1) {
+        // No match, add existing if not deleted
+        if (existingDividend.x != true) {
+          deduplicatedExistingDividends.push(existingDividend);
+        }
+
+      } else if (existingDividend.x == true) {
+        // Deleted dividend match, exclude from new
+        dividends.splice(matchedDividendIndex, 1);
+
+      } else {
+        // Match, will be added later
+      }
+    }
+
+    // Frequency fix using all known dividends
+    let _fixedDividends = deduplicatedExistingDividends
+      .concat(dividends)
+      .sorted((l, r) => l.e - r.e);
+    
+    _fixedDividends = removeDuplicatedDividends(_fixedDividends);
+    _fixedDividends = updateDividendsFrequency(_fixedDividends);
+
+    _fixedDividends = _fixedDividends
+      .filter(fixedDividend => 
+        existingDividends.find(dividend => 
+          fixedDividend.a == dividend.a && 
+          fixedDividend.f == dividend.f && 
+          compareOptionalDates(fixedDividend.d, dividend.d) && 
+          compareOptionalDates(fixedDividend.e, dividend.e) && 
+          compareOptionalDates(fixedDividend.p, dividend.p)
+        ) == null
+      );
+
+    // Push result to others
+    fixedDividends.push(..._fixedDividends);
+  }
+
+  return fixedDividends;
 }
 
 //////////////////////////////////////////////////////////////////// Historical Prices

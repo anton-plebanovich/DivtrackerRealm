@@ -23,7 +23,7 @@ exports = async function(database) {
   await loadMissingHistoricalPrices(shortSymbols).mapErrorToSystem();
 
   // Dividends are averagely missing
-  await loadMissingDividends(shortSymbols).mapErrorToSystem();
+  await updateDividends(shortSymbols).mapErrorToSystem();
 
   // Splits are frequently missing
   await loadMissingSplits(shortSymbols).mapErrorToSystem();
@@ -72,7 +72,7 @@ async function loadMissingCompanies(shortSymbols) {
 /**
  * @param {[ShortSymbol]} shortSymbols
  */
-async function loadMissingDividends(shortSymbols) {
+async function updateDividends(shortSymbols) {
   const collectionName = 'dividends';
   const collection = fmp.collection(collectionName);
   const missingShortSymbols = await getMissingShortSymbols(collectionName, shortSymbols);
