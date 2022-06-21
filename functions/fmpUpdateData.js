@@ -77,7 +77,7 @@ async function updateCompaniesDaily(shortSymbols) {
   
   const collection = fmp.collection(collectionName);
   await fetchCompanies(outdatedShortSymbols, async (companies, symbolIDs) => {
-    checkExecutionTimeoutAndThrow();
+    checkExecutionTimeoutAndThrow(-1);
     
     if (!companies.length) {
       console.log(`No companies. Skipping update.`);
