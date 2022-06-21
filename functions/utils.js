@@ -716,6 +716,19 @@ Array.prototype.asyncMap = async function(limit, callback) {
 };
 
 /**
+ * @returns {Date} Today day start date in UTC.
+ */
+Date.today = function() {
+  const date = new Date();
+  date.setUTCHours(0);
+  date.setUTCMinutes(0);
+  date.setUTCSeconds(0);
+  date.setUTCMilliseconds(0);
+
+  return date;
+};
+
+/**
  * @returns {Date} Yesterday day start date in UTC.
  */
 Date.yesterday = function() {

@@ -30,6 +30,10 @@
         "private": true
     },
     {
+        "name": "fmpUpdateData",
+        "private": true
+    },
+    {
         "name": "fmpUpdateDividends",
         "private": true
     },
