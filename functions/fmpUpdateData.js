@@ -23,28 +23,25 @@ exports = async function(_databaseName) {
   const tickers = shortSymbols.map(x => x.t);
   console.log(`Loading missing data for tickers (${tickers.length}): ${tickers}`);
 
-  // TODO: Update, instead of load missing.
   // await loadMissingSplits(shortSymbols).mapErrorToSystem();
+  if (checkExecutionTimeout(90)) { return; }
+
   // await loadMissingDividends(shortSymbols).mapErrorToSystem();
-  // await loadMissingCompanies(shortSymbols).mapErrorToSystem();
+  if (checkExecutionTimeout(90)) { return; }
+
+  await updateCompaniesDaily(shortSymbols).mapErrorToSystem();
+  if (checkExecutionTimeout(90)) { return; }
+  
   // await loadMissingHistoricalPrices(shortSymbols).mapErrorToSystem();
+  if (checkExecutionTimeout(90)) { return; }
 };
 
 //////////////////////////////////////////////////////////////////// Symbols
 
 async function updateSymbolsDaily(databaseName) {
-  const symbolsObjectID = `${databaseName}-symbols`;
-  const updatesCollection = db.collection(updatesCollectionName);
-  const symbolUpdate = await updatesCollection.findOne({ _id: symbolsObjectID });
-  const date = symbolUpdate.d;
-  const today = Date.today();
-
-  if (date < today) {
-    console.log(`Symbols are outdated. Calling update function.`);
+  const isOutdated = await isOutdated(databaseName, 'symbols', minDate);
+  if (isOutdated) {
     await context.functions.execute("fmpUpdateSymbols", databaseName);
-
-  } else {
-    console.log(`Symbols are up to date. Update skipped.`);
   }
 }
 
@@ -232,6 +229,22 @@ async function loadMissingSplits(shortSymbols) {
 }
 
 //////////////////////////////////////////////////////////////////// Helpers
+
+async function isOutdated(databaseName, collectionName, minDate) {
+  const objectID = `${databaseName}-${collectionName}`;
+  const updatesCollection = db.collection(updatesCollectionName);
+  const update = await updatesCollection.findOne({ _id: objectID });
+  const date = update.d;
+
+  if (date < minDate) {
+    console.log(`Collection '${collectionName}' is outdated`);
+    return true;
+
+  } else {
+    console.log(`Collection '${collectionName}' is up to date`);
+    return false;
+  }
+}
 
 /**
  * Returns only missing IDs from `shortSymbols`.

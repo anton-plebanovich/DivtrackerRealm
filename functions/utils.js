@@ -1348,8 +1348,16 @@ function _logAndReject(message, data) {
 
 logAndReject = _logAndReject;
 
-/** Checks that we didn't exceed 90s timeout. */
-checkExecutionTimeout = function checkExecutionTimeout(limit) {
+/** Checks that we didn't exceed timeout and throws an error if so. */
+function _checkExecutionTimeoutAndThrow(limit) {
+  if (_checkExecutionTimeout(limit)) {
+    _logAndThrow('execution timeout');
+  }
+}
+
+checkExecutionTimeoutAndThrow = _checkExecutionTimeoutAndThrow;
+
+function _checkExecutionTimeout(limit) {
   if (typeof startDate === 'undefined') {
     startDate = new Date();
   }
@@ -1363,11 +1371,15 @@ checkExecutionTimeout = function checkExecutionTimeout(limit) {
   }
 
   if (seconds > limit) {
-    _logAndThrow('execution timeout');
+    console.log(`execution timeout`);
+    return true;
   } else {
     console.logVerbose(`${limit - seconds} execution time left`);
+    return false;
   }
-};
+}
+
+checkExecutionTimeout = _checkExecutionTimeout;
 
 function _throwIfNotFunction(func, message, ErrorType) {
   _throwIfUndefinedOrNull(func, message, ErrorType);
@@ -1772,7 +1784,9 @@ getDateLogString = function getDateLogString() {
 };
 
 exports = function() {
-  extendRuntime();
+  if (typeof startDate === 'undefined') {
+    startDate = new Date();
+  }
 
   if (typeof environment === 'undefined') {
     environment = "sandbox-anton";
@@ -1841,6 +1855,8 @@ exports = function() {
       }
     };
   }
+
+  extendRuntime();
   
   console.log("Imported utils");
 };

@@ -766,7 +766,7 @@ async function v2DatabaseFillMigration() {
     ]);
   }
 
-  checkExecutionTimeout();
+  checkExecutionTimeoutAndThrow();
   const v2Symbols = await v2SymbolsCollection.find().toArray();
   const idByTicker = {};
   for (const v2Symbol of v2Symbols) {
@@ -776,21 +776,21 @@ async function v2DatabaseFillMigration() {
 
   const invalidEntitesFind = { $regex: ":(NAS|NYS|POR|USAMEX|USBATS|USPAC)" };
 
-  checkExecutionTimeout();
+  checkExecutionTimeoutAndThrow();
   await fillV2CompanyCollectionMigration(idByTicker, invalidEntitesFind);
-  checkExecutionTimeout();
+  checkExecutionTimeoutAndThrow();
   await fillV2DividendsCollectionMigration(idByTicker, invalidEntitesFind);
-  checkExecutionTimeout();
+  checkExecutionTimeoutAndThrow();
   await fillV2HistoricalPricesCollectionMigration(idByTicker, invalidEntitesFind);
-  checkExecutionTimeout();
+  checkExecutionTimeoutAndThrow();
   await fillV2PreviousDayPricesCollectionMigration(idByTicker, invalidEntitesFind);
-  checkExecutionTimeout();
+  checkExecutionTimeoutAndThrow();
   await fillV2QoutesCollectionMigration(idByTicker, invalidEntitesFind);
-  checkExecutionTimeout();
+  checkExecutionTimeoutAndThrow();
   await fillV2SettingsCollectionMigration(idByTicker, invalidEntitesFind);
-  checkExecutionTimeout();
+  checkExecutionTimeoutAndThrow();
   await fillV2SplitsCollectionMigration(idByTicker, invalidEntitesFind);
-  checkExecutionTimeout();
+  checkExecutionTimeoutAndThrow();
   await fillV2TransactionsCollectionMigration(idByTicker, invalidEntitesFind);
 }
 
