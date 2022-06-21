@@ -19,6 +19,8 @@ exports = async function(_databaseName) {
   } catch(error) {
     if (error.message !== executionTimeoutErrorMessage) {
       throw error;
+    } else {
+      return error;
     }
   }
 };
@@ -33,17 +35,17 @@ async function run() {
   const tickers = shortSymbols.map(x => x.t);
   console.log(`Updating data for tickers (${tickers.length}): ${tickers}`);
 
-  await loadMissingSplits(shortSymbols)
+  await updateCompaniesDaily(shortSymbols)
+    .mapErrorToSystem();
+
+  await updateSplitsDaily(shortSymbols)
     .mapErrorToSystem();
 
   // await loadMissingDividends(shortSymbols)
   // .mapErrorToSystem();
 
-  await updateCompaniesDaily(shortSymbols)
+  await updateHistoricalPricesDaily(shortSymbols)
     .mapErrorToSystem();
-
-  // await loadMissingHistoricalPrices(shortSymbols)
-  // .mapErrorToSystem();
 }
 
 //////////////////////////////////////////////////////////////////// Symbols
@@ -172,7 +174,7 @@ async function loadMissingDividends(shortSymbols) {
 /**
  * @param {[ShortSymbol]} shortSymbols
  */
-async function loadMissingHistoricalPrices(shortSymbols) {
+async function updateHistoricalPricesDaily(shortSymbols) {
   const collectionName = 'historical-prices';
   const minDate = Date.today();
   const isUpToDate = await checkIfUpToDate(collectionName, minDate);
@@ -188,21 +190,9 @@ async function loadMissingHistoricalPrices(shortSymbols) {
   
   const collection = fmp.collection(collectionName);
   await fetchHistoricalPrices(outdatedShortSymbols, null, async (historicalPrices, symbolIDs) => {
-    if (!historicalPrices.length) {
-      console.log(`No historical prices. Skipping update.`);
-      await updateStatus(collectionName, symbolIDs);
-      return;
-    }
-  
-    const bulk = collection.initializeUnorderedBulkOp();
-    for (const historicalPrice of historicalPrices) {
-      const query = { d: historicalPrice.d, s: historicalPrice.s };
-      const update = { $set: historicalPrice };
-      bulk.find(query).upsert().updateOne(update);
-    }
-  
-    await bulk.execute();
+    await collection.safeUpdateMany(splits, null, ['s', 'd']);
     await updateStatus(collectionName, symbolIDs);
+    checkExecutionTimeoutAndThrow();
   });
 
   await setUpdateDate(`${databaseName}-${collectionName}`);
@@ -213,7 +203,7 @@ async function loadMissingHistoricalPrices(shortSymbols) {
 /**
  * @param {[ShortSymbol]} shortSymbols
  */
-async function loadMissingSplits(shortSymbols) {
+async function updateSplitsDaily(shortSymbols) {
   const collectionName = 'splits';
   const minDate = Date.today();
   const isUpToDate = await checkIfUpToDate(collectionName, minDate);
