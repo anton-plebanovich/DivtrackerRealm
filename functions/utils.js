@@ -1737,6 +1737,7 @@ function getCurrencySymbol(currency) {
   // https://www.eurochange.co.uk/travel-money/world-currency-abbreviations-symbols-and-codes-travel-money
   switch(currency) {
     case "AUD": return "$";
+    case "BMD": return "$";
     case "CAD": return "$";
     case "CHF": return "CHF";
     case "EUR": return "€";
