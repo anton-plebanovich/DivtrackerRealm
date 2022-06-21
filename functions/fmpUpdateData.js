@@ -16,14 +16,12 @@ exports = async function(_databaseName) {
   
   await updateSymbolsDaily(databaseName);
 
-  console.log(`Checking missing symbols`)
+  console.log(`Checking missing symbols`);
   await context.functions.execute("fmpLoadMissingData", databaseName);
 
   const shortSymbols = await getShortSymbols();
   const tickers = shortSymbols.map(x => x.t);
   console.log(`Loading missing data for tickers (${tickers.length}): ${tickers}`);
-
-  await context.functions.execute("fmpUpdateQuotes", databaseName);
 
   // TODO: Update, instead of load missing.
   // await loadMissingSplits(shortSymbols).mapErrorToSystem();
@@ -36,14 +34,14 @@ exports = async function(_databaseName) {
 
 async function updateSymbolsDaily(databaseName) {
   const symbolsObjectID = `${databaseName}-symbols`;
-  const updatesCollection = fmp.collection(updatesCollectionName)
+  const updatesCollection = db.collection(updatesCollectionName);
   const symbolUpdate = await updatesCollection.findOne({ _id: symbolsObjectID });
   const date = symbolUpdate.d;
   const today = Date.today();
 
   if (date < today) {
     console.log(`Symbols are outdated. Calling update function.`);
-    await context.functions.execute("fmpUpdateSymbols", database);
+    await context.functions.execute("fmpUpdateSymbols", databaseName);
 
   } else {
     console.log(`Symbols are up to date. Update skipped.`);
