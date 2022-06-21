@@ -1348,7 +1348,7 @@ function _logAndReject(message, data) {
 
 logAndReject = _logAndReject;
 
-executionTimeoutErrorMessage = 'execution timeout';
+executionTimeoutErrorMessage = 'execution time limit reached';
 
 /** Checks that we didn't exceed timeout and throws an error if so. */
 function _checkExecutionTimeoutAndThrow(limit) {
