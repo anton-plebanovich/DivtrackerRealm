@@ -26,10 +26,6 @@
         "private": true
     },
     {
-        "name": "fmpUpdateCompanies",
-        "private": true
-    },
-    {
         "name": "fmpUpdateData",
         "private": true
     },
