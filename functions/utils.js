@@ -1353,7 +1353,7 @@ executionTimeoutError = 'execution timeout';
 /** Checks that we didn't exceed timeout and throws an error if so. */
 function _checkExecutionTimeoutAndThrow(limit) {
   if (_checkExecutionTimeout(limit)) {
-    _logAndThrow(executionTimeoutError);
+    throw executionTimeoutError;
   }
 }
 
