@@ -34,15 +34,7 @@
         "private": true
     },
     {
-        "name": "fmpUpdateHistoricalPrices",
-        "private": true
-    },
-    {
         "name": "fmpUpdateQuotes",
-        "private": true
-    },
-    {
-        "name": "fmpUpdateSplits",
         "private": true
     },
     {

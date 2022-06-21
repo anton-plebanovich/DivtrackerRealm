@@ -187,9 +187,12 @@ async function updateHistoricalPricesDaily(shortSymbols) {
     console.log(`No outdated historical prices. Skipping update.`);
     return;
   }
-  
+
+  const previousMonthStart = Date.previousMonthStart().dayString();
+  const previousMonthEnd = Date.previousMonthEnd().dayString();
+  const query = { from: previousMonthStart, to: previousMonthEnd };
   const collection = fmp.collection(collectionName);
-  await fetchHistoricalPrices(outdatedShortSymbols, null, async (historicalPrices, symbolIDs) => {
+  await fetchHistoricalPrices(outdatedShortSymbols, query, async (historicalPrices, symbolIDs) => {
     await collection.safeUpdateMany(historicalPrices, null, ['s', 'd']);
     await updateStatus(collectionName, symbolIDs);
     checkExecutionTimeoutAndThrow();
