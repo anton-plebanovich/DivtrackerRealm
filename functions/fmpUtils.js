@@ -1208,11 +1208,16 @@ getOpenDate = _getOpenDate;
 
 ///////////////////////////////////////////////////////////////////////////////// INITIALIZATION
 
+/**
+ * Executes `utils` and sets `databaseName`, `fmp` and `api` environment constants.
+ */
 exports = function(_databaseName) {
   context.functions.execute("utils");
 
   if (typeof fmp === 'undefined') {
     databaseName = _getFMPDatabaseName(_databaseName);
+    Object.freeze(databaseName);
+    
     fmp = atlas.db(databaseName);
   }
 
@@ -1224,14 +1229,14 @@ exports = function(_databaseName) {
   console.log("Imported FMP utils");
 };
 
-function _getFMPDatabaseName(database) {
-  if (Object.prototype.toString.call(database) === '[object Object]') {
+function _getFMPDatabaseName(databaseName) {
+  if (Object.prototype.toString.call(databaseName) === '[object Object]') {
     // Trigger object, just erase
-    database = null;
+    databaseName = null;
   }
 
-  if (database != null && database !== 'Hello world!') {
-    return database;
+  if (databaseName != null && databaseName !== 'Hello world!') {
+    return databaseName;
   } else {
     return "fmp";
   }

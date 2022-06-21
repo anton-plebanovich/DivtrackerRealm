@@ -20,14 +20,13 @@
 }
  */
 
-exports = async function(database) {
-  context.functions.execute("fmpUtils", database);
-  database = getFMPDatabaseName(database);
+exports = async function(_databaseName) {
+  context.functions.execute("fmpUtils", _databaseName);
   
   const date = new Date();
   await updateFMPSymbols();
   await context.functions.execute("mergedUpdateSymbols", date, "fmp");
-  await setUpdateDate(`${database}-symbols`);
+  await setUpdateDate(`${databaseName}-symbols`);
   
   console.log(`SUCCESS`);
 };

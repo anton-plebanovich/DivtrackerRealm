@@ -24,7 +24,7 @@ exports = async function(_databaseName) {
 };
 
 async function run() {
-  await updateSymbolsDaily(databaseName);
+  await updateSymbolsDaily();
 
   console.log(`Checking missing data`);
   await context.functions.execute("fmpLoadMissingData", databaseName);
@@ -48,10 +48,10 @@ async function run() {
 
 //////////////////////////////////////////////////////////////////// Symbols
 
-async function updateSymbolsDaily(databaseName) {
+async function updateSymbolsDaily() {
   const collectionName = 'symbols';
   const minDate = Date.today();
-  const isUpToDate = await checkState(databaseName, collectionName, minDate);
+  const isUpToDate = await checkState(collectionName, minDate);
   if (isUpToDate) { return; }
 
   await context.functions.execute("fmpUpdateSymbols", databaseName);
@@ -65,7 +65,7 @@ async function updateSymbolsDaily(databaseName) {
 async function updateCompaniesDaily(shortSymbols) {
   const collectionName = 'companies';
   const minDate = Date.today();
-  const isUpToDate = await checkState(databaseName, collectionName, minDate);
+  const isUpToDate = await checkState(collectionName, minDate);
   if (isUpToDate) { return; }
 
   const outdatedShortSymbols = await getOutdatedShortSymbols(collectionName, shortSymbols, minDate);
@@ -89,6 +89,8 @@ async function updateCompaniesDaily(shortSymbols) {
     await collection.safeUpdateMany(companies, undefined, '_id');
     await updateStatus(collectionName, symbolIDs);
   });
+
+  await setUpdateDate(`${databaseName}-${collectionName}`);
 }
 
 //////////////////////////////////////////////////////////////////// Dividends
@@ -99,7 +101,7 @@ async function updateCompaniesDaily(shortSymbols) {
 async function loadMissingDividends(shortSymbols) {
   const collectionName = 'dividends';
   const minDate = Date.today();
-  const isUpToDate = await checkState(databaseName, collectionName, minDate);
+  const isUpToDate = await checkState(collectionName, minDate);
   if (isUpToDate) { return; }
 
   const outdatedShortSymbols = await getOutdatedShortSymbols(collectionName, shortSymbols, minDate);
@@ -168,6 +170,8 @@ async function loadMissingDividends(shortSymbols) {
     fetchDividendsCalendar(outdatedShortSymbols, calendarCallback),
     fetchDividends(outdatedShortSymbols, null, historicalCallback)
   ]);
+
+  await setUpdateDate(`${databaseName}-${collectionName}`);
 }
 
 //////////////////////////////////////////////////////////////////// Historical Prices
@@ -178,7 +182,7 @@ async function loadMissingDividends(shortSymbols) {
 async function loadMissingHistoricalPrices(shortSymbols) {
   const collectionName = 'historical-prices';
   const minDate = Date.today();
-  const isUpToDate = await checkState(databaseName, collectionName, minDate);
+  const isUpToDate = await checkState(collectionName, minDate);
   if (isUpToDate) { return; }
 
   const outdatedShortSymbols = await getOutdatedShortSymbols(collectionName, shortSymbols, minDate);
@@ -207,6 +211,8 @@ async function loadMissingHistoricalPrices(shortSymbols) {
     await bulk.execute();
     await updateStatus(collectionName, symbolIDs);
   });
+
+  await setUpdateDate(`${databaseName}-${collectionName}`);
 }
 
 //////////////////////////////////////////////////////////////////// Splits
@@ -217,7 +223,7 @@ async function loadMissingHistoricalPrices(shortSymbols) {
 async function loadMissingSplits(shortSymbols) {
   const collectionName = 'splits';
   const minDate = Date.today();
-  const isUpToDate = await checkState(databaseName, collectionName, minDate);
+  const isUpToDate = await checkState(collectionName, minDate);
   if (isUpToDate) { return; }
   
   const outdatedShortSymbols = await getOutdatedShortSymbols(collectionName, shortSymbols, minDate);
@@ -246,6 +252,8 @@ async function loadMissingSplits(shortSymbols) {
     await bulk.execute();
     await updateStatus(collectionName, symbolIDs);
   });
+
+  await setUpdateDate(`${databaseName}-${collectionName}`);
 }
 
 //////////////////////////////////////////////////////////////////// Helpers
@@ -253,13 +261,12 @@ async function loadMissingSplits(shortSymbols) {
 /**
  * Checks if all data in a collection is up to date.
  */
-async function checkState(databaseName, collectionName, minDate) {
+async function checkState(collectionName, minDate) {
   const objectID = `${databaseName}-${collectionName}`;
   const updatesCollection = db.collection(updatesCollectionName);
   const update = await updatesCollection.findOne({ _id: objectID });
-  const date = update.d;
 
-  if (date < minDate) {
+  if (update == null || update.d < minDate) {
     console.log(`Collection '${collectionName}' is outdated`);
     return true;
 
@@ -275,6 +282,8 @@ async function checkState(databaseName, collectionName, minDate) {
 async function getOutdatedShortSymbols(collectionName, shortSymbols, minDate) {
   const statusCollection = fmp.collection(statusCollectionName)
   const outdatedIDs = await statusCollection
+  // We do not check for `null` here because date should be always set by `fmpLoadMissingData` first.
+  // If the date is missing it means the data is not loaded and we can't update yet or we'll prevent missing data from load.
     .find({ [collectionName]: { $lt: minDate } }, { _id: 1 })
     .toArray()
 
