@@ -82,8 +82,6 @@ async function updateCompaniesDaily(shortSymbols) {
   
   const collection = fmp.collection(collectionName);
   await fetchCompanies(outdatedShortSymbols, async (companies, symbolIDs) => {
-    checkExecutionTimeoutAndThrow(-1);
-    
     if (!companies.length) {
       console.log(`No companies. Skipping update.`);
       await updateStatus(collectionName, symbolIDs);
@@ -92,6 +90,7 @@ async function updateCompaniesDaily(shortSymbols) {
 
     await collection.safeUpdateMany(companies, undefined, '_id');
     await updateStatus(collectionName, symbolIDs);
+    checkExecutionTimeoutAndThrow();
   });
 
   await setUpdateDate(`${databaseName}-${collectionName}`);
