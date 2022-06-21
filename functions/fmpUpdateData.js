@@ -17,7 +17,7 @@ exports = async function(_databaseName) {
   try {
     await run();
   } catch(error) {
-    if (error !== executionTimeoutError) {
+    if (error.message !== executionTimeoutErrorMessage) {
       throw error;
     }
   }
@@ -33,16 +33,20 @@ async function run() {
   const tickers = shortSymbols.map(x => x.t);
   console.log(`Updating data for tickers (${tickers.length}): ${tickers}`);
 
-  // await loadMissingSplits(shortSymbols).mapErrorToSystem();
+  // await loadMissingSplits(shortSymbols)
+  // .mapErrorToSystem();
   if (checkExecutionTimeout()) { return; }
 
-  // await loadMissingDividends(shortSymbols).mapErrorToSystem();
+  // await loadMissingDividends(shortSymbols)
+  // .mapErrorToSystem();
   if (checkExecutionTimeout()) { return; }
 
-  await updateCompaniesDaily(shortSymbols).mapErrorToSystem();
+  await updateCompaniesDaily(shortSymbols)
+    .mapErrorToSystem();
   if (checkExecutionTimeout()) { return; }
 
-  // await loadMissingHistoricalPrices(shortSymbols).mapErrorToSystem();
+  // await loadMissingHistoricalPrices(shortSymbols)
+  // .mapErrorToSystem();
   if (checkExecutionTimeout()) { return; }
 }
 

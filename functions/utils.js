@@ -1348,12 +1348,12 @@ function _logAndReject(message, data) {
 
 logAndReject = _logAndReject;
 
-executionTimeoutError = 'execution timeout';
+executionTimeoutErrorMessage = 'execution timeout';
 
 /** Checks that we didn't exceed timeout and throws an error if so. */
 function _checkExecutionTimeoutAndThrow(limit) {
   if (_checkExecutionTimeout(limit)) {
-    throw executionTimeoutError;
+    throw new _SystemError(executionTimeoutErrorMessage);
   }
 }
 
@@ -1373,7 +1373,7 @@ function _checkExecutionTimeout(limit) {
   }
 
   if (seconds > limit) {
-    console.log(executionTimeoutError);
+    console.log(executionTimeoutErrorMessage);
     return true;
   } else {
     console.logVerbose(`${limit - seconds} execution time left`);
