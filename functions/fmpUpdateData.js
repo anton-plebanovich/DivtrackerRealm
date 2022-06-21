@@ -33,8 +33,8 @@ async function run() {
   const tickers = shortSymbols.map(x => x.t);
   console.log(`Updating data for tickers (${tickers.length}): ${tickers}`);
 
-  // await loadMissingSplits(shortSymbols)
-  //   .mapErrorToSystem();
+  await loadMissingSplits(shortSymbols)
+    .mapErrorToSystem();
 
   // await loadMissingDividends(shortSymbols)
   // .mapErrorToSystem();
