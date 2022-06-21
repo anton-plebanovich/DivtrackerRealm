@@ -1208,12 +1208,12 @@ getOpenDate = _getOpenDate;
 
 ///////////////////////////////////////////////////////////////////////////////// INITIALIZATION
 
-exports = function(database) {
+exports = function(_databaseName) {
   context.functions.execute("utils");
 
   if (typeof fmp === 'undefined') {
-    database = _getFMPDatabaseName(database);
-    fmp = atlas.db(database);
+    databaseName = _getFMPDatabaseName(_databaseName);
+    fmp = atlas.db(databaseName);
   }
 
   if (typeof apikey === 'undefined') {
