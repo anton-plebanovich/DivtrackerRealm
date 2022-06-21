@@ -190,7 +190,7 @@ async function updateHistoricalPricesDaily(shortSymbols) {
   
   const collection = fmp.collection(collectionName);
   await fetchHistoricalPrices(outdatedShortSymbols, null, async (historicalPrices, symbolIDs) => {
-    await collection.safeUpdateMany(splits, null, ['s', 'd']);
+    await collection.safeUpdateMany(historicalPrices, null, ['s', 'd']);
     await updateStatus(collectionName, symbolIDs);
     checkExecutionTimeoutAndThrow();
   });
