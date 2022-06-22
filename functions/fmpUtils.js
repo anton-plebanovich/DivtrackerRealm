@@ -50,6 +50,13 @@ getShortSymbols = _getShortSymbols;
 
 //////////////////////////////////// Predefined Fetches
 
+/**
+ * Measurements:
+ * - it takes ~4s to fetch 10k quotes and ~7s to map and add them all together to the database
+ * - it takes ~200s to map and add quotes to the database by chunks of 100 while also blocking fetch
+ * - it takes 18.251s to map 1000 historical price tickers and 36.958s to fetch them
+ */
+
 /// To prevent `414 Request-URI Too Large` error we need to split our requests by some value.
 const defaultMaxFetchSize = 100;
 
@@ -84,6 +91,10 @@ fetchCompanies = async function fetchCompanies(shortSymbols, callback) {
     tickers,
     null,
     defaultMaxFetchSize,
+    // 1k fetch: 0.933
+    // 1k map: 0.111
+    // 1k insert: 0.5
+    3273,
     idByTicker,
     _fixFMPCompany, 
     callback
@@ -112,6 +123,10 @@ fetchDividends = async function fetchDividends(shortSymbols, limit, callback) {
     tickers,
     queryParameters,
     defaultMaxBatchSize,
+    // 1k tickers (10247 records) fetch: 6.977512898
+    // 1k tickers (10247 records) map: 1.194
+    // 1k tickers (10247 records) insert: 4.427
+    355,
     limit,
     'historicalStockList',
     'historical',
@@ -160,7 +175,7 @@ fetchHistoricalPrices = async function fetchHistoricalPrices(shortSymbols, query
   // queryParameters.from = minFetchDate;
 
   // We need to split tickers by exchanges or it won't work
-  const results = [];
+  const result = [];
   const shortSymbolsByExchange = shortSymbols.toBuckets('c');
   const exchanges = Object.keys(shortSymbolsByExchange);
   console.log(`Fetching historical prices data for '${exchanges.length}' exchanges`);
@@ -169,11 +184,15 @@ fetchHistoricalPrices = async function fetchHistoricalPrices(shortSymbols, query
     console.log(`Fetching '${tickers.length}' tickers historical prices data for '${exchange}' exchange`);
   
     // https://financialmodelingprep.com/api/v3/historical-price-full/AAPL,AAP?serietype=line&from=2016-01-01&apikey=969387165d69a8607f9726e8bb52b901
-    const result = await _fmpFetchBatchAndMapArray(
+    const partialResult = await _fmpFetchBatchAndMapArray(
       "/v3/historical-price-full",
       tickers,
       queryParameters,
       defaultMaxBatchSize,
+      // 1k tickers (59706 records) fetch: 35.29359
+      // 1k tickers (59706 records) map: 23.665
+      // 1k tickers (59706 records) insert: 33.231
+      35,
       null,
       'historicalStockList',
       'historical',
@@ -183,11 +202,11 @@ fetchHistoricalPrices = async function fetchHistoricalPrices(shortSymbols, query
     );
 
     console.log(`Fetched '${tickers.length}' tickers historical prices data for '${exchange}' exchange`);
-    results.push(result);
+    result.push(...partialResult);
   }
   console.log(`Fetched historical prices data for '${exchanges.length}' exchanges`);
 
-  return results.flat();
+  return result;
 };
 
 /**
@@ -207,6 +226,10 @@ fetchQuotes = async function fetchQuotes(shortSymbols, callback) {
     tickers,
     null,
     defaultMaxFetchSize,
+    // 1k fetch: 1.286
+    // 1k map: 0.065
+    // 1k insert: 0.302
+    5450,
     idByTicker,
     _fixFMPQuote,
     callback
@@ -233,6 +256,10 @@ fetchSplits = async function fetchSplits(shortSymbols, callback) {
     tickers,
     queryParameters,
     defaultMaxBatchSize,
+    // 1k tickers (27 records) fetch: 7.7
+    // 1k tickers (27 records) map: 0.003
+    // 1k tickers (27 records) insert: 0.037
+    50000,
     null,
     'historicalStockList',
     'historical',
@@ -293,7 +320,7 @@ async function _fmpFetchAndMapFlatArray(api, tickers, queryParameters, idByTicke
  * @param {function} mapFunction Function to map data to our format.
  * @returns {Promise<[Object]>} Flat array of entities.
  */
-async function _fmpFetchBatchAndMapArray(api, tickers, queryParameters, maxBatchSize, limit, groupingKey, dataKey, idByTicker, mapFunction, callback) {
+async function _fmpFetchBatchAndMapArray(api, tickers, queryParameters, maxBatchSize, maxTickersBuffer, limit, groupingKey, dataKey, idByTicker, mapFunction, callback) {
   const _map = (datas) => {
     if (datas[groupingKey] != null) {
       const dataByTicker = datas[groupingKey].toDictionary('symbol');
@@ -326,7 +353,7 @@ async function _fmpFetchBatchAndMapArray(api, tickers, queryParameters, maxBatch
     _mapAndCallback = undefined;
   }
 
-  const response = await _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, groupingKey, _mapAndCallback);
+  const response = await _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, maxTickersBuffer, groupingKey, _mapAndCallback);
   
   // Only return data if callback is missing. We should not perform double mapping.
   if (callback == null) {
@@ -340,11 +367,12 @@ async function _fmpFetchBatchAndMapArray(api, tickers, queryParameters, maxBatch
  * If symbols count exceed max allowed amount it splits it to several requests and returns composed result.
  * @param {string} api API to call.
  * @param {Object} queryParameters Additional query parameters.
+ * @param {number} maxTickersBuffer We should have less than 2 seconds mapping time when we have max number of tickers.
  * @param {[string]} idByTicker Dictionary of ticker symbol ID by ticker symbol.
  * @param {function} mapFunction Function to map data to our format.
  * @returns {Promise<[Object]>} Flat array of entities.
  */
- async function _fmpFetchAndMapObjects(api, tickers, queryParameters, maxFetchSize, idByTicker, mapFunction, callback) {
+ async function _fmpFetchAndMapObjects(api, tickers, queryParameters, maxFetchSize, maxTickersBuffer, idByTicker, mapFunction, callback) {
   const _map = (datas) => {
     const dataByTicker = datas.toDictionary('symbol');
     const existingTickers = Object.keys(dataByTicker).filter(x => tickers.includes(x));
@@ -366,7 +394,7 @@ async function _fmpFetchBatchAndMapArray(api, tickers, queryParameters, maxBatch
     _mapAndCallback = undefined;
   }
   
-  const response = await _fmpFetchChunked(api, tickers, queryParameters, maxFetchSize, _mapAndCallback);
+  const response = await _fmpFetchChunked(api, tickers, queryParameters, maxFetchSize, maxTickersBuffer, _mapAndCallback);
 
   // Only return data if callback is missing. We should not perform double mapping.
   if (callback == null) {
@@ -376,13 +404,13 @@ async function _fmpFetchBatchAndMapArray(api, tickers, queryParameters, maxBatch
 
 //////////////////////////////////// Base Fetch
 
-async function _fmpFetchChunked(api, tickers, queryParameters, maxFetchSize, callback) {
+async function _fmpFetchChunked(api, tickers, queryParameters, maxFetchSize, maxTickersBuffer, callback) {
   throwIfEmptyArray(tickers, `_fmpFetchChunked tickers`);
 
   const chunkedTickers = tickers.chunkedByCount(maxConcurrentFetchesPerRequest);
   const operations = chunkedTickers
     .filterEmpty()
-    .map(x => _fmpFetchChunkedPart(api, x, queryParameters, maxFetchSize, callback));
+    .map(x => _fmpFetchChunkedPart(api, x, queryParameters, maxFetchSize, maxTickersBuffer, callback));
     
   const results = await Promise.all(operations);
 
@@ -395,7 +423,7 @@ async function _fmpFetchChunked(api, tickers, queryParameters, maxFetchSize, cal
  * but if add them in small chunks and always wait for database operation to finish it may take 200 seconds in total.
  * So it's x20 time increase and we want to bypass that.
  */
-async function _fmpFetchChunkedPart(api, tickers, queryParameters, maxFetchSize, callback) {
+async function _fmpFetchChunkedPart(api, tickers, queryParameters, maxFetchSize, maxTickersBuffer, callback) {
   throwIfUndefinedOrNull(api, `_fmpFetchChunkedPart api`);
   throwIfEmptyArray(tickers, `_fmpFetchChunkedPart tickers`);
 
@@ -445,8 +473,8 @@ async function _fmpFetchChunkedPart(api, tickers, queryParameters, maxFetchSize,
     }
 
     // Stop fetch if we collected too much tickers already during ongoing callback
-    if (partialTickers.length >= defaultMaxTickersBuffer) {
-      console.log(`Reached max tickers buffer of '${defaultMaxTickersBuffer}' tickers. Waiting for callback to finish.`)
+    if (partialTickers.length >= maxTickersBuffer) {
+      console.log(`Reached max tickers buffer of '${maxTickersBuffer}' tickers. Waiting for callback to finish.`)
       await callbackPromise;
     }
 
@@ -479,25 +507,26 @@ async function _fmpFetchChunkedPart(api, tickers, queryParameters, maxFetchSize,
  * @param {[string]} tickers Ticker Symbols to fetch, e.g. ['AAP','AAPL','PBA'].
  * @param {Object} queryParameters Additional query parameters.
  * @param {Int} maxBatchSize Max allowed batch size.
+ * @param {number} maxTickersBuffer We should have less than 2 seconds mapping time when we have max number of tickers.
  * @param {string} groupingKey Batch grouping key, e.g. 'historicalStockList'.
  * @param {function} callback TODO.
  * @returns {Promise<{string: {string: Object|[Object]}}>} Parsed EJSON object. Composed from several responses if max symbols count was exceeded. 
  * The first object keys are symbols. The next inner object keys are types. And the next inner object is an array of type objects.
  */
-async function _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, groupingKey, callback) {
+async function _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, maxTickersBuffer, groupingKey, callback) {
   throwIfEmptyArray(tickers, `_fmpFetchBatch tickers`);
 
   const chunkedTickers = tickers.chunkedByCount(maxConcurrentFetchesPerRequest);
   const operations = chunkedTickers
     .filterEmpty()
-    .map(x => _fmpFetchBatchPart(api, x, queryParameters, maxBatchSize, groupingKey, callback));
+    .map(x => _fmpFetchBatchPart(api, x, queryParameters, maxBatchSize, maxTickersBuffer, groupingKey, callback));
 
   const results = await Promise.all(operations);
   const datas = results.map(result => result[groupingKey]);
   return { [groupingKey]: datas.flat() };
 };
 
-async function _fmpFetchBatchPart(api, tickers, queryParameters, maxBatchSize, groupingKey, callback) {
+async function _fmpFetchBatchPart(api, tickers, queryParameters, maxBatchSize, maxTickersBuffer, groupingKey, callback) {
   throwIfUndefinedOrNull(api, `_fmpFetchBatchPart api`);
   throwIfEmptyArray(tickers, `_fmpFetchBatchPart tickers`);
 
@@ -569,8 +598,8 @@ async function _fmpFetchBatchPart(api, tickers, queryParameters, maxBatchSize, g
     }
 
     // Stop fetch if we collected too much tickers already during ongoing callback
-    if (partialTickers.length >= defaultMaxTickersBuffer) {
-      console.log(`Reached max tickers buffer of '${defaultMaxTickersBuffer}' tickers. Waiting for callback to finish.`)
+    if (partialTickers.length >= maxTickersBuffer) {
+      console.log(`Reached max tickers buffer of '${maxTickersBuffer}' tickers. Waiting for callback to finish.`)
       await callbackPromise;
     }
 
