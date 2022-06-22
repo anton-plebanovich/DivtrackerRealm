@@ -27,18 +27,11 @@ async function run() {
   const tickers = shortSymbols.map(x => x.t);
   console.log(`Loading missing data for tickers (${tickers.length}): ${tickers}`);
 
-  // Fetch huge requests first
-  await loadMissingCompanies(shortSymbols).mapErrorToSystem();
   await loadMissingQuotes(shortSymbols).mapErrorToSystem();
-
-  // Fetch huge but rarely missing data
-  await loadMissingHistoricalPrices(shortSymbols).mapErrorToSystem();
-
-  // Dividends are averagely missing
-  await loadMissingDividends(shortSymbols).mapErrorToSystem();
-
-  // Splits are frequently missing
+  await loadMissingCompanies(shortSymbols).mapErrorToSystem();
   await loadMissingSplits(shortSymbols).mapErrorToSystem();
+  await loadMissingDividends(shortSymbols).mapErrorToSystem();
+  await loadMissingHistoricalPrices(shortSymbols).mapErrorToSystem();
 }
 
 //////////////////////////////////////////////////////////////////// Companies

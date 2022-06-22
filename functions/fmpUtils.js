@@ -202,7 +202,10 @@ fetchHistoricalPrices = async function fetchHistoricalPrices(shortSymbols, query
     );
 
     console.log(`Fetched '${tickers.length}' tickers historical prices data for '${exchange}' exchange`);
-    result.push(...partialResult);
+
+    if (callback == null) {
+      result.push(...partialResult);
+    }
   }
   console.log(`Fetched historical prices data for '${exchanges.length}' exchanges`);
 
@@ -543,6 +546,8 @@ async function _fmpFetchBatchPart(api, tickers, queryParameters, maxBatchSize, m
     chunkedTickersArray = tickers.chunkedBySize(maxBatchSize);
   }
 
+  // TODO: Switch to just array response. We need to also fix mapping for that.
+  // TODO: Unify _fmpFetchBatch and _fmpFetchChunked since there are a lot of duplicated code.
   // Always map to the same format
   const emptyResponse = { [groupingKey]: [] };
 
