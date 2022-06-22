@@ -127,8 +127,9 @@ Object.prototype.safeUpsertMany = async function(newObjects, field, setUpdateDat
 /**
  * Safely computes and executes update operation from old to new objects on a collection.
  * @note Marked as deleted records `x === true` can not be restored using this method.
+ * @param {array|object|null} oldObjectsDictionary Old object array, already created old objects dictionary or just `null`.
  */
-Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields, setUpdateDate, insertMissing) {
+Object.prototype.safeUpdateMany = async function(newObjects, oldObjectsDictionary, fields, setUpdateDate, insertMissing) {
   _throwIfNotArray(newObjects, `Please pass new objects array as the first argument. safeUpdateMany`);
   if (newObjects.length === 0) {
     console.log(`New objects array is empty. Nothing to update.`);
@@ -153,28 +154,35 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields,
     _logAndThrow(`${invalidObjectsLength} of ${newObjects.length} new objects do not contain required '${fields}' fields`);
   }
 
-  if (oldObjects == null) {
+  if (oldObjectsDictionary == null) {
     // Sort deleted to the start so they will be overridden in the dictionary
     const sort = { x: -1 };
 
-    if (newObjects.length < 1000) {
+    if (newObjects.length < ENV.maxFindInSize) {
       console.log(`Old objects are undefined. Fetching them by '${fields}'.`);
       const find = getFindOperation(newObjects, fields);
-      oldObjects = await this
+      oldObjectsDictionary = await this
         .find(find)
         .sort(sort)
         .toArray();
 
     } else {
       console.log(`Old objects are undefined. Fetching them by requesting all existing objects.`);
-      oldObjects = await this.fullFind({});
-      oldObjects = oldObjects.sortedDeletedToTheStart();
+      oldObjectsDictionary = await this.fullFind({});
+      oldObjectsDictionary = oldObjectsDictionary.sortedDeletedToTheStart();
     }
+
+    oldObjectsDictionary = oldObjectsDictionary.toDictionary(fields);
+
+  } else if (Object.prototype.toString.call(oldObjectsDictionary) === '[object Array]') {
+    oldObjectsDictionary = oldObjectsDictionary.sortedDeletedToTheStart();
+    oldObjectsDictionary = oldObjectsDictionary.toDictionary(fields);
+
   } else {
-    oldObjects = oldObjects.sortedDeletedToTheStart();
+    _throwIfNotObject(oldObjectsDictionary, `Old objects should be of an Array or Object type`);
   }
 
-  if (!oldObjects?.length) {
+  if (!Object.keys(oldObjectsDictionary).length) {
     if (insertMissing) {
       console.log(`No old objects. Just inserting new objects.`);
       return await this.insertMany(newObjects);
@@ -184,7 +192,6 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields,
     }
   }
 
-  const dictionary = oldObjects.toDictionary(fields);
   let bulk = this.initializeUnorderedBulkOp();
   let i = 0;
   for (const newObject of newObjects) {
@@ -194,15 +201,15 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields,
       } else {
         return null;
       }
-    }, dictionary);
+    }, oldObjectsDictionary);
 
     const changed = bulk.findAndUpdateOrInsertIfNeeded(newObject, existingObject, fields, setUpdateDate, insertMissing);
     if (changed) {
       i++;
     }
 
-  // Try to prevent 'pending promise returned that will never resolve/reject uncaught promise rejection: &{0xc1bac2aa90 0xc1bac2aa80}' error by splitting batch operations to chunks
-    if (i === 1000) {
+    // Try to prevent 'pending promise returned that will never resolve/reject uncaught promise rejection: &{0xc1bac2aa90 0xc1bac2aa80}' error by splitting batch operations to chunks
+    if (i === ENV.maxBulkSize) {
       console.log('Too much bulk changes. Executing collected 1000.')
       i = 0
       await bulk.safeExecute();
@@ -1383,6 +1390,20 @@ function _checkExecutionTimeout(limit) {
 
 checkExecutionTimeout = _checkExecutionTimeout;
 
+function _throwIfNotObject(object, message, ErrorType) {
+  _throwIfUndefinedOrNull(object, message, ErrorType);
+
+  const type = typeof object;
+  const objectType = Object.prototype.toString.call(object);
+  if (type === 'object' || objectType === '[object Object]') { return object; }
+  if (ErrorType == null) { ErrorType = _SystemError; }
+  if (message == null) { message = ""; }
+  
+  throw new ErrorType(`Argument should be of the 'object' type. Instead, received '${objectType} (${type})'. ${message}`);
+}
+
+throwIfNotObject = _throwIfNotObject;
+
 function _throwIfNotFunction(func, message, ErrorType) {
   _throwIfUndefinedOrNull(func, message, ErrorType);
 
@@ -1787,6 +1808,15 @@ getDateLogString = function getDateLogString() {
 };
 
 exports = function() {
+  if (typeof ENV === 'undefined') {
+    ENV = {
+      maxBulkSize: 1000,
+      maxFindInSize: 1000,
+    };
+
+    Object.freeze(ENV);
+  }
+
   if (typeof startDate === 'undefined') {
     startDate = new Date();
   }

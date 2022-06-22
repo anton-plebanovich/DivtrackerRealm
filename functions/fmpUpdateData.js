@@ -77,10 +77,19 @@ async function updateCompaniesDaily(shortSymbols) {
     console.log(`No outdated companies. Skipping update.`);
     return;
   }
-  
+
+  let existingCompanies;
   const collection = fmp.collection(collectionName);
+  if (outdatedShortSymbols.length < ENV.maxFindInSize) {
+    const symbolIDs = outdatedShortSymbols.map(x => x._id);
+    existingCompanies = await collection.find({ _id: { $in: symbolIDs } });
+  } else {
+    existingCompanies = await collection.fullFind();
+  }
+
+  const existingCompaniesByID = existingCompanies.toDictionary('_id');
   await fetchCompanies(outdatedShortSymbols, async (companies, symbolIDs) => {
-    await collection.safeUpdateMany(companies, undefined, '_id');
+    await collection.safeUpdateMany(companies, existingCompaniesByID, '_id');
     await updateStatus(collectionName, symbolIDs);
     checkExecutionTimeoutAndThrow();
   });
@@ -107,10 +116,24 @@ async function updateDividends(shortSymbols) {
     return;
   }
 
+  let existingDividends;
   const collection = fmp.collection(collectionName);
+  if (outdatedShortSymbols.length < ENV.maxFindInSize) {
+    const symbolIDs = outdatedShortSymbols.map(x => x._id);
+    existingDividends = await collection.find({ s: { $in: symbolIDs } });
+  } else {
+    existingDividends = await collection.fullFind();
+  }
+
+  const existingDividendsBySymbolID = existingDividends.toBuckets('s');
+  const fields = ['s', 'e', 'a'];
+  const existingDividendByFields = existingDividends
+    .sortedDeletedToTheStart()
+    .toDictionary(fields);
+
   const callbackBase = async (historical, dividends, symbolIDs) => {
-    dividends = await fixDividends(collection, dividends);
-    await collection.safeUpdateMany(dividends, null, ['s', 'e', 'a']);
+    dividends = fixDividends(dividends, existingDividendsBySymbolID);
+    await collection.safeUpdateMany(dividends, existingDividendByFields, fields);
 
     if (historical) {
       await updateStatus(collectionName, symbolIDs);
@@ -133,13 +156,10 @@ async function updateDividends(shortSymbols) {
   await setUpdateDate(`${databaseName}-${collectionName}`);
 }
 
-async function fixDividends(collection, dividends) {
+function fixDividends(dividends, existingDividendsBySymbolID) {
   if (!dividends.length) { return []; }
 
   const dividendsBySymbolID = dividends.toBuckets(x => x.s);
-  const symbolIDs = Object.keys(dividendsBySymbolID);
-  const existingDividends = await collection({ s: { $in: symbolIDs } });
-  const existingDividendsBySymbolID = existingDividends.toBuckets('s');
   const fixedDividends = [];
   for (const [symbolID, dividends] of Object.entries(dividendsBySymbolID)) {
     const existingDividends = existingDividendsBySymbolID[symbolID];
@@ -226,7 +246,7 @@ async function updateHistoricalPricesDaily(shortSymbols) {
   const query = { from: previousMonthStart, to: previousMonthEnd };
   const collection = fmp.collection(collectionName);
   await fetchHistoricalPrices(outdatedShortSymbols, query, async (historicalPrices, symbolIDs) => {
-    await collection.safeUpdateMany(historicalPrices, null, ['s', 'd']);
+    await collection.safeUpsertMany(historicalPrices, ['s', 'd']);
     await updateStatus(collectionName, symbolIDs);
     checkExecutionTimeoutAndThrow();
   });
