@@ -376,7 +376,9 @@ async function _fmpFetchChunked(api, tickers, queryParameters, maxFetchSize, cal
 
   const chunkedTickers = tickers.chunkedByCount(maxConcurrentFetchesPerRequest);
   const operations = chunkedTickers.map(x => _fmpFetchChunkedPart(api, x, queryParameters, maxFetchSize, callback));
-  await Promise.all(operations);
+  const results = await Promise.all(operations);
+  
+  return results.flat();
 }
 
 /**
