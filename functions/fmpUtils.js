@@ -377,7 +377,7 @@ async function _fmpFetchChunked(api, tickers, queryParameters, maxFetchSize, cal
   const chunkedTickers = tickers.chunkedByCount(maxConcurrentFetchesPerRequest);
   const operations = chunkedTickers.map(x => _fmpFetchChunkedPart(api, x, queryParameters, maxFetchSize, callback));
   const results = await Promise.all(operations);
-  
+
   return results.flat();
 }
 
@@ -436,7 +436,7 @@ async function _fmpFetchChunkedPart(api, tickers, queryParameters, maxFetchSize,
       }
     }
 
-    if (callback != null && callbackPromise?.isFinished()) {
+    if (callback != null && callbackPromise?.isFinished() != false) {
       callbackPromise = callback(partialResponse, partialTickers)
         .observeStatus();
 
@@ -551,7 +551,7 @@ async function _fmpFetchBatchPart(api, tickers, queryParameters, maxBatchSize, g
       }
     }
 
-    if (callback != null && callbackPromise?.isFinished()) {
+    if (callback != null && callbackPromise?.isFinished() != false) {
       callbackPromise = callback(partialResponse, partialTickers)
         .observeStatus();
 
