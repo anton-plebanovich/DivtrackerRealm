@@ -91,11 +91,11 @@ async function loadMissingDividends(shortSymbols) {
   };
 
   const calendarCallback = async (dividends, symbolIDs) => {
-    callbackBase(false, dividends, symbolIDs);
+    await callbackBase(false, dividends, symbolIDs);
   };
 
   const historicalCallback = async (dividends, symbolIDs) => {
-    callbackBase(true, dividends, symbolIDs);
+    await callbackBase(true, dividends, symbolIDs);
   };
 
   await Promise.all([
@@ -179,10 +179,10 @@ async function loadMissingSplits(shortSymbols) {
  * Returns only missing IDs from `shortSymbols`.
  */
 async function getMissingShortSymbols(collectionName, shortSymbols) {
-  const statusCollection = fmp.collection('data-status')
+  const statusCollection = fmp.collection('data-status');
   const existingIDs = await statusCollection
     .find({ [collectionName]: { $ne: null } }, { _id: 1 })
-    .toArray()
+    .toArray();
 
   const idByID = existingIDs.toDictionary('_id');
   const missingShortSymbols = shortSymbols.filter(

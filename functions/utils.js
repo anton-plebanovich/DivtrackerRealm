@@ -2,6 +2,7 @@
 // utils.js
 
 // https://www.mongodb.com/docs/manual/reference/method/cursor.sort/
+// 'uncaught promise rejection' - happens when there is async work executed without `await` that throw an error.
 
 ///////////////////////////////////////////////////////////////////////////////// MATH
 
@@ -1338,7 +1339,7 @@ function extendRuntime() {
     result.isFulfilled = function() { return isFulfilled; };
     result.isPending = function() { return isPending; };
     result.isRejected = function() { return isRejected; };
-    result.throwIfRejected = function() { if (isRejected) throw error; };
+    result.throwIfRejected = function() { if (isRejected) { throw error; } };
 
     return result;
   };
@@ -1459,7 +1460,7 @@ function _checkExecutionTimeout(limit) {
 
   // One symbol full fetch takes 17.5s and we have only 120s function execution time so let's put some limit.
   if (limit == null) {
-    limit = 110;
+    limit = 100;
   }
 
   if (seconds > limit) {
