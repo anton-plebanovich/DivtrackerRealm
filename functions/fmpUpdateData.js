@@ -78,18 +78,8 @@ async function updateCompaniesDaily(shortSymbols) {
     return;
   }
 
-  let existingCompanies;
-  const collection = fmp.collection(collectionName);
-  if (outdatedShortSymbols.length < ENV.maxFindInSize) {
-    const symbolIDs = outdatedShortSymbols.map(x => x._id);
-    existingCompanies = await collection.find({ _id: { $in: symbolIDs } });
-  } else {
-    existingCompanies = await collection.fullFind();
-  }
-
-  const existingCompaniesByID = existingCompanies.toDictionary('_id');
   await fetchCompanies(outdatedShortSymbols, async (companies, symbolIDs) => {
-    await collection.safeUpdateMany(companies, existingCompaniesByID, '_id');
+    await collection.safeUpsertMany(companies, '_id');
     await updateStatus(collectionName, symbolIDs);
     checkExecutionTimeoutAndThrow();
   });
