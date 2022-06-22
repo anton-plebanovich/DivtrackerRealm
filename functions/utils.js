@@ -104,7 +104,7 @@ Object.prototype.safeUpsertMany = async function(newObjects, fields, setUpdateDa
   if (setUpdateDate == null) {
     setUpdateDate = true;
   }
-  
+
   const bulk = this.initializeUnorderedBulkOp();
   for (const newObject of newObjects) {
     const find = fields.reduce((find, field) => {
@@ -474,17 +474,33 @@ Array.prototype.removeContentsOf = function(arg) {
 };
 
 /**
- * Splits array into array of chunked arrays.
+ * Splits array into array of chunked arrays of specific size.
  * @param {number} size Size of a chunk.
  * @returns {object[][]} Array of chunked arrays.
  */
-Array.prototype.chunked = function(size) {
+Array.prototype.chunkedBySize = function(size) {
   var chunks = [];
   for (i=0,j=this.length; i<j; i+=size) {
       const chunk = this.slice(i,i+size);
       chunks.push(chunk);
   }
 
+  return chunks;
+};
+
+/**
+ * Splits array into array of chunked arrays of specific count.
+ * @param {number} count Size of a chunk.
+ * @returns {object[][]} Array of chunked arrays.
+ */
+Array.prototype.chunkedByCount = function(count) {
+  if (count < 2) { return [a]; }
+  const copy = [...this];
+  let chunks = [];
+  for (let i = count; i > 0; i--) {
+    chunks.push(copy.splice(0, Math.ceil(copy.length / i)));
+  }
+  
   return chunks;
 };
 
@@ -1259,6 +1275,40 @@ function extendRuntime() {
         errors => reject(new _CompositeError(errors))
       )
     );
+  };
+
+  Promise.prototype.observeStatus = function() {
+    // Don't modify any promise that has been already modified.
+    if (this.isFinished) return this;
+  
+    // Set initial state
+    var isPending = true;
+    var isRejected = false;
+    var isFulfilled = false;
+    var isFinished = false;
+  
+    // Observe the promise, saving the fulfillment in a closure scope.
+    var result = this.then(
+        function(v) {
+            isFinished = true;
+            isFulfilled = true;
+            isPending = false;
+            return v; 
+        }, 
+        function(e) {
+            isFinished = true;
+            isRejected = true;
+            isPending = false;
+            throw e; 
+        }
+    );
+  
+    result.isFinished = function() { return isFinished; };
+    result.isFulfilled = function() { return isFulfilled; };
+    result.isPending = function() { return isPending; };
+    result.isRejected = function() { return isRejected; };
+
+    return result;
   };
 
   /**

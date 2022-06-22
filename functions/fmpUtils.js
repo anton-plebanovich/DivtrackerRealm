@@ -372,8 +372,22 @@ async function _fmpFetchBatchAndMapArray(api, tickers, queryParameters, maxBatch
 //////////////////////////////////// Base Fetch
 
 async function _fmpFetchChunked(api, tickers, queryParameters, maxFetchSize, callback) {
-  throwIfUndefinedOrNull(api, `_fmpFetchBatch api`);
-  throwIfEmptyArray(tickers, `_fmpFetchBatch tickers`);
+  throwIfEmptyArray(tickers, `_fmpFetchChunked tickers`);
+
+  const chunkedTickers = tickers.chunkedByCount(maxConcurrentFetchesPerRequest);
+  const operations = chunkedTickers.map(x => _fmpFetchChunkedPart(api, x, queryParameters, maxFetchSize, callback));
+  await Promise.all(operations);
+}
+
+/**
+ * This one performs it's part of the work. The idea here is to do not stop fetch while callback is performed.
+ * I noticed that 10k `quotes` may fetch in 4 seconds and then it takes 7 seconds to add them all
+ * but if add them in small chunks and always wait for database operation to finish it may take 200 seconds in total.
+ * So it's x20 time increase and we want to bypass that.
+ */
+async function _fmpFetchChunkedPart(api, tickers, queryParameters, maxFetchSize, callback) {
+  throwIfUndefinedOrNull(api, `_fmpFetchChunkedPart api`);
+  throwIfEmptyArray(tickers, `_fmpFetchChunkedPart tickers`);
 
   if (queryParameters == null) {
     queryParameters = {};
@@ -385,16 +399,19 @@ async function _fmpFetchChunked(api, tickers, queryParameters, maxFetchSize, cal
   if (maxFetchSize == null) {
     chunkedTickersArray = [tickers];
   } else {
-    chunkedTickersArray = tickers.chunked(maxFetchSize);
+    chunkedTickersArray = tickers.chunkedBySize(maxFetchSize);
   }
 
-  return await chunkedTickersArray
-  .asyncMap(maxConcurrentFetchesPerRequest, async chunkedTickers => {
+  const combinedResponse = [];
+  let partialResponse = [];
+  let partialTickers = [];
+  let callbackPromise;
+  for (const chunkedTickers of chunkedTickersArray) {
     const tickersString = chunkedTickers.join(",");
     const batchAPI = `${api}/${tickersString}`;
     console.log(`Fetching chunk for ${chunkedTickers.length} symbols with query '${queryParameters.stringify()}': ${tickersString}`);
     
-    let response
+    let response;
     try {
       response = await _fmpFetch(batchAPI, queryParameters);
     } catch(error) {
@@ -406,15 +423,39 @@ async function _fmpFetchChunked(api, tickers, queryParameters, maxFetchSize, cal
     }
 
     if (callback != null) {
-      await callback(response, chunkedTickers);
+      partialTickers.push(...chunkedTickers);
     }
     
-    return response;
-  })
-  .then(x => 
-    x.filterNullAndUndefined()
-    .flat()
-  );
+    if (response?.length) {
+      combinedResponse.push(...response);
+
+      if (callback != null) {
+        partialResponse.push(...response);
+      }
+    }
+
+    if (callback != null && callbackPromise?.isFinished()) {
+      callbackPromise = callback(partialResponse, partialTickers)
+        .observeStatus();
+
+      partialResponse = [];
+      partialTickers = [];
+    }
+  }
+
+  if (callback != null && partialTickers.length) {
+    // Flush what have left and also wait for an ongoing operation if needed
+    await Promise.all([
+      callbackPromise,
+      callback(partialResponse, partialTickers)
+    ]);
+
+  } else if (callbackPromise?.isPending()) {
+    // Wait for an ongoing operation
+    await callbackPromise;
+  }
+
+  return combinedResponse;
 }
 
 /**
@@ -428,8 +469,18 @@ async function _fmpFetchChunked(api, tickers, queryParameters, maxFetchSize, cal
  * The first object keys are symbols. The next inner object keys are types. And the next inner object is an array of type objects.
  */
 async function _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, groupingKey, callback) {
-  throwIfUndefinedOrNull(api, `_fmpFetchBatch api`);
   throwIfEmptyArray(tickers, `_fmpFetchBatch tickers`);
+
+  const chunkedTickers = tickers.chunkedByCount(maxConcurrentFetchesPerRequest);
+  const operations = chunkedTickers.map(x => _fmpFetchBatchPart(api, x, queryParameters, maxBatchSize, groupingKey, callback));
+  const results = await Promise.all(operations);
+  const datas = results.map(result => result[groupingKey]);
+  return { [groupingKey]: datas.flat() };
+};
+
+async function _fmpFetchBatchPart(api, tickers, queryParameters, maxBatchSize, groupingKey, callback) {
+  throwIfUndefinedOrNull(api, `_fmpFetchBatchPart api`);
+  throwIfEmptyArray(tickers, `_fmpFetchBatchPart tickers`);
 
   if (queryParameters == null) {
     queryParameters = {};
@@ -441,19 +492,22 @@ async function _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, group
   if (maxBatchSize == null) {
     chunkedTickersArray = [tickers];
   } else {
-    chunkedTickersArray = tickers.chunked(maxBatchSize);
+    chunkedTickersArray = tickers.chunkedBySize(maxBatchSize);
   }
 
   // Always map to the same format
   const emptyResponse = { [groupingKey]: [] };
 
-  return await chunkedTickersArray
-  .asyncMap(maxConcurrentFetchesPerRequest, async chunkedTickers => {
+  const combinedResponse = { [groupingKey]: [] };
+  let partialResponse = { [groupingKey]: [] };
+  let partialTickers = [];
+  let callbackPromise;
+  for (const chunkedTickers of chunkedTickersArray) {
     const tickersString = chunkedTickers.join(",");
     const batchAPI = `${api}/${tickersString}`;
     console.log(`Fetching batch for ${chunkedTickers.length} symbols with query '${queryParameters.stringify()}': ${tickersString}`);
     
-    let response
+    let response;
     try {
       response = await _fmpFetch(batchAPI, queryParameters);
     } catch(error) {
@@ -484,20 +538,40 @@ async function _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, group
     }
 
     if (callback != null) {
-      await callback(response, chunkedTickers);
+      partialTickers.push(...chunkedTickers);
+    }
+    
+    if (response[groupingKey]?.length) {
+      combinedResponse[groupingKey].push(...response[groupingKey]);
+
+      if (callback != null) {
+        partialResponse[groupingKey].push(...response[groupingKey]);
+      }
     }
 
-    return response;
-  })
-  .then(results => {
-    const datas = results
-      .map(result => result[groupingKey])
-      .filterNullAndUndefined()
-      .flat();
+    if (callback != null && callbackPromise?.isFinished()) {
+      callbackPromise = callback(partialResponse, partialTickers)
+        .observeStatus();
 
-    return { [groupingKey]: datas };
-  })
-};
+      partialResponse = { [groupingKey]: [] };
+      partialTickers = [];
+    }
+  }
+
+  if (callback != null && partialTickers.length) {
+    // Flush what have left and also wait for an ongoing operation if needed
+    await Promise.all([
+      callbackPromise,
+      callback(partialResponse, partialTickers)
+    ]);
+
+  } else if (callbackPromise?.isPending()) {
+    // Wait for an ongoing operation
+    await callbackPromise;
+  }
+
+  return combinedResponse;
+}
 
 /**
  * Requests data from FMP. 
