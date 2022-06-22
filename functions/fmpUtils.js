@@ -1347,6 +1347,20 @@ function _getOpenDate(openDateValue) {
 
 getOpenDate = _getOpenDate;
 
+async function _updateStatus(collectionName, symbolIDs) {
+  const bulk = fmp.collection('data-status').initializeUnorderedBulkOp();
+  for (const symbolID of symbolIDs) {
+    bulk
+      .find({ _id: symbolID })
+      .upsert()
+      .updateOne({ $currentDate: { [collectionName]: true } });
+  }
+
+  await bulk.safeExecute();
+}
+
+updateStatus = _updateStatus;
+
 ///////////////////////////////////////////////////////////////////////////////// INITIALIZATION
 
 /**

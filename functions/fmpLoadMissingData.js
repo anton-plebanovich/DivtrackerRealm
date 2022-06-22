@@ -175,13 +175,11 @@ async function loadMissingSplits(shortSymbols) {
 
 //////////////////////////////////////////////////////////////////// Helpers
 
-const statusCollectionName = 'data-status';
-
 /**
  * Returns only missing IDs from `shortSymbols`.
  */
 async function getMissingShortSymbols(collectionName, shortSymbols) {
-  const statusCollection = fmp.collection(statusCollectionName)
+  const statusCollection = fmp.collection('data-status')
   const existingIDs = await statusCollection
     .find({ [collectionName]: { $ne: null } }, { _id: 1 })
     .toArray()
@@ -192,18 +190,4 @@ async function getMissingShortSymbols(collectionName, shortSymbols) {
   );
   
   return missingShortSymbols;
-}
-
-async function updateStatus(collectionName, symbolIDs) {
-  const statusCollection = fmp.collection(statusCollectionName)
-  
-  const bulk = statusCollection.initializeUnorderedBulkOp();
-  for (const symbolID of symbolIDs) {
-    bulk
-      .find({ _id: symbolID })
-      .upsert()
-      .updateOne({ $currentDate: { [collectionName]: true } });
-  }
-
-  await bulk.safeExecute();
 }
