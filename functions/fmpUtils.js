@@ -475,6 +475,10 @@ async function _fmpFetchChunkedPart(api, tickers, queryParameters, maxFetchSize,
       }
     }
 
+    if (callbackPromise?.isRejected()) {
+      throw callbackPromise.error();
+    }
+
     // Stop fetch if we collected too much tickers already during ongoing callback
     if (partialTickers.length >= maxTickersBuffer) {
       console.log(`Reached max tickers buffer of '${maxTickersBuffer}' tickers. Waiting for callback to finish.`)
@@ -483,7 +487,7 @@ async function _fmpFetchChunkedPart(api, tickers, queryParameters, maxFetchSize,
 
     if (callback != null && callbackPromise?.isFinished() != false) {
       callbackPromise = callback(partialResponse, partialTickers)
-        .observeStatus();
+        .observeStatusAndCatch();
 
       partialResponse = [];
       partialTickers = [];
@@ -602,6 +606,10 @@ async function _fmpFetchBatchPart(api, tickers, queryParameters, maxBatchSize, m
       }
     }
 
+    if (callbackPromise?.isRejected()) {
+      throw callbackPromise.error();
+    }
+
     // Stop fetch if we collected too much tickers already during ongoing callback
     if (partialTickers.length >= maxTickersBuffer) {
       console.log(`Reached max tickers buffer of '${maxTickersBuffer}' tickers. Waiting for callback to finish.`)
@@ -610,7 +618,7 @@ async function _fmpFetchBatchPart(api, tickers, queryParameters, maxBatchSize, m
 
     if (callback != null && callbackPromise?.isFinished() != false) {
       callbackPromise = callback(partialResponse, partialTickers)
-        .observeStatus();
+        .observeStatusAndCatch();
 
       partialResponse = { [groupingKey]: [] };
       partialTickers = [];

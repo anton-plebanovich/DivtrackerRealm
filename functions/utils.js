@@ -1306,7 +1306,7 @@ function extendRuntime() {
     );
   };
 
-  Promise.prototype.observeStatus = function() {
+  Promise.prototype.observeStatusAndCatch = function() {
     // Don't modify any promise that has been already modified.
     if (this.isFinished) return this;
   
@@ -1315,6 +1315,7 @@ function extendRuntime() {
     var isRejected = false;
     var isFulfilled = false;
     var isFinished = false;
+    var error;
   
     // Observe the promise, saving the fulfillment in a closure scope.
     var result = this.then(
@@ -1328,7 +1329,8 @@ function extendRuntime() {
             isFinished = true;
             isRejected = true;
             isPending = false;
-            throw e; 
+            error = e;
+            return;
         }
     );
   
@@ -1336,6 +1338,7 @@ function extendRuntime() {
     result.isFulfilled = function() { return isFulfilled; };
     result.isPending = function() { return isPending; };
     result.isRejected = function() { return isRejected; };
+    result.error = function() { return error; };
 
     return result;
   };

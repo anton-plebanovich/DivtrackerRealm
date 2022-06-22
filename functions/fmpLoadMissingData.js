@@ -27,11 +27,20 @@ async function run() {
   const tickers = shortSymbols.map(x => x.t);
   console.log(`Loading missing data for tickers (${tickers.length}): ${tickers}`);
 
-  await loadMissingQuotes(shortSymbols).mapErrorToSystem();
-  await loadMissingCompanies(shortSymbols).mapErrorToSystem();
-  await loadMissingSplits(shortSymbols).mapErrorToSystem();
-  await loadMissingDividends(shortSymbols).mapErrorToSystem();
-  await loadMissingHistoricalPrices(shortSymbols).mapErrorToSystem();
+  await loadMissingQuotes(shortSymbols)
+    .mapErrorToSystem();
+
+  await loadMissingCompanies(shortSymbols)
+    .mapErrorToSystem();
+
+  await loadMissingSplits(shortSymbols)
+    .mapErrorToSystem();
+
+  await loadMissingDividends(shortSymbols)
+    .mapErrorToSystem();
+
+  await loadMissingHistoricalPrices(shortSymbols)
+    .mapErrorToSystem();
 }
 
 //////////////////////////////////////////////////////////////////// Companies
