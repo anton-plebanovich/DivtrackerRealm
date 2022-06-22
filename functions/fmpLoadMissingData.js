@@ -46,13 +46,7 @@ async function loadMissingCompanies(shortSymbols) {
   }
   
   await fetchCompanies(missingShortSymbols, async (companies, symbolIDs) => {
-    if (!companies.length) {
-      console.log(`No companies. Skipping insert.`);
-      await updateStatus(collectionName, symbolIDs);
-      return;
-    }
-
-    await collection.safeUpsertMany(companies, '_id');
+    await collection.safeInsertMissing(companies, '_id');
     await updateStatus(collectionName, symbolIDs);
   });
 }
@@ -74,18 +68,7 @@ async function loadMissingDividends(shortSymbols) {
   }
 
   const callbackBase = async (historical, dividends, symbolIDs) => {
-    if (!dividends.length) {
-      if (historical) {
-        console.log(`No historical dividends. Skipping insert.`);
-        await updateStatus(collectionName, symbolIDs);
-      } else {
-        // We should not update status for calendar dividends and instead rely on historical dividends.
-        console.log(`No calendar dividends. Skipping insert.`);
-      }
-      return;
-    }
-  
-    await collection.safeUpsertMany(dividends, ['s', 'e', 'a']);
+    await collection.safeInsertMissing(dividends, ['s', 'e', 'a']);
     if (historical) {
       await updateStatus(collectionName, symbolIDs);
     }
@@ -122,13 +105,7 @@ async function loadMissingHistoricalPrices(shortSymbols) {
   }
   
   await fetchHistoricalPrices(missingShortSymbols, null, async (historicalPrices, symbolIDs) => {
-    if (!historicalPrices.length) {
-      console.log(`No historical prices. Skipping insert.`);
-      await updateStatus(collectionName, symbolIDs);
-      return;
-    }
-  
-    await collection.safeUpsertMany(historicalPrices, ['s', 'd']);
+    await collection.safeInsertMissing(historicalPrices, ['s', 'd']);
     await updateStatus(collectionName, symbolIDs);
   });
 }
@@ -150,15 +127,9 @@ async function loadMissingQuotes(shortSymbols) {
   }
   
   await fetchQuotes(missingShortSymbols, async (quotes, symbolIDs) => {
-    if (!quotes.length) {
-      console.log(`No quotes. Skipping insert.`);
-      await updateStatus(collectionName, symbolIDs);
-      return;
-    }
-    
-    await collection.safeUpsertMany(quotes, '_id');
+    await collection.safeInsertMissing(quotes, '_id');
     await updateStatus(collectionName, symbolIDs);
-  })
+  });
 }
 
 //////////////////////////////////////////////////////////////////// Splits
@@ -178,13 +149,7 @@ async function loadMissingSplits(shortSymbols) {
   }
   
   await fetchSplits(missingShortSymbols, async (splits, symbolIDs) => {
-    if (!splits.length) {
-      console.log(`No splits. Skipping insert.`);
-      await updateStatus(collectionName, symbolIDs);
-      return;
-    }
-
-    await collection.safeUpsertMany(splits, ['s', 'e']);
+    await collection.safeInsertMissing(splits, ['s', 'e']);
     await updateStatus(collectionName, symbolIDs);
   });
 }
