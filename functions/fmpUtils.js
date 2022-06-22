@@ -126,7 +126,7 @@ fetchDividends = async function fetchDividends(shortSymbols, limit, callback) {
     // 3k tickers (48744 records) fetch: 20.417
     // 3k tickers (48744 records) map: 6.692
     // 3k tickers (48744 records) insert: 34.803
-    144 / 2,
+    144,
     limit,
     'historicalStockList',
     'historical',
@@ -475,13 +475,13 @@ async function _fmpFetchChunkedPart(api, tickers, queryParameters, maxFetchSize,
       }
     }
 
-    callbackPromise?.throwIfRejected();
-
     // Stop fetch if we collected too much tickers already during ongoing callback
     if (partialTickers.length >= maxTickersBuffer) {
       console.log(`Reached max tickers buffer of '${maxTickersBuffer}' tickers. Waiting for callback to finish.`)
       await callbackPromise;
     }
+
+    callbackPromise?.throwIfRejected();
 
     if (callback != null && callbackPromise?.isFinished() != false) {
       callbackPromise = callback(partialResponse, partialTickers)
@@ -606,13 +606,13 @@ async function _fmpFetchBatchPart(api, tickers, queryParameters, maxBatchSize, m
       }
     }
 
-    callbackPromise?.throwIfRejected();
-
     // Stop fetch if we collected too much tickers already during ongoing callback
     if (partialTickers.length >= maxTickersBuffer) {
       console.log(`Reached max tickers buffer of '${maxTickersBuffer}' tickers. Waiting for callback to finish.`)
       await callbackPromise;
     }
+
+    callbackPromise?.throwIfRejected();
 
     if (callback != null && callbackPromise?.isFinished() != false) {
       callbackPromise = callback(partialResponse, partialTickers)
