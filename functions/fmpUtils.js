@@ -380,7 +380,10 @@ async function _fmpFetchChunked(api, tickers, queryParameters, maxFetchSize, cal
   throwIfEmptyArray(tickers, `_fmpFetchChunked tickers`);
 
   const chunkedTickers = tickers.chunkedByCount(maxConcurrentFetchesPerRequest);
-  const operations = chunkedTickers.map(x => _fmpFetchChunkedPart(api, x, queryParameters, maxFetchSize, callback));
+  const operations = chunkedTickers
+    .filterNullAndUndefined()
+    .map(x => _fmpFetchChunkedPart(api, x, queryParameters, maxFetchSize, callback));
+    
   const results = await Promise.all(operations);
 
   return results.flat();
@@ -485,7 +488,10 @@ async function _fmpFetchBatch(api, tickers, queryParameters, maxBatchSize, group
   throwIfEmptyArray(tickers, `_fmpFetchBatch tickers`);
 
   const chunkedTickers = tickers.chunkedByCount(maxConcurrentFetchesPerRequest);
-  const operations = chunkedTickers.map(x => _fmpFetchBatchPart(api, x, queryParameters, maxBatchSize, groupingKey, callback));
+  const operations = chunkedTickers
+    .filterNullAndUndefined()
+    .map(x => _fmpFetchBatchPart(api, x, queryParameters, maxBatchSize, groupingKey, callback));
+
   const results = await Promise.all(operations);
   const datas = results.map(result => result[groupingKey]);
   return { [groupingKey]: datas.flat() };
