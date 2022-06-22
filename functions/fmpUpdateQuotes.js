@@ -18,10 +18,12 @@ exports = async function(database) {
     return;
   }
 
-  // TODO: We might insert after each batch fetch
-  const quotes = await fetchQuotes(shortSymbols);
-  const quotesCollection = fmp.collection("quotes");
-  await quotesCollection.safeUpsertMany(quotes, '_id', true);
+  const collection = fmp.collection("quotes");
+  await fetchQuotes(shortSymbols, async (quotes, symbolIDs) => {
+    await collection.safeUpsertMany(quotes, '_id');
+    await updateStatus("quotes", symbolIDs);
+    checkExecutionTimeoutAndThrow();
+  });
 
   await setUpdateDate(`${database}-quotes`);
 

@@ -123,10 +123,10 @@ fetchDividends = async function fetchDividends(shortSymbols, limit, callback) {
     tickers,
     queryParameters,
     defaultMaxBatchSize,
-    // 1k tickers (10247 records) fetch: 6.977512898
-    // 1k tickers (10247 records) map: 1.194
-    // 1k tickers (10247 records) insert: 4.427
-    355,
+    // 3k tickers (48744 records) fetch: 20.417
+    // 3k tickers (48744 records) map: 6.692
+    // 3k tickers (48744 records) insert: 34.803
+    144,
     limit,
     'historicalStockList',
     'historical',
