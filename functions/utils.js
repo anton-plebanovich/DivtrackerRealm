@@ -546,6 +546,13 @@ Array.prototype.getRandomElements = function(count) {
 }
 
 /**
+ * Assumes elements are an arrays and filters those that does not have length.
+ */
+Array.prototype.filterEmpty = function() {
+  return this.filter(x => x?.length);
+};
+
+/**
  * Filters `null` and `undefined` elements.
  */
 Array.prototype.filterNullAndUndefined = function() {
