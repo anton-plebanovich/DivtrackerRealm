@@ -1463,7 +1463,7 @@ function _checkExecutionTimeout(limit) {
   }
 
   if (seconds > limit) {
-    console.log(executionTimeoutErrorMessage);
+    console.log(`${executionTimeoutErrorMessage}. Execution time: ${seconds} seconds`);
     return true;
   } else {
     console.logVerbose(`${limit - seconds} execution time left`);

@@ -126,7 +126,7 @@ fetchDividends = async function fetchDividends(shortSymbols, limit, callback) {
     // 3k tickers (48744 records) fetch: 20.417
     // 3k tickers (48744 records) map: 6.692
     // 3k tickers (48744 records) insert: 34.803
-    144,
+    144 / 2,
     limit,
     'historicalStockList',
     'historical',
