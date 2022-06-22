@@ -52,7 +52,7 @@ async function loadMissingCompanies(shortSymbols) {
       return;
     }
 
-    await collection.insertMany(companies, { ordered: false });
+    await collection.safeUpsertMany(companies, '_id');
     await updateStatus(collectionName, symbolIDs);
   });
 }
@@ -85,7 +85,7 @@ async function loadMissingDividends(shortSymbols) {
       return;
     }
   
-    await collection.insertMany(dividends, { ordered: false });
+    await collection.safeUpsertMany(dividends, ['s', 'e', 'a']);
     if (historical) {
       await updateStatus(collectionName, symbolIDs);
     }
@@ -128,7 +128,7 @@ async function loadMissingHistoricalPrices(shortSymbols) {
       return;
     }
   
-    await collection.insertMany(historicalPrices, { ordered: false });
+    await collection.safeUpsertMany(historicalPrices, ['s', 'd']);
     await updateStatus(collectionName, symbolIDs);
   });
 }
@@ -156,7 +156,7 @@ async function loadMissingQuotes(shortSymbols) {
       return;
     }
     
-    await collection.insertMany(quotes, { ordered: false });
+    await collection.safeUpsertMany(historicalPrices, '_id');
     await updateStatus(collectionName, symbolIDs);
   })
 }
@@ -184,7 +184,7 @@ async function loadMissingSplits(shortSymbols) {
       return;
     }
 
-    await collection.insertMany(splits, { ordered: false });
+    await collection.safeUpsertMany(splits, ['s', 'e']);
     await updateStatus(collectionName, symbolIDs);
   });
 }

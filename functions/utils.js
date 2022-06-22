@@ -92,31 +92,31 @@ Object.prototype.safeInsertMissing = async function(newObjects, fields) {
   return await bulk.safeExecute();
 };
 
-Object.prototype.safeUpsertMany = async function(newObjects, field, setUpdateDate) {
+Object.prototype.safeUpsertMany = async function(newObjects, fields, setUpdateDate) {
   _throwIfNotArray(newObjects, `Please pass new objects array as the first argument. safeUpsertMany`);
   if (newObjects.length === 0) {
     console.log(`New objects array is empty. Nothing to upsert.`);
     return;
   }
 
-  if (field == null) {
-    field = "_id";
-  }
+  fields = normalizeFields(fields);
 
   if (setUpdateDate == null) {
     setUpdateDate = true;
   }
 
-  const bulk = this.initializeUnorderedBulkOp();
   for (const newObject of newObjects) {
-    // https://docs.mongodb.com/manual/reference/operator/update/currentDate/
+    const find = fields.reduce((find, field) => {
+      return Object.assign(find, { [field]: newObject[field] });
+    }, {});
+
     const update = { $set: newObject };
     if (setUpdateDate == true) {
       update.$currentDate = { u: true };
     }
 
     bulk
-      .find({ [field]: newObject[field] })
+      .find(find)
       .upsert()
       .updateOne(update);
   }
