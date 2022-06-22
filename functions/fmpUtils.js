@@ -475,9 +475,7 @@ async function _fmpFetchChunkedPart(api, tickers, queryParameters, maxFetchSize,
       }
     }
 
-    if (callbackPromise?.isRejected()) {
-      throw callbackPromise.error();
-    }
+    callbackPromise?.throwIfRejected();
 
     // Stop fetch if we collected too much tickers already during ongoing callback
     if (partialTickers.length >= maxTickersBuffer) {
@@ -505,6 +503,8 @@ async function _fmpFetchChunkedPart(api, tickers, queryParameters, maxFetchSize,
     // Wait for an ongoing operation
     await callbackPromise;
   }
+  
+  callbackPromise?.throwIfRejected();
 
   return combinedResponse;
 }
@@ -606,9 +606,7 @@ async function _fmpFetchBatchPart(api, tickers, queryParameters, maxBatchSize, m
       }
     }
 
-    if (callbackPromise?.isRejected()) {
-      throw callbackPromise.error();
-    }
+    callbackPromise?.throwIfRejected();
 
     // Stop fetch if we collected too much tickers already during ongoing callback
     if (partialTickers.length >= maxTickersBuffer) {
@@ -636,6 +634,8 @@ async function _fmpFetchBatchPart(api, tickers, queryParameters, maxBatchSize, m
     // Wait for an ongoing operation
     await callbackPromise;
   }
+
+  callbackPromise?.throwIfRejected();
 
   return combinedResponse;
 }
