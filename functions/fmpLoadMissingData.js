@@ -11,6 +11,18 @@
 exports = async function(database) {
   context.functions.execute("fmpUtils", database);
   
+  try {
+    await run();
+  } catch(error) {
+    if (error.message !== executionTimeoutErrorMessage) {
+      throw error;
+    } else {
+      return error;
+    }
+  }
+};
+
+async function run() {
   const shortSymbols = await getShortSymbols();
   const tickers = shortSymbols.map(x => x.t);
   console.log(`Loading missing data for tickers (${tickers.length}): ${tickers}`);
@@ -27,7 +39,7 @@ exports = async function(database) {
 
   // Splits are frequently missing
   await loadMissingSplits(shortSymbols).mapErrorToSystem();
-};
+}
 
 //////////////////////////////////////////////////////////////////// Companies
 
@@ -48,6 +60,7 @@ async function loadMissingCompanies(shortSymbols) {
   await fetchCompanies(missingShortSymbols, async (companies, symbolIDs) => {
     await collection.safeInsertMissing(companies, '_id');
     await updateStatus(collectionName, symbolIDs);
+    checkExecutionTimeoutAndThrow();
   });
 }
 
@@ -72,6 +85,7 @@ async function loadMissingDividends(shortSymbols) {
     if (historical) {
       await updateStatus(collectionName, symbolIDs);
     }
+    checkExecutionTimeoutAndThrow();
   };
 
   const calendarCallback = async (dividends, symbolIDs) => {
@@ -107,6 +121,7 @@ async function loadMissingHistoricalPrices(shortSymbols) {
   await fetchHistoricalPrices(missingShortSymbols, null, async (historicalPrices, symbolIDs) => {
     await collection.safeInsertMissing(historicalPrices, ['s', 'd']);
     await updateStatus(collectionName, symbolIDs);
+    checkExecutionTimeoutAndThrow();
   });
 }
 
@@ -129,6 +144,7 @@ async function loadMissingQuotes(shortSymbols) {
   await fetchQuotes(missingShortSymbols, async (quotes, symbolIDs) => {
     await collection.safeInsertMissing(quotes, '_id');
     await updateStatus(collectionName, symbolIDs);
+    checkExecutionTimeoutAndThrow();
   });
 }
 
@@ -151,6 +167,7 @@ async function loadMissingSplits(shortSymbols) {
   await fetchSplits(missingShortSymbols, async (splits, symbolIDs) => {
     await collection.safeInsertMissing(splits, ['s', 'e']);
     await updateStatus(collectionName, symbolIDs);
+    checkExecutionTimeoutAndThrow();
   });
 }
 
