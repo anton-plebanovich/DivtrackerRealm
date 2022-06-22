@@ -1,8 +1,8 @@
 
 // fmpLoadMissingData.js
 
-// https://docs.mongofmp.com/manual/reference/method/Bulk.find.upsert/
-// https://docs.mongofmp.com/realm/mongodb/actions/collection.bulkWrite/
+// https://docs.mongodb.com/manual/reference/method/Bulk.find.upsert/
+// https://docs.mongodb.com/realm/mongodb/actions/collection.bulkWrite/
 
 /**
  * @example
@@ -23,7 +23,7 @@ exports = async function(database) {
   await loadMissingHistoricalPrices(shortSymbols).mapErrorToSystem();
 
   // Dividends are averagely missing
-  await updateDividends(shortSymbols).mapErrorToSystem();
+  await loadMissingDividends(shortSymbols).mapErrorToSystem();
 
   // Splits are frequently missing
   await loadMissingSplits(shortSymbols).mapErrorToSystem();
@@ -51,18 +51,8 @@ async function loadMissingCompanies(shortSymbols) {
       await updateStatus(collectionName, symbolIDs);
       return;
     }
-  
-    const operations = [];
-    for (const company of companies) {
-      const filter = { _id: company._id };
-      const update = { $setOnInsert: company, $currentDate: { u: true } };
-      const updateOne = { filter: filter, update: update, upsert: true };
-      const operation = { updateOne: updateOne };
-      operations.push(operation);
-    }
-  
-    const options = { ordered: false };
-    await collection.bulkWrite(operations, options);
+
+    await collection.insertMany(companies, { ordered: false });
     await updateStatus(collectionName, symbolIDs);
   });
 }
@@ -72,7 +62,7 @@ async function loadMissingCompanies(shortSymbols) {
 /**
  * @param {[ShortSymbol]} shortSymbols
  */
-async function updateDividends(shortSymbols) {
+async function loadMissingDividends(shortSymbols) {
   const collectionName = 'dividends';
   const collection = fmp.collection(collectionName);
   const missingShortSymbols = await getMissingShortSymbols(collectionName, shortSymbols);
@@ -95,34 +85,7 @@ async function updateDividends(shortSymbols) {
       return;
     }
   
-    const bulk = collection.initializeUnorderedBulkOp();
-    for (const dividend of dividends) {
-      const query = {};
-      if (dividend.e != null) {
-        query.e = dividend.e;
-      } else {
-        console.error(`Invalid ex date: ${dividend.stringify()}`);
-      }
-  
-      if (dividend.a != null) {
-        query.a = dividend.a;
-      } else {
-        console.error(`Invalid amount: ${dividend.stringify()}`);
-      }
-
-      // We do not check frequency because it might be changed when we delete dividends and recompute it for all of them
-  
-      if (dividend.s != null) {
-        query.s = dividend.s;
-      } else {
-        console.error(`Invalid symbol: ${dividend.stringify()}`);
-      }
-  
-      const update = { $setOnInsert: dividend };
-      bulk.find(query).upsert().updateOne(update);
-    }
-  
-    await bulk.execute();
+    await collection.insertMany(dividends, { ordered: false });
     if (historical) {
       await updateStatus(collectionName, symbolIDs);
     }
@@ -165,14 +128,7 @@ async function loadMissingHistoricalPrices(shortSymbols) {
       return;
     }
   
-    const bulk = collection.initializeUnorderedBulkOp();
-    for (const historicalPrice of historicalPrices) {
-      const query = { d: historicalPrice.d, s: historicalPrice.s };
-      const update = { $setOnInsert: historicalPrice };
-      bulk.find(query).upsert().updateOne(update);
-    }
-  
-    await bulk.execute();
+    await collection.insertMany(historicalPrices, { ordered: false });
     await updateStatus(collectionName, symbolIDs);
   });
 }
@@ -200,14 +156,7 @@ async function loadMissingQuotes(shortSymbols) {
       return;
     }
     
-    const bulk = collection.initializeUnorderedBulkOp();
-    for (const quote of quotes) {
-      const query = { _id: quote._id };
-      const update = { $setOnInsert: quote, $currentDate: { u: true } };
-      bulk.find(query).upsert().updateOne(update);
-    }
-    
-    await bulk.execute();
+    await collection.insertMany(quotes, { ordered: false });
     await updateStatus(collectionName, symbolIDs);
   })
 }
@@ -234,15 +183,8 @@ async function loadMissingSplits(shortSymbols) {
       await updateStatus(collectionName, symbolIDs);
       return;
     }
-  
-    const bulk = collection.initializeUnorderedBulkOp();
-    for (const split of splits) {
-      const query = { e: split.e, s: split.s };
-      const update = { $setOnInsert: split };
-      bulk.find(query).upsert().updateOne(update);
-    }
-  
-    await bulk.execute();
+
+    await collection.insertMany(splits, { ordered: false });
     await updateStatus(collectionName, symbolIDs);
   });
 }
