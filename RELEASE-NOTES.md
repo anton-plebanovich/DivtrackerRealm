@@ -5,7 +5,7 @@
 
 - Deploy the new server with all FMP triggers disabled
 - Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument fetch_new_symbols_for_fmp_tmp --verbose`
-- Execute `dt call-realm-function --environment sandbox-anton --function fmpLoadMissingData --argument fmp-tmp --retry-on-error 'execution time limit exceeded'`
+- Execute `dt call-realm-function --environment sandbox-anton --function fmpLoadMissingData --argument fmp-tmp --retry-on-error 'execution time limit'`
 - Execute `dt backup --environment sandbox-anton --database fmp-tmp --verbose`
 - Execute `dt restore --environment local --backup-source-environment sandbox-anton --database fmp-tmp --yes --verbose`
 - Execute symbols migration on the local environment
@@ -43,7 +43,7 @@
 - Execute `dt backup --environment sandbox-anton --database fmp --verbose`
 - Execute `dt restore --environment sandbox-anton --database fmp --to-database fmp-tmp --yes --verbose`
 - Execute `dt call-realm-function --environment sandbox-anton --function fmpUpdateSymbols --argument fmp-tmp --verbose`
-- Execute `dt call-realm-function --environment sandbox-anton --function fmpLoadMissingData --argument fmp-tmp --retry-on-error 'execution time limit exceeded'`
+- Execute `dt call-realm-function --environment sandbox-anton --function fmpLoadMissingData --argument fmp-tmp --retry-on-error 'execution time limit'`
 - Execute `dt backup --environment sandbox-anton --database fmp-tmp --verbose`
 - Execute `dt restore --environment local --backup-source-environment sandbox-anton --database fmp-tmp --yes --verbose`
 - Execute symbols migration on the local environment

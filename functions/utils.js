@@ -1460,7 +1460,7 @@ function _checkExecutionTimeout(limit) {
 
   // One symbol full fetch takes 17.5s and we have only 120s function execution time so let's put some limit.
   if (limit == null) {
-    limit = 100;
+    limit = 110;
   }
 
   if (seconds > limit) {
