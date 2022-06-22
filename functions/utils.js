@@ -1338,7 +1338,7 @@ function extendRuntime() {
     result.isFulfilled = function() { return isFulfilled; };
     result.isPending = function() { return isPending; };
     result.isRejected = function() { return isRejected; };
-    result.throwIfRejected = function() { throw error; };
+    result.throwIfRejected = function() { if (isRejected) throw error; };
 
     return result;
   };
