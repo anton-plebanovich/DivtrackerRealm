@@ -156,7 +156,7 @@ async function loadMissingQuotes(shortSymbols) {
       return;
     }
     
-    await collection.safeUpsertMany(historicalPrices, '_id');
+    await collection.safeUpsertMany(quotes, '_id');
     await updateStatus(collectionName, symbolIDs);
   })
 }

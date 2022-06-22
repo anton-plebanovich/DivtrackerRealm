@@ -104,7 +104,8 @@ Object.prototype.safeUpsertMany = async function(newObjects, fields, setUpdateDa
   if (setUpdateDate == null) {
     setUpdateDate = true;
   }
-
+  
+  const bulk = this.initializeUnorderedBulkOp();
   for (const newObject of newObjects) {
     const find = fields.reduce((find, field) => {
       return Object.assign(find, { [field]: newObject[field] });
