@@ -77,7 +77,8 @@ Object.prototype.safeInsertMissing = async function(newObjects, fields) {
 
   fields = normalizeFields(fields);
   
-  const bulk = this.initializeUnorderedBulkOp();
+  let bulk = this.initializeUnorderedBulkOp();
+  let i = 0;
   for (const newObject of newObjects) {
     const find = fields.reduce((find, field) => {
       return Object.assign(find, { [field]: newObject[field] });
@@ -87,9 +88,19 @@ Object.prototype.safeInsertMissing = async function(newObjects, fields) {
       .find(find)
       .upsert()
       .updateOne({ $setOnInsert: newObject });
+
+    i++;
+
+    // Try to prevent 'pending promise returned that will never resolve/reject uncaught promise rejection: &{0xc1bac2aa90 0xc1bac2aa80}' error by splitting batch operations to chunks
+    if (i === ENV.maxBulkSize) {
+      console.log(`Too much bulk changes. Executing collected ${ENV.maxBulkSize}.`)
+      i = 0
+      await bulk.safeExecute();
+      bulk = this.initializeUnorderedBulkOp();
+    }
   }
 
-  return await bulk.safeExecute();
+  await bulk.safeExecute();
 };
 
 Object.prototype.safeUpsertMany = async function(newObjects, fields, setUpdateDate) {
@@ -105,7 +116,8 @@ Object.prototype.safeUpsertMany = async function(newObjects, fields, setUpdateDa
     setUpdateDate = true;
   }
 
-  const bulk = this.initializeUnorderedBulkOp();
+  let bulk = this.initializeUnorderedBulkOp();
+  let i = 0;
   for (const newObject of newObjects) {
     const find = fields.reduce((find, field) => {
       return Object.assign(find, { [field]: newObject[field] });
@@ -120,9 +132,19 @@ Object.prototype.safeUpsertMany = async function(newObjects, fields, setUpdateDa
       .find(find)
       .upsert()
       .updateOne(update);
+
+    i++;
+
+    // Try to prevent 'pending promise returned that will never resolve/reject uncaught promise rejection: &{0xc1bac2aa90 0xc1bac2aa80}' error by splitting batch operations to chunks
+    if (i === ENV.maxBulkSize) {
+      console.log(`Too much bulk changes. Executing collected ${ENV.maxBulkSize}.`)
+      i = 0
+      await bulk.safeExecute();
+      bulk = this.initializeUnorderedBulkOp();
+    }
   }
 
-  return await bulk.safeExecute();
+  await bulk.safeExecute();
 };
 
 /**
@@ -211,7 +233,7 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjectsDictionar
 
     // Try to prevent 'pending promise returned that will never resolve/reject uncaught promise rejection: &{0xc1bac2aa90 0xc1bac2aa80}' error by splitting batch operations to chunks
     if (i === ENV.maxBulkSize) {
-      console.log('Too much bulk changes. Executing collected 1000.')
+      console.log(`Too much bulk changes. Executing collected ${ENV.maxBulkSize}.`)
       i = 0
       await bulk.safeExecute();
       bulk = this.initializeUnorderedBulkOp();
@@ -1861,7 +1883,7 @@ getDateLogString = function getDateLogString() {
 exports = function() {
   if (typeof ENV === 'undefined') {
     ENV = {
-      maxBulkSize: 1000,
+      maxBulkSize: 5000,
       maxFindInSize: 1000,
     };
 
