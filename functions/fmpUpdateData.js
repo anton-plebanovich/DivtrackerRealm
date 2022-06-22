@@ -38,14 +38,14 @@ async function run() {
   await updateCompaniesDaily(shortSymbols)
     .mapErrorToSystem();
 
-  await updateSplitsDaily(shortSymbols)
-    .mapErrorToSystem();
+  // await updateSplitsDaily(shortSymbols)
+  //   .mapErrorToSystem();
 
-  await updateDividends(shortSymbols)
-    .mapErrorToSystem();
+  // await updateDividends(shortSymbols)
+  //   .mapErrorToSystem();
 
-  await updateHistoricalPricesDaily(shortSymbols)
-    .mapErrorToSystem();
+  // await updateHistoricalPricesDaily(shortSymbols)
+  //   .mapErrorToSystem();
 }
 
 //////////////////////////////////////////////////////////////////// Symbols
