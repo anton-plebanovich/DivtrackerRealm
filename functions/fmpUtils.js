@@ -53,6 +53,11 @@ getShortSymbols = _getShortSymbols;
 /// To prevent `414 Request-URI Too Large` error we need to split our requests by some value.
 const defaultMaxFetchSize = 100;
 
+/**
+ * Max amount of buffered tickers. If it's reached fetching will stop until callback is executed.
+ */
+const defaultMaxTickersBuffer = 1000;
+
 /// To prevent `This request is limited to 5 symbols to prevent exceeding server response time.` error we need to limit our batch size.
 const defaultMaxBatchSize = 5;
 
@@ -436,6 +441,12 @@ async function _fmpFetchChunkedPart(api, tickers, queryParameters, maxFetchSize,
       }
     }
 
+    // Stop fetch if we collected too much tickers already during ongoing callback
+    if (partialTickers.length >= defaultMaxTickersBuffer) {
+      console.log(`Reached max tickers buffer of '${defaultMaxTickersBuffer}' tickers. Waiting for callback to finish.`)
+      await callbackPromise;
+    }
+
     if (callback != null && callbackPromise?.isFinished() != false) {
       callbackPromise = callback(partialResponse, partialTickers)
         .observeStatus();
@@ -549,6 +560,12 @@ async function _fmpFetchBatchPart(api, tickers, queryParameters, maxBatchSize, g
       if (callback != null) {
         partialResponse[groupingKey].push(...response[groupingKey]);
       }
+    }
+
+    // Stop fetch if we collected too much tickers already during ongoing callback
+    if (partialTickers.length >= defaultMaxTickersBuffer) {
+      console.log(`Reached max tickers buffer of '${defaultMaxTickersBuffer}' tickers. Waiting for callback to finish.`)
+      await callbackPromise;
     }
 
     if (callback != null && callbackPromise?.isFinished() != false) {
