@@ -75,7 +75,7 @@ async function updateCompaniesDaily(shortSymbols) {
     return;
   }
 
-  const collection = fmp.collection(collectionName)
+  const collection = fmp.collection(collectionName);
   const existingCompanies = await collection.fullFind();
   const fields = ['_id'];
   const existingCompaniesByFields = existingCompanies.toDictionary(fields);
@@ -108,7 +108,7 @@ async function updateDividends(shortSymbols) {
     return;
   }
 
-  const collection = fmp.collection(collectionName)
+  const collection = fmp.collection(collectionName);
   const existingDividends = await collection.fullFind();
   const existingDividendsBySymbolID = existingDividends.toBuckets('s');
   const fields = ['s', 'e', 'a'];
@@ -136,7 +136,7 @@ async function updateDividends(shortSymbols) {
 
   await Promise.all([
     fetchDividendsCalendar(outdatedShortSymbols, calendarCallback),
-    fetchDividends(outdatedShortSymbols, null, historicalCallback)
+    fetchDividends(outdatedShortSymbols, 1, historicalCallback)
   ]);
 
   await setUpdateDate(fmp, `${databaseName}-${collectionName}`);
@@ -267,7 +267,7 @@ async function updateSplitsDaily(shortSymbols) {
     return;
   }
   
-  const collection = fmp.collection(collectionName)
+  const collection = fmp.collection(collectionName);
   const existingSplits = await collection.fullFind();
   const fields = ['s', 'e'];
   const existingSplitsByFields = existingSplits
