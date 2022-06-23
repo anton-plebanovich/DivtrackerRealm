@@ -136,6 +136,7 @@ async function updateDividends(shortSymbols) {
     if (historical) {
       await updateStatus(collectionName, symbolIDs);
     }
+    checkExecutionTimeoutAndThrow();
   };
 
   const calendarCallback = async (dividends, symbolIDs) => {
