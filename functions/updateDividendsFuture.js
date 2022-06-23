@@ -32,5 +32,5 @@ exports = async function() {
   
   await collection.safeUpdateMany(futureDividends, null, 'i', true, true);
 
-  await setUpdateDate("dividends-future");
+  await setUpdateDate(db, "dividends-future");
 };

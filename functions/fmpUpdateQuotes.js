@@ -25,7 +25,7 @@ exports = async function(database) {
     checkExecutionTimeoutAndThrow();
   });
 
-  await setUpdateDate(`${database}-quotes`);
+  await setUpdateDate(fmp, `${database}-quotes`);
 
   console.log(`SUCCESS`);
 };

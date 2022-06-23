@@ -92,7 +92,7 @@ async function updateCompaniesDaily(shortSymbols) {
     checkExecutionTimeoutAndThrow();
   });
 
-  await setUpdateDate(`${databaseName}-${collectionName}`);
+  await setUpdateDate(fmp, `${databaseName}-${collectionName}`);
 }
 
 //////////////////////////////////////////////////////////////////// Dividends
@@ -151,7 +151,7 @@ async function updateDividends(shortSymbols) {
     fetchDividends(outdatedShortSymbols, null, historicalCallback)
   ]);
 
-  await setUpdateDate(`${databaseName}-${collectionName}`);
+  await setUpdateDate(fmp, `${databaseName}-${collectionName}`);
 }
 
 function fixDividends(dividends, existingDividendsBySymbolID) {
@@ -255,7 +255,7 @@ async function updateHistoricalPricesDaily(shortSymbols) {
     checkExecutionTimeoutAndThrow();
   });
 
-  await setUpdateDate(`${databaseName}-${collectionName}`);
+  await setUpdateDate(fmp, `${databaseName}-${collectionName}`);
 }
 
 //////////////////////////////////////////////////////////////////// Splits
@@ -297,7 +297,7 @@ async function updateSplitsDaily(shortSymbols) {
     checkExecutionTimeoutAndThrow();
   });
 
-  await setUpdateDate(`${databaseName}-${collectionName}`);
+  await setUpdateDate(fmp, `${databaseName}-${collectionName}`);
 }
 
 //////////////////////////////////////////////////////////////////// Helpers

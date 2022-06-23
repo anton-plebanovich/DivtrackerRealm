@@ -26,7 +26,7 @@ exports = async function(_databaseName) {
   const date = new Date();
   await updateFMPSymbols();
   await context.functions.execute("mergedUpdateSymbols", date, "fmp");
-  await setUpdateDate(`${databaseName}-symbols`);
+  await setUpdateDate(fmp, `${databaseName}-symbols`);
   
   console.log(`SUCCESS`);
 };

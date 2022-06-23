@@ -68,7 +68,7 @@ async function refetch_IEX_splits() {
     console.log(`Historical splits are empty for symbols: '${shortSymbols.map(x => x.t)}'`);
   }
 
-  await setUpdateDate("splits");
+  await setUpdateDate(db, "splits");
 }
 
 /**
