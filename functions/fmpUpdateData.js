@@ -127,11 +127,11 @@ async function updateDividends(shortSymbols) {
   };
 
   const calendarCallback = async (dividends, symbolIDs) => {
-    callbackBase(false, dividends, symbolIDs);
+    await callbackBase(false, dividends, symbolIDs);
   };
 
   const historicalCallback = async (dividends, symbolIDs) => {
-    callbackBase(true, dividends, symbolIDs);
+    await callbackBase(true, dividends, symbolIDs);
   };
 
   await Promise.all([
