@@ -1345,6 +1345,44 @@ function _getOpenDate(openDateValue) {
 
 getOpenDate = _getOpenDate;
 
+///////////////////////////////////////////////////////////////////////////////// UPDATE
+
+async function _setUpdateDate(_id, date) {
+  _throwIfUndefinedOrNull(_id, `_setUpdateDate _id`);
+  if (date == null) {
+    date = new Date();
+  }
+
+  const collection = fmp.collection("updates");
+  return await collection.updateOne(
+    { _id: _id }, 
+    { $set: { d: date }, $currentDate: { u: true } }, 
+    { "upsert": true }
+  )
+};
+
+setUpdateDate = _setUpdateDate;
+
+/**
+ * Checks if all data in a collection is up to date.
+ */
+async function _checkIfUpToDate(databaseName, collectionName, minDate) {
+  const objectID = `${databaseName}-${collectionName}`;
+  const updatesCollection = fmp.collection('updates');
+  const update = await updatesCollection.findOne({ _id: objectID });
+
+  if (update == null || update.d < minDate) {
+    console.log(`Collection '${collectionName}' is outdated`);
+    return false;
+
+  } else {
+    console.log(`Collection '${collectionName}' is up to date`);
+    return true;
+  }
+}
+
+checkIfUpToDate = _checkIfUpToDate;
+
 async function _updateStatus(collectionName, symbolIDs) {
   const bulk = fmp.collection('data-status').initializeUnorderedBulkOp();
   for (const symbolID of symbolIDs) {

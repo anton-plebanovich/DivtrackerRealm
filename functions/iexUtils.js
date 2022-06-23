@@ -907,6 +907,24 @@ function _getOpenDate(openDateValue) {
 
 getOpenDate = _getOpenDate;
 
+///////////////////////////////////////////////////////////////////////////////// UPDATE
+
+async function _setUpdateDate(_id, date) {
+  _throwIfUndefinedOrNull(_id, `_setUpdateDate _id`);
+  if (date == null) {
+    date = new Date();
+  }
+
+  const collection = db.collection("updates");
+  return await collection.updateOne(
+    { _id: _id }, 
+    { $set: { d: date }, $currentDate: { u: true } }, 
+    { "upsert": true }
+  )
+};
+
+setUpdateDate = _setUpdateDate;
+
 ///////////////////////////////////////////////////////////////////////////////// INITIALIZATION
 
 exports = function() {

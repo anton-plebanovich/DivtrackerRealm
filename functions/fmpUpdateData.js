@@ -4,9 +4,6 @@
 // https://docs.mongofmp.com/manual/reference/method/Bulk.find.upsert/
 // https://docs.mongofmp.com/realm/mongodb/actions/collection.bulkWrite/
 
-const statusCollectionName = 'data-status';
-const updatesCollectionName = 'updates';
-
 /**
  * @example
  * exports();
@@ -53,7 +50,7 @@ async function run() {
 async function updateSymbolsDaily() {
   const collectionName = 'symbols';
   const minDate = Date.today();
-  const isUpToDate = await checkIfUpToDate(collectionName, minDate);
+  const isUpToDate = await checkIfUpToDate(databaseName, collectionName, minDate);
   if (isUpToDate) { return; }
 
   await context.functions.execute("fmpUpdateSymbols", databaseName);
@@ -67,7 +64,7 @@ async function updateSymbolsDaily() {
 async function updateCompaniesDaily(shortSymbols) {
   const collectionName = 'companies';
   const minDate = Date.today();
-  const isUpToDate = await checkIfUpToDate(collectionName, minDate);
+  const isUpToDate = await checkIfUpToDate(databaseName, collectionName, minDate);
   if (isUpToDate) { return; }
 
   const outdatedShortSymbols = await getOutdatedShortSymbols(collectionName, shortSymbols, minDate);
@@ -96,7 +93,7 @@ async function updateCompaniesDaily(shortSymbols) {
 async function updateDividends(shortSymbols) {
   const collectionName = 'dividends';
   const minDate = Date.today();
-  const isUpToDate = await checkIfUpToDate(collectionName, minDate);
+  const isUpToDate = await checkIfUpToDate(databaseName, collectionName, minDate);
   if (isUpToDate) { return; }
 
   const outdatedShortSymbols = await getOutdatedShortSymbols(collectionName, shortSymbols, minDate);
@@ -221,7 +218,7 @@ function fixDividends(dividends, existingDividendsBySymbolID) {
 async function updateHistoricalPricesDaily(shortSymbols) {
   const collectionName = 'historical-prices';
   const minDate = Date.today();
-  const isUpToDate = await checkIfUpToDate(collectionName, minDate);
+  const isUpToDate = await checkIfUpToDate(databaseName, collectionName, minDate);
   if (isUpToDate) { return; }
 
   const outdatedShortSymbols = await getOutdatedShortSymbols(collectionName, shortSymbols, minDate);
@@ -253,7 +250,7 @@ async function updateHistoricalPricesDaily(shortSymbols) {
 async function updateSplitsDaily(shortSymbols) {
   const collectionName = 'splits';
   const minDate = Date.today();
-  const isUpToDate = await checkIfUpToDate(collectionName, minDate);
+  const isUpToDate = await checkIfUpToDate(databaseName, collectionName, minDate);
   if (isUpToDate) { return; }
   
   const outdatedShortSymbols = await getOutdatedShortSymbols(collectionName, shortSymbols, minDate);
@@ -277,28 +274,10 @@ async function updateSplitsDaily(shortSymbols) {
 //////////////////////////////////////////////////////////////////// Helpers
 
 /**
- * Checks if all data in a collection is up to date.
- */
-async function checkIfUpToDate(collectionName, minDate) {
-  const objectID = `${databaseName}-${collectionName}`;
-  const updatesCollection = db.collection(updatesCollectionName);
-  const update = await updatesCollection.findOne({ _id: objectID });
-
-  if (update == null || update.d < minDate) {
-    console.log(`Collection '${collectionName}' is outdated`);
-    return false;
-
-  } else {
-    console.log(`Collection '${collectionName}' is up to date`);
-    return true;
-  }
-}
-
-/**
  * Returns only outdated IDs from `shortSymbols`.
  */
 async function getOutdatedShortSymbols(collectionName, shortSymbols, minDate) {
-  const statusCollection = fmp.collection(statusCollectionName)
+  const statusCollection = fmp.collection('data-status')
   const upToDateIDs = await statusCollection
   // We do not check for `null` here because date should be always set by `fmpLoadMissingData` first.
   // If the date is missing it means the data is not loaded and we can't update yet or we'll prevent missing data from load.
@@ -311,18 +290,4 @@ async function getOutdatedShortSymbols(collectionName, shortSymbols, minDate) {
   );
   
   return outdatedShortSymbols;
-}
-
-async function updateStatus(collectionName, symbolIDs) {
-  const statusCollection = fmp.collection(statusCollectionName)
-  
-  const bulk = statusCollection.initializeUnorderedBulkOp();
-  for (const symbolID of symbolIDs) {
-    bulk
-      .find({ _id: symbolID })
-      .upsert()
-      .updateOne({ $currentDate: { [collectionName]: true } });
-  }
-
-  await bulk.safeExecute();
 }
