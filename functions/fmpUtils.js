@@ -116,6 +116,8 @@ fetchDividends = async function fetchDividends(shortSymbols, from, callback) {
   // FMP have dividends history from 1973 year for some companies and we do not need so much at the moment
   if (from == null) {
     from =  minFetchDate;
+  } else if (from instanceof Date) {
+    from = from.dayString();
   }
 
   queryParameters.from = from;
