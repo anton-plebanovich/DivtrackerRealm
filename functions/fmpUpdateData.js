@@ -78,6 +78,7 @@ async function updateCompaniesDaily(shortSymbols) {
     return;
   }
 
+  const collection = fmp.collection(collectionName);
   await fetchCompanies(outdatedShortSymbols, async (companies, symbolIDs) => {
     await collection.safeUpsertMany(companies, '_id');
     await updateStatus(collectionName, symbolIDs);
