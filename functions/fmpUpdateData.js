@@ -75,17 +75,10 @@ async function updateCompaniesDaily(shortSymbols) {
     return;
   }
 
-  let existingCompanies;
-  const collection = fmp.collection(collectionName);
-  if (outdatedShortSymbols.length < ENV.maxFindInSize) {
-    const symbolIDs = outdatedShortSymbols.map(x => x._id);
-    existingCompanies = await collection.find({ _id: { $in: symbolIDs } });
-  } else {
-    existingCompanies = await collection.fullFind();
-  }
-
+  const existingCompanies = await collection.fullFind();
   const fields = ['_id'];
   const existingCompaniesByFields = existingCompanies.toDictionary(fields);
+
   await fetchCompanies(outdatedShortSymbols, async (companies, symbolIDs) => {
     await collection.safeUpdateMany(companies, existingCompaniesByFields, fields);
     await updateStatus(collectionName, symbolIDs);
@@ -114,20 +107,10 @@ async function updateDividends(shortSymbols) {
     return;
   }
 
-  let existingDividends;
-  const collection = fmp.collection(collectionName);
-  if (outdatedShortSymbols.length < ENV.maxFindInSize) {
-    const symbolIDs = outdatedShortSymbols.map(x => x._id);
-    existingDividends = await collection.find({ s: { $in: symbolIDs } });
-  } else {
-    existingDividends = await collection.fullFind();
-  }
-
+  const existingDividends = await collection.fullFind({}, { x: -1 });
   const existingDividendsBySymbolID = existingDividends.toBuckets('s');
   const fields = ['s', 'e', 'a'];
-  const existingDividendByFields = existingDividends
-    .sortedDeletedToTheStart()
-    .toDictionary(fields);
+  const existingDividendByFields = existingDividends.toDictionary(fields);
 
   const callbackBase = async (historical, dividends, symbolIDs) => {
     dividends = fixDividends(dividends, existingDividendsBySymbolID);
@@ -245,7 +228,7 @@ async function updateHistoricalPricesDaily(shortSymbols) {
   const query = { from: previousMonthStart, to: previousMonthEnd };
 
   const collection = fmp.collection(collectionName);
-  const existingHistoricalPrices = await collection({ d: { $gte: previousMonthStart, $lte: previousMonthEnd } });
+  const existingHistoricalPrices = await collection.fullFind({ d: { $gte: previousMonthStart, $lte: previousMonthEnd } }, { x: -1 });
 
   const fields = ['s', 'd'];
   const existingHistoricalPricesByFields = existingHistoricalPrices.toDictionary(fields);
@@ -278,19 +261,9 @@ async function updateSplitsDaily(shortSymbols) {
     return;
   }
   
-  let existingSplits;
-  const collection = fmp.collection(collectionName);
-  if (outdatedShortSymbols.length < ENV.maxFindInSize) {
-    const symbolIDs = outdatedShortSymbols.map(x => x._id);
-    existingSplits = await collection.find({ s: { $in: symbolIDs } });
-  } else {
-    existingSplits = await collection.fullFind();
-  }
-
+  const existingSplits = await collection.fullFind({}, { x: -1 });
   const fields = ['s', 'e'];
-  const existingSplitsByFields = existingSplits
-    .sortedDeletedToTheStart()
-    .toDictionary(fields);
+  const existingSplitsByFields = existingSplits.toDictionary(fields);
 
   await fetchSplits(outdatedShortSymbols, async (splits, symbolIDs) => {
     await collection.safeUpdateMany(splits, existingSplitsByFields, fields);

@@ -182,7 +182,9 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjectsDictionar
     // Sort deleted to the start so they will be overridden in the dictionary
     const sort = { x: -1 };
 
-    if (newObjects.length < ENV.maxFindInSize) {
+    // Use IN search if objects count is less than 10% of existing
+    const count = await this.count();
+    if (newObjects.length < count * 0.1) {
       console.log(`Old objects are undefined. Fetching them by '${fields}'.`);
       const find = getFindOperation(newObjects, fields);
       oldObjectsDictionary = await this
@@ -192,8 +194,7 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjectsDictionar
 
     } else {
       console.log(`Old objects are undefined. Fetching them by requesting all existing objects.`);
-      oldObjectsDictionary = await this.fullFind({});
-      oldObjectsDictionary = oldObjectsDictionary.sortedDeletedToTheStart();
+      oldObjectsDictionary = await this.fullFind({}, sort);
     }
 
     oldObjectsDictionary = oldObjectsDictionary.toDictionary(fields);
@@ -316,9 +317,13 @@ Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, fields, 
 /**
  * Bypass find limit of 50000 objects by fetching all results successively  
  */
-Object.prototype.fullFind = async function(find) {
+Object.prototype.fullFind = async function(find, sort) {
   if (find == null) {
     find = {};
+  }
+
+  if (sort == null) {
+    sort = { _id: 1 };
   }
 
   let objectsPage;
@@ -333,7 +338,7 @@ Object.prototype.fullFind = async function(find) {
       compositeFind = find;
     }
 
-    objectsPage = await this.find(compositeFind).sort({ _id: 1 }).limit(pageSize).toArray();
+    objectsPage = await this.find(compositeFind).sort(sort).limit(pageSize).toArray();
     objects.push(...objectsPage);
     console.logVerbose(`Full fetch objects length: ${objects.length}`);
   } while (objectsPage.length >= pageSize);
@@ -1895,7 +1900,6 @@ exports = function() {
   if (typeof ENV === 'undefined') {
     ENV = {
       maxBulkSize: 5000,
-      maxFindInSize: 1000,
     };
 
     Object.freeze(ENV);
