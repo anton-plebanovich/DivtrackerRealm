@@ -107,14 +107,18 @@ fetchCompanies = async function fetchCompanies(shortSymbols, callback) {
  * @param {Int} Limit Per ticker limit.
  * @returns {[Dividend]} Array of requested objects.
  */
-fetchDividends = async function fetchDividends(shortSymbols, limit, callback) {
+fetchDividends = async function fetchDividends(shortSymbols, from, callback) {
   throwIfEmptyArray(shortSymbols, `fetchDividends shortSymbols`);
 
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
   const queryParameters = {};
 
   // FMP have dividends history from 1973 year for some companies and we do not need so much at the moment
-  queryParameters.from = minFetchDate;
+  if (from == null) {
+    from =  minFetchDate;
+  }
+
+  queryParameters.from = from;
 
   // https://financialmodelingprep.com/api/v3/historical-price-full/stock_dividend/AAPL?from=2016-01-01&apikey=969387165d69a8607f9726e8bb52b901
   // https://financialmodelingprep.com/api/v3/historical-price-full/stock_dividend/AAPL,AAP?from=2016-01-01&apikey=969387165d69a8607f9726e8bb52b901
@@ -127,7 +131,7 @@ fetchDividends = async function fetchDividends(shortSymbols, limit, callback) {
     // 3k tickers (48744 records) map: 6.692
     // 3k tickers (48744 records) insert: 34.803
     144,
-    limit,
+    null,
     'historicalStockList',
     'historical',
     idByTicker,

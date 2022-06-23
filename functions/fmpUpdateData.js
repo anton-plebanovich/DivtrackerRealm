@@ -146,9 +146,13 @@ async function fetchAndUpdateDividends(outdatedShortSymbols) {
     await callbackBase(true, dividends, symbolIDs);
   };
 
+  // Not sure what is the update pattern for FMP dividends so just using 1 month ago for now
+  const from = Date.today();
+  from.setUTCMonth(-1);
+
   await Promise.all([
     fetchDividendsCalendar(outdatedShortSymbols, calendarCallback),
-    fetchDividends(outdatedShortSymbols, 1, historicalCallback)
+    fetchDividends(outdatedShortSymbols, from, historicalCallback)
   ]);
 }
 
