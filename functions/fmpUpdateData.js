@@ -109,10 +109,12 @@ async function updateDividends(shortSymbols) {
   }
 
   const collection = fmp.collection(collectionName)
-  const existingDividends = await collection.fullFind({}, { x: -1 });
+  const existingDividends = await collection.fullFind();
   const existingDividendsBySymbolID = existingDividends.toBuckets('s');
   const fields = ['s', 'e', 'a'];
-  const existingDividendByFields = existingDividends.toDictionary(fields);
+  const existingDividendByFields = existingDividends
+    .sortedDeletedToTheStart()
+    .toDictionary(fields);
 
   const callbackBase = async (historical, dividends, symbolIDs) => {
     dividends = fixDividends(dividends, existingDividendsBySymbolID);
@@ -230,10 +232,12 @@ async function updateHistoricalPricesDaily(shortSymbols) {
   const query = { from: previousMonthStart, to: previousMonthEnd };
 
   const collection = fmp.collection(collectionName);
-  const existingHistoricalPrices = await collection.fullFind({ d: { $gte: previousMonthStart, $lte: previousMonthEnd } }, { x: -1 });
+  const existingHistoricalPrices = await collection.fullFind({ d: { $gte: previousMonthStart, $lte: previousMonthEnd } });
 
   const fields = ['s', 'd'];
-  const existingHistoricalPricesByFields = existingHistoricalPrices.toDictionary(fields);
+  const existingHistoricalPricesByFields = existingHistoricalPrices
+    .sortedDeletedToTheStart()
+    .toDictionary(fields);
 
   await fetchHistoricalPrices(outdatedShortSymbols, query, async (historicalPrices, symbolIDs) => {
     await collection.safeUpdateMany(historicalPrices, existingHistoricalPricesByFields, fields);
@@ -264,9 +268,11 @@ async function updateSplitsDaily(shortSymbols) {
   }
   
   const collection = fmp.collection(collectionName)
-  const existingSplits = await collection.fullFind({}, { x: -1 });
+  const existingSplits = await collection.fullFind();
   const fields = ['s', 'e'];
-  const existingSplitsByFields = existingSplits.toDictionary(fields);
+  const existingSplitsByFields = existingSplits
+    .sortedDeletedToTheStart()
+    .toDictionary(fields);
 
   await fetchSplits(outdatedShortSymbols, async (splits, symbolIDs) => {
     await collection.safeUpdateMany(splits, existingSplitsByFields, fields);

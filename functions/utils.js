@@ -194,7 +194,8 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjectsDictionar
 
     } else {
       console.log(`Old objects are undefined. Fetching them by requesting all existing objects.`);
-      oldObjectsDictionary = await this.fullFind({}, sort);
+      oldObjectsDictionary = await this.fullFind();
+      oldObjectsDictionary = oldObjectsDictionary.sortedDeletedToTheStart();
     }
 
     oldObjectsDictionary = oldObjectsDictionary.toDictionary(fields);
@@ -316,14 +317,11 @@ Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, fields, 
 
 /**
  * Bypass find limit of 50000 objects by fetching all results successively  
+ * @note We do not allow `sort` parameter to prevent ambiguity between fetches which may cause holey or intersecting result.
  */
-Object.prototype.fullFind = async function(find, sort) {
+Object.prototype.fullFind = async function(find) {
   if (find == null) {
     find = {};
-  }
-
-  if (sort == null) {
-    sort = { _id: 1 };
   }
 
   let objectsPage;
@@ -338,7 +336,7 @@ Object.prototype.fullFind = async function(find, sort) {
       compositeFind = find;
     }
 
-    objectsPage = await this.find(compositeFind).sort(sort).limit(pageSize).toArray();
+    objectsPage = await this.find(compositeFind).sort({ _id: 1 }).limit(pageSize).toArray();
     objects.push(...objectsPage);
     console.logVerbose(`Full fetch objects length: ${objects.length}`);
   } while (objectsPage.length >= pageSize);
