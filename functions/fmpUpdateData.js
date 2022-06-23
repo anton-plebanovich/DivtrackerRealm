@@ -118,6 +118,7 @@ async function updateDividends(shortSymbols) {
 }
 
 async function fetchAndUpdateDividends(outdatedShortSymbols) {
+  const collectionName = 'dividends';
   const collection = fmp.collection(collectionName);
   const outdatedSymbolIDs = outdatedShortSymbols.map(x => x._id);
   const existingDividends = await collection.fullFind({ s: { $in: outdatedSymbolIDs } });
