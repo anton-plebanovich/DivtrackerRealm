@@ -5,6 +5,7 @@
 // https://docs.mongofmp.com/realm/mongodb/actions/collection.bulkWrite/
 
 /**
+ * Takes ~5 minutes for 9568 symbols
  * @example
  * exports();
  */
