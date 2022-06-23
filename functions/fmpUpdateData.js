@@ -108,8 +108,19 @@ async function updateDividends(shortSymbols) {
     return;
   }
 
+  // It takes too much time (~60s for 112k dividends) to get full dividends and prepare working context so instead we limit simultaneous symbols count
+  const chunkedOutdatedShortSymbols = outdatedShortSymbols.chunkBySize(1000);
+  for (const outdatedShortSymbols of chunkedOutdatedShortSymbols) {
+    await fetchAndUpdateDividends(outdatedShortSymbols)
+  }
+
+  await setUpdateDate(fmp, `${databaseName}-${collectionName}`);
+}
+
+async function fetchAndUpdateDividends(outdatedShortSymbols) {
   const collection = fmp.collection(collectionName);
-  const existingDividends = await collection.fullFind();
+  const outdatedSymbolIDs = outdatedShortSymbols.map(x => x._id);
+  const existingDividends = await collection.fullFind({ s: { $in: outdatedSymbolIDs } });
   const existingDividendsBySymbolID = existingDividends.toBuckets('s');
   const fields = ['s', 'e', 'a'];
   const existingDividendByFields = existingDividends
@@ -138,8 +149,6 @@ async function updateDividends(shortSymbols) {
     fetchDividendsCalendar(outdatedShortSymbols, calendarCallback),
     fetchDividends(outdatedShortSymbols, 1, historicalCallback)
   ]);
-
-  await setUpdateDate(fmp, `${databaseName}-${collectionName}`);
 }
 
 function fixDividends(dividends, existingDividendsBySymbolID) {
@@ -227,9 +236,12 @@ async function updateHistoricalPricesDaily(shortSymbols) {
     return;
   }
 
-  const previousMonthStart = Date.previousMonthStart().dayString();
-  const previousMonthEnd = Date.previousMonthEnd().dayString();
-  const query = { from: previousMonthStart, to: previousMonthEnd };
+  const previousMonthStart = Date.previousMonthStart();
+  const previousMonthStartString = previousMonthStart.dayString();
+
+  const previousMonthEnd = Date.previousMonthEnd();
+  const previousMonthEndString = previousMonthEnd.dayString();
+  const query = { from: previousMonthStartString, to: previousMonthEndString };
 
   const collection = fmp.collection(collectionName);
   const existingHistoricalPrices = await collection.fullFind({ d: { $gte: previousMonthStart, $lte: previousMonthEnd } });
