@@ -35,14 +35,14 @@ async function run() {
   await updateCompaniesDaily(shortSymbols)
     .mapErrorToSystem();
 
-  // await updateSplitsDaily(shortSymbols)
-  //   .mapErrorToSystem();
+  await updateSplitsDaily(shortSymbols)
+    .mapErrorToSystem();
 
-  // await updateDividends(shortSymbols)
-  //   .mapErrorToSystem();
+  await updateDividends(shortSymbols)
+    .mapErrorToSystem();
 
-  // await updateHistoricalPricesDaily(shortSymbols)
-  //   .mapErrorToSystem();
+  await updateHistoricalPricesDaily(shortSymbols)
+    .mapErrorToSystem();
 }
 
 //////////////////////////////////////////////////////////////////// Symbols
@@ -75,9 +75,19 @@ async function updateCompaniesDaily(shortSymbols) {
     return;
   }
 
+  let existingCompanies;
   const collection = fmp.collection(collectionName);
+  if (outdatedShortSymbols.length < ENV.maxFindInSize) {
+    const symbolIDs = outdatedShortSymbols.map(x => x._id);
+    existingCompanies = await collection.find({ _id: { $in: symbolIDs } });
+  } else {
+    existingCompanies = await collection.fullFind();
+  }
+
+  const fields = ['_id'];
+  const existingCompaniesByFields = existingCompanies.toDictionary(fields);
   await fetchCompanies(outdatedShortSymbols, async (companies, symbolIDs) => {
-    await collection.safeUpsertMany(companies, '_id');
+    await collection.safeUpdateMany(companies, existingCompaniesByFields, fields);
     await updateStatus(collectionName, symbolIDs);
     checkExecutionTimeoutAndThrow();
   });
@@ -232,9 +242,15 @@ async function updateHistoricalPricesDaily(shortSymbols) {
   const previousMonthStart = Date.previousMonthStart().dayString();
   const previousMonthEnd = Date.previousMonthEnd().dayString();
   const query = { from: previousMonthStart, to: previousMonthEnd };
+
   const collection = fmp.collection(collectionName);
+  const existingHistoricalPrices = await collection({ d: { $gte: previousMonthStart, $lte: previousMonthEnd } });
+
+  const fields = ['s', 'd'];
+  const existingHistoricalPricesByFields = existingHistoricalPrices.toDictionary(fields);
+
   await fetchHistoricalPrices(outdatedShortSymbols, query, async (historicalPrices, symbolIDs) => {
-    await collection.safeUpsertMany(historicalPrices, ['s', 'd']);
+    await collection.safeUpdateMany(historicalPrices, existingHistoricalPricesByFields, fields);
     await updateStatus(collectionName, symbolIDs);
     checkExecutionTimeoutAndThrow();
   });
@@ -261,9 +277,22 @@ async function updateSplitsDaily(shortSymbols) {
     return;
   }
   
+  let existingSplits;
   const collection = fmp.collection(collectionName);
+  if (outdatedShortSymbols.length < ENV.maxFindInSize) {
+    const symbolIDs = outdatedShortSymbols.map(x => x._id);
+    existingSplits = await collection.find({ s: { $in: symbolIDs } });
+  } else {
+    existingSplits = await collection.fullFind();
+  }
+
+  const fields = ['s', 'e'];
+  const existingSplitsByFields = existingSplits
+    .sortedDeletedToTheStart()
+    .toDictionary(fields);
+
   await fetchSplits(outdatedShortSymbols, async (splits, symbolIDs) => {
-    await collection.safeUpdateMany(splits, null, ['s', 'e']);
+    await collection.safeUpdateMany(splits, existingSplitsByFields, fields);
     await updateStatus(collectionName, symbolIDs);
     checkExecutionTimeoutAndThrow();
   });
