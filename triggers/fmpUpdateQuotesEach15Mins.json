@@ -10,7 +10,7 @@
     "event_processors": {
         "FUNCTION": {
             "config": {
-                "function_name": "updateQuotesV2"
+                "function_name": "fmpUpdateQuotes"
             }
         }
     }
