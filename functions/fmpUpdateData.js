@@ -109,7 +109,7 @@ async function updateDividends(shortSymbols) {
   }
 
   // It takes too much time (~60s for 112k dividends) to get full dividends and prepare working context so instead we limit simultaneous symbols count
-  const chunkedOutdatedShortSymbols = outdatedShortSymbols.chunkBySize(1000);
+  const chunkedOutdatedShortSymbols = outdatedShortSymbols.chunkedBySize(1000);
   for (const outdatedShortSymbols of chunkedOutdatedShortSymbols) {
     await fetchAndUpdateDividends(outdatedShortSymbols)
   }
