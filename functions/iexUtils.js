@@ -910,7 +910,7 @@ getOpenDate = _getOpenDate;
 ///////////////////////////////////////////////////////////////////////////////// UPDATE
 
 async function _setUpdateDate(_id, date) {
-  _throwIfUndefinedOrNull(_id, `_setUpdateDate _id`);
+  throwIfUndefinedOrNull(_id, `_setUpdateDate _id`);
   if (date == null) {
     date = new Date();
   }
