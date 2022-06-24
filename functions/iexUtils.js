@@ -93,7 +93,7 @@ async function _getShortSymbols(symbolIDs) {
   const shortSymbols = await symbolsCollection
     .find(
       { _id: { $in: symbolIDs } }, 
-      { _id: 1, t: 1 }
+      { _id: 1, c: 1, t: 1 }
     )
     .toArray();
 
@@ -171,7 +171,7 @@ fetchSymbols = async function fetchSymbols() {
  * @param {[ShortSymbol]} shortSymbols Short symbol models for which to fetch.
  * @returns {[Company]} Array of requested objects.
  */
- fetchCompanies = async function fetchCompanies(shortSymbols) {
+fetchCompanies = async function fetchCompanies(shortSymbols) {
   throwIfUndefinedOrNull(shortSymbols, `fetchCompanies shortSymbols`);
   if (!shortSymbols.length) { return []; }
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
@@ -219,7 +219,7 @@ fetchDividends = async function fetchDividends(shortSymbols, isFuture, range, li
  * @param {[ShortSymbol]} shortSymbols Short symbol models for which to fetch.
  * @returns {[PreviousDayPrice]} Array of requested objects.
  */
- async function _fetchPreviousDayPrices(shortSymbols) {
+async function _fetchPreviousDayPrices(shortSymbols) {
   throwIfUndefinedOrNull(shortSymbols, `fetchPreviousDayPrices shortSymbols`);
   if (!shortSymbols.length) { return []; }
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
@@ -237,7 +237,7 @@ fetchPreviousDayPrices = _fetchPreviousDayPrices;
  * @param {string} range Range to fetch.
  * @returns {[HistoricalPrice]} Array of requested objects.
  */
- fetchHistoricalPrices = async function fetchHistoricalPrices(shortSymbols, range) {
+fetchHistoricalPrices = async function fetchHistoricalPrices(shortSymbols, range) {
    throwIfUndefinedOrNull(shortSymbols, `fetchHistoricalPrices shortSymbols`);
    if (!shortSymbols.length) { return []; }
 
@@ -262,7 +262,7 @@ fetchPreviousDayPrices = _fetchPreviousDayPrices;
  * @param {[ShortSymbol]} shortSymbols Short symbol models for which to fetch.
  * @returns {[Quote]} Array of requested objects.
  */
- fetchQuotes = async function fetchQuotes(shortSymbols) {
+fetchQuotes = async function fetchQuotes(shortSymbols) {
   throwIfUndefinedOrNull(shortSymbols, `fetchQuotes shortSymbols`);
   if (!shortSymbols.length) { return []; }
   const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
@@ -278,7 +278,7 @@ fetchPreviousDayPrices = _fetchPreviousDayPrices;
  * @param {string} range Range to fetch.
  * @returns {[Split]} Array of requested objects.
  */
- fetchSplits = async function fetchSplits(shortSymbols, range, isFuture) {
+fetchSplits = async function fetchSplits(shortSymbols, range, isFuture) {
   throwIfUndefinedOrNull(shortSymbols, `fetchSplits shortSymbols`);
   throwIfUndefinedOrNull(isFuture, `fetchSplits isFuture`);
   if (!shortSymbols.length) { return []; }
@@ -794,7 +794,7 @@ function _fixSplits(iexSplits, symbolID) {
     iexSplits = _removeDuplicatedIEXSplits(iexSplits);
 
     return iexSplits
-      .filter(iexSplits => iexSplits.exDate >= minFetchDate)
+      .filter(iexSplit => iexSplit.exDate >= minFetchDate)
       .map(iexSplit => {
         const split = {};
         split.setIfNotNullOrUndefined('e', _getOpenDate(iexSplit.exDate));
@@ -816,7 +816,6 @@ function _fixSplits(iexSplits, symbolID) {
 
 fixSplits = _fixSplits;
 
-// TODO: Check 'MCHP' and 'NYC' fetches
 function _removeDuplicatedIEXSplits(iexSplits) {
   const buckets = iexSplits.toBuckets('refid');
   const result = [];

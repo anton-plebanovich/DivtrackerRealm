@@ -30,7 +30,7 @@ async function _getShortSymbols() {
   const shortSymbols = await symbolsCollection
     .find(
       { e: null },
-      { _id: 1, t: 1, c: 1 }
+      { _id: 1, c: 1, t: 1 }
     )
     .toArray();
 
@@ -663,6 +663,9 @@ const possiblyIrregularMinTimeInterval = 7 * 24 * 3600 * 1000;
 // 13 days
 const possiblyIrregularMaxTimeInterval = 13 * 24 * 3600 * 1000;
 
+// Dividend series min length. Lower length series frequency will be set to undefiend
+const minDividendSeriesLenght = 3;
+
 // TODO: Improve that logic to take into account whole context and so better series detection instead of just compare adjacent dividends.
 // TODO: We should use parser approach here the same way we did for CSV normalizer to have better flexibility.
 function _updateDividendsFrequency(dividends) {
@@ -670,15 +673,36 @@ function _updateDividendsFrequency(dividends) {
 
   const nonDeletedDividends = dividends.filter(x => x.x != true);
 
-  // We do not try to determine frequency of series lower than 3.
-  if (nonDeletedDividends.length < 3) {
+  // We do not try to determine frequency of series lower than min.
+  if (nonDeletedDividends.length < minDividendSeriesLenght) {
     nonDeletedDividends.forEach(dividend => dividend.f = 'u');
     return dividends;
   }
 
+  const series = [];
+  function updateSeries(dividend) {
+    const newFrequency = dividend?.f;
+
+    // Ignore irregular frequency in series
+    if (newFrequency === 'i') {
+      return;
+    }
+
+    const isSeriesEnd = newFrequency != series[0]?.f;
+    if (isSeriesEnd) {
+      if (series.length < minDividendSeriesLenght) {
+        series.forEach(x => x.f = 'u');
+      }
+      series.length = 0;
+    }
+
+    if (dividend != null) {
+      series.push(dividend);
+    }
+  }
+
   const mainFrequency = getMainFrequency(nonDeletedDividends);
   for (const [i, dividend] of nonDeletedDividends.entries()) {
-    
     let iPrev = 1;
     let prevDividend;
     while (i - iPrev >= 0 && prevDividend == null) {
@@ -691,6 +715,9 @@ function _updateDividendsFrequency(dividends) {
 
       iPrev++;
     }
+
+    // Prev dividend has computed frequency so we use it
+    updateSeries(prevDividend);
 
     let iNext = 1;
     let nextDividend;
@@ -718,7 +745,6 @@ function _updateDividendsFrequency(dividends) {
 
       if (isPossiblyIrregular) {
         // Try to identify irregular dividends
-        // TODO: if main frequency is 'm' we need to lower weekly range
         if (nextFrequency === 'w') {
           const thisDiff = math_bigger_times(dividend.a, prevDividend.a);
           const nextDiff = math_bigger_times(nextDividend.a, prevDividend.a);
@@ -839,6 +865,10 @@ function _updateDividendsFrequency(dividends) {
       dividend.f = 'u'; // The only record
     }
   }
+
+  // Add last and finish series
+  updateSeries(nonDeletedDividends[nonDeletedDividends.length - 1]);
+  updateSeries(null);
 
   if (foundIrregular) {
     _updateDividendsFrequency(dividends.filter(x => x.f !== 'i'));
@@ -1094,7 +1124,7 @@ function _fixFMPSymbols(fmpSymbols) {
     return fmpSymbols
       .filterNullAndUndefined()
       // Limit to only supported types
-      .filter(fmpSymbol => fmpSymbol.exchangeShortName === "MCX" || fmpSymbol.type === "fund")
+      .filter(fmpSymbol => fmpSymbol.exchangeShortName === "MCX" || fmpSymbol.type === "fund" || fmpSymbol.type === "etf")
       .map(fmpSymbol => {
         const symbol = {};
         symbol.setIfNotNullOrUndefined('c', fmpSymbol.exchangeShortName);
@@ -1109,9 +1139,6 @@ function _fixFMPSymbols(fmpSymbols) {
     return [];
   }
 };
-
-// TODO: Fix FMP and IEX open and close date computations. They should instead of harcoded exchange work with passed exchange. Migrations.
-// TODO: Also check if payment and declared date for dividends **MUST** be adjusted. Leave as is if possible.
 
 /** 
  * First parameter: Date in the "yyyy-mm-dd" or timestamp or Date format, e.g. "2020-03-27" or '1633046400000' or Date.

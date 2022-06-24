@@ -759,6 +759,20 @@ Date.previousMonthStart = function() {
 };
 
 /**
+ * @returns {Date} Previous month end date in UTC.
+ */
+Date.previousMonthEnd = function() {
+  const date = new Date();
+  date.setUTCDate(0);
+  date.setUTCHours(23);
+  date.setUTCMinutes(59);
+  date.setUTCSeconds(59);
+  date.setUTCMilliseconds(999);
+
+  return date;
+};
+
+/**
  * @param {Date} otherDate Other date.
  * @returns {number} absolute amount of days between source date and other date.
  */
@@ -1278,6 +1292,15 @@ function extendRuntime() {
    */
   BSON.ObjectId.prototype.hex = function() {
     return this.toString().substring(8);
+  }
+
+  /**
+   * Returns time part from `BSON.ObjectId` as `Date`.
+   */
+  BSON.ObjectId.prototype.date = function() {
+    const timeHexString = this.toString().substring(0, 8);
+    const timestamp = parseInt(timeHexString, 16) * 1000;
+    return new Date(timestamp);
   }
 
   runtimeExtended = true;

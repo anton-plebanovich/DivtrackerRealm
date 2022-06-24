@@ -34,7 +34,7 @@
         "private": true
     },
     {
-        "name": "fmpUpdatePrices",
+        "name": "fmpUpdateHistoricalPrices",
         "private": true
     },
     {
