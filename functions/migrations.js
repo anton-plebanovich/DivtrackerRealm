@@ -16,8 +16,8 @@ exports = async function(migration, arg) {
   logData = true;
 
   try {
-    if (migration === 'fetch_refid_for_IEX_dividends') {
-      await fetch_refid_for_IEX_dividends();
+    if (migration === 'fetch_refid_for_past_IEX_dividends') {
+      await fetch_refid_for_past_IEX_dividends();
     } else {
       throw `Unexpected migration: ${migration}`;
     }
