@@ -10,12 +10,12 @@
 - After deployment is finished we should check migrations if any using `production` environment data. To replace `stage` data with `production` data we follow steps below:
   - Go to `Deployment` -> `Configuration` and tap `Disable Drafts`, confirm by tapping `Disable Drafts` in the popup
   - Go to `Device Sync` and tap `Terminate Sync` confirm by typing `Terminate sync` in the field and tapping `Terminate Sync`
-  - Execute command: `dt backup --environment production --verbose && dt restore --environment stage --backup-source-environment production --data-collections --verbose`
+  - Execute command: `dt backup --environment production --verbose && dt erase-environment -e stage -d divtracker-v2 -c transactions && dt restore --environment stage --backup-source-environment production --data-collections --yes --verbose`
   - Enable sync back using default parameters. Use `{"%%partition":{"%in":["%%user.id",null]}}` for `Read Permissions` and `{"%%partition":"%%user.id"}` for `Write Permissions`
   - Go to `Deployment` -> `Configuration` and tap `Enable Automatic Deployment`
 - If migrations looks good we also perform the last round of manual testing with the `release` app version here.
 - If manual testing succeeded and we no longer need the `stage` environment we should erase data.
-- We prepare to deploy to the `production` but we must stick to the 9-12 GMT time window on weekends.
+- We prepare to deploy to the `production` but we must stick to the 9:15-12:00 GMT time window on weekends.
 
 # Hotfix release flow
 
@@ -42,6 +42,7 @@ All the same as for normal flow except we don't have the required time window an
 - We should not have any `testXXX` function deployed here so they should be removed during merge if needed.
 - IEX data comes from the IEX Production so we should have the same data as in the `production` environment but in less volume.
 - The team is working here so if something looks wrong it should be reported immediately and fixed.
+- Erase command: `dt backup --environment sandbox-anton --verbose && dt erase-environment --environment sandbox && dt restore --environment sandbox --backup-source-environment sandbox-anton --minimum --do-not-drop --yes --verbose`
 
 ### Stage
 

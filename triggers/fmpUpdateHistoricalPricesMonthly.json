@@ -1,16 +1,16 @@
 {
     "id": "6185ffbd6db886ed8f037b25",
-    "name": "fmpUpdatePricesMonthly",
+    "name": "fmpUpdateHistoricalPricesMonthly",
     "type": "SCHEDULED",
     "config": {
-        "schedule": "9 23 1 * *",
+        "schedule": "9 23 1,2,3 * *",
         "skip_catchup_events": true
     },
-    "disabled": false,
+    "disabled": true,
     "event_processors": {
         "FUNCTION": {
             "config": {
-                "function_name": "fmpUpdateCompanies"
+                "function_name": "fmpUpdateHistoricalPrices"
             }
         }
     }
