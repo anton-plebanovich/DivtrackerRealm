@@ -1697,6 +1697,8 @@ async function _httpGET(baseURL, api, queryParameters) {
   const url = _getURL(baseURL, api, queryParameters);
   console.log(`Request with URL: ${url}`);
 
+  _checkExecutionTimeoutAndThrow(115);
+
   try {
     const response = await context.http.get({ url: url });
     return new _NetworkResponse(url, response);
