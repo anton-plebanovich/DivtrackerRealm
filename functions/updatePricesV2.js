@@ -84,5 +84,5 @@
   if (date > new Date()) {
     date.setUTCDate(date.getUTCDate() - 1)
   }
-  await setUpdateDate("prices", date);
+  await setUpdateDate(db, "prices", date);
 };
