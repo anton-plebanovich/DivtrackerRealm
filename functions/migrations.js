@@ -167,7 +167,7 @@ async function update_IEX_dividends(dividends, oldDividends) {
   
   // Try to prevent 'pending promise returned that will never resolve/reject uncaught promise rejection: &{0xc1bac2aa90 0xc1bac2aa80}' error by splitting batch operations to chunks
   const chunkSize = 1000;
-  const chunkedNewDividends = dividends.chunked(chunkSize);
+  const chunkedNewDividends = dividends.chunkedBySize(chunkSize);
   for (const [i, newDividendsChunk] of chunkedNewDividends.entries()) {
     console.log(`Updating dividends: ${i * chunkSize + newDividendsChunk.length}/${dividends.length}`);
     const bulk = collection.initializeUnorderedBulkOp();
