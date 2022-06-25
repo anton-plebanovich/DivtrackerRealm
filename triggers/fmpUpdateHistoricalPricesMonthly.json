@@ -3,7 +3,7 @@
     "name": "fmpUpdateHistoricalPricesMonthly",
     "type": "SCHEDULED",
     "config": {
-        "schedule": "9 23 1,2,3 * *",
+        "schedule": "9 2 1,2,3 * *",
         "skip_catchup_events": true
     },
     "disabled": false,

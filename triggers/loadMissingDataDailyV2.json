@@ -3,7 +3,7 @@
     "name": "loadMissingDataDailyV2",
     "type": "SCHEDULED",
     "config": {
-        "schedule": "58 8 * * *",
+        "schedule": "58 11 * * *",
         "skip_catchup_events": true
     },
     "disabled": false,
