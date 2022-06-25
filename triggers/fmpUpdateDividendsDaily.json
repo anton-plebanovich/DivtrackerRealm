@@ -3,7 +3,7 @@
     "name": "fmpUpdateDividendsDaily",
     "type": "SCHEDULED",
     "config": {
-        "schedule": "3 23 * * *",
+        "schedule": "3 3 * * *",
         "skip_catchup_events": true
     },
     "disabled": false,
