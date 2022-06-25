@@ -1,8 +1,13 @@
 
 # ################################################## P L A N N E D ##############################################################
 
+
+
+# ################################################## O N G O I N G ##############################################################
+
 # 2022-06-XX | FMP OTCs support
 
+- Make sure trigger times are correct
 - Deploy the new server with all FMP triggers disabled
 - Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument fetch_new_symbols_for_fmp_tmp --verbose`
 - Execute `dt call-realm-function --environment sandbox-anton --function fmpLoadMissingData --argument fmp-tmp --retry-on-error 'execution time limit'`
@@ -30,9 +35,9 @@
 - Drop `fmp-tmp` database
 - Enable all previously disabled triggers
 
-# ################################################## O N G O I N G ##############################################################
+# ################################################## D O N E ##############################################################
 
-# 2022-06-XX | Missing IEX splits, FMP historical prices, FMP ETFs support
+# 2022-06-24 | Missing IEX splits, FMP historical prices, FMP ETFs support
 
 - Deploy the new server with all FMP triggers disabled
 - Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument refetch_IEX_splits --verbose`
@@ -67,8 +72,6 @@
 - Execute `dt call-realm-function --environment sandbox-anton --function checkTransactionsV2 --verbose`
 - Drop `fmp-tmp` database
 - Enable all previously disabled triggers
-
-# ################################################## D O N E ##############################################################
 
 # 2022-06-18 | Old format date, IEX calendar splits, and refid for dividends
  
