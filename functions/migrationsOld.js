@@ -519,6 +519,7 @@ function fix_IEX_dividends_with_duplicates(iexDividends, symbolID) {
     return [];
   }
 }
+
 ////////////////////////////////////////////////////// 2022-06-18 Duplicated IEX dividends deletion
 
 async function delete_duplicated_IEX_dividends() {
