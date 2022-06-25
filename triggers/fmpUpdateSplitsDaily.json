@@ -3,7 +3,7 @@
     "name": "fmpUpdateSplitsDaily",
     "type": "SCHEDULED",
     "config": {
-        "schedule": "5 23 * * *",
+        "schedule": "5 1 * * *",
         "skip_catchup_events": true
     },
     "disabled": false,

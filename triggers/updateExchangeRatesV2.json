@@ -3,7 +3,7 @@
     "name": "updateExchangeRatesV2",
     "type": "SCHEDULED",
     "config": {
-        "schedule": "7 9 * * *",
+        "schedule": "7 11 * * *",
         "skip_catchup_events": true
     },
     "disabled": false,

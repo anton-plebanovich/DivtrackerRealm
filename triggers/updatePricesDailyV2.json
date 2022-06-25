@@ -3,7 +3,7 @@
     "name": "updatePricesDailyV2",
     "type": "SCHEDULED",
     "config": {
-        "schedule": "9 9 * * 2-6",
+        "schedule": "9 11 * * 2-6",
         "skip_catchup_events": true
     },
     "disabled": false,

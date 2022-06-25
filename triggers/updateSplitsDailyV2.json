@@ -3,7 +3,7 @@
     "name": "updateSplitsDailyV2",
     "type": "SCHEDULED",
     "config": {
-        "schedule": "5 9 * * *",
+        "schedule": "5 11 * * *",
         "skip_catchup_events": true
     },
     "disabled": false,
