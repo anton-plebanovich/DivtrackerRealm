@@ -3,7 +3,7 @@
     "name": "fmpUpdateQuotesEach15Mins",
     "type": "SCHEDULED",
     "config": {
-        "schedule": "0,15,30,45 * * * *",
+        "schedule": "2,17,32,47 * * * *",
         "skip_catchup_events": true
     },
     "disabled": false,

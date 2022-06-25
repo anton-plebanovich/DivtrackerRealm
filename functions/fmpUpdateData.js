@@ -148,6 +148,7 @@ async function fetchAndUpdateDividends(outdatedShortSymbols) {
   };
 
   // Not sure what is the update pattern for FMP dividends so just using 1 month ago for now
+  // NOTE: Might be 2 days ago
   const from = Date.today();
   from.setUTCMonth(from.getUTCMonth() - 1);
 

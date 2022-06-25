@@ -3,7 +3,7 @@
     "name": "fmpUpdateData12TimesADay",
     "type": "SCHEDULED",
     "config": {
-        "schedule": "2,4,6,8,10,12,17,19,21,23,25,27 23 * * *",
+        "schedule": "2,4,6,8,10,12,17,19,21,23,25,27 0 * * *",
         "skip_catchup_events": true
     },
     "disabled": false,

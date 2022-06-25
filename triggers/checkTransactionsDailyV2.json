@@ -3,7 +3,7 @@
     "name": "checkTransactionsDailyV2",
     "type": "SCHEDULED",
     "config": {
-        "schedule": "0 9 * * *",
+        "schedule": "0 10 * * *",
         "skip_catchup_events": true
     },
     "disabled": false,
