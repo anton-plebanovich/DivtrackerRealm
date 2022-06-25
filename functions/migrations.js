@@ -74,6 +74,78 @@ async function fetch_refid_for_past_IEX_dividends() {
   await find_and_update_IEX_dividends(pastDividends, find);
 }
 
+async function fetch_IEX_dividends_with_duplicates(shortSymbols, isFuture, range, limit) {
+  throwIfUndefinedOrNull(shortSymbols, `fetchDividends shortSymbols`);
+  throwIfUndefinedOrNull(isFuture, `fetchDividends isFuture`);
+  if (!shortSymbols.length) { return []; }
+
+  if (range == null) {
+    range = defaultRange;
+  }
+
+  const [tickers, idByTicker] = getTickersAndIDByTicker(shortSymbols);
+
+  const parameters = { range: range };
+  if (isFuture) {
+    parameters.calendar = 'true';
+  }
+  if (limit != null) {
+    parameters.limit = limit;
+  }
+  
+  // https://cloud.iexapis.com/stable/stock/market/batch?token=pk_9f1d7a2688f24e26bb24335710eae053&types=dividends&symbols=AAPL,AAP&range=6y&calendar=true
+  // https://cloud.iexapis.com/stable/stock/market/batch?token=pk_9f1d7a2688f24e26bb24335710eae053&types=dividends&symbols=AAPL,AAP&range=6y
+  // https://sandbox.iexapis.com/stable/stock/market/batch?token=Tpk_581685f711114d9f9ab06d77506fdd49&types=dividends&symbols=AAPL,AAP&range=6y&calendar=true
+  // https://sandbox.iexapis.com/stable/stock/market/batch?token=Tpk_581685f711114d9f9ab06d77506fdd49&types=dividends&symbols=AAPL,AAP&range=6y
+  return await iexFetchBatchAndMapArray('dividends', tickers, idByTicker, fix_IEX_dividends_with_duplicates, parameters);
+}
+
+function fix_IEX_dividends_with_duplicates(iexDividends, symbolID) {
+  try {
+    throwIfUndefinedOrNull(iexDividends, `fixDividendsWithDuplicates iexDividends`);
+    throwIfUndefinedOrNull(symbolID, `fixDividendsWithDuplicates uniqueID`);
+    if (!iexDividends.length) { 
+      console.logVerbose(`IEX dividends are empty for ${symbolID}. Nothing to fix.`);
+      return []; 
+    }
+
+    console.logVerbose(`Mapping '${iexDividends.length}' IEX dividends for ${symbolID}`);
+    const dividends = iexDividends
+      .filterNullAndUndefined()
+      .map(iexDividend => {
+        const dividend = {};
+        dividend.d = getOpenDate(iexDividend.declaredDate);
+        dividend.e = getOpenDate(iexDividend.exDate);
+        dividend.p = getOpenDate(iexDividend.paymentDate);
+        dividend.i = iexDividend.refid;
+        dividend.s = symbolID;
+
+        if (iexDividend.amount != null) {
+          dividend.a = BSON.Double(iexDividend.amount);
+        }
+
+        // We add only the first letter of a frequency
+        if (iexDividend.frequency != null) {
+          dividend.f = iexDividend.frequency.charAt(0);
+        }
+    
+        // We do not add `USD` frequencies to the database.
+        if (iexDividend.currency != null && iexDividend.currency !== "USD") {
+          dividend.c = iexDividend.currency.toUpperCase();
+        }
+    
+        return dividend;
+      });
+
+    console.logVerbose(`Returning '${dividends.length}' dividends for ${symbolID}`);
+    return dividends;
+
+  } catch(error) {
+    console.error(`Unable to map dividends: ${error}`);
+    return [];
+  }
+}
+
 async function find_and_update_IEX_dividends(dividends, find) {
   const collection = db.collection("dividends");
   let oldDividends = await collection.fullFind(find);
