@@ -293,7 +293,11 @@ async function updateSplitsDaily(shortSymbols) {
     .sortedDeletedToTheStart()
     .toDictionary(fields);
 
-  await fetchSplits(outdatedShortSymbols, async (splits, symbolIDs) => {
+  // Not sure what is the update pattern for FMP splits so just using 1 month ago for now
+  const from = Date.today();
+  from.setUTCMonth(from.getUTCMonth() - 1);
+
+  await fetchSplits(outdatedShortSymbols, from, async (splits, symbolIDs) => {
     await collection.safeUpdateMany(splits, existingSplitsByFields, fields);
     await updateStatus(collectionName, symbolIDs);
     checkExecutionTimeoutAndThrow();

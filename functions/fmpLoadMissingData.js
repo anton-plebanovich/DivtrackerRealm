@@ -167,7 +167,7 @@ async function loadMissingSplits(shortSymbols) {
     return;
   }
   
-  await fetchSplits(missingShortSymbols, async (splits, symbolIDs) => {
+  await fetchSplits(missingShortSymbols, null, async (splits, symbolIDs) => {
     await collection.safeInsertMissing(splits, ['s', 'e']);
     await updateStatus(collectionName, symbolIDs);
     checkExecutionTimeoutAndThrow();
