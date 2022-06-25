@@ -21,7 +21,7 @@ exports = async function(migration, arg) {
     if (migration === 'fetch_new_symbols_for_fmp_tmp') {
       await fetch_new_symbols_for_fmp_tmp();
     } else if (migration === 'fetch_refid_for_IEX_dividends') {
-      await fetch_refid_for_past_IEX_dividends();
+      await fetch_refid_for_IEX_dividends();
     } else {
       throw `Unexpected migration: ${migration}`;
     }
