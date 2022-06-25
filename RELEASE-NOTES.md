@@ -8,7 +8,7 @@
 # 2022-06-XX | IEX dividends refid refetch
 
 - Deploy the new server
-- Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument fetch_refid_for_IEX_dividends --verbose`
+- Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument fetch_refid_for_past_IEX_dividends --verbose`
 - Check `divtracker-v2.dividends` using `{ i: null }`
 - Execute `dt check-dividends --environment sandbox-anton`
 
