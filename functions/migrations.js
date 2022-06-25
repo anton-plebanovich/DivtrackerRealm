@@ -16,16 +16,45 @@ exports = async function(migration, arg) {
   logData = true;
 
   try {
-    if (migration === 'fetch_refid_for_past_IEX_dividends') {
+    console.log(`Performing '${migration}' migration`);
+
+    if (migration === 'fetch_new_symbols_for_fmp_tmp') {
+      await fetch_new_symbols_for_fmp_tmp();
+    } else if (migration === 'fetch_refid_for_past_IEX_dividends') {
       await fetch_refid_for_past_IEX_dividends();
     } else {
       throw `Unexpected migration: ${migration}`;
     }
+
+    console.log(`SUCCESS!`);
     
   } catch(error) {
     console.error(error);
+    console.error(`FAILURE!`);
   }
 };
+
+////////////////////////////////////////////////////// 2022-06-XX
+
+async function fetch_new_symbols_for_fmp_tmp() {
+  context.functions.execute("fmpUtils");
+  
+  const collection = fmp.collection("symbols");
+  const symbols = await collection.fullFind();
+  const symbolByTicker = symbols.toDictionary('t');
+  console.log(`Existing symbols: ${symbols.length}`);
+
+  const fetchedSymbols = await fetchSymbols();
+  console.log(`Fetched symbols: ${fetchedSymbols.length}`);
+
+  const newSymbols = fetchedSymbols.filter(x => symbolByTicker[x.t] == null);
+  console.log(`New symbols: ${newSymbols.length}`);
+
+  const tmpCollection = atlas.db('fmp-tmp').collection("symbols");
+  await tmpCollection.insertMany(newSymbols);
+}
+
+////////////////////////////////////////////////////// 2022-06-XX
 
 async function fetch_refid_for_past_IEX_dividends() {
   context.functions.execute("iexUtils");
@@ -138,7 +167,7 @@ async function update_IEX_dividends(dividends, oldDividends) {
   
   // Try to prevent 'pending promise returned that will never resolve/reject uncaught promise rejection: &{0xc1bac2aa90 0xc1bac2aa80}' error by splitting batch operations to chunks
   const chunkSize = 1000;
-  const chunkedNewDividends = dividends.chunked(chunkSize);
+  const chunkedNewDividends = dividends.chunkedBySize(chunkSize);
   for (const [i, newDividendsChunk] of chunkedNewDividends.entries()) {
     console.log(`Updating dividends: ${i * chunkSize + newDividendsChunk.length}/${dividends.length}`);
     const bulk = collection.initializeUnorderedBulkOp();

@@ -2,6 +2,7 @@
 // utils.js
 
 // https://www.mongodb.com/docs/manual/reference/method/cursor.sort/
+// 'uncaught promise rejection' - happens when there is async work executed without `await` that throw an error.
 
 ///////////////////////////////////////////////////////////////////////////////// MATH
 
@@ -77,7 +78,8 @@ Object.prototype.safeInsertMissing = async function(newObjects, fields) {
 
   fields = normalizeFields(fields);
   
-  const bulk = this.initializeUnorderedBulkOp();
+  let bulk = this.initializeUnorderedBulkOp();
+  let i = 0;
   for (const newObject of newObjects) {
     const find = fields.reduce((find, field) => {
       return Object.assign(find, { [field]: newObject[field] });
@@ -87,48 +89,71 @@ Object.prototype.safeInsertMissing = async function(newObjects, fields) {
       .find(find)
       .upsert()
       .updateOne({ $setOnInsert: newObject });
+
+    i++;
+
+    // Try to prevent 'pending promise returned that will never resolve/reject uncaught promise rejection: &{0xc1bac2aa90 0xc1bac2aa80}' error by splitting batch operations to chunks
+    if (i === ENV.maxBulkSize) {
+      console.log(`Too much bulk changes. Executing collected ${ENV.maxBulkSize}.`)
+      i = 0
+      await bulk.safeExecute();
+      bulk = this.initializeUnorderedBulkOp();
+    }
   }
 
-  return await bulk.safeExecute();
+  await bulk.safeExecute();
 };
 
-Object.prototype.safeUpsertMany = async function(newObjects, field, setUpdateDate) {
+Object.prototype.safeUpsertMany = async function(newObjects, fields, setUpdateDate) {
   _throwIfNotArray(newObjects, `Please pass new objects array as the first argument. safeUpsertMany`);
   if (newObjects.length === 0) {
     console.log(`New objects array is empty. Nothing to upsert.`);
     return;
   }
 
-  if (field == null) {
-    field = "_id";
-  }
+  fields = normalizeFields(fields);
 
   if (setUpdateDate == null) {
     setUpdateDate = true;
   }
 
-  const bulk = this.initializeUnorderedBulkOp();
+  let bulk = this.initializeUnorderedBulkOp();
+  let i = 0;
   for (const newObject of newObjects) {
-    // https://docs.mongodb.com/manual/reference/operator/update/currentDate/
+    const find = fields.reduce((find, field) => {
+      return Object.assign(find, { [field]: newObject[field] });
+    }, {});
+
     const update = { $set: newObject };
     if (setUpdateDate == true) {
       update.$currentDate = { u: true };
     }
 
     bulk
-      .find({ [field]: newObject[field] })
+      .find(find)
       .upsert()
       .updateOne(update);
+
+    i++;
+
+    // Try to prevent 'pending promise returned that will never resolve/reject uncaught promise rejection: &{0xc1bac2aa90 0xc1bac2aa80}' error by splitting batch operations to chunks
+    if (i === ENV.maxBulkSize) {
+      console.log(`Too much bulk changes. Executing collected ${ENV.maxBulkSize}.`)
+      i = 0
+      await bulk.safeExecute();
+      bulk = this.initializeUnorderedBulkOp();
+    }
   }
 
-  return await bulk.safeExecute();
+  await bulk.safeExecute();
 };
 
 /**
  * Safely computes and executes update operation from old to new objects on a collection.
  * @note Marked as deleted records `x === true` can not be restored using this method.
+ * @param {array|object|null} oldObjectsDictionary Old object array, already created old objects dictionary or just `null`.
  */
-Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields, setUpdateDate, insertMissing) {
+Object.prototype.safeUpdateMany = async function(newObjects, oldObjectsDictionary, fields, setUpdateDate, insertMissing) {
   _throwIfNotArray(newObjects, `Please pass new objects array as the first argument. safeUpdateMany`);
   if (newObjects.length === 0) {
     console.log(`New objects array is empty. Nothing to update.`);
@@ -153,28 +178,37 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields,
     _logAndThrow(`${invalidObjectsLength} of ${newObjects.length} new objects do not contain required '${fields}' fields`);
   }
 
-  if (oldObjects == null) {
+  if (oldObjectsDictionary == null) {
     // Sort deleted to the start so they will be overridden in the dictionary
     const sort = { x: -1 };
 
-    if (newObjects.length < 1000) {
+    // Use IN search if objects count is less than 10% of existing
+    const count = await this.count();
+    if (newObjects.length < count * 0.1) {
       console.log(`Old objects are undefined. Fetching them by '${fields}'.`);
       const find = getFindOperation(newObjects, fields);
-      oldObjects = await this
+      oldObjectsDictionary = await this
         .find(find)
         .sort(sort)
         .toArray();
 
     } else {
       console.log(`Old objects are undefined. Fetching them by requesting all existing objects.`);
-      oldObjects = await this.fullFind({});
-      oldObjects = oldObjects.sortedDeletedToTheStart();
+      oldObjectsDictionary = await this.fullFind();
+      oldObjectsDictionary = oldObjectsDictionary.sortedDeletedToTheStart();
     }
+
+    oldObjectsDictionary = oldObjectsDictionary.toDictionary(fields);
+
+  } else if (Object.prototype.toString.call(oldObjectsDictionary) === '[object Array]') {
+    oldObjectsDictionary = oldObjectsDictionary.sortedDeletedToTheStart();
+    oldObjectsDictionary = oldObjectsDictionary.toDictionary(fields);
+
   } else {
-    oldObjects = oldObjects.sortedDeletedToTheStart();
+    _throwIfNotObject(oldObjectsDictionary, `Old objects should be of an Array or Object type`);
   }
 
-  if (!oldObjects?.length) {
+  if (!Object.keys(oldObjectsDictionary).length) {
     if (insertMissing) {
       console.log(`No old objects. Just inserting new objects.`);
       return await this.insertMany(newObjects);
@@ -184,7 +218,6 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields,
     }
   }
 
-  const dictionary = oldObjects.toDictionary(fields);
   let bulk = this.initializeUnorderedBulkOp();
   let i = 0;
   for (const newObject of newObjects) {
@@ -194,16 +227,16 @@ Object.prototype.safeUpdateMany = async function(newObjects, oldObjects, fields,
       } else {
         return null;
       }
-    }, dictionary);
+    }, oldObjectsDictionary);
 
     const changed = bulk.findAndUpdateOrInsertIfNeeded(newObject, existingObject, fields, setUpdateDate, insertMissing);
     if (changed) {
       i++;
     }
 
-  // Try to prevent 'pending promise returned that will never resolve/reject uncaught promise rejection: &{0xc1bac2aa90 0xc1bac2aa80}' error by splitting batch operations to chunks
-    if (i === 1000) {
-      console.log('Too much bulk changes. Executing collected 1000.')
+    // Try to prevent 'pending promise returned that will never resolve/reject uncaught promise rejection: &{0xc1bac2aa90 0xc1bac2aa80}' error by splitting batch operations to chunks
+    if (i === ENV.maxBulkSize) {
+      console.log(`Too much bulk changes. Executing collected ${ENV.maxBulkSize}.`)
       i = 0
       await bulk.safeExecute();
       bulk = this.initializeUnorderedBulkOp();
@@ -284,6 +317,7 @@ Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, fields, 
 
 /**
  * Bypass find limit of 50000 objects by fetching all results successively  
+ * @note We do not allow `sort` parameter to prevent ambiguity between fetches which may cause holey or intersecting result.
  */
 Object.prototype.fullFind = async function(find) {
   if (find == null) {
@@ -466,17 +500,33 @@ Array.prototype.removeContentsOf = function(arg) {
 };
 
 /**
- * Splits array into array of chunked arrays.
+ * Splits array into array of chunked arrays of specific size.
  * @param {number} size Size of a chunk.
  * @returns {object[][]} Array of chunked arrays.
  */
-Array.prototype.chunked = function(size) {
+Array.prototype.chunkedBySize = function(size) {
   var chunks = [];
   for (i=0,j=this.length; i<j; i+=size) {
       const chunk = this.slice(i,i+size);
       chunks.push(chunk);
   }
 
+  return chunks;
+};
+
+/**
+ * Splits array into array of chunked arrays of specific count.
+ * @param {number} count Size of a chunk.
+ * @returns {object[][]} Array of chunked arrays.
+ */
+Array.prototype.chunkedByCount = function(count) {
+  if (count < 2) { return [a]; }
+  const copy = [...this];
+  let chunks = [];
+  for (let i = count; i > 0; i--) {
+    chunks.push(copy.splice(0, Math.ceil(copy.length / i)));
+  }
+  
   return chunks;
 };
 
@@ -498,6 +548,13 @@ Array.prototype.getRandomElements = function(count) {
 
   return elements;
 }
+
+/**
+ * Assumes elements are an arrays and filters those that does not have length.
+ */
+Array.prototype.filterEmpty = function() {
+  return this.filter(x => x?.length);
+};
 
 /**
  * Filters `null` and `undefined` elements.
@@ -713,6 +770,19 @@ Array.prototype.asyncMap = async function(limit, callback) {
   }
   await Promise.all(threads);
   return results;
+};
+
+/**
+ * @returns {Date} Today day start date in UTC.
+ */
+Date.today = function() {
+  const date = new Date();
+  date.setUTCHours(0);
+  date.setUTCMinutes(0);
+  date.setUTCSeconds(0);
+  date.setUTCMilliseconds(0);
+
+  return date;
 };
 
 /**
@@ -1240,6 +1310,43 @@ function extendRuntime() {
     );
   };
 
+  Promise.prototype.observeStatusAndCatch = function() {
+    // Don't modify any promise that has been already modified.
+    if (this.isFinished) return this;
+  
+    // Set initial state
+    var isPending = true;
+    var isRejected = false;
+    var isFulfilled = false;
+    var isFinished = false;
+    var error;
+  
+    // Observe the promise, saving the fulfillment in a closure scope.
+    var result = this.then(
+        function(v) {
+            isFinished = true;
+            isFulfilled = true;
+            isPending = false;
+            return v; 
+        }, 
+        function(e) {
+            isFinished = true;
+            isRejected = true;
+            isPending = false;
+            error = e;
+            return;
+        }
+    );
+  
+    result.isFinished = function() { return isFinished; };
+    result.isFulfilled = function() { return isFulfilled; };
+    result.isPending = function() { return isPending; };
+    result.isRejected = function() { return isRejected; };
+    result.throwIfRejected = function() { if (isRejected) { throw error; } };
+
+    return result;
+  };
+
   /**
    * This function returns an ObjectId embedded with a given datetime
    * Accepts both Date object and string input
@@ -1335,8 +1442,18 @@ function _logAndReject(message, data) {
 
 logAndReject = _logAndReject;
 
-/** Checks that we didn't exceed 90s timeout. */
-checkExecutionTimeout = function checkExecutionTimeout(limit) {
+executionTimeoutErrorMessage = 'execution time limit reached';
+
+/** Checks that we didn't exceed timeout and throws an error if so. */
+function _checkExecutionTimeoutAndThrow(limit) {
+  if (_checkExecutionTimeout(limit)) {
+    throw new _SystemError(executionTimeoutErrorMessage);
+  }
+}
+
+checkExecutionTimeoutAndThrow = _checkExecutionTimeoutAndThrow;
+
+function _checkExecutionTimeout(limit) {
   if (typeof startDate === 'undefined') {
     startDate = new Date();
   }
@@ -1350,11 +1467,29 @@ checkExecutionTimeout = function checkExecutionTimeout(limit) {
   }
 
   if (seconds > limit) {
-    _logAndThrow('execution timeout');
+    console.log(`${executionTimeoutErrorMessage}. Execution time: ${seconds} seconds`);
+    return true;
   } else {
     console.logVerbose(`${limit - seconds} execution time left`);
+    return false;
   }
-};
+}
+
+checkExecutionTimeout = _checkExecutionTimeout;
+
+function _throwIfNotObject(object, message, ErrorType) {
+  _throwIfUndefinedOrNull(object, message, ErrorType);
+
+  const type = typeof object;
+  const objectType = Object.prototype.toString.call(object);
+  if (type === 'object' || objectType === '[object Object]') { return object; }
+  if (ErrorType == null) { ErrorType = _SystemError; }
+  if (message == null) { message = ""; }
+  
+  throw new ErrorType(`Argument should be of the 'object' type. Instead, received '${objectType} (${type})'. ${message}`);
+}
+
+throwIfNotObject = _throwIfNotObject;
 
 function _throwIfNotFunction(func, message, ErrorType) {
   _throwIfUndefinedOrNull(func, message, ErrorType);
@@ -1562,6 +1697,8 @@ async function _httpGET(baseURL, api, queryParameters) {
   const url = _getURL(baseURL, api, queryParameters);
   console.log(`Request with URL: ${url}`);
 
+  _checkExecutionTimeoutAndThrow(115);
+
   try {
     const response = await context.http.get({ url: url });
     return new _NetworkResponse(url, response);
@@ -1710,6 +1847,7 @@ function getCurrencySymbol(currency) {
   // https://www.eurochange.co.uk/travel-money/world-currency-abbreviations-symbols-and-codes-travel-money
   switch(currency) {
     case "AUD": return "$";
+    case "BMD": return "$";
     case "CAD": return "$";
     case "CHF": return "CHF";
     case "EUR": return "€";
@@ -1725,8 +1863,8 @@ function getCurrencySymbol(currency) {
 
 ///////////////////////////////////////////////////////////////////////////////// UPDATE
 
-async function _setUpdateDate(_id, date) {
-  _throwIfUndefinedOrNull(_id, `_setUpdateDate _id`);
+async function _setUpdateDate(db, _id, date) {
+  throwIfUndefinedOrNull(_id, `_setUpdateDate _id`);
   if (date == null) {
     date = new Date();
   }
@@ -1759,7 +1897,17 @@ getDateLogString = function getDateLogString() {
 };
 
 exports = function() {
-  extendRuntime();
+  if (typeof ENV === 'undefined') {
+    ENV = {
+      maxBulkSize: 5000,
+    };
+
+    Object.freeze(ENV);
+  }
+
+  if (typeof startDate === 'undefined') {
+    startDate = new Date();
+  }
 
   if (typeof environment === 'undefined') {
     environment = "sandbox";
@@ -1828,6 +1976,8 @@ exports = function() {
       }
     };
   }
+
+  extendRuntime();
   
   console.log("Imported utils");
 };
