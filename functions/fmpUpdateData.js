@@ -9,11 +9,11 @@
  * @example
  * exports();
  */
-exports = async function(_databaseName) {
+exports = async function(_databaseName, skipSymbolsUpdate) {
   context.functions.execute("fmpUtils", _databaseName);
 
   try {
-    await run();
+    await run(skipSymbolsUpdate);
   } catch(error) {
     if (error.message !== executionTimeoutErrorMessage) {
       throw error;
@@ -23,8 +23,10 @@ exports = async function(_databaseName) {
   }
 };
 
-async function run() {
-  await updateSymbolsDaily();
+async function run(skipSymbolsUpdate) {
+  if (skipSymbolsUpdate?.toString() == 'true') {
+    await updateSymbolsDaily();
+  }
 
   console.log(`Checking missing data`);
   await context.functions.execute("fmpLoadMissingData", databaseName);
