@@ -5,14 +5,6 @@
 
 # ################################################## O N G O I N G ##############################################################
 
-# 2022-06-XX | IEX dividends refid refetch
-
-- Deploy the new server
-- Execute `dt backup --environment sandbox-anton --database divtracker-v2 --collection dividends`
-- Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument fetch_refid_for_past_IEX_dividends --verbose`
-- Check `divtracker-v2.dividends` using `{ i: null }`
-- Execute `dt check-dividends --environment sandbox-anton`
-
 # 2022-06-XX | FMP OTCs support
 
 - Make sure trigger times are correct
@@ -43,7 +35,15 @@
 
 # ################################################## D O N E ##############################################################
 
-# 2022-06-24 | Missing IEX splits, FMP historical prices, FMP ETFs support
+# 2022-06-26 | IEX dividends refid refetch
+
+- Deploy the new server
+- Execute `dt backup --environment sandbox-anton --database divtracker-v2 --collection dividends`
+- Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument fetch_refid_for_past_IEX_dividends --verbose`
+- Check `divtracker-v2.dividends` using `{ i: null }`
+- Execute `dt check-dividends --environment sandbox-anton`
+
+# 2022-06-25 | Missing IEX splits, FMP historical prices, FMP ETFs support
 
 - Deploy the new server with all FMP triggers disabled
 - Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument refetch_IEX_splits --verbose`
