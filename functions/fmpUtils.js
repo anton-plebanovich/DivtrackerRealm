@@ -1280,6 +1280,7 @@ function _fixFMPSymbols(fmpSymbols) {
         || fmpSymbol.type === "fund" 
         || fmpSymbol.type === "etf" 
         || fmpSymbol.exchangeShortName == "OTC"
+        || fmpSymbol.exchangeShortName == "MUTUAL_FUND"
       )
       .map(fmpSymbol => {
         const symbol = {};

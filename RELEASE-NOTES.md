@@ -5,7 +5,7 @@
 
 # ################################################## O N G O I N G ##############################################################
 
-# 2022-06-XX | FMP OTCs support
+# 2022-06-XX | FMP OTCs and mutual funds support
 
 - Make sure trigger times are correct
 - Deploy the new server with all FMP triggers disabled
