@@ -24,6 +24,13 @@ async function _cleanup() {
     db.collection('splits').deleteMany({}),
     db.collection('transactions').deleteMany({})
   ]);
+
+  // We should always have IEX symbols
+  const symbolsCount = await db.collection('symbols').count();
+  if (symbolsCount === 0) {
+    await context.functions.execute("updateSymbolsV2");
+    await context.functions.execute("mergedUpdateSymbols");
+  }
 }
 
 cleanup = _cleanup;
