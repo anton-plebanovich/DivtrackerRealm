@@ -1278,9 +1278,10 @@ function _fixFMPSymbols(fmpSymbols) {
       .filter(fmpSymbol => 
         fmpSymbol.exchangeShortName === "MCX"
         || fmpSymbol.type === "fund" 
+        || fmpSymbol.exchangeShortName === "MUTUAL_FUND"
         || fmpSymbol.type === "etf" 
-        || fmpSymbol.exchangeShortName == "OTC"
-        || fmpSymbol.exchangeShortName == "MUTUAL_FUND"
+        || fmpSymbol.exchangeShortName === "ETF"
+        || fmpSymbol.exchangeShortName === "OTC"
       )
       .map(fmpSymbol => {
         const symbol = {};

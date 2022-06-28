@@ -30,6 +30,7 @@
 - Execute `dt call-realm-function --environment sandbox-anton --function mergedUpdateSymbols --verbose`
 - Background/foreground the app and check that `<IEX_AND_FMP_CONFLICTING_TICKER>` ticker data is refetched
 - Execute `dt call-realm-function --environment sandbox-anton --function checkTransactionsV2 --verbose`
+- Execute `dt check-symbols --environment sandbox-anton`
 - Drop `fmp-tmp` database
 - Enable all previously disabled triggers
 
