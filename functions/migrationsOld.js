@@ -7,6 +7,9 @@
 // https://docs.mongodb.com/manual/reference/method/Bulk.insert/
 
 exports = function() {
+  // 2022-06-26
+  fetch_refid_for_all_past_IEX_dividends;
+
   // 2022-06-25
   refetch_IEX_splits;
   fix_FMP_dividends_v2;
@@ -47,6 +50,26 @@ exports = function() {
   // 2021-04-15
   executeTransactionsMigration_15042021;
 };
+
+////////////////////////////////////////////////////// 2022-06-26
+
+async function fetch_refid_for_all_past_IEX_dividends() {
+  context.functions.execute("iexUtils");
+
+  const collection = db.collection("dividends");
+  const symbolIDs = await collection.distinct('s', { i: null });
+  const shortSymbols = await getShortSymbols(symbolIDs);
+  console.log(`Refetching dividends for '${symbolIDs.length}' symbols: ${symbolIDs.stringify()}`)
+
+  const minFetchDate = '2016-01-01';
+  const defaultRange = `${(new Date().getUTCFullYear() - new Date(minFetchDate).getUTCFullYear()) * 12 + new Date().getMonth() + 1}m`;
+  const pastDividends = await fetch_IEX_dividends_with_duplicates(shortSymbols, false, defaultRange, null);
+
+  const now = new Date();
+  const exDateFind = { $lt: now };
+  const find = { i: null, e: exDateFind };
+  await find_and_update_IEX_dividends(pastDividends, find);
+}
 
 ////////////////////////////////////////////////////// 2022-06-25
 
