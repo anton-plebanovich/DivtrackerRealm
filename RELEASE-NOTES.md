@@ -5,21 +5,14 @@
 
 # ################################################## O N G O I N G ##############################################################
 
-# 2022-06-XX | IEX dividends refid refetch
-
-- Deploy the new server
-- Execute `dt backup --environment sandbox-anton --database divtracker-v2 --collection dividends`
-- Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument fetch_refid_for_past_IEX_dividends --verbose`
-- Check `divtracker-v2.dividends` using `{ i: null }`
-- Execute `dt check-dividends --environment sandbox-anton`
-
-# 2022-06-XX | FMP OTCs support
+# 2022-06-XX | FMP OTCs and mutual funds support
 
 - Make sure trigger times are correct
 - Deploy the new server with all FMP triggers disabled
 - If needed, adjust an environment for commands below
+- Execute `dt restore-index --environment sandbox-anton --database fmp-tmp`
 - Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument fetch_new_symbols_for_fmp_tmp --verbose`
-- Execute `dt call-realm-function --environment sandbox-anton --function fmpLoadMissingData --argument fmp-tmp --retry-on-error 'execution time limit'`
+- Execute `dt call-realm-function --environment sandbox-anton --function fmpLoadMissingData --argument fmp-tmp --retry-on-error 'execution time limit' --verbose`
 - Execute `dt backup --environment sandbox-anton --database fmp-tmp --verbose`
 - Execute `dt restore --environment local --backup-source-environment sandbox-anton --database fmp-tmp --yes --verbose`
 - Execute symbols migration on the local environment
@@ -27,12 +20,8 @@
 - Execute `dt backup --environment local --database fmp-tmp --verbose`
 - Execute `dt restore --environment sandbox-anton --backup-source-environment local --database fmp-tmp --yes --verbose`
 - Check data counts
-- Execute `dt call-realm-function --environment sandbox-anton --function fmpLoadMissingData --argument fmp-tmp --verbose`
-- Execute `dt call-realm-function --environment sandbox-anton --function fmpUpdateCompanies --argument fmp-tmp --verbose`
-- Execute `dt call-realm-function --environment sandbox-anton --function fmpUpdateDividends --argument fmp-tmp --verbose`
-- Execute `dt call-realm-function --environment sandbox-anton --function fmpUpdateHistoricalPrices --argument fmp-tmp --verbose`
+- Execute `dt call-realm-function --environment sandbox-anton --function fmpUpdateData --argument fmp-tmp --argument true --verbose`
 - Execute `dt call-realm-function --environment sandbox-anton --function fmpUpdateQuotes --argument fmp-tmp --verbose`
-- Execute `dt call-realm-function --environment sandbox-anton --function fmpUpdateSplits --argument fmp-tmp --verbose`
 - Check data counts
 - Execute `dt backup --environment sandbox-anton --database fmp-tmp --verbose`
 - Execute in the `playground` to get conflicting tickers: `const newTickers = await atlas.db('fmp-tmp').collection('symbols').distinct('t'); const oldTickers = await db.collection('symbols').distinct('t'); return newTickers.filter(x => oldTickers.includes(x));`
@@ -41,12 +30,21 @@
 - Execute `dt call-realm-function --environment sandbox-anton --function mergedUpdateSymbols --verbose`
 - Background/foreground the app and check that `<IEX_AND_FMP_CONFLICTING_TICKER>` ticker data is refetched
 - Execute `dt call-realm-function --environment sandbox-anton --function checkTransactionsV2 --verbose`
+- Execute `dt check-symbols --environment sandbox-anton`
 - Drop `fmp-tmp` database
 - Enable all previously disabled triggers
 
 # ################################################## D O N E ##############################################################
 
-# 2022-06-24 | Missing IEX splits, FMP historical prices, FMP ETFs support
+# 2022-06-26 | IEX dividends refid refetch
+
+- Deploy the new server
+- Execute `dt backup --environment sandbox-anton --database divtracker-v2 --collection dividends`
+- Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument fetch_refid_for_past_IEX_dividends --verbose`
+- Check `divtracker-v2.dividends` using `{ i: null }`
+- Execute `dt check-dividends --environment sandbox-anton`
+
+# 2022-06-25 | Missing IEX splits, FMP historical prices, FMP ETFs support
 
 - Deploy the new server with all FMP triggers disabled
 - Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument refetch_IEX_splits --verbose`

@@ -24,7 +24,7 @@ exports = async function(_databaseName, skipSymbolsUpdate) {
 };
 
 async function run(skipSymbolsUpdate) {
-  if (skipSymbolsUpdate?.toString() == 'true') {
+  if (skipSymbolsUpdate?.toString() !== 'true') {
     await updateSymbolsDaily();
   }
 
