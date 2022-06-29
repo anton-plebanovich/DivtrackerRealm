@@ -20,7 +20,7 @@ async function test() {
   await context.functions.execute("fmpUpdateSymbols");
   await prepareFMPData();
   await Promise.all([
-    context.functions.execute("fmpUpdateData"),
+    context.functions.execute("fmpUpdateData", true),
     context.functions.execute("fmpUpdateQuotes"),
   ]);
 }

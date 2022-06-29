@@ -59,9 +59,10 @@ async function _prepareFMPData() {
     return;
   }
   
+  // Switch to FMP context
   context.functions.execute("fmpUtils");
 
-  // Cleanup FMP environment
+  // Cleanup FMP environment and merged symbols
   await Promise.all([
     fmp.collection('companies').deleteMany({}),
     fmp.collection('data-status').deleteMany({}),
@@ -76,12 +77,13 @@ async function _prepareFMPData() {
   // Insert 20 symbols
   const symbols = await fetchSymbols();
   const symbolsToAdd = symbols.getRandomElements(19);
-  const pciSymbol = symbols.find(x => x.t === "DHROX");
-  symbolsToAdd.push(pciSymbol);
+  const twoSourcesSymbol = symbols.find(x => x.t === "DHROX");
+  symbolsToAdd.push(twoSourcesSymbol);
   await fmp.collection('symbols').insertMany(symbolsToAdd);
   await context.functions.execute("mergedUpdateSymbols");
   await context.functions.execute("fmpLoadMissingData");
 
+  // Restore context
   context.functions.execute("iexUtils");
 }
 
@@ -246,4 +248,4 @@ exports = function() {
   context.functions.execute("iexUtils");
   
   context.user.id = '61ae5154d9b3cb9ea55ec5c6';
-}
+};
