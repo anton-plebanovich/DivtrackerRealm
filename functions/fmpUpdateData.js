@@ -172,8 +172,7 @@ function fixDividends(dividends, existingDividendsBySymbolID) {
     if (existingDividends == null) {
       // There were no dividends but we have them now. 
       // It's hard to say if that's the first record or the whole set was added so asking to fix manually.
-      // dt data-status -e <ENV> -d fmp -c dividends --id <ID1> && dt call-realm-function -e <ENV> -f fmpLoadMissingData --verbose
-      console.error(`Missing existing dividends for: ${symbolID}. It's better to load missing dividends data for this.`);
+      console.error(`Missing existing dividends for: ${symbolID}. It's better to load missing dividends data for this: 'dt data-status -e ${environment} -d fmp -c dividends --erase-all --id ${symbolID} && dt call-realm-function -e ${environment} -f fmpLoadMissingData --verbose'`);
       continue;
     }
 
