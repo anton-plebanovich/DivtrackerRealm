@@ -344,10 +344,10 @@ function verifyResponseV2(response, timestamp, collections, symbolIDs, fullFetch
   }
 
   // Check that system fields do not returned
-  refidCollections.forEach(refidCollection => {
-    response.updates?.[refidCollection]?.forEach(object => {
-      if (object.i != null) {
-        throw `Unexpected system field 'i' is returned for '${refidCollection}' collection`;
+  Object.entries(systemFieldsByCollectionName).forEach(([collectionName, systemFields]) => {
+    response.updates?.[collectionName]?.forEach(object => {
+      if (systemFields.contains(x => object[x])) {
+        throw `All system fields are not removed from '${object.stringify()}' object for '${collectionName}' collection`;
       }
     });
   });
@@ -420,7 +420,8 @@ const nonSearchableIDCollections = [
   'updates',
 ];
 
-const refidCollections = [
-  'dividends',
-  'splits',
-];
+const systemFieldsByCollectionName = {
+  dividends: ['i'], // refid 
+  splits: ['i'], // refid
+  symbols: ['c'], // exchange
+};
