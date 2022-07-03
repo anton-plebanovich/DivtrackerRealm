@@ -132,7 +132,7 @@ async function fetchAndUpdateDividends(outdatedShortSymbols) {
     .toDictionary(fields);
 
   const callbackBase = async (historical, dividends, symbolIDs) => {
-    dividends = fixDividends(dividends, existingDividendsBySymbolID);
+    dividends = await fixDividends(dividends, existingDividendsBySymbolID);
     await collection.safeUpdateMany(dividends, existingDividendByFields, fields);
 
     if (historical) {
@@ -160,7 +160,7 @@ async function fetchAndUpdateDividends(outdatedShortSymbols) {
   ]);
 }
 
-function fixDividends(dividends, existingDividendsBySymbolID) {
+async function fixDividends(dividends, existingDividendsBySymbolID) {
   if (!dividends.length) { return []; }
 
   const dividendsBySymbolID = dividends.toBuckets(x => x.s);
