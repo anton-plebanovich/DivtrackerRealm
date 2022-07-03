@@ -114,7 +114,7 @@ async function updateDividends(shortSymbols) {
   // It takes too much time (~60s for 112k dividends) to get full dividends and prepare working context so instead we limit simultaneous symbols count
   const chunkedOutdatedShortSymbols = outdatedShortSymbols.chunkedBySize(1000);
   for (const outdatedShortSymbols of chunkedOutdatedShortSymbols) {
-    await fetchAndUpdateDividends(outdatedShortSymbols)
+    await fetchAndUpdateDividends(outdatedShortSymbols);
   }
 
   await setUpdateDate(fmp, `${databaseName}-${collectionName}`);
@@ -172,7 +172,7 @@ async function fixDividends(dividends, existingDividendsBySymbolID) {
       // It's hard to say if that's the first record or the whole set was added so fetching full range instead
       console.log(`Existing dividends are missing for '${symbolID}' symbol. Performing full fetch.`);
       const shortSymbol = await fmp.collection("symbols").findOne(
-        { _id: symbolID },
+        { _id: new BSON.ObjectId(symbolID) },
         { _id: 1, c: 1, t: 1 }
       );
 
