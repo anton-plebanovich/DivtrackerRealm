@@ -5,6 +5,7 @@
 
 # ################################################## O N G O I N G ##############################################################
 
+- If needed, adjust an environment for commands below
 - Deploy the new server
 - Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument mered_symbols_fill_exchanges_migration --verbose`
 

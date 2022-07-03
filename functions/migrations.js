@@ -60,8 +60,8 @@ async function mered_symbols_fill_exchanges_migration() {
   context.functions.execute("utils");
 
   const mergedSymbolsCollection = atlas.db("merged").collection("symbols");
-  const iexSymbolsCollection = db.collection('symbols');
-  const fmpSymbolsCollection = fmp.collection('symbols');
+  const iexSymbolsCollection = atlas.db("divtracker-v2").collection('symbols');
+  const fmpSymbolsCollection = atlas.db("fmp").collection('symbols');
   const [mergedSymbols, iexSymbols, fmpSymbols] = await Promise.all([
     mergedSymbolsCollection.fullFind(),
     iexSymbolsCollection.fullFind(),
