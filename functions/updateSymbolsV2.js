@@ -38,9 +38,12 @@ exports = async function() {
 
   const date = new Date();
   await updateIEXSymbols();
+  await setUpdateDate(iex, "symbols");
+
   await updateDivtrackerSymbols();
+  await setUpdateDate(db, "symbols");
+
   await context.functions.execute("mergedUpdateSymbols", date, "iex");
-  await setUpdateDate("symbols");
   
   console.log(`SUCCESS`);
 };

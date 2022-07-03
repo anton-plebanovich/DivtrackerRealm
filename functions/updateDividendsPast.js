@@ -52,5 +52,5 @@ exports = async function() {
   const pastDividends = longFetchDividends.concat(shortFetchDividends);
   await collection.safeUpdateMany(pastDividends, null, 'i', true, true);
 
-  await setUpdateDate("dividends-past");
+  await setUpdateDate(db, "dividends-past");
 };

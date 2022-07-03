@@ -24,7 +24,8 @@ exports = async function(date, sourceName) {
     find = date.getFindOperator();
   }
   
-  const mergedSymbolsCollection = atlas.db("merged").collection("symbols");
+  const db = atlas.db("merged");
+  const mergedSymbolsCollection = db.collection("symbols");
   
   if (sourceName == null) {
     // For backward compatibility with symbols in transactions we update IEX first
@@ -35,7 +36,7 @@ exports = async function(date, sourceName) {
     await update(mergedSymbolsCollection, find, source);
   }
   
-  await setUpdateDate(`merged-symbols`);
+  await setUpdateDate(db, `merged-symbols`);
   
   console.log(`SUCCESS`);
 };

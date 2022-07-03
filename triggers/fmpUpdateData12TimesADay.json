@@ -1,16 +1,16 @@
 {
     "id": "6185ffbd6db886ed8f037b22",
-    "name": "fmpLoadMissingDataDaily",
+    "name": "fmpUpdateData12TimesADay",
     "type": "SCHEDULED",
     "config": {
-        "schedule": "3 23 * * *",
+        "schedule": "2,4,6,8,10,12,17,19,21,23,25,27 23 * * *",
         "skip_catchup_events": true
     },
-    "disabled": false,
+    "disabled": true,
     "event_processors": {
         "FUNCTION": {
             "config": {
-                "function_name": "fmpLoadMissingData"
+                "function_name": "fmpUpdateData"
             }
         }
     }

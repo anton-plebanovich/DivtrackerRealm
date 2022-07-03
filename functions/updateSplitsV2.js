@@ -43,5 +43,5 @@ exports = async function() {
     console.log(`Historical splits are empty for symbols: '${shortSymbols.map(x => x.t)}'`);
   }
 
-  await setUpdateDate("splits");
+  await setUpdateDate(db, "splits");
 };

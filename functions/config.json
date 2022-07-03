@@ -26,23 +26,11 @@
         "private": true
     },
     {
-        "name": "fmpUpdateCompanies",
-        "private": true
-    },
-    {
-        "name": "fmpUpdateDividends",
-        "private": true
-    },
-    {
-        "name": "fmpUpdateHistoricalPrices",
+        "name": "fmpUpdateData",
         "private": true
     },
     {
         "name": "fmpUpdateQuotes",
-        "private": true
-    },
-    {
-        "name": "fmpUpdateSplits",
         "private": true
     },
     {

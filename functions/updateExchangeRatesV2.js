@@ -24,5 +24,5 @@ exports = async function() {
   
   const options = { ordered: false };
   await collection.bulkWrite(operations, options);
-  await setUpdateDate("exchange-rates");
+  await setUpdateDate(db, "exchange-rates");
 };
