@@ -170,10 +170,16 @@ async function fixDividends(dividends, existingDividendsBySymbolID) {
     if (existingDividends == null) {
       // There were no dividends but we have them now. 
       // It's hard to say if that's the first record or the whole set was added so fetching full range instead
+      console.log(`Existing dividends are missing for '${symbolID}' symbol. Performing full fetch.`);
+      const shortSymbol = await fmp.collection("symbols").findOne(
+        { _id: symbolID },
+        { _id: 1, c: 1, t: 1 }
+      );
+
       const allDividends = await Promise
         .all([
-          fetchDividendsCalendar([symbolID]),
-          fetchDividends([symbolID], null)
+          fetchDividendsCalendar([shortSymbol]),
+          fetchDividends([shortSymbol], null)
         ])
         .then(x => x.flat());
 
