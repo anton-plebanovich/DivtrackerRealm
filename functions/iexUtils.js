@@ -385,7 +385,7 @@ async function _iexFetchBatchNew(types, tickers, queryParameters) {
   const api = `/stock/market/batch`;
   const typesParameter = types.join(",");
   const maxSymbolsAmount = 100;
-  const chunkedSymbolsArray = tickers.chunked(maxSymbolsAmount);
+  const chunkedSymbolsArray = tickers.chunkedBySize(maxSymbolsAmount);
   var result = {};
   for (const chunkedSymbols of chunkedSymbolsArray) {
     const symbolsParameter = chunkedSymbols.join(",");

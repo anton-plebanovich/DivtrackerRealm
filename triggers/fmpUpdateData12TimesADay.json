@@ -1,16 +1,16 @@
 {
-    "id": "6185ffbd6db886ed8f037b28",
-    "name": "fmpUpdateSplitsDaily",
+    "id": "6185ffbd6db886ed8f037b22",
+    "name": "fmpUpdateData12TimesADay",
     "type": "SCHEDULED",
     "config": {
-        "schedule": "5 3 * * *",
+        "schedule": "0,2,4,6,10,12,14,16,18,21,25,27 3 * * *",
         "skip_catchup_events": true
     },
     "disabled": false,
     "event_processors": {
         "FUNCTION": {
             "config": {
-                "function_name": "fmpUpdateSplits"
+                "function_name": "fmpUpdateData"
             }
         }
     }

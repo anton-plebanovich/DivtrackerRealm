@@ -7,9 +7,12 @@
 // https://docs.mongodb.com/manual/reference/method/Bulk.insert/
 
 exports = function() {
+  // 2022-06-26
+  fetch_refid_for_all_past_IEX_dividends;
+
   // 2022-06-25
   refetch_IEX_splits;
-  fix_FMP_dividends_with_iteration;
+  fix_FMP_dividends_v2;
 
   // 2022-06-18
   null_fields_cleanup_migration;
@@ -48,6 +51,26 @@ exports = function() {
   executeTransactionsMigration_15042021;
 };
 
+////////////////////////////////////////////////////// 2022-06-26
+
+async function fetch_refid_for_all_past_IEX_dividends() {
+  context.functions.execute("iexUtils");
+
+  const collection = db.collection("dividends");
+  const symbolIDs = await collection.distinct('s', { i: null });
+  const shortSymbols = await getShortSymbols(symbolIDs);
+  console.log(`Refetching dividends for '${symbolIDs.length}' symbols: ${symbolIDs.stringify()}`)
+
+  const minFetchDate = '2016-01-01';
+  const defaultRange = `${(new Date().getUTCFullYear() - new Date(minFetchDate).getUTCFullYear()) * 12 + new Date().getMonth() + 1}m`;
+  const pastDividends = await fetch_IEX_dividends_with_duplicates(shortSymbols, false, defaultRange, null);
+
+  const now = new Date();
+  const exDateFind = { $lt: now };
+  const find = { i: null, e: exDateFind };
+  await find_and_update_IEX_dividends(pastDividends, find);
+}
+
 ////////////////////////////////////////////////////// 2022-06-25
 
 async function refetch_IEX_splits() {
@@ -68,13 +91,13 @@ async function refetch_IEX_splits() {
     console.log(`Historical splits are empty for symbols: '${shortSymbols.map(x => x.t)}'`);
   }
 
-  await setUpdateDate("splits");
+  await setUpdateDate(db, "splits");
 }
 
 /**
  * Deletes duplicated FMP dividends and fixes frequency where needed
  */
- async function fix_FMP_dividends_with_iteration(iteration) {
+ async function fix_FMP_dividends_v2(iteration) {
   context.functions.execute("fmpUtils");
   throwIfNotNumber(iteration, `Iteration should be a number parameter with proper iteration value`);
 
@@ -393,7 +416,7 @@ async function update_IEX_dividends(dividends, oldDividends) {
   
   // Try to prevent 'pending promise returned that will never resolve/reject uncaught promise rejection: &{0xc1bac2aa90 0xc1bac2aa80}' error by splitting batch operations to chunks
   const chunkSize = 1000;
-  const chunkedNewDividends = dividends.chunked(chunkSize);
+  const chunkedNewDividends = dividends.chunkedBySize(chunkSize);
   for (const [i, newDividendsChunk] of chunkedNewDividends.entries()) {
     console.log(`Updating dividends: ${i * chunkSize + newDividendsChunk.length}/${dividends.length}`);
     const bulk = collection.initializeUnorderedBulkOp();
@@ -767,7 +790,7 @@ async function v2DatabaseFillMigration() {
     ]);
   }
 
-  checkExecutionTimeout();
+  checkExecutionTimeoutAndThrow();
   const v2Symbols = await v2SymbolsCollection.find().toArray();
   const idByTicker = {};
   for (const v2Symbol of v2Symbols) {
@@ -777,21 +800,21 @@ async function v2DatabaseFillMigration() {
 
   const invalidEntitesFind = { $regex: ":(NAS|NYS|POR|USAMEX|USBATS|USPAC)" };
 
-  checkExecutionTimeout();
+  checkExecutionTimeoutAndThrow();
   await fillV2CompanyCollectionMigration(idByTicker, invalidEntitesFind);
-  checkExecutionTimeout();
+  checkExecutionTimeoutAndThrow();
   await fillV2DividendsCollectionMigration(idByTicker, invalidEntitesFind);
-  checkExecutionTimeout();
+  checkExecutionTimeoutAndThrow();
   await fillV2HistoricalPricesCollectionMigration(idByTicker, invalidEntitesFind);
-  checkExecutionTimeout();
+  checkExecutionTimeoutAndThrow();
   await fillV2PreviousDayPricesCollectionMigration(idByTicker, invalidEntitesFind);
-  checkExecutionTimeout();
+  checkExecutionTimeoutAndThrow();
   await fillV2QoutesCollectionMigration(idByTicker, invalidEntitesFind);
-  checkExecutionTimeout();
+  checkExecutionTimeoutAndThrow();
   await fillV2SettingsCollectionMigration(idByTicker, invalidEntitesFind);
-  checkExecutionTimeout();
+  checkExecutionTimeoutAndThrow();
   await fillV2SplitsCollectionMigration(idByTicker, invalidEntitesFind);
-  checkExecutionTimeout();
+  checkExecutionTimeoutAndThrow();
   await fillV2TransactionsCollectionMigration(idByTicker, invalidEntitesFind);
 }
 
