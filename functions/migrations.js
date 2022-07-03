@@ -79,4 +79,6 @@ async function mered_symbols_fill_exchanges_migration() {
     }
     mergedSymbol.m.c = mergedSymbol[mergedSymbol.m.s].c;
   });
+
+  await mergedSymbolsCollection.safeUpdateMany(mergedSymbols, null, '_id', false, false);
 }
