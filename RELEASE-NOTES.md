@@ -5,7 +5,12 @@
 
 # ################################################## O N G O I N G ##############################################################
 
-# 2022-06-XX | FMP OTCs and mutual funds support
+- Deploy the new server
+- Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument mered_symbols_fill_exchanges_migration --verbose`
+
+# ################################################## D O N E ##############################################################
+
+# 2022-07-03 | FMP OTCs
 
 - Make sure trigger times are correct
 - Deploy the new server with all FMP triggers disabled
@@ -33,8 +38,6 @@
 - Execute `dt check-symbols --environment sandbox-anton`
 - Drop `fmp-tmp` database
 - Enable all previously disabled triggers
-
-# ################################################## D O N E ##############################################################
 
 # 2022-06-26 | IEX dividends refid refetch
 

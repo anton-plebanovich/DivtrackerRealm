@@ -20,6 +20,8 @@ exports = async function(migration, arg) {
 
     if (migration === 'fetch_new_symbols_for_fmp_tmp') {
       await fetch_new_symbols_for_fmp_tmp();
+    } else if (migration === 'mered_symbols_fill_exchanges_migration') {
+      await mered_symbols_fill_exchanges_migration();
     } else {
       throw `Unexpected migration: ${migration}`;
     }
@@ -32,7 +34,7 @@ exports = async function(migration, arg) {
   }
 };
 
-////////////////////////////////////////////////////// 2022-06-XX
+////////////////////////////////////////////////////// 2022-07-XX
 
 async function fetch_new_symbols_for_fmp_tmp() {
   context.functions.execute("fmpUtils");
@@ -50,4 +52,31 @@ async function fetch_new_symbols_for_fmp_tmp() {
 
   const tmpCollection = atlas.db('fmp-tmp').collection("symbols");
   await tmpCollection.insertMany(newSymbols);
+}
+
+////////////////////////////////////////////////////// 2022-07-XX
+
+async function mered_symbols_fill_exchanges_migration() {
+  context.functions.execute("utils");
+
+  const mergedSymbolsCollection = atlas.db("merged").collection("symbols");
+  const iexSymbolsCollection = db.collection('symbols');
+  const fmpSymbolsCollection = fmp.collection('symbols');
+  const [mergedSymbols, iexSymbols, fmpSymbols] = await Promise.all([
+    mergedSymbolsCollection.fullFind(),
+    iexSymbolsCollection.fullFind(),
+    fmpSymbolsCollection.fullFind(),
+  ]);
+
+  const iexSymbolsByID = iexSymbols.toDictionary('_id');
+  const fmpSymbolsByID = fmpSymbols.toDictionary('_id');
+  mergedSymbols.forEach(mergedSymbol => {
+    if (mergedSymbol.i != null) {
+      mergedSymbol.i.c = iexSymbolsByID[mergedSymbol.i._id].c;
+    }
+    if (mergedSymbol.f != null) {
+      mergedSymbol.f.c = fmpSymbolsByID[mergedSymbol.f._id].c;
+    }
+    mergedSymbol.m.c = mergedSymbol[mergedSymbol.m.s].c;
+  });
 }
