@@ -316,7 +316,7 @@ async function _fmpFetchAndMapFlatArray(api, tickers, queryParameters, idByTicke
             return mapFunction(datas, idByTicker[ticker]);
           }
         })
-        .flat()
+        .flat();
       }
     );
 }

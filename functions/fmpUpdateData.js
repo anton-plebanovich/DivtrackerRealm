@@ -166,14 +166,21 @@ function fixDividends(dividends, existingDividendsBySymbolID) {
   const dividendsBySymbolID = dividends.toBuckets(x => x.s);
   const fixedDividends = [];
   for (const [symbolID, dividends] of Object.entries(dividendsBySymbolID)) {
-    const existingDividends = existingDividendsBySymbolID[symbolID];
-
-    // Check if there is nothing to fix
+    let existingDividends = existingDividendsBySymbolID[symbolID];
     if (existingDividends == null) {
       // There were no dividends but we have them now. 
-      // It's hard to say if that's the first record or the whole set was added so asking to fix manually.
-      console.error(`Missing existing dividends for: ${symbolID}. It's better to load missing dividends data for this: 'dt data-status -e ${environment} -d fmp -c dividends --erase-all --id ${symbolID} && dt call-realm-function -e ${environment} -f fmpLoadMissingData --verbose'`);
-      continue;
+      // It's hard to say if that's the first record or the whole set was added so fetching full range instead
+      const allDividends = await Promise
+        .all([
+          fetchDividendsCalendar([symbolID]),
+          fetchDividends([symbolID], null)
+        ])
+        .then(x => x.flat());
+
+      dividends.length = 0;
+      dividends.push(...allDividends);
+
+      existingDividends = [];
     }
 
     // We remove new dividends from existing to allow update in case something was changed.
