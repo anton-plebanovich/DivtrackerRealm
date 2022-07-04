@@ -100,7 +100,10 @@ async function _generateRandomTransactions(count, symbols) {
   }
 
   if (symbols == null) {
-    symbols = await db.collection('symbols').find({ e: null }).toArray();
+    symbols = await atlas.db("merged")
+      .collection("symbols")
+      .find({ 'm.e': null, i: { $ne: null }, f: null })
+      .toArray();
   }
 
   // {
