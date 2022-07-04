@@ -24,6 +24,7 @@ exports = async function() {
 
   // Future
   // TODO: Enable when clients ready
+  // TODO: Fix splits migration
   // console.log(`Fetching and updating calendar splits`);
   // const futureSplits = await fetchSplits(shortSymbols, null, true);
   // await collection.safeInsertMissing(futureSplits, 'i');

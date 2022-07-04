@@ -284,7 +284,9 @@ exports = async function(timestamp, collectionNames, symbolIDs, fullFetchCollect
 
 async function getSymbolsData(mergedSymbolsCollection, previousUpdateDate, symbolIDs, fullFetchCollections) {
   const find = {};
-  const projection = { m: true };
+
+  // We do not use exchange anyhow on clients atm
+  const projection = { m: true, 'm.c': false };
 
   if (previousUpdateDate != null) {
     // TODO: We might need to use date - 5 mins to prevent race conditions. I am not 100% sure because I don't know if MongoDB handles it properly.

@@ -44,8 +44,7 @@ exports = async function(date, sourceName) {
 async function update(mergedSymbolsCollection, find, source) {
   const sourceCollection = source.db.collection("symbols");
   const [sourceSymbols, mergedSymbols] = await Promise.all([
-    // We do not need exchanges yet
-    sourceCollection.find(find, { u: false, c: false }).toArray(),
+    sourceCollection.find(find, { u: false }).toArray(),
     mergedSymbolsCollection.find({}, { u: false }).toArray(),
   ]);
 
