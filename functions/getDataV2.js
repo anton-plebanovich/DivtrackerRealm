@@ -285,8 +285,9 @@ exports = async function(timestamp, collectionNames, symbolIDs, fullFetchCollect
 async function getSymbolsData(mergedSymbolsCollection, previousUpdateDate, symbolIDs, fullFetchCollections) {
   const find = {};
 
-  // We do not use exchange anyhow on clients atm
-  const projection = { m: true, 'm.c': false };
+  // We need main source without exchange
+  const projection = { _id: 0, m: { c: 0 }, u: 0, r: 0 };
+  sources.forEach(source => projection[source.field] = 0);
 
   if (previousUpdateDate != null) {
     // TODO: We might need to use date - 5 mins to prevent race conditions. I am not 100% sure because I don't know if MongoDB handles it properly.
@@ -308,12 +309,12 @@ async function getSymbolsData(mergedSymbolsCollection, previousUpdateDate, symbo
 async function getCollectionData(source, collectionName, previousUpdateDate, symbolIDs, refetchSymbolIDs, fullFetchCollections, mainIDBySourceID) {
   const collection = source.db.collection(collectionName);
   const find = {};
-  const projection = { u: false };
+  const projection = { u: 0 };
 
   // Remove system data from response
   const systemFields = systemFieldsByCollectionNameBySourceName[source.name]?.[collectionName];
   if (systemFields != null) {
-    systemFields.forEach(x => projection[x] = false);
+    systemFields.forEach(x => projection[x] = 0);
   }
 
   if (symbolIDs != null && !fullFetchCollections.includes(collectionName)) {
