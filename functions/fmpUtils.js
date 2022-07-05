@@ -1276,12 +1276,11 @@ function _fixFMPSymbols(fmpSymbols) {
       .filterNullAndUndefined()
       // Limit to only supported types
       .filter(fmpSymbol => 
-        fmpSymbol.exchangeShortName === "MCX"
-        || fmpSymbol.type === "fund" 
-        || fmpSymbol.exchangeShortName === "MUTUAL_FUND"
-        || fmpSymbol.type === "etf" 
-        || fmpSymbol.exchangeShortName === "ETF"
-        || fmpSymbol.exchangeShortName === "OTC"
+        fmpSymbol.type === "fund"
+        || fmpSymbol.type === "etf"
+        || (fmpSymbol.exchangeShortName !== "NASDAQ"
+          && fmpSymbol.exchangeShortName !== "NYSE"
+          && fmpSymbol.exchangeShortName !== "AMEX")
       )
       .map(fmpSymbol => {
         const symbol = {};
