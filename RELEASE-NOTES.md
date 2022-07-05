@@ -5,6 +5,7 @@
 
 # ################################################## O N G O I N G ##############################################################
 
+- Make sure trigger times are correct
 - If needed, adjust an environment for commands below
 - Deploy the new server with all FMP triggers disabled
 - Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument mered_symbols_fill_exchanges_migration --verbose`
@@ -16,10 +17,6 @@
 - Execute symbols migration on the local environment
 - Execute `dt backup --environment local --database fmp-tmp --verbose`
 - Execute `dt restore --environment sandbox-anton --backup-source-environment local --database fmp-tmp --yes --verbose`
-- Check data counts
-- Execute `dt call-realm-function --environment sandbox-anton --function fmpUpdateData --argument fmp-tmp --argument true --verbose`
-- Execute `dt call-realm-function --environment sandbox-anton --function fmpUpdateQuotes --argument fmp-tmp --verbose`
-- Check data counts
 - Execute `dt backup --environment sandbox-anton --database fmp-tmp --verbose`
 - Execute in the `playground` to get conflicting tickers: `const newTickers = await atlas.db('fmp-tmp').collection('symbols').distinct('t'); const oldTickers = await db.collection('symbols').distinct('t'); return newTickers.filter(x => oldTickers.includes(x));`
 - Open the app and add `<IEX_AND_FMP_CONFLICTING_TICKER>` ticker
