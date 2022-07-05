@@ -62,7 +62,7 @@ async function update(mergedSymbolsCollection, find, source) {
     }
 
     // Second, check if symbol is added from different source. Try to search by ticker as more robust.
-    operation = getUpdateMergedSymbolOperation(mergedSymbolByTicker, source, sourceSymbol, 't');
+    operation = getUpdateMergedSymbolOperation(mergedSymbolByTicker, source, sourceSymbol, 't', 'c');
     if (addOperationIfNeeded(operation, operations)) {
       continue;
     }
@@ -98,11 +98,20 @@ async function update(mergedSymbolsCollection, find, source) {
 /**
  * Returns operation on success update
  */
-function getUpdateMergedSymbolOperation(dictionary, source, sourceSymbol, compareField) {
+function getUpdateMergedSymbolOperation(mergedSymbolByField, source, sourceSymbol, compareField, additionCompareField) {
   const key = sourceSymbol[compareField];
   if (key == null) { return null; }
 
-  const mergedSymbol = dictionary[key];
+  const mergedSymbol = mergedSymbolByField[key];
+  if (additionCompareField != null) {
+    const sourceAdditionValue = source[additionCompareField];
+    const mergedAdditionValue = mergedSymbol[additionCompareField];
+    if (sourceAdditionValue != null && mergedAdditionValue != null && sourceAdditionValue !== mergedAdditionValue) {
+      // We need to adjust tickers that are conflicting. E.g. add exchange to their name.
+      throw `Conflicting symbol: ${source.stringify()}. Merged: ${mergedSymbol.stringify()}`;
+    }
+  }
+
   if (mergedSymbol == null) {
     return null;
   } else {
