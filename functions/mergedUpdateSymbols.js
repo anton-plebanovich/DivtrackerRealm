@@ -103,6 +103,10 @@ function getUpdateMergedSymbolOperation(mergedSymbolByField, source, sourceSymbo
   if (key == null) { return null; }
 
   const mergedSymbol = mergedSymbolByField[key];
+  if (mergedSymbol == null) {
+    return null;
+  }
+
   if (additionCompareField != null) {
     const sourceAdditionValue = source[additionCompareField];
     const mergedAdditionValue = mergedSymbol[additionCompareField];
@@ -111,12 +115,8 @@ function getUpdateMergedSymbolOperation(mergedSymbolByField, source, sourceSymbo
       throw `Conflicting symbol: ${source.stringify()}. Merged: ${mergedSymbol.stringify()}`;
     }
   }
-
-  if (mergedSymbol == null) {
-    return null;
-  } else {
-    return getUpdateSymbolOperation(source, sourceSymbol, mergedSymbol);
-  }
+  
+  return getUpdateSymbolOperation(source, sourceSymbol, mergedSymbol);
 }
 
 /**
