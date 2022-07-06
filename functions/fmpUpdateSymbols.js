@@ -46,7 +46,8 @@ async function updateFMPSymbols() {
   );
 
   const manuallyDisabledTickers = [
-    'TMFS', // No quote and wrong exchange
+    '1', // Conflicts with IEX
+    'TMFS', // No quote, wrong exchange and conflicts with IEX
     'LONZ', // Wrong exchange and conflicts with IEX
   ];
 

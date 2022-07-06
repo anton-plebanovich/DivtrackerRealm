@@ -20,7 +20,7 @@
 - Execute `dt restore --environment local --backup-source-environment sandbox-anton --database fmp-tmp --yes --verbose`
 - Execute symbols migration on the local environment
 - Execute `dt backup --environment local --database fmp-tmp --verbose`
-- Execute in the `playground` to get conflicting tickers: `const newTickers = await atlas.db('fmp-tmp').collection('symbols').distinct('t'); const oldTickers = await db.collection('symbols').distinct('t'); return newTickers.filter(x => oldTickers.includes(x));`
+- Execute in the `playground` to get conflicting tickers: `const newTickers = await atlas.db('fmp-tmp').collection('symbols').distinct('t', { e: null }); const oldTickers = await db.collection('symbols').distinct('t', { e: null }); return newTickers.filter(x => oldTickers.includes(x));`
 - Open the app and add `<IEX_AND_FMP_CONFLICTING_TICKER>` ticker
 - Execute `dt restore --environment sandbox-anton --backup-source-environment local --database fmp-tmp --to-database fmp --do-not-drop --yes --verbose`
 - Execute `dt call-realm-function --environment sandbox-anton --function mergedUpdateSymbols --verbose`
