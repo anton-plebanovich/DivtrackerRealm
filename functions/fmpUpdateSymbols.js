@@ -20,12 +20,16 @@
 }
  */
 
-exports = async function(_databaseName) {
+exports = async function(_databaseName, skipMergedUpdate) {
   context.functions.execute("fmpUtils", _databaseName);
   
   const date = new Date();
   await updateFMPSymbols();
-  await context.functions.execute("mergedUpdateSymbols", date, "fmp");
+  
+  if (skipMergedUpdate?.toString() !== 'true') {
+    await context.functions.execute("mergedUpdateSymbols", date, "fmp");
+  }
+
   await setUpdateDate(fmp, `${databaseName}-symbols`);
   
   console.log(`SUCCESS`);
