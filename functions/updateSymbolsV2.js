@@ -33,17 +33,30 @@
 /**
  * @note IEX update happens at 8am, 9am, 12pm, 1pm UTC
  */
-exports = async function() {
+exports = async function(__reserved, updateName) {
   context.functions.execute("iexUtils");
 
-  const date = new Date();
-  await updateIEXSymbols();
-  await setUpdateDate(iex, "symbols");
+  if (updateName == null) {
+    const date = new Date();
+    await updateIEXSymbols();
+    await setUpdateDate(iex, "symbols");
+  
+    await updateDivtrackerSymbols();
+    await setUpdateDate(db, "symbols");
+  
+    await context.functions.execute("mergedUpdateSymbols", date, "iex");
 
-  await updateDivtrackerSymbols();
-  await setUpdateDate(db, "symbols");
+  } else if (updateName === 'updateIEXSymbols') {
+    await updateIEXSymbols();
+    await setUpdateDate(iex, "symbols");
 
-  await context.functions.execute("mergedUpdateSymbols", date, "iex");
+  } else if (updateName === 'updateDivtrackerSymbols') {
+    await updateDivtrackerSymbols();
+    await setUpdateDate(db, "symbols");
+
+  } else {
+    throw `Unknown '${updateName}' update name`;
+  }
   
   console.log(`SUCCESS`);
 };
