@@ -44,8 +44,8 @@ exports = async function(date, sourceName) {
 async function update(mergedSymbolsCollection, find, source) {
   const sourceCollection = source.db.collection("symbols");
   const [sourceSymbols, mergedSymbols] = await Promise.all([
-    sourceCollection.find(find, { u: false }).toArray(),
-    mergedSymbolsCollection.find({}, { u: false }).toArray(),
+    sourceCollection.fullFind(find, { u: false }),
+    mergedSymbolsCollection.fullFind({}, { u: false }),
   ]);
 
   const mergedSymbolByID = mergedSymbols.toDictionary(x => x[source.field]?._id);
@@ -62,7 +62,7 @@ async function update(mergedSymbolsCollection, find, source) {
     }
 
     // Second, check if symbol is added from different source. Try to search by ticker as more robust.
-    operation = getUpdateMergedSymbolOperation(mergedSymbolByTicker, source, sourceSymbol, 't');
+    operation = getUpdateMergedSymbolOperation(mergedSymbolByTicker, source, sourceSymbol, 't', 'c');
     if (addOperationIfNeeded(operation, operations)) {
       continue;
     }
@@ -98,22 +98,38 @@ async function update(mergedSymbolsCollection, find, source) {
 /**
  * Returns operation on success update
  */
-function getUpdateMergedSymbolOperation(dictionary, source, sourceSymbol, compareField) {
+function getUpdateMergedSymbolOperation(mergedSymbolByKey, source, sourceSymbol, compareField, additionCompareField) {
   const key = sourceSymbol[compareField];
-  if (key == null) { return null; }
+  if (key == null) { 
+    return null; 
+  }
 
-  const mergedSymbol = dictionary[key];
+  const mergedSymbol = mergedSymbolByKey[key];
   if (mergedSymbol == null) {
     return null;
-  } else {
-    return getUpdateSymbolOperation(source, sourceSymbol, mergedSymbol);
   }
+
+  if (additionCompareField != null) {
+    const sourceAdditionValue = source[additionCompareField];
+    const mergedAdditionValue = mergedSymbol.m?.[additionCompareField];
+    if (sourceAdditionValue != null && mergedAdditionValue != null && sourceAdditionValue !== mergedAdditionValue) {
+      // We need to adjust tickers that are conflicting. Currently, we just disable them in one source.
+      throw `Conflicting symbol: ${source.stringify()}. Merged: ${mergedSymbol.stringify()}`;
+    }
+  }
+  
+  return getUpdateSymbolOperation(source, sourceSymbol, mergedSymbol);
 }
 
 /**
  * Returns operation on success update
  */
 function getUpdateSymbolOperation(source, sourceSymbol, mergedSymbol) {
+  // If source is disabled and detached we do not need to do anything
+  if (sourceSymbol.e == false && mergedSymbol[source.field] == null) {
+    return {};
+  }
+
   let newMainSymbol;
   for (const otherSource of sources) {
     const otherField = otherSource.field;

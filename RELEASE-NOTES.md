@@ -5,9 +5,32 @@
 
 # ################################################## O N G O I N G ##############################################################
 
+- Make sure trigger times are correct
 - If needed, adjust an environment for commands below
-- Deploy the new server
-- Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument mered_symbols_fill_exchanges_migration --verbose`
+- Deploy the new server with all FMP triggers disabled
+- Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument fix_fmp_symbols_exchanges --verbose`
+- Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument merged_symbols_fill_exchanges_migration --verbose`
+- Execute `dt call-realm-function --environment sandbox-anton --function fmpUpdateSymbols --verbose`
+- Check `merged.symbols` using `{ "f.c": { $ne: null }, "i.c": { $ne: null }, $expr: { $ne: ["$f.c", "$i.c"] } }`. Results should be empty.
+- Execute `dt backup --environment sandbox-anton --verbose`
+- Execute `dt restore-index --environment sandbox-anton --database fmp-tmp`
+- Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument fetch_new_symbols_for_fmp_tmp --verbose`
+- Execute `dt call-realm-function --environment sandbox-anton --function fmpLoadMissingData --argument fmp-tmp --retry-on-error 'execution time limit' --verbose`
+- Execute `dt backup --environment sandbox-anton --database fmp-tmp --verbose`
+- Execute `dt restore --environment local --backup-source-environment sandbox-anton --database fmp-tmp --yes --verbose`
+- Execute symbols migration on the local environment
+- Execute `dt backup --environment local --database fmp-tmp --verbose`
+- Execute in the `playground` to get conflicting tickers: `const newTickers = await atlas.db('fmp-tmp').collection('symbols').distinct('t', { e: null }); const oldTickers = await db.collection('symbols').distinct('t', { e: null }); return newTickers.filter(x => oldTickers.includes(x));`
+- Open the app and add `<IEX_AND_FMP_CONFLICTING_TICKER>` ticker
+- Execute `dt restore --environment sandbox-anton --backup-source-environment local --database fmp-tmp --to-database fmp --do-not-drop --yes --verbose`
+- Execute `dt call-realm-function --environment sandbox-anton --function fmpUpdateSymbols --verbose`
+- Execute `dt call-realm-function --environment sandbox-anton --function mergedUpdateSymbols --verbose`
+- Check `merged.symbols` using `{ "f.c": { $ne: null }, "i.c": { $ne: null }, $expr: { $ne: ["$f.c", "$i.c"] } }`. Results should be empty.
+- Background/foreground the app and check that `<IEX_AND_FMP_CONFLICTING_TICKER>` ticker data is refetched
+- Execute `dt call-realm-function --environment sandbox-anton --function checkTransactionsV2 --verbose`
+- Execute `dt check-symbols --environment sandbox-anton`
+- Drop `fmp-tmp` database
+- Enable all previously disabled triggers
 
 # ################################################## D O N E ##############################################################
 
