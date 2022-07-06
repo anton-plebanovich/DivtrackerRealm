@@ -10,6 +10,7 @@
 - Deploy the new server with all FMP triggers disabled
 - Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument fix_fmp_symbols_exchanges --verbose`
 - Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument merged_symbols_fill_exchanges_migration --verbose`
+- Execute `dt call-realm-function --environment sandbox-anton --function fmpUpdateSymbols --verbose`
 - Check `merged.symbols` using `{ "f.c": { $ne: null }, "i.c": { $ne: null }, $expr: { $ne: ["$f.c", "$i.c"] } }`. Results should be empty.
 - Execute `dt backup --environment sandbox-anton --verbose`
 - Execute `dt restore-index --environment sandbox-anton --database fmp-tmp`

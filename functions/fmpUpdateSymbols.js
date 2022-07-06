@@ -45,10 +45,17 @@ async function updateFMPSymbols() {
     !newTickers.includes(symbolID)
   );
 
+  const manuallyDisabledTickers = [
+    'TMFS', // No quote and wrong exchange
+    'LONZ', // Wrong exchange and conflicts with IEX
+  ];
+
+  tickersToDisable.push(...manuallyDisabledTickers);
+
   if (tickersToDisable.length) {
     console.log(`Disabling FMP symbols: ${tickersToDisable}`);
     await fmpCollection.updateMany(
-      { t: { $in: tickersToDisable } },
+      { t: { $in: tickersToDisable }, e: null },
       { 
         $set: { e: false },
         $currentDate: { "u": true },

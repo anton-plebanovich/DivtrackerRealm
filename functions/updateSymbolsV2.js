@@ -116,7 +116,7 @@ async function updateIEXSymbols() {
   if (symbolsIDsToDisable.length) {
     console.log(`Disabling IEX symbols: ${symbolsIDsToDisable}`);
     await iexCollection.updateMany(
-      { symbol: { $in: symbolsIDsToDisable } },
+      { symbol: { $in: symbolsIDsToDisable }, isEnabled: true },
       { $set: { isEnabled: false }, $currentDate: { u: true } }
     );
   }
