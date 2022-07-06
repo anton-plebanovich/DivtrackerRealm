@@ -109,7 +109,7 @@ function getUpdateMergedSymbolOperation(mergedSymbolByField, source, sourceSymbo
 
   if (additionCompareField != null) {
     const sourceAdditionValue = source[additionCompareField];
-    const mergedAdditionValue = mergedSymbol[additionCompareField];
+    const mergedAdditionValue = mergedSymbol.m?.[additionCompareField];
     if (sourceAdditionValue != null && mergedAdditionValue != null && sourceAdditionValue !== mergedAdditionValue) {
       // We need to adjust tickers that are conflicting. Currently, we just disable them in one source.
       throw `Conflicting symbol: ${source.stringify()}. Merged: ${mergedSymbol.stringify()}`;
@@ -123,6 +123,11 @@ function getUpdateMergedSymbolOperation(mergedSymbolByField, source, sourceSymbo
  * Returns operation on success update
  */
 function getUpdateSymbolOperation(source, sourceSymbol, mergedSymbol) {
+  // If source is disabled and detached we do not need to do anything
+  if (sourceSymbol.e == false && mergedSymbol[source.field] == null) {
+    return {};
+  }
+
   let newMainSymbol;
   for (const otherSource of sources) {
     const otherField = otherSource.field;
