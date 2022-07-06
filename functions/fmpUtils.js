@@ -27,12 +27,10 @@ String.prototype.removeSensitiveData = function() {
 async function _getShortSymbols() {
   // Getting short symbols for IDs
   const symbolsCollection = fmp.collection("symbols");
-  const shortSymbols = await symbolsCollection
-    .find(
-      { e: null },
-      { _id: 1, c: 1, t: 1 }
-    )
-    .toArray();
+  const shortSymbols = await symbolsCollection.fullFind(
+    { e: null },
+    { _id: 1, c: 1, t: 1 }
+  );
 
   console.log(`Got short symbols (${shortSymbols.length})`);
   console.logData(`Got short symbols (${shortSymbols.length})`, shortSymbols);

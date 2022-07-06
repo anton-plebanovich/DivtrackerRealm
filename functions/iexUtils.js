@@ -48,12 +48,10 @@ async function _getInUseShortSymbols() {
 
   // Transactions are using merged symbol ID so we need to map
   const mergedSymbolsCollection = atlas.db("merged").collection("symbols");
-  const mergedSymbols = await mergedSymbolsCollection
-    .find(
-      { _id: { $in: distinctTransactionMergedSymbolIDs }, i: { $ne: null } },
-      { _id: 0, 'i._id': 1 }
-    )
-    .toArray();
+  const mergedSymbols = await mergedSymbolsCollection.fullFind(
+    { _id: { $in: distinctTransactionMergedSymbolIDs }, i: { $ne: null } },
+    { _id: 0, 'i._id': 1 }
+  );
 
   const distinctTransactionSymbolIDs = mergedSymbols.map(x => x.i._id);
 
@@ -101,12 +99,10 @@ getInUseShortSymbols = _getInUseShortSymbols;
 async function _getShortSymbols(symbolIDs) {
   // Getting short symbols for IDs
   const symbolsCollection = db.collection("symbols");
-  const shortSymbols = await symbolsCollection
-    .find(
-      { _id: { $in: symbolIDs } }, 
-      { _id: 1, c: 1, t: 1 }
-    )
-    .toArray();
+  const shortSymbols = await symbolsCollection.fullFind(
+    { _id: { $in: symbolIDs } }, 
+    { _id: 1, c: 1, t: 1 }
+  );
 
   console.log(`Got short symbols (${shortSymbols.length}) for '${symbolIDs}'`);
   console.logData(`Got short symbols (${shortSymbols.length}) for '${symbolIDs}'`, shortSymbols);
