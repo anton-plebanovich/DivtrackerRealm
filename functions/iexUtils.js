@@ -41,10 +41,21 @@ async function _getInUseShortSymbols() {
   // So by combining we have all current + all future symbols. Idealy.
   const companiesCollection = db.collection("companies");
   const transactionsCollection = db.collection("transactions");
-  const [companyIDs, distinctTransactionSymbolIDs] = await Promise.all([
+  const [companyIDs, distinctTransactionMergedSymbolIDs] = await Promise.all([
     companiesCollection.distinct("_id", {}),
     transactionsCollection.distinct("s", {}),
   ]);
+
+  // Transactions are using merged symbol ID so we need to map
+  const mergedSymbolsCollection = atlas.db("merged").collection("symbols");
+  const mergedSymbols = await mergedSymbolsCollection
+    .find(
+      { _id: { $in: distinctTransactionMergedSymbolIDs }, i: { $ne: null } },
+      { _id: 0, 'i._id': 1 }
+    )
+    .toArray();
+
+  const distinctTransactionSymbolIDs = mergedSymbols.map(x => x.i._id);
 
   console.log(`Unique companies IDs (${companyIDs.length})`);
   console.logData(`Unique companies IDs (${companyIDs.length})`, companyIDs);

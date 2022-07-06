@@ -111,7 +111,7 @@ function getUpdateMergedSymbolOperation(mergedSymbolByField, source, sourceSymbo
     const sourceAdditionValue = source[additionCompareField];
     const mergedAdditionValue = mergedSymbol[additionCompareField];
     if (sourceAdditionValue != null && mergedAdditionValue != null && sourceAdditionValue !== mergedAdditionValue) {
-      // We need to adjust tickers that are conflicting. E.g. add exchange to their name.
+      // We need to adjust tickers that are conflicting. Currently, we just disable them in one source.
       throw `Conflicting symbol: ${source.stringify()}. Merged: ${mergedSymbol.stringify()}`;
     }
   }

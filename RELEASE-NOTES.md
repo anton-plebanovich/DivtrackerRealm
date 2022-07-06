@@ -23,7 +23,9 @@
 - Execute in the `playground` to get conflicting tickers: `const newTickers = await atlas.db('fmp-tmp').collection('symbols').distinct('t', { e: null }); const oldTickers = await db.collection('symbols').distinct('t', { e: null }); return newTickers.filter(x => oldTickers.includes(x));`
 - Open the app and add `<IEX_AND_FMP_CONFLICTING_TICKER>` ticker
 - Execute `dt restore --environment sandbox-anton --backup-source-environment local --database fmp-tmp --to-database fmp --do-not-drop --yes --verbose`
+- Execute `dt call-realm-function --environment sandbox-anton --function fmpUpdateSymbols --verbose`
 - Execute `dt call-realm-function --environment sandbox-anton --function mergedUpdateSymbols --verbose`
+- Check `merged.symbols` using `{ "f.c": { $ne: null }, "i.c": { $ne: null }, $expr: { $ne: ["$f.c", "$i.c"] } }`. Results should be empty.
 - Background/foreground the app and check that `<IEX_AND_FMP_CONFLICTING_TICKER>` ticker data is refetched
 - Execute `dt call-realm-function --environment sandbox-anton --function checkTransactionsV2 --verbose`
 - Execute `dt check-symbols --environment sandbox-anton`
