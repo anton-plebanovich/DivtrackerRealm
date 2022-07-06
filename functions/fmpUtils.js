@@ -1264,7 +1264,7 @@ const exchangeByFmpExchange = {
   AMS: "XAMS",
   ASE: "XASE",
   ATH: "XATH",
-  BATS: "BATE",
+  BATS: "BATS",
   BER: "XBER",
   BSE: "XBOM",
   BUD: "XBUD",
