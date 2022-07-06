@@ -45,6 +45,9 @@ async function _getInUseShortSymbols() {
     companiesCollection.distinct("_id", {}),
     transactionsCollection.distinct("s", {}),
   ]);
+  
+  console.log(`Distinct merged symbol IDs for transactions (${distinctTransactionMergedSymbolIDs.length})`);
+  console.logData(`Distinct merged symbol IDs for transactions (${distinctTransactionMergedSymbolIDs.length})`, distinctTransactionMergedSymbolIDs);
 
   // Transactions are using merged symbol ID so we need to map
   const mergedSymbolsCollection = atlas.db("merged").collection("symbols");
