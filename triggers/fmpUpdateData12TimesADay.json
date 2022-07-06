@@ -2,8 +2,7 @@
     "id": "6185ffbd6db886ed8f037b22",
     "name": "fmpUpdateData12TimesADay",
     "type": "SCHEDULED",
-    "config": {
-        "schedule": "0,2,4,8,10,12,14,16,18,23,25,27 2 * * *",
+        "schedule": "0,2,4,9,11,13,15,17,19,24,26,28,30,32,34,39,41,43,45,47,49,54,56,58 0 * * *",
         "skip_catchup_events": true
     },
     "disabled": false,

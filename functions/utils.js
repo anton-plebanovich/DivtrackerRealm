@@ -319,9 +319,13 @@ Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, fields, 
  * Bypass find limit of 50000 objects by fetching all results successively  
  * @note We do not allow `sort` parameter to prevent ambiguity between fetches which may cause holey or intersecting result.
  */
-Object.prototype.fullFind = async function(find) {
+Object.prototype.fullFind = async function(find, projection) {
   if (find == null) {
     find = {};
+  }
+
+  if (projection == null) {
+    projection = {};
   }
 
   let objectsPage;
@@ -336,7 +340,7 @@ Object.prototype.fullFind = async function(find) {
       compositeFind = find;
     }
 
-    objectsPage = await this.find(compositeFind).sort({ _id: 1 }).limit(pageSize).toArray();
+    objectsPage = await this.find(compositeFind, projection).sort({ _id: 1 }).limit(pageSize).toArray();
     objects.push(...objectsPage);
     console.logVerbose(`Full fetch objects length: ${objects.length}`);
   } while (objectsPage.length >= pageSize);
