@@ -324,6 +324,10 @@ Object.prototype.fullFind = async function(find, projection) {
     find = {};
   }
 
+  if (projection == null) {
+    projection = {};
+  }
+
   let objectsPage;
   const objects = [];
   const pageSize = 50000;
