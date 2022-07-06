@@ -44,8 +44,8 @@ exports = async function(date, sourceName) {
 async function update(mergedSymbolsCollection, find, source) {
   const sourceCollection = source.db.collection("symbols");
   const [sourceSymbols, mergedSymbols] = await Promise.all([
-    sourceCollection.find(find, { u: false }).toArray(),
-    mergedSymbolsCollection.find({}, { u: false }).toArray(),
+    sourceCollection.fullFind(find, { u: false }),
+    mergedSymbolsCollection.fullFind({}, { u: false }),
   ]);
 
   const mergedSymbolByID = mergedSymbols.toDictionary(x => x[source.field]?._id);
@@ -98,11 +98,13 @@ async function update(mergedSymbolsCollection, find, source) {
 /**
  * Returns operation on success update
  */
-function getUpdateMergedSymbolOperation(mergedSymbolByField, source, sourceSymbol, compareField, additionCompareField) {
+function getUpdateMergedSymbolOperation(mergedSymbolByKey, source, sourceSymbol, compareField, additionCompareField) {
   const key = sourceSymbol[compareField];
-  if (key == null) { return null; }
+  if (key == null) { 
+    return null; 
+  }
 
-  const mergedSymbol = mergedSymbolByField[key];
+  const mergedSymbol = mergedSymbolByKey[key];
   if (mergedSymbol == null) {
     return null;
   }
