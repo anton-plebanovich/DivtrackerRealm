@@ -6,7 +6,7 @@
         "schedule": "6,21,36,51 * * * *",
         "skip_catchup_events": true
     },
-    "disabled": true,
+    "disabled": false,
     "event_processors": {
         "FUNCTION": {
             "config": {
