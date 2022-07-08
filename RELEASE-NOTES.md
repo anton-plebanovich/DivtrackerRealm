@@ -7,12 +7,11 @@
 
 - Make sure trigger times are correct
 - If needed, adjust an environment for commands below
+- Execute `dt backup --environment sandbox-anton --verbose`
 - Deploy the new server with all FMP triggers disabled
 - Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument fix_fmp_symbols_exchanges --verbose`
 - Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument merged_symbols_fill_exchanges_migration --verbose`
-- Execute `dt call-realm-function --environment sandbox-anton --function fmpUpdateSymbols --verbose`
 - Check `merged.symbols` using `{ "f.c": { $ne: null }, "i.c": { $ne: null }, $expr: { $ne: ["$f.c", "$i.c"] } }`. Results should be empty.
-- Execute `dt backup --environment sandbox-anton --verbose`
 - Execute `dt restore-index --environment sandbox-anton --database fmp-tmp`
 - Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument fetch_new_symbols_for_fmp_tmp --verbose`
 - Execute `dt call-realm-function --environment sandbox-anton --function fmpLoadMissingData --argument fmp-tmp --retry-on-error 'execution time limit' --verbose`
@@ -30,6 +29,7 @@
 - Execute `dt call-realm-function --environment sandbox-anton --function checkTransactionsV2 --verbose`
 - Execute `dt check-symbols --environment sandbox-anton`
 - Drop `fmp-tmp` database
+- Execute `dt backup --environment sandbox-anton --verbose`
 - Enable all previously disabled triggers
 
 # ################################################## D O N E ##############################################################
