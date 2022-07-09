@@ -29,7 +29,10 @@ async function run(skipSymbolsUpdate) {
   }
 
   console.log(`Checking missing data`);
-  await context.functions.execute("fmpLoadMissingData", databaseName);
+  const result = await context.functions.execute("fmpLoadMissingData", databaseName);
+  if (result?.message === executionTimeoutErrorMessage) {
+    return result;
+  }
 
   const shortSymbols = await getShortSymbols();
   const tickers = shortSymbols.map(x => x.t);
