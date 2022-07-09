@@ -5,6 +5,12 @@
 
 # ################################################## O N G O I N G ##############################################################
 
+
+
+# ################################################## D O N E ##############################################################
+
+# 2022-07-09 | FMP non-American, FMP exchanges ISO names and exchanges for merged symbols
+
 - Make sure trigger times are correct
 - If needed, adjust an environment for commands below
 - Execute `dt backup --environment sandbox-anton --verbose`
@@ -30,8 +36,6 @@
 - Execute `dt check-symbols --environment sandbox-anton`
 - Execute `dt backup --environment sandbox-anton --verbose`
 - Enable all previously disabled triggers
-
-# ################################################## D O N E ##############################################################
 
 # 2022-07-03 | FMP OTCs
 
