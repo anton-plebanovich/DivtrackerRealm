@@ -114,7 +114,7 @@ async function updateDividends(shortSymbols) {
   // It takes too much time (~60s for 112k dividends) to get full dividends and prepare working context so instead we limit simultaneous symbols count
   const chunkedOutdatedShortSymbols = outdatedShortSymbols.chunkedBySize(1000);
   for (const outdatedShortSymbols of chunkedOutdatedShortSymbols) {
-    await fetchAndUpdateDividends(outdatedShortSymbols)
+    await fetchAndUpdateDividends(outdatedShortSymbols);
   }
 
   await setUpdateDate(fmp, `${databaseName}-${collectionName}`);
@@ -132,7 +132,7 @@ async function fetchAndUpdateDividends(outdatedShortSymbols) {
     .toDictionary(fields);
 
   const callbackBase = async (historical, dividends, symbolIDs) => {
-    dividends = fixDividends(dividends, existingDividendsBySymbolID);
+    dividends = await fixDividends(dividends, existingDividendsBySymbolID);
     await collection.safeUpdateMany(dividends, existingDividendByFields, fields);
 
     if (historical) {
@@ -160,21 +160,33 @@ async function fetchAndUpdateDividends(outdatedShortSymbols) {
   ]);
 }
 
-function fixDividends(dividends, existingDividendsBySymbolID) {
+async function fixDividends(dividends, existingDividendsBySymbolID) {
   if (!dividends.length) { return []; }
 
   const dividendsBySymbolID = dividends.toBuckets(x => x.s);
   const fixedDividends = [];
   for (const [symbolID, dividends] of Object.entries(dividendsBySymbolID)) {
-    const existingDividends = existingDividendsBySymbolID[symbolID];
-
-    // Check if there is nothing to fix
+    let existingDividends = existingDividendsBySymbolID[symbolID];
     if (existingDividends == null) {
       // There were no dividends but we have them now. 
-      // It's hard to say if that's the first record or the whole set was added so asking to fix manually.
-      // dt data-status -e <ENV> -d fmp -c dividends --id <ID1> && dt call-realm-function -e <ENV> -f fmpLoadMissingData --verbose
-      console.error(`Missing existing dividends for: ${symbolID}. It's better to load missing dividends data for this.`);
-      continue;
+      // It's hard to say if that's the first record or the whole set was added so fetching full range instead
+      console.log(`Existing dividends are missing for '${symbolID}' symbol. Performing full fetch.`);
+      const shortSymbol = await fmp.collection("symbols").findOne(
+        { _id: new BSON.ObjectId(symbolID) },
+        { _id: 1, c: 1, t: 1 }
+      );
+
+      const allDividends = await Promise
+        .all([
+          fetchDividendsCalendar([shortSymbol]),
+          fetchDividends([shortSymbol], null)
+        ])
+        .then(x => x.flat());
+
+      dividends.length = 0;
+      dividends.push(...allDividends);
+
+      existingDividends = [];
     }
 
     // We remove new dividends from existing to allow update in case something was changed.
