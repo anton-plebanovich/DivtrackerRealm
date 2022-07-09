@@ -20,12 +20,16 @@
 }
  */
 
-exports = async function(_databaseName) {
+exports = async function(_databaseName, skipMergedUpdate) {
   context.functions.execute("fmpUtils", _databaseName);
   
   const date = new Date();
   await updateFMPSymbols();
-  await context.functions.execute("mergedUpdateSymbols", date, "fmp");
+  
+  if (skipMergedUpdate?.toString() !== 'true') {
+    await context.functions.execute("mergedUpdateSymbols", date, "fmp");
+  }
+
   await setUpdateDate(fmp, `${databaseName}-symbols`);
   
   console.log(`SUCCESS`);
@@ -45,10 +49,18 @@ async function updateFMPSymbols() {
     !newTickers.includes(symbolID)
   );
 
+  const manuallyDisabledTickers = [
+    '1', // Conflicts with IEX
+    'TMFS', // No quote, wrong exchange and conflicts with IEX
+    'LONZ', // Wrong exchange and conflicts with IEX
+  ];
+
+  tickersToDisable.push(...manuallyDisabledTickers);
+
   if (tickersToDisable.length) {
     console.log(`Disabling FMP symbols: ${tickersToDisable}`);
     await fmpCollection.updateMany(
-      { t: { $in: tickersToDisable } },
+      { t: { $in: tickersToDisable }, e: null },
       { 
         $set: { e: false },
         $currentDate: { "u": true },

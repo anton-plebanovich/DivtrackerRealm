@@ -27,12 +27,10 @@ String.prototype.removeSensitiveData = function() {
 async function _getShortSymbols() {
   // Getting short symbols for IDs
   const symbolsCollection = fmp.collection("symbols");
-  const shortSymbols = await symbolsCollection
-    .find(
-      { e: null },
-      { _id: 1, c: 1, t: 1 }
-    )
-    .toArray();
+  const shortSymbols = await symbolsCollection.fullFind(
+    { e: null },
+    { _id: 1, c: 1, t: 1 }
+  );
 
   console.log(`Got short symbols (${shortSymbols.length})`);
   console.logData(`Got short symbols (${shortSymbols.length})`, shortSymbols);
@@ -316,7 +314,7 @@ async function _fmpFetchAndMapFlatArray(api, tickers, queryParameters, idByTicke
             return mapFunction(datas, idByTicker[ticker]);
           }
         })
-        .flat()
+        .flat();
       }
     );
 }
@@ -1258,6 +1256,75 @@ function _fixFMPSplits(fmpSplits, symbolID) {
   }
 };
 
+// https://stockmarketmba.com/globalstockexchanges.php
+const exchangeByFmpExchange = {
+  AMEX: "ARCX",
+  AMS: "XAMS",
+  ASE: "XASE",
+  ATH: "XATH",
+  BATS: "BATS",
+  BER: "XBER",
+  BSE: "XBOM",
+  BUD: "XBUD",
+  BUE: "XBUE",
+  CPH: "XCSE",
+  CRYPTO: "CRYPTO",
+  DFM: "XDFM",
+  DOH: "DSMD",
+  DUS: "XDUS",
+  ETF: null,
+  EURONEXT: "EURONEXT",
+  FGI: null,
+  FKA: "XFKA",
+  HAM: "XHAM",
+  HEL: "XHEL",
+  HKSE: "XHKG",
+  ICE: "XICE",
+  IOB: "IOB",
+  IST: "XIST",
+  JKT: "XIDX",
+  JNB: "XJSE",
+  JPX: "XTKS",
+  KLS: "XKLS",
+  KOE: "XKOS",
+  KOSDAQ: "XKOS",
+  KSC: "XKRX",
+  LIS: "XLIS",
+  LSE: "XLON",
+  MCE: "XMAD",
+  MCX: "MISX",
+  MEX: "XMEX",
+  MIL: "MTAA",
+  MUN: "XMUN",
+  MUTUAL_FUND: null,
+  NASDAQ: "XNAS",
+  NEO: "NEOE",
+  NSE: "XNSE",
+  NYSE: "XNYS",
+  OSE: "XOSL",
+  OTC: null,
+  PRA: "XPRA",
+  SAO: "BVMF",
+  SAT: null,
+  SAU: "XSAU",
+  SET: "XBKK",
+  SGO: "XSGO",
+  SHH: "XSHG",
+  SHZ: "XSHE",
+  SIX: "XSWX",
+  STO: "XSTO",
+  STU: "XSTU",
+  TAI: "XTAI",
+  TAL: "XTAL",
+  TLV: "XTAE",
+  TSX: "XTSX",
+  TWO: "ROCO",
+  VIE: "XWBO",
+  WSE: "XWAR",
+  XETRA: "XETR",
+  YHD: null,
+}
+
 /**
  * Fixes symbos object so it can be added to MongoDB.
  * @param {[FMPSymbol]} fmpSymbols Symbols object.
@@ -1276,16 +1343,15 @@ function _fixFMPSymbols(fmpSymbols) {
       .filterNullAndUndefined()
       // Limit to only supported types
       .filter(fmpSymbol => 
-        fmpSymbol.exchangeShortName === "MCX"
-        || fmpSymbol.type === "fund" 
-        || fmpSymbol.exchangeShortName === "MUTUAL_FUND"
-        || fmpSymbol.type === "etf" 
-        || fmpSymbol.exchangeShortName === "ETF"
-        || fmpSymbol.exchangeShortName === "OTC"
+        fmpSymbol.type === "fund"
+        || fmpSymbol.type === "etf"
+        || (fmpSymbol.exchangeShortName !== "NASDAQ"
+          && fmpSymbol.exchangeShortName !== "NYSE"
+          && fmpSymbol.exchangeShortName !== "AMEX")
       )
       .map(fmpSymbol => {
         const symbol = {};
-        symbol.setIfNotNullOrUndefined('c', fmpSymbol.exchangeShortName);
+        symbol.setIfNotNullOrUndefined('c', exchangeByFmpExchange[fmpSymbol.exchangeShortName]);
         symbol.setIfNotNullOrUndefined('n', fmpSymbol.name);
         symbol.setIfNotNullOrUndefined('t', fmpSymbol.symbol);
 

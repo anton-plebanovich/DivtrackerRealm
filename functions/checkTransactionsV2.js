@@ -8,12 +8,10 @@
   context.functions.execute("iexUtils");
   const transactionsCollection = db.collection("transactions");
 
-  const transactions = transactionsCollection.fullFind({});
+  const transactions = await transactionsCollection.fullFind({});
   if (!transactions.length) {
     console.log(`Nothing to verify. Transactions are empty.`);
     return;
-  } else {
-    console.log(`Checking transactions with filter: ${find.stringify()}`);
   }
   
   // Check transactions
