@@ -54,7 +54,7 @@ async function _restoreSymbols() {
 restoreSymbols = _restoreSymbols;
 
 async function _prepareFMPData() {
-  if (environment !== 'tests') {
+  if (ENV.environment !== 'tests') {
     return;
   }
   
