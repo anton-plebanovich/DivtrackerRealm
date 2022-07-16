@@ -740,7 +740,7 @@ function _fixFMPCompany(fmpCompany, symbolID) {
     console.error(`Unable to fix company ${fmpCompany.stringify()}: ${error}`);
     return null;
   }
-};
+}
 
 /**
  * Fixes dividends object so it can be added to MongoDB.

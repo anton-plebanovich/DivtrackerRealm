@@ -20,6 +20,8 @@ exports = async function(migration, arg) {
 
     if (migration === 'fetch_new_symbols_for_fmp_tmp') {
       await fetch_new_symbols_for_fmp_tmp();
+    } else if (migration === 'fill_hardcoded_fmp_companies') {
+      await fill_hardcoded_fmp_companies();
     } else {
       throw `Unexpected migration: ${migration}`;
     }
@@ -48,4 +50,33 @@ async function fetch_new_symbols_for_fmp_tmp() {
 
   const tmpCollection = atlas.db('fmp-tmp').collection("symbols");
   await tmpCollection.insertMany(newSymbols);
+}
+
+async function fill_hardcoded_fmp_companies() {
+  context.functions.execute("fmpUtils");
+
+  const symbols = await atlas.db('fmp-tmp').collection("symbols").find().toArray();
+  const symbolByTicker = symbols.toDictionary('t');
+  const fmpSymbols = await fetch(ENV.hostURL, '/fmp_mutual_funds.json');
+  const companies = fmpSymbols.map(fmpSymbol => max_fmp_symbol_to_fmp_company(fmpSymbol, symbolByTicker[fmpSymbol.symbol]._id))
+  await atlas.db('fmp-tmp').collection("companies").insertMany(companies);
+}
+
+function max_fmp_symbol_to_fmp_company(fmpSymbol, symbolID) {
+  try {
+    throwIfUndefinedOrNull(fmpSymbol, `max_fmp_symbol_to_fmp_company company`);
+    throwIfUndefinedOrNull(symbolID, `max_fmp_symbol_to_fmp_company symbolID`);
+  
+    console.logVerbose(`Company data fix start`);
+    const company = {};
+    company._id = symbolID;
+    company.c = "USD";
+    company.setIfNotNullOrUndefined('n', fmpSymbol.name);
+    company.t = "mf";
+
+    return company;
+  } catch(error) {
+    console.error(`Unable to fix company ${fmpSymbol.stringify()}: ${error}`);
+    return null;
+  }
 }

@@ -13,6 +13,7 @@
 - Deploy the new server with all FMP triggers disabled
 - Execute `dt restore-index --environment sandbox-anton --database fmp-tmp`
 - Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument fetch_new_symbols_for_fmp_tmp --verbose`
+- Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument fill_hardcoded_fmp_companies --verbose`
 - Execute `dt call-realm-function --environment sandbox-anton --function fmpLoadMissingData --argument fmp-tmp --retry-on-error 'execution time limit' --verbose`
 - Execute `dt backup --environment sandbox-anton --database fmp-tmp --verbose`
 - Execute `dt restore --environment local --backup-source-environment sandbox-anton --database fmp-tmp --yes --verbose`
