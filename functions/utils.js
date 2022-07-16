@@ -1903,6 +1903,8 @@ getDateLogString = function getDateLogString() {
 exports = function() {
   if (typeof ENV === 'undefined') {
     ENV = {
+      environment: "sandbox",
+      hostURL: 'https://divtrackersandbox-zlomz.mongodbstitch.com',
       maxBulkSize: 5000,
     };
 
@@ -1911,10 +1913,6 @@ exports = function() {
 
   if (typeof startDate === 'undefined') {
     startDate = new Date();
-  }
-
-  if (typeof environment === 'undefined') {
-    environment = "sandbox";
   }
 
   if (typeof atlas === 'undefined') {
