@@ -288,8 +288,13 @@ fetchSplits = async function fetchSplits(shortSymbols, from, callback) {
  */
 fetchSymbols = async function fetchSymbols() {
   // https://financialmodelingprep.com/api/v3/stock/list?apikey=969387165d69a8607f9726e8bb52b901
-  return await _fmpFetch("/v3/stock/list")
-    .then(_fixFMPSymbols);
+
+  return await Promise.all([
+    _fmpFetch("/v3/stock/list"),
+    fetch(ENV.hostURL, '/fmp_mutual_funds.json'),
+  ])
+  .then(results => results.flat())
+  .then(_fixFMPSymbols);
 };
 
 //////////////////////////////////// Generic Fetches
