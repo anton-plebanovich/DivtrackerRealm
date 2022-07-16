@@ -1199,9 +1199,6 @@ function _fixFMPQuote(fmpQuote, symbolID) {
     const quote = {};
     quote._id = symbolID;
 
-    // TODO: Temporary just to get names
-    quote.setIfNotNullOrUndefined('n', fmpQuote.name);
-
     if (fmpQuote.price != null) {
       quote.setIfNotNullOrUndefined('l', fmpQuote.price);
     } else {
