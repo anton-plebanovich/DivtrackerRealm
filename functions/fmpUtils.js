@@ -1277,9 +1277,9 @@ const exchangeByFmpExchange = {
   DFM: "XDFM",
   DOH: "DSMD",
   DUS: "XDUS",
-  ETF: null,
+  ETF: "ETF", // not an exchange
   EURONEXT: "EURONEXT",
-  FGI: null,
+  FGI: "FGI", // FTSE Index
   FKA: "XFKA",
   HAM: "XHAM",
   HEL: "XHEL",
@@ -1301,16 +1301,16 @@ const exchangeByFmpExchange = {
   MEX: "XMEX",
   MIL: "MTAA",
   MUN: "XMUN",
-  MUTUAL_FUND: null,
+  MUTUAL_FUND: "MUTUAL_FUND", // not an exchange
   NASDAQ: "XNAS",
   NEO: "NEOE",
   NSE: "XNSE",
   NYSE: "XNYS",
   OSE: "XOSL",
-  OTC: null,
+  OTC: "OTC", // not an exchange
   PRA: "XPRA",
   SAO: "BVMF",
-  SAT: null,
+  SAT: "SAT", // Unknown exchange
   SAU: "XSAU",
   SET: "XBKK",
   SGO: "XSGO",
@@ -1327,7 +1327,7 @@ const exchangeByFmpExchange = {
   VIE: "XWBO",
   WSE: "XWAR",
   XETRA: "XETR",
-  YHD: null,
+  YHD: "YHD", // Delisted stocks
 }
 
 /**

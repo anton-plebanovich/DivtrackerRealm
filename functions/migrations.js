@@ -67,7 +67,6 @@ function max_fmp_symbol_to_fmp_company(fmpSymbol, symbolID) {
     throwIfUndefinedOrNull(fmpSymbol, `max_fmp_symbol_to_fmp_company company`);
     throwIfUndefinedOrNull(symbolID, `max_fmp_symbol_to_fmp_company symbolID`);
   
-    console.logVerbose(`Company data fix start`);
     const company = {};
     company._id = symbolID;
     company.c = "USD";
