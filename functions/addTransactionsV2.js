@@ -45,6 +45,11 @@ exports = async function(transactions, replace) {
     if (transaction._ == null) {
       transaction._ = userID;
     }
+
+    // USD is assumed by default
+    if (transaction.y == 'USD') {
+      delete transaction.y;
+    }
   });
 
   // Check
