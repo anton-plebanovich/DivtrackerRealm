@@ -1820,6 +1820,7 @@ getSupportedSymbolIDs = _getSupportedSymbolIDs;
   }
 
   // Fix data
+  const additionalData = await _fetch(ENV.hostURL, '/currencies_info.json');
   const entries = Object.entries(ejsonBody.rates);
   const exchangeRates = [];
   for (const [currency, rate] of entries) {
@@ -1833,7 +1834,7 @@ getSupportedSymbolIDs = _getSupportedSymbolIDs;
       continue;
     }
 
-    const currencySymbol = getCurrencySymbol(currency);
+    const currencySymbol = additionalData?.[exchangeRate._id]?.symbol_native;
     if (currencySymbol) {
       exchangeRate.s = currencySymbol;
     }
@@ -1845,25 +1846,6 @@ getSupportedSymbolIDs = _getSupportedSymbolIDs;
 }
 
 fetchExchangeRates = _fetchExchangeRates;
-
-function getCurrencySymbol(currency) {
-  // TODO: Add more later
-  // https://www.eurochange.co.uk/travel-money/world-currency-abbreviations-symbols-and-codes-travel-money
-  switch(currency) {
-    case "AUD": return "$";
-    case "BMD": return "$";
-    case "CAD": return "$";
-    case "CHF": return "CHF";
-    case "EUR": return "€";
-    case "GBP": return "£";
-    case "ILS": return "₪";
-    case "INR": return "₹";
-    case "JPY": return "¥";
-    case "NOK": return "kr";
-    case "USD": return "$";
-    default: return null;
-  }
-}
 
 ///////////////////////////////////////////////////////////////////////////////// UPDATE
 

@@ -13,6 +13,15 @@
     ]
   },
   {
+    "path": "/currencies_info.json",
+    "attrs": [
+      {
+        "name": "Content-Type",
+        "value": "application/json"
+      }
+    ]
+  },
+  {
     "path": "/fmp_mutual_funds.json",
     "attrs": [
       {
