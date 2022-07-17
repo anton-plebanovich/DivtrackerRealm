@@ -5,6 +5,33 @@
 
 # ################################################## O N G O I N G ##############################################################
 
+# 2022-07-XX | FMP all mutual funds
+
+- Make sure `environment` and `hostURL` in the `ENV` global variable are correct
+- If needed, adjust an environment for commands below
+- Execute `dt backup --environment sandbox-anton --verbose`
+- Deploy the new server with all FMP triggers disabled
+- Execute `dt restore-index --environment sandbox-anton --database fmp-tmp`
+- Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument fetch_new_symbols_for_fmp_tmp --verbose`
+- Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument fill_hardcoded_fmp_companies --verbose`
+- Execute `dt call-realm-function --environment sandbox-anton --function fmpLoadMissingData --argument fmp-tmp --retry-on-error 'execution time limit' --verbose`
+- Execute `dt backup --environment sandbox-anton --database fmp-tmp --verbose`
+- Execute `dt restore --environment local --backup-source-environment sandbox-anton --database fmp-tmp --yes --verbose`
+- Execute symbols migration on the local environment
+- Execute `dt backup --environment local --database fmp-tmp --verbose`
+- Drop `fmp-tmp` database
+- Execute `dt restore --environment sandbox-anton --backup-source-environment local --database fmp-tmp --to-database fmp --do-not-drop --yes --verbose`
+- Execute `dt call-realm-function --environment sandbox-anton --function fmpUpdateSymbols --verbose`
+- Execute `dt call-realm-function --environment sandbox-anton --function mergedUpdateSymbols --verbose`
+- Execute `dt call-realm-function --environment sandbox-anton --function checkTransactionsV2 --verbose`
+- Execute `dt check-symbols --environment sandbox-anton`
+- Execute `dt backup --environment sandbox-anton --verbose`
+- Enable all previously disabled triggers
+
+# ################################################## D O N E ##############################################################
+
+# 2022-07-09 | FMP non-American, FMP exchanges ISO names and exchanges for merged symbols
+
 - Make sure trigger times are correct
 - If needed, adjust an environment for commands below
 - Execute `dt backup --environment sandbox-anton --verbose`
@@ -18,8 +45,8 @@
 - Execute `dt restore --environment local --backup-source-environment sandbox-anton --database fmp-tmp --yes --verbose`
 - Execute symbols migration on the local environment
 - Execute `dt backup --environment local --database fmp-tmp --verbose`
-- Drop `fmp-tmp` database
 - Execute in the `playground` to get conflicting tickers: `const newTickers = await atlas.db('fmp-tmp').collection('symbols').distinct('t', { e: null }); const oldTickers = await db.collection('symbols').distinct('t', { e: null }); return newTickers.filter(x => oldTickers.includes(x));`
+- Drop `fmp-tmp` database
 - Open the app and add `<IEX_AND_FMP_CONFLICTING_TICKER>` ticker
 - Execute `dt restore --environment sandbox-anton --backup-source-environment local --database fmp-tmp --to-database fmp --do-not-drop --yes --verbose`
 - Execute `dt call-realm-function --environment sandbox-anton --function fmpUpdateSymbols --verbose`
@@ -30,8 +57,6 @@
 - Execute `dt check-symbols --environment sandbox-anton`
 - Execute `dt backup --environment sandbox-anton --verbose`
 - Enable all previously disabled triggers
-
-# ################################################## D O N E ##############################################################
 
 # 2022-07-03 | FMP OTCs
 

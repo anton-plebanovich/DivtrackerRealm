@@ -48,6 +48,22 @@ async function update(mergedSymbolsCollection, find, source) {
     mergedSymbolsCollection.fullFind({}, { u: false }),
   ]);
 
+  const notExchange = [
+    'ETF',
+    'FGI',
+    'MUTUAL_FUND',
+    'OTC',
+    'SAT',
+    'YHD',
+  ];
+
+  // Delete exchanges that not actually an exchanges so they can be merged
+  sourceSymbols.forEach(sourceSymbol => {
+    if (notExchange.includes(sourceSymbol.c)) {
+      delete sourceSymbol.c;
+    }
+  });
+
   const mergedSymbolByID = mergedSymbols.toDictionary(x => x[source.field]?._id);
   const mergedSymbolByTicker = mergedSymbols.toDictionary(x => x.m.t);
   
