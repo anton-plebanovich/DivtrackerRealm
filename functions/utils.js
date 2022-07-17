@@ -1838,6 +1838,9 @@ getSupportedSymbolIDs = _getSupportedSymbolIDs;
     const currencySymbol = additionalData?.[exchangeRate._id]?.symbol_native;
     if (currencySymbol) {
       exchangeRate.s = currencySymbol;
+    } else {
+      // Fallback to generic currency symbol
+      exchangeRate.s = "¤";
     }
 
     exchangeRates.push(exchangeRate);
