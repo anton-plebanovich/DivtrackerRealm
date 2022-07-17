@@ -1820,6 +1820,7 @@ getSupportedSymbolIDs = _getSupportedSymbolIDs;
   }
 
   // Fix data
+  // https://github.com/mansourcodes/country-databases/blob/main/currency-details.json
   const additionalData = await _fetch(ENV.hostURL, '/currencies_info.json');
   const entries = Object.entries(ejsonBody.rates);
   const exchangeRates = [];

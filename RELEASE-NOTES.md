@@ -1,11 +1,14 @@
 
 # ################################################## P L A N N E D ##############################################################
 
+# 2022-07-XX | Portfolio currency localization
 
+- If needed, adjust an environment for commands below
+- Execute `dt call-realm-function --environment sandbox-anton --function updateExchangeRatesV2 --verbose`
 
 # ################################################## O N G O I N G ##############################################################
 
-# 2022-07-XX | FMP all mutual funds
+# 2022-07-17 | FMP all mutual funds
 
 - Make sure `environment` and `hostURL` in the `ENV` global variable are correct
 - If needed, adjust an environment for commands below
