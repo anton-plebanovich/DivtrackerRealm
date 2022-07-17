@@ -288,8 +288,13 @@ fetchSplits = async function fetchSplits(shortSymbols, from, callback) {
  */
 fetchSymbols = async function fetchSymbols() {
   // https://financialmodelingprep.com/api/v3/stock/list?apikey=969387165d69a8607f9726e8bb52b901
-  return await _fmpFetch("/v3/stock/list")
-    .then(_fixFMPSymbols);
+
+  return await Promise.all([
+    _fmpFetch("/v3/stock/list"),
+    fetch(ENV.hostURL, '/fmp_mutual_funds.json'),
+  ])
+  .then(results => results.flat())
+  .then(_fixFMPSymbols);
 };
 
 //////////////////////////////////// Generic Fetches
@@ -735,7 +740,7 @@ function _fixFMPCompany(fmpCompany, symbolID) {
     console.error(`Unable to fix company ${fmpCompany.stringify()}: ${error}`);
     return null;
   }
-};
+}
 
 /**
  * Fixes dividends object so it can be added to MongoDB.
@@ -1272,9 +1277,9 @@ const exchangeByFmpExchange = {
   DFM: "XDFM",
   DOH: "DSMD",
   DUS: "XDUS",
-  ETF: null,
+  ETF: "ETF", // not an exchange
   EURONEXT: "EURONEXT",
-  FGI: null,
+  FGI: "FGI", // FTSE Index
   FKA: "XFKA",
   HAM: "XHAM",
   HEL: "XHEL",
@@ -1296,16 +1301,16 @@ const exchangeByFmpExchange = {
   MEX: "XMEX",
   MIL: "MTAA",
   MUN: "XMUN",
-  MUTUAL_FUND: null,
+  MUTUAL_FUND: "MUTUAL_FUND", // not an exchange
   NASDAQ: "XNAS",
   NEO: "NEOE",
   NSE: "XNSE",
   NYSE: "XNYS",
   OSE: "XOSL",
-  OTC: null,
+  OTC: "OTC", // not an exchange
   PRA: "XPRA",
   SAO: "BVMF",
-  SAT: null,
+  SAT: "SAT", // Unknown exchange
   SAU: "XSAU",
   SET: "XBKK",
   SGO: "XSGO",
@@ -1322,7 +1327,7 @@ const exchangeByFmpExchange = {
   VIE: "XWBO",
   WSE: "XWAR",
   XETRA: "XETR",
-  YHD: null,
+  YHD: "YHD", // Delisted stocks
 }
 
 /**

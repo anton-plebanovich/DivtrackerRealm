@@ -13,6 +13,15 @@
     ]
   },
   {
+    "path": "/fmp_mutual_funds.json",
+    "attrs": [
+      {
+        "name": "Content-Type",
+        "value": "application/json"
+      }
+    ]
+  },
+  {
     "path": "/index.html",
     "attrs": [
       {

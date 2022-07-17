@@ -20,10 +20,8 @@ exports = async function(migration, arg) {
 
     if (migration === 'fetch_new_symbols_for_fmp_tmp') {
       await fetch_new_symbols_for_fmp_tmp();
-    } else if (migration === 'fix_fmp_symbols_exchanges') {
-      await fix_fmp_symbols_exchanges();
-    } else if (migration === 'merged_symbols_fill_exchanges_migration') {
-      await merged_symbols_fill_exchanges_migration();
+    } else if (migration === 'fill_hardcoded_fmp_companies') {
+      await fill_hardcoded_fmp_companies();
     } else {
       throw `Unexpected migration: ${migration}`;
     }
@@ -35,8 +33,6 @@ exports = async function(migration, arg) {
     console.error(`FAILURE!`);
   }
 };
-
-////////////////////////////////////////////////////// 2022-07-XX
 
 async function fetch_new_symbols_for_fmp_tmp() {
   context.functions.execute("fmpUtils");
@@ -56,55 +52,30 @@ async function fetch_new_symbols_for_fmp_tmp() {
   await tmpCollection.insertMany(newSymbols);
 }
 
-////////////////////////////////////////////////////// 2022-07-XX
-
-async function fix_fmp_symbols_exchanges() {
+async function fill_hardcoded_fmp_companies() {
   context.functions.execute("fmpUtils");
 
-  const newSymbols = await fetchSymbols();
-  const fmpCollection = fmp.collection("symbols");
-  await fmpCollection.safeUpdateMany(newSymbols, undefined, 't', false, false);
-
-  const mergedSymbolsCollection = atlas.db("merged").collection("symbols");
-  const fmpSymbolsCollection = atlas.db("fmp").collection('symbols');
-  const [mergedSymbols, fmpSymbols] = await Promise.all([
-    mergedSymbolsCollection.fullFind(),
-    fmpSymbolsCollection.fullFind(),
-  ]);
-
-  const fmpSymbolsByID = fmpSymbols.toDictionary('_id');
-  mergedSymbols.forEach(mergedSymbol => {
-    if (mergedSymbol.f != null) {
-      mergedSymbol.f.c = fmpSymbolsByID[mergedSymbol.f._id].c;
-    }
-  });
-
-  await mergedSymbolsCollection.safeUpdateMany(mergedSymbols, null, '_id', false, false);
+  const symbols = await atlas.db('fmp-tmp').collection("symbols").find().toArray();
+  const symbolByTicker = symbols.toDictionary('t');
+  const fmpSymbols = await fetch(ENV.hostURL, '/fmp_mutual_funds.json');
+  const companies = fmpSymbols.map(fmpSymbol => max_fmp_symbol_to_fmp_company(fmpSymbol, symbolByTicker[fmpSymbol.symbol]._id))
+  await atlas.db('fmp-tmp').collection("companies").insertMany(companies);
 }
 
-async function merged_symbols_fill_exchanges_migration() {
-  context.functions.execute("utils");
+function max_fmp_symbol_to_fmp_company(fmpSymbol, symbolID) {
+  try {
+    throwIfUndefinedOrNull(fmpSymbol, `max_fmp_symbol_to_fmp_company company`);
+    throwIfUndefinedOrNull(symbolID, `max_fmp_symbol_to_fmp_company symbolID`);
+  
+    const company = {};
+    company._id = symbolID;
+    company.c = "USD";
+    company.setIfNotNullOrUndefined('n', fmpSymbol.name);
+    company.t = "mf";
 
-  const mergedSymbolsCollection = atlas.db("merged").collection("symbols");
-  const iexSymbolsCollection = atlas.db("divtracker-v2").collection('symbols');
-  const fmpSymbolsCollection = atlas.db("fmp").collection('symbols');
-  const [mergedSymbols, iexSymbols, fmpSymbols] = await Promise.all([
-    mergedSymbolsCollection.fullFind(),
-    iexSymbolsCollection.fullFind(),
-    fmpSymbolsCollection.fullFind(),
-  ]);
-
-  const iexSymbolsByID = iexSymbols.toDictionary('_id');
-  const fmpSymbolsByID = fmpSymbols.toDictionary('_id');
-  mergedSymbols.forEach(mergedSymbol => {
-    if (mergedSymbol.i != null) {
-      mergedSymbol.i.c = iexSymbolsByID[mergedSymbol.i._id].c;
-    }
-    if (mergedSymbol.f != null) {
-      mergedSymbol.f.c = fmpSymbolsByID[mergedSymbol.f._id].c;
-    }
-    mergedSymbol.m.c = mergedSymbol[mergedSymbol.m.s].c;
-  });
-
-  await mergedSymbolsCollection.safeUpdateMany(mergedSymbols, null, '_id', false, false);
+    return company;
+  } catch(error) {
+    console.error(`Unable to fix company ${fmpSymbol.stringify()}: ${error}`);
+    return null;
+  }
 }

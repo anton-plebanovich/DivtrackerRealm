@@ -7,6 +7,10 @@
 // https://docs.mongodb.com/manual/reference/method/Bulk.insert/
 
 exports = function() {
+  // 2022-07-09
+  fix_fmp_symbols_exchanges;
+  merged_symbols_fill_exchanges_migration;
+
   // 2022-06-26
   fetch_refid_for_all_past_IEX_dividends;
 
@@ -50,6 +54,59 @@ exports = function() {
   // 2021-04-15
   executeTransactionsMigration_15042021;
 };
+
+////////////////////////////////////////////////////// 2022-07-09
+
+async function fix_fmp_symbols_exchanges() {
+  context.functions.execute("fmpUtils");
+
+  const newSymbols = await fetchSymbols();
+  const fmpCollection = fmp.collection("symbols");
+  await fmpCollection.safeUpdateMany(newSymbols, undefined, 't', false, false);
+
+  const mergedSymbolsCollection = atlas.db("merged").collection("symbols");
+  const fmpSymbolsCollection = atlas.db("fmp").collection('symbols');
+  const [mergedSymbols, fmpSymbols] = await Promise.all([
+    mergedSymbolsCollection.fullFind(),
+    fmpSymbolsCollection.fullFind(),
+  ]);
+
+  const fmpSymbolsByID = fmpSymbols.toDictionary('_id');
+  mergedSymbols.forEach(mergedSymbol => {
+    if (mergedSymbol.f != null) {
+      mergedSymbol.f.c = fmpSymbolsByID[mergedSymbol.f._id].c;
+    }
+  });
+
+  await mergedSymbolsCollection.safeUpdateMany(mergedSymbols, null, '_id', false, false);
+}
+
+async function merged_symbols_fill_exchanges_migration() {
+  context.functions.execute("utils");
+
+  const mergedSymbolsCollection = atlas.db("merged").collection("symbols");
+  const iexSymbolsCollection = atlas.db("divtracker-v2").collection('symbols');
+  const fmpSymbolsCollection = atlas.db("fmp").collection('symbols');
+  const [mergedSymbols, iexSymbols, fmpSymbols] = await Promise.all([
+    mergedSymbolsCollection.fullFind(),
+    iexSymbolsCollection.fullFind(),
+    fmpSymbolsCollection.fullFind(),
+  ]);
+
+  const iexSymbolsByID = iexSymbols.toDictionary('_id');
+  const fmpSymbolsByID = fmpSymbols.toDictionary('_id');
+  mergedSymbols.forEach(mergedSymbol => {
+    if (mergedSymbol.i != null) {
+      mergedSymbol.i.c = iexSymbolsByID[mergedSymbol.i._id].c;
+    }
+    if (mergedSymbol.f != null) {
+      mergedSymbol.f.c = fmpSymbolsByID[mergedSymbol.f._id].c;
+    }
+    mergedSymbol.m.c = mergedSymbol[mergedSymbol.m.s].c;
+  });
+
+  await mergedSymbolsCollection.safeUpdateMany(mergedSymbols, null, '_id', false, false);
+}
 
 ////////////////////////////////////////////////////// 2022-06-26
 
