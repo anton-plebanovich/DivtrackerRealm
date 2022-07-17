@@ -1,12 +1,16 @@
 
 # ################################################## P L A N N E D ##############################################################
 
+
+
+# ################################################## O N G O I N G ##############################################################
+
 # 2022-07-XX | Portfolio currency localization
 
 - If needed, adjust an environment for commands below
 - Execute `dt call-realm-function --environment sandbox-anton --function updateExchangeRatesV2 --verbose`
 
-# ################################################## O N G O I N G ##############################################################
+# ################################################## D O N E ##############################################################
 
 # 2022-07-17 | FMP all mutual funds
 
@@ -30,8 +34,6 @@
 - Execute `dt check-symbols --environment sandbox-anton`
 - Execute `dt backup --environment sandbox-anton --verbose`
 - Enable all previously disabled triggers
-
-# ################################################## D O N E ##############################################################
 
 # 2022-07-09 | FMP non-American, FMP exchanges ISO names and exchanges for merged symbols
 
