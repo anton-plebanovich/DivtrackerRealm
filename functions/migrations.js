@@ -31,6 +31,7 @@ exports = async function(migration, arg) {
   } catch(error) {
     console.error(error);
     console.error(`FAILURE!`);
+    throw error;
   }
 };
 

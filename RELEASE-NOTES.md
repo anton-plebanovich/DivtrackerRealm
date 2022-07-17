@@ -13,7 +13,7 @@
 - Make sure `environment` and `hostURL` in the `ENV` global variable are correct
 - If needed, adjust an environment for commands below
 - Execute `dt backup --environment sandbox-anton --verbose`
-- Deploy the new server with all FMP triggers disabled
+- Deploy the new server with all FMP triggers disabled and make sure deploy successfully finished
 - Execute `dt restore-index --environment sandbox-anton --database fmp-tmp`
 - Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument fetch_new_symbols_for_fmp_tmp --verbose`
 - Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument fill_hardcoded_fmp_companies --verbose`
