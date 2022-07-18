@@ -110,12 +110,16 @@ async function update(mergedSymbolsCollection, find, source) {
   }
 }
 
-const americanExchanges = {
-  ARCX: true,
-  BATS: true,
-  XASE: true,
-  XNAS: true,
-  XNYS: true,
+const countryByExchange = {
+  ARCX: "USA",
+  BATS: "USA",
+  XASE: "USA",
+  XNAS: "USA",
+  XNCM: "USA",
+  XNGS: "USA",
+  XNMS: "USA",
+  XNYS: "USA",
+  XPOR: "USA",
 }
 
 /**
@@ -136,7 +140,7 @@ function getUpdateMergedSymbolOperation(mergedSymbolByKey, source, sourceSymbol,
     const sourceAdditionValue = source[additionCompareField];
     const mergedAdditionValue = mergedSymbol.m?.[additionCompareField];
     if (sourceAdditionValue != null && mergedAdditionValue != null && sourceAdditionValue !== mergedAdditionValue) {
-      if (additionCompareField === 'c' && americanExchanges[sourceAdditionValue] === americanExchanges[mergedAdditionValue]) {
+      if (additionCompareField === 'c' && countryByExchange[sourceAdditionValue] === countryByExchange[mergedAdditionValue]) {
         // We ignore case when symbol is on different american exchanges
       } else {
         // We need to adjust tickers that are conflicting. Currently, we just disable them in one source.

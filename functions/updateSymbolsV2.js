@@ -179,16 +179,9 @@ async function updateDivtrackerSymbols() {
   const newSymbols = iexSymbols.map(iexSymbol => {
     const symbol = {};
     symbol._id = iexSymbol._id;
+    symbol.setIfNotNullOrUndefined('c', iexSymbol.exchangeSegment);
     symbol.setIfNotNullOrUndefined('n', iexSymbol.name);
     symbol.setIfNotNullOrUndefined('t', iexSymbol.symbol);
-
-    if (iexSymbol.exchange === 'XPOR') {
-      // Portal is a NASDAQ market
-      symbol.c = 'XNAS';
-      
-    } else {
-      symbol.setIfNotNullOrUndefined('c', iexSymbol.exchange);
-    }
 
     // Enable flag should be only set if it's `false`
     if (!iexSymbol.isEnabled) {

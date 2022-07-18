@@ -1280,13 +1280,13 @@ const exchangeByFmpExchange = {
   DUS: "XDUS",
   ETF: "ETF", // not an exchange
   EURONEXT: "EURONEXT",
-  FGI: "FGI", // not an exchange, FTSE Index
+  FGI: "FGI", // not an exchange, FTSE (Financial Times Stock Exchange) Index
   FKA: "XFKA",
   HAM: "XHAM",
   HEL: "XHEL",
   HKSE: "XHKG",
   ICE: "XICE",
-  IOB: "IOB",
+  IOB: "IOB", // International Order Book (IOB) on London Stock Exchange (XLON)
   IST: "XIST",
   JKT: "XIDX",
   JNB: "XJSE",
@@ -1406,7 +1406,7 @@ function _fixFmpExchangeSymbol(symbol, name) {
       return 'BATS';
       
       case 'NASDAQ Global Select':
-      return 'XNAS'; // segment - XNGS
+      return 'XNGS';
       
       default:
       console.error(`Unknown 'ETF' exchange name: ${fixedSymbol}-${symbol}-${name}`);
@@ -1423,35 +1423,35 @@ function _fixFmpExchangeSymbol(symbol, name) {
     // EURONEXT-Paris
     // EURONEXT-SES
     // EURONEXT-São Paulo
-    // case 'EURONEXT': switch (name) {
-    //   case 'Amsterdam': return 'XAMS';
-    //   case 'Brussels': return 'XBRU';
-    //   case 'Canadian Sec': return 'XCNQ'; // Not sure
-    //   case 'Frankfurt': return 'XFRA'; // Not sure
-    //   case 'Irish': return 'XDUB'; // Not sure
-    //   case 'Madrid Stock Exchange': return 'XMAD'; // Not sure
-    //   case 'NZSE': return 'XNZE'; // Not sure
-    //   case 'Paris': return 'XPAR';
-    //   case 'SES': return 'XSES'; // Not sure
-    //   case 'São Paulo': return 'BVMF'; // Not sure
+    case 'EURONEXT': switch (name) {
+      case 'Amsterdam': return 'XAMS';
+      case 'Brussels': return 'XBRU';
+      case 'Canadian Sec': return 'XCNQ'; // Not sure
+      case 'Frankfurt': return 'XFRA'; // Not sure
+      case 'Irish': return 'XDUB'; // Not sure
+      case 'Madrid Stock Exchange': return 'XMAD'; // Not sure
+      case 'NZSE': return 'XNZE'; // Not sure
+      case 'Paris': return 'XPAR';
+      case 'SES': return 'XSES'; // Not sure
+      case 'São Paulo': return 'BVMF'; // Not sure
       
-    //   default:
-    //   console.error(`Unknown 'EURONEXT' exchange name: ${fixedSymbol}-${symbol}-${name}`);
-    //   return fixedSymbol;
-    // }
+      default:
+      console.error(`Unknown 'EURONEXT' exchange name: ${fixedSymbol}-${symbol}-${name}`);
+      return fixedSymbol;
+    }
 
     // MUTUAL_FUND-Nasdaq Capital Market
     // MUTUAL_FUND-undefined
     case 'MUTUAL_FUND': switch (name) {
       case 'Nasdaq Capital Market':
-        return 'XNAS'; // segment - XNCM
+        return 'XNCM';
 
       case undefined:
-        return 'XNAS'; // segment - XNCM
+        return 'XNCM';
       
       default:
       console.error(`Unknown 'MUTUAL_FUND' exchange name: ${fixedSymbol}-${symbol}-${name}`);
-      return 'XNAS';
+      return 'XNCM';
     }
 
     // NASDAQ-NASDAQ
@@ -1472,16 +1472,16 @@ function _fixFmpExchangeSymbol(symbol, name) {
       case 'NASDAQ Capital Market':
       case 'Nasdaq Capital Market':
       case 'NCM':
-      return 'XNAS'; // segment - XNCM
+      return 'XNCM';
 
       case 'NASDAQ Global Market':
       case 'Nasdaq Global Market':
-      return 'XNAS'; // segment - XNMS
+      return 'XNMS';
 
       case 'NASDAQ Global Select':
       case 'Nasdaq Global Select':
       case 'NasdaqGS':
-      return 'XNAS'; // segment - XNGS
+      return 'XNGS';
       
       default:
       console.error(`Unknown 'NASDAQ' exchange: ${fixedSymbol}-${symbol}-${name}`);
