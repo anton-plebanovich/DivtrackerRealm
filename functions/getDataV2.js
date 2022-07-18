@@ -284,10 +284,8 @@ exports = async function(timestamp, collectionNames, symbolIDs, fullFetchCollect
 
 async function getSymbolsData(mergedSymbolsCollection, previousUpdateDate, symbolIDs, fullFetchCollections) {
   const find = {};
-
   const projection = { _id: 0, m: 1 };
-  sources.forEach(source => projection[source.field] = 0);
-
+  
   if (previousUpdateDate != null) {
     // TODO: We might need to use date - 5 mins to prevent race conditions. I am not 100% sure because I don't know if MongoDB handles it properly.
     Object.assign(find, previousUpdateDate.getFindOperator());
