@@ -1373,7 +1373,7 @@ function _fixFMPSymbols(fmpSymbols) {
 // Check `CheckSymbols.swift` in the `dt` Xcode project for more info
 function _fixFmpExchangeSymbol(symbol, name) {
   throwIfUndefinedOrNull(symbol, `_fixFmpExchangeSymbol symbol ${name}`);
-  throwIfUndefinedOrNull(name, `_fixFmpExchangeSymbol name ${symbol}`);
+  // TODO: Hardcoded MUTUAL_FUND do not have exchnage name
 
   const fixedSymbol = exchangeByFmpExchange[symbol];
   if (fixedSymbol == null) {
@@ -1449,8 +1449,12 @@ function _fixFmpExchangeSymbol(symbol, name) {
     }
 
     // MUTUAL_FUND-Nasdaq Capital Market
+    // MUTUAL_FUND-undefined
     case 'MUTUAL_FUND': switch (name) {
       case 'Nasdaq Capital Market':
+      return 'XNCM';
+
+      case undefined:
       return 'XNCM';
       
       default:
