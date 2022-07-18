@@ -49,6 +49,7 @@ async function update(mergedSymbolsCollection, find, source) {
   ]);
 
   const notExchange = {
+    '-': true,
     'ETF': true,
     'FGI': true,
     'MUTUAL_FUND': true,
