@@ -8,9 +8,13 @@
 # 2022-07-XX | Portfolio currency localization | Exchange segment for symbols
 
 - If needed, adjust an environment for commands below
+- Execute `dt backup --environment sandbox-anton --verbose`
 - Execute `dt call-realm-function --environment sandbox-anton --function updateExchangeRatesV2 --verbose`
-- Execute `dt call-realm-function --environment sandbox-anton --function updateSymbolsV2 --verbose`
-- Execute `dt call-realm-function --environment sandbox-anton --function fmpUpdateSymbols --verbose`
+- Execute `dt call-realm-function --environment sandbox-anton --function updateSymbolsV2 --argument updateDivtrackerSymbols --verbose`
+- Execute `dt call-realm-function --environment sandbox-anton --function fmpUpdateSymbols --argument fmp --argument skipMergedUpdate --verbose`
+- Execute `dt call-realm-function --environment sandbox-anton --function mergedUpdateSymbols --verbose`
+- Execute `dt check-symbols --environment sandbox-anton --database merged`
+- Execute `dt backup --environment sandbox-anton --verbose`
 
 # ################################################## D O N E ##############################################################
 

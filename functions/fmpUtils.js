@@ -1372,8 +1372,8 @@ function _fixFMPSymbols(fmpSymbols) {
 
 // Check `CheckSymbols.swift` in the `dt` Xcode project for more info
 function _fixFmpExchangeSymbol(symbol, name) {
-  throwIfUndefinedOrNull(symbol, `_fixFmpExchangeSymbol symbol`);
-  throwIfUndefinedOrNull(name, `_fixFmpExchangeSymbol name`);
+  throwIfUndefinedOrNull(symbol, `_fixFmpExchangeSymbol symbol ${name}`);
+  throwIfUndefinedOrNull(name, `_fixFmpExchangeSymbol name ${symbol}`);
 
   const fixedSymbol = exchangeByFmpExchange[symbol];
   if (fixedSymbol == null) {
