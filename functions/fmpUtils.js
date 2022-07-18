@@ -1331,6 +1331,13 @@ const exchangeByFmpExchange = {
   YHD: "XHKG", // Delisted stocks?
 };
 
+
+const manuallyDisabledTickers = {
+  '1': true, // Conflicts with IEX
+  'TMFS': true, // No quote, wrong exchange and conflicts with IEX
+  'LONZ': true, // Wrong exchange and conflicts with IEX
+};
+
 /**
  * Fixes symbos object so it can be added to MongoDB.
  * @param {[FMPSymbol]} fmpSymbols Symbols object.
@@ -1360,6 +1367,11 @@ function _fixFMPSymbols(fmpSymbols) {
         symbol.setIfNotNullOrUndefined('c', _fixFmpExchangeSymbol(fmpSymbol.exchangeShortName, fmpSymbol.exchange));
         symbol.setIfNotNullOrUndefined('n', fmpSymbol.name);
         symbol.setIfNotNullOrUndefined('t', fmpSymbol.symbol);
+
+        // Disable some symbols
+        if (manuallyDisabledTickers[fmpSymbol.symbol] === true) {
+          symbol.e = false;
+        }
 
         return symbol;
       });
