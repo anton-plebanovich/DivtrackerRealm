@@ -285,8 +285,7 @@ exports = async function(timestamp, collectionNames, symbolIDs, fullFetchCollect
 async function getSymbolsData(mergedSymbolsCollection, previousUpdateDate, symbolIDs, fullFetchCollections) {
   const find = {};
 
-  // We need main source without exchange
-  const projection = { _id: 0, m: { c: 0 }, u: 0, r: 0 };
+  const projection = { _id: 0, m: 1, u: 0, r: 0 };
   sources.forEach(source => projection[source.field] = 0);
 
   if (previousUpdateDate != null) {

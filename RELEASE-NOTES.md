@@ -5,10 +5,12 @@
 
 # ################################################## O N G O I N G ##############################################################
 
-# 2022-07-XX | Portfolio currency localization
+# 2022-07-XX | Portfolio currency localization | Exchange segment for symbols
 
 - If needed, adjust an environment for commands below
 - Execute `dt call-realm-function --environment sandbox-anton --function updateExchangeRatesV2 --verbose`
+- Execute `dt call-realm-function --environment sandbox-anton --function updateSymbolsV2 --verbose`
+- Execute `dt call-realm-function --environment sandbox-anton --function fmpUpdateSymbols --verbose`
 
 # ################################################## D O N E ##############################################################
 

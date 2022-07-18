@@ -423,5 +423,4 @@ const nonSearchableIDCollections = [
 const systemFieldsByCollectionName = {
   dividends: ['i'], // refid 
   splits: ['i'], // refid
-  symbols: ['c'], // exchange
 };
