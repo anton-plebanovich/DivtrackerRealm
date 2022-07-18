@@ -1335,7 +1335,6 @@ const exchangeByFmpExchange = {
 const manuallyDisabledTickers = {
   '1': true, // Conflicts with IEX
   'TMFS': true, // No quote, wrong exchange and conflicts with IEX
-  'LONZ': true, // Wrong exchange and conflicts with IEX
 };
 
 /**

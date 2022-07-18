@@ -110,6 +110,14 @@ async function update(mergedSymbolsCollection, find, source) {
   }
 }
 
+const americanExchanges = {
+  ARCX: true,
+  BATS: true,
+  XASE: true,
+  XNAS: true,
+  XNYS: true,
+}
+
 /**
  * Returns operation on success update
  */
@@ -128,8 +136,12 @@ function getUpdateMergedSymbolOperation(mergedSymbolByKey, source, sourceSymbol,
     const sourceAdditionValue = source[additionCompareField];
     const mergedAdditionValue = mergedSymbol.m?.[additionCompareField];
     if (sourceAdditionValue != null && mergedAdditionValue != null && sourceAdditionValue !== mergedAdditionValue) {
-      // We need to adjust tickers that are conflicting. Currently, we just disable them in one source.
-      throw `Conflicting symbol: ${source.stringify()}. Merged: ${mergedSymbol.stringify()}`;
+      if (additionCompareField === 'c' && americanExchanges[sourceAdditionValue] === americanExchanges[mergedAdditionValue]) {
+        // We ignore case when symbol is on different american exchanges
+      } else {
+        // We need to adjust tickers that are conflicting. Currently, we just disable them in one source.
+        throw `Conflicting symbol: ${source.stringify()}. Merged: ${mergedSymbol.stringify()}`;
+      }
     }
   }
   
