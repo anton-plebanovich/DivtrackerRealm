@@ -43,7 +43,8 @@ const requiredTransactionKeys = [
 ];
 
 const optionalTransactionKeys = [
-  "c"
+  "c",
+  "y",
 ];
 
 function checkTransaction(transaction, symbolIDBySymbolID) {

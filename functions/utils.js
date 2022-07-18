@@ -1821,6 +1821,7 @@ getSupportedSymbolIDs = _getSupportedSymbolIDs;
 
   // Fix data
   // https://github.com/mansourcodes/country-databases/blob/main/currency-details.json
+  // https://en.wikipedia.org/wiki/Currency_sign_(typography)
   const additionalData = await _fetch(ENV.hostURL, '/currencies_info.json');
   const entries = Object.entries(ejsonBody.rates);
   const exchangeRates = [];
