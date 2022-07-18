@@ -179,7 +179,7 @@ async function updateDivtrackerSymbols() {
   const newSymbols = iexSymbols.map(iexSymbol => {
     const symbol = {};
     symbol._id = iexSymbol._id;
-    symbol.setIfNotNullOrUndefined('c', iexSymbol.exchangeSegment);
+    symbol.setIfNotNullOrUndefined('c', iexSymbol.exchange);
     symbol.setIfNotNullOrUndefined('n', iexSymbol.name);
     symbol.setIfNotNullOrUndefined('t', iexSymbol.symbol);
 
