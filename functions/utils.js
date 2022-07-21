@@ -326,6 +326,8 @@ Object.prototype.fullFind = async function(find, projection) {
 
   if (projection == null) {
     projection = {};
+  } else if (projection._id === 0) {
+    throw `'_id' field is required for 'fullFind' operation. Please update 'projection' object`;
   }
 
   let objectsPage;

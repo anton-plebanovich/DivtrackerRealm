@@ -292,7 +292,7 @@ async function getSymbolsData(mergedSymbolsCollection, previousUpdateDate, symbo
   const find = {};
 
   // We need main source without exchange
-  const projection = { _id: 0, m: { c: 0 }, u: 0, r: 0 };
+  const projection = { m: { c: 0 }, u: 0, r: 0 };
   sources.forEach(source => projection[source.field] = 0);
 
   if (previousUpdateDate != null) {
