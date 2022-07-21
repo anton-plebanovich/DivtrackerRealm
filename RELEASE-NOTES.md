@@ -1,7 +1,7 @@
 
 # ################################################## P L A N N E D ##############################################################
 
-- Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument update_all_symbols --verbose`
+
 
 # ################################################## O N G O I N G ##############################################################
 
@@ -9,6 +9,7 @@
 
 - If needed, adjust an environment for commands below
 - Execute `dt backup --environment sandbox-anton --verbose`
+- Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument update_all_symbols --verbose`
 - Execute `dt call-realm-function --environment sandbox-anton --function updateExchangeRatesV2 --verbose`
 - Execute `dt call-realm-function --environment sandbox-anton --function updateSymbolsV2 --argument updateDivtrackerSymbols --verbose`
 - Execute `dt call-realm-function --environment sandbox-anton --function fmpUpdateSymbols --argument fmp --argument true --verbose`
