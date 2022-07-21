@@ -1446,18 +1446,23 @@ function _logAndReject(message, data) {
 
 logAndReject = _logAndReject;
 
+const defaultExecutionLimit = 110;
+const defaultSystemExecutionLimit = 115;
 executionTimeoutErrorMessage = 'execution time limit reached';
 
 /** Checks that we didn't exceed timeout and throws an error if so. */
 function _checkExecutionTimeoutAndThrow(limit) {
-  if (_checkExecutionTimeout(limit)) {
+  const timeLeft = _getExecutionTimeLeft(limit);
+  if (timeLeft <= 0) {
     throw new _SystemError(executionTimeoutErrorMessage);
+  } else {
+    return timeLeft;
   }
 }
 
 checkExecutionTimeoutAndThrow = _checkExecutionTimeoutAndThrow;
 
-function _checkExecutionTimeout(limit) {
+function _getExecutionTimeLeft(limit) {
   if (typeof startDate === 'undefined') {
     startDate = new Date();
   }
@@ -1467,19 +1472,20 @@ function _checkExecutionTimeout(limit) {
 
   // One symbol full fetch takes 17.5s and we have only 120s function execution time so let's put some limit.
   if (limit == null) {
-    limit = 110;
+    limit = defaultExecutionLimit;
   }
 
-  if (seconds > limit) {
+  const timeLeft = limit - seconds;
+  if (timeLeft > 0) {
     console.log(`${executionTimeoutErrorMessage}. Execution time: ${seconds} seconds`);
-    return true;
   } else {
     console.logVerbose(`${limit - seconds} execution time left`);
-    return false;
   }
+
+  return timeLeft;
 }
 
-checkExecutionTimeout = _checkExecutionTimeout;
+getExecutionTimeLeft = _getExecutionTimeLeft;
 
 function _throwIfNotObject(object, message, ErrorType) {
   _throwIfUndefinedOrNull(object, message, ErrorType);
@@ -1665,6 +1671,7 @@ async function _fetch(baseURL, api, queryParameters) {
     }
 
     console.log(`Received '${response.statusCode}' error with text '${response.string}'. Trying to retry after a '${delay}' delay.`);
+    _checkExecutionTimeoutAndThrow(defaultSystemExecutionLimit - delay);
     await new Promise(r => setTimeout(r, delay));
     response = await _httpGET(baseURL, api, queryParameters);
   }
@@ -1701,7 +1708,7 @@ async function _httpGET(baseURL, api, queryParameters) {
   const url = _getURL(baseURL, api, queryParameters);
   console.log(`Request with URL: ${url}`);
 
-  _checkExecutionTimeoutAndThrow(115);
+  _checkExecutionTimeoutAndThrow(defaultSystemExecutionLimit);
 
   try {
     const response = await context.http.get({ url: url });
@@ -1804,6 +1811,7 @@ getSupportedSymbolIDs = _getSupportedSymbolIDs;
   for (let step = 0; step < 10 && (response.status === '??????'); step++) {
     const delay = (step + 1) * (500 + Math.random() * 1000);
     console.log(`Received '${response.status}' error with text '${response.body.text()}'. Trying to retry after a '${delay}' delay.`);
+    _checkExecutionTimeoutAndThrow(defaultSystemExecutionLimit - delay);
     await new Promise(r => setTimeout(r, delay));
     response = await context.http.get({ url: url });
   }
