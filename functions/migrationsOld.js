@@ -7,6 +7,9 @@
 // https://docs.mongodb.com/manual/reference/method/Bulk.insert/
 
 exports = function() {
+  // 2022-07-17
+  fill_hardcoded_fmp_companies;
+
   // 2022-07-09
   fix_fmp_symbols_exchanges;
   merged_symbols_fill_exchanges_migration;
@@ -54,6 +57,36 @@ exports = function() {
   // 2021-04-15
   executeTransactionsMigration_15042021;
 };
+
+////////////////////////////////////////////////////// 2022-07-17
+
+async function fill_hardcoded_fmp_companies() {
+  context.functions.execute("fmpUtils");
+
+  const symbols = await atlas.db('fmp-tmp').collection("symbols").find().toArray();
+  const symbolByTicker = symbols.toDictionary('t');
+  const fmpSymbols = await fetch(ENV.hostURL, '/fmp_mutual_funds.json');
+  const companies = fmpSymbols.map(fmpSymbol => max_fmp_symbol_to_fmp_company(fmpSymbol, symbolByTicker[fmpSymbol.symbol]._id))
+  await atlas.db('fmp-tmp').collection("companies").insertMany(companies);
+}
+
+function max_fmp_symbol_to_fmp_company(fmpSymbol, symbolID) {
+  try {
+    throwIfUndefinedOrNull(fmpSymbol, `max_fmp_symbol_to_fmp_company company`);
+    throwIfUndefinedOrNull(symbolID, `max_fmp_symbol_to_fmp_company symbolID`);
+  
+    const company = {};
+    company._id = symbolID;
+    company.c = "USD";
+    company.setIfNotNullOrUndefined('n', fmpSymbol.name);
+    company.t = "mf";
+
+    return company;
+  } catch(error) {
+    console.error(`Unable to fix company ${fmpSymbol.stringify()}: ${error}`);
+    return null;
+  }
+}
 
 ////////////////////////////////////////////////////// 2022-07-09
 
