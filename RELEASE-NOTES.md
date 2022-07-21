@@ -1,7 +1,7 @@
 
 # ################################################## P L A N N E D ##############################################################
 
-
+- Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument update_all_symbols --verbose`
 
 # ################################################## O N G O I N G ##############################################################
 
