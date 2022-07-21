@@ -76,6 +76,23 @@ async function update(mergedSymbolsCollection, find, source) {
       continue;
     }
 
+    // TODO: IEX and FMP has different ticker format. Example: BF.B (IEX) and BF-B (FMP)
+    // IEX special symbols: 
+    // . | (0)
+    // # | EHC# (1)
+    // + | ZGN+
+    // - | WFC-L
+    // = | XPOA=
+    // ^ | VHAQ^
+
+    // FMP special symbols:
+    // &. | GMRP&UI.NS
+    // -
+    // --. | ENRO-PREF-B.ST
+    // -.
+    // .
+    // .. | BT.A.L (1)
+
     // Second, check if symbol is added from different source. Try to search by ticker as more robust.
     operation = getUpdateMergedSymbolOperation(mergedSymbolByTicker, source, sourceSymbol, 't', 'c');
     if (addOperationIfNeeded(operation, operations)) {
