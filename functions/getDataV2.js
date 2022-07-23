@@ -149,6 +149,12 @@ exports = async function(timestamp, collectionNames, symbolIDs, fullFetchCollect
 
   if (symbolIDs?.length) {
     const mergedSymbols = await mergedSymbolsCollection.find({ _id: { $in: symbolIDs } }).toArray();
+
+    // Theoretically, we should not bypass 50k limit because we have 1k companies limit per user
+    if (mergedSymbols.length === 50000) {
+      console.error(`Partial objects find for '${symbols}' collection. Symbols length: ${symbolIDs.length}`);
+    }
+
     symbolIDsBySource = mergedSymbols.reduce((dictionary, mergedSymbol) => {
       const key = mergedSymbol.m.s;
       const value = mergedSymbol[key]._id;
@@ -284,11 +290,8 @@ exports = async function(timestamp, collectionNames, symbolIDs, fullFetchCollect
 
 async function getSymbolsData(mergedSymbolsCollection, previousUpdateDate, symbolIDs, fullFetchCollections) {
   const find = {};
-
-  // We need main source without exchange
-  const projection = { _id: 0, m: { c: 0 }, u: 0, r: 0 };
-  sources.forEach(source => projection[source.field] = 0);
-
+  const projection = { m: 1 };
+  
   if (previousUpdateDate != null) {
     // TODO: We might need to use date - 5 mins to prevent race conditions. I am not 100% sure because I don't know if MongoDB handles it properly.
     Object.assign(find, previousUpdateDate.getFindOperator());
@@ -300,7 +303,7 @@ async function getSymbolsData(mergedSymbolsCollection, previousUpdateDate, symbo
 
   console.logData(`Performing 'symbols' find`, find);
 
-  const mergedSymbols = await mergedSymbolsCollection.find(find, projection).toArray();
+  const mergedSymbols = await mergedSymbolsCollection.fullFind(find, projection);
   const symbols = mergedSymbols.map(x => x.m);
 
   return symbols;
@@ -369,6 +372,12 @@ async function getCollectionData(source, collectionName, previousUpdateDate, sym
   console.logData(`Performing '${source.name}-${collectionName}' find`, find);
 
   const objects = await collection.find(find, projection).toArray();
+
+  // Theoretically, we should not bypass 50k limit because we have 1k companies limit per user
+  if (objects.length === 50000) {
+    console.error(`Partial objects find for '${collectionName}' collection. Find: ${find.stringify()}`);
+  }
+
   fixData(objects, collectionName, mainIDBySourceID);
 
   return objects

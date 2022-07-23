@@ -5,12 +5,25 @@
 
 # ################################################## O N G O I N G ##############################################################
 
-# 2022-07-XX | FMP all mutual funds
+# 2022-07-XX | Portfolio currency localization | Exchange segment for symbols
+
+- If needed, adjust an environment for commands below
+- Execute `dt backup --environment sandbox-anton --verbose`
+- Execute `dt call-realm-function --environment sandbox-anton --function updateExchangeRatesV2 --verbose`
+- Execute `dt call-realm-function --environment sandbox-anton --function updateSymbolsV2 --argument updateDivtrackerSymbols --verbose`
+- Execute `dt call-realm-function --environment sandbox-anton --function fmpUpdateSymbols --argument fmp --argument true --verbose`
+- Execute `dt call-realm-function --environment sandbox-anton --function mergedUpdateSymbols --verbose`
+- Execute `dt check-symbols --environment sandbox-anton --database merged`
+- Execute `dt backup --environment sandbox-anton --verbose`
+
+# ################################################## D O N E ##############################################################
+
+# 2022-07-17 | FMP all mutual funds
 
 - Make sure `environment` and `hostURL` in the `ENV` global variable are correct
 - If needed, adjust an environment for commands below
 - Execute `dt backup --environment sandbox-anton --verbose`
-- Deploy the new server with all FMP triggers disabled
+- Deploy the new server with all FMP triggers disabled and make sure deploy successfully finished
 - Execute `dt restore-index --environment sandbox-anton --database fmp-tmp`
 - Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument fetch_new_symbols_for_fmp_tmp --verbose`
 - Execute `dt call-realm-function --environment sandbox-anton --function migrations --argument fill_hardcoded_fmp_companies --verbose`
@@ -27,8 +40,6 @@
 - Execute `dt check-symbols --environment sandbox-anton`
 - Execute `dt backup --environment sandbox-anton --verbose`
 - Enable all previously disabled triggers
-
-# ################################################## D O N E ##############################################################
 
 # 2022-07-09 | FMP non-American, FMP exchanges ISO names and exchanges for merged symbols
 
