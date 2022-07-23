@@ -150,7 +150,7 @@ function getUpdateMergedSymbolOperation(mergedSymbolByKey, source, sourceSymbol,
     const sourceAdditionValue = sourceSymbol[additionCompareField];
     const mergedAdditionValue = mergedSymbol.m?.[additionCompareField];
     if (sourceAdditionValue !== mergedAdditionValue) {
-      if (additionCompareField === 'c' && (notExchange[sourceAdditionValue] != null || notExchange[mergedAdditionValue] != null)) {
+      if (additionCompareField === 'c' && (sourceAdditionValue == null || notExchange[sourceAdditionValue] != null || mergedAdditionValue == null || notExchange[mergedAdditionValue] != null)) {
         // We allow to merge symbols if at least one does not have an actual exchange
       } else if (additionCompareField === 'c' && countryByExchange[sourceAdditionValue] === countryByExchange[mergedAdditionValue]) {
         // We ignore case when symbol is on different american exchanges
