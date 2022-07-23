@@ -147,7 +147,7 @@ function getUpdateMergedSymbolOperation(mergedSymbolByKey, source, sourceSymbol,
   }
 
   if (additionCompareField != null) {
-    const sourceAdditionValue = source[additionCompareField];
+    const sourceAdditionValue = sourceSymbol[additionCompareField];
     const mergedAdditionValue = mergedSymbol.m?.[additionCompareField];
     if (sourceAdditionValue !== mergedAdditionValue) {
       if (additionCompareField === 'c' && (notExchange[sourceAdditionValue] != null || notExchange[mergedAdditionValue] != null)) {
@@ -156,7 +156,7 @@ function getUpdateMergedSymbolOperation(mergedSymbolByKey, source, sourceSymbol,
         // We ignore case when symbol is on different american exchanges
       } else {
         // We need to adjust tickers that are conflicting. Currently, we just disable them in one source.
-        throw `Conflicting symbol: ${source.stringify()}. Merged: ${mergedSymbol.stringify()}`;
+        throw `Conflicting symbol: ${sourceSymbol.stringify()}. Merged: ${mergedSymbol.stringify()}`;
       }
     }
   }
