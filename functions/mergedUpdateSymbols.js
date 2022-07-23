@@ -84,6 +84,11 @@ async function update(mergedSymbolsCollection, find, source) {
       continue;
     }
 
+    // Do not add already disabled symbols
+    if (sourceSymbol.e === false) {
+      continue;
+    }
+
     // Sadly, we can't merge using name because FMP may shorten symbol names:
     // JFR - Nuveen Floating Rate Income Fund
     // NFRIX - Nuveen Floating Rate Income Fund Class I
@@ -155,8 +160,14 @@ function getUpdateMergedSymbolOperation(mergedSymbolByKey, source, sourceSymbol,
       } else if (additionCompareField === 'c' && countryByExchange[sourceAdditionValue] === countryByExchange[mergedAdditionValue]) {
         // We ignore case when symbol is on different american exchanges
       } else {
-        // We need to adjust tickers that are conflicting. Currently, we just disable them in one source.
-        throw `Conflicting symbol: ${sourceSymbol.stringify()}. Merged: ${mergedSymbol.stringify()}`;
+        if (sourceSymbol.e === false) {
+          // Allow disabled symbol to pass
+          console.log(`Conflicting symbol: ${sourceSymbol.stringify()}. Merged: ${mergedSymbol.stringify()}`);
+          return null;
+        } else {
+          // We need to adjust tickers that are conflicting. Currently, we just disable them in one source.
+          throw `Conflicting symbol: ${sourceSymbol.stringify()}. Merged: ${mergedSymbol.stringify()}`;
+        }
       }
     }
   }
