@@ -11,7 +11,7 @@
 - Execute `dt backup --environment sandbox-anton --verbose`
 - Deploy the new server and make sure deploy successfully finished
 - Execute `dt call-realm-function --environment sandbox-anton --function updateExchangeRatesV2 --verbose`
-- Execute `dt call-realm-function --environment sandbox-anton --function updateSymbolsV2 --argument updateDivtrackerSymbols --verbose`
+- Execute `dt call-realm-function --environment sandbox-anton --function updateSymbolsV2 --argument null --argument updateDivtrackerSymbols --verbose`
 - Execute `dt call-realm-function --environment sandbox-anton --function fmpUpdateSymbols --argument fmp --argument true --verbose`
 - Execute `dt call-realm-function --environment sandbox-anton --function mergedUpdateSymbols --verbose`
 - Execute `dt check-symbols --environment sandbox-anton --database merged`
