@@ -1478,7 +1478,7 @@ function _getExecutionTimeLeft(limit) {
   }
 
   const timeLeft = limit - seconds;
-  if (timeLeft > 0) {
+  if (timeLeft <= 0) {
     console.log(`${executionTimeoutErrorMessage}. Execution time: ${seconds} seconds`);
   } else {
     console.logVerbose(`${limit - seconds} execution time left`);
@@ -1673,7 +1673,7 @@ async function _fetch(baseURL, api, queryParameters) {
     }
 
     console.log(`Received '${response.statusCode}' error with text '${response.string}'. Trying to retry after a '${delay}' delay.`);
-    _checkExecutionTimeoutAndThrow(defaultSystemExecutionLimit - delay);
+    _checkExecutionTimeoutAndThrow(defaultSystemExecutionLimit - delay / 1000);
     await new Promise(r => setTimeout(r, delay));
     response = await _httpGET(baseURL, api, queryParameters);
   }
@@ -1813,7 +1813,7 @@ getSupportedSymbolIDs = _getSupportedSymbolIDs;
   for (let step = 0; step < 10 && (response.status === '??????'); step++) {
     const delay = (step + 1) * (500 + Math.random() * 1000);
     console.log(`Received '${response.status}' error with text '${response.body.text()}'. Trying to retry after a '${delay}' delay.`);
-    _checkExecutionTimeoutAndThrow(defaultSystemExecutionLimit - delay);
+    _checkExecutionTimeoutAndThrow(defaultSystemExecutionLimit - delay / 1000);
     await new Promise(r => setTimeout(r, delay));
     response = await context.http.get({ url: url });
   }
