@@ -79,7 +79,13 @@ async function update(mergedSymbolsCollection, find, source) {
     // .. | BT.A.L (1)
 
     // Second, check if symbol is added from different source. Try to search by ticker as more robust.
-    operation = getUpdateMergedSymbolOperation(mergedSymbolByTicker, source, sourceSymbol, 't', 'c');
+    if (isIEXSandbox) {
+      // On IEX sandbox exchanges are broken
+      operation = getUpdateMergedSymbolOperation(mergedSymbolByTicker, source, sourceSymbol, 't');
+    } else {
+      operation = getUpdateMergedSymbolOperation(mergedSymbolByTicker, source, sourceSymbol, 't', 'c');
+    }
+
     if (addOperationIfNeeded(operation, operations)) {
       continue;
     }
