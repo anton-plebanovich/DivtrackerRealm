@@ -48,21 +48,6 @@ async function update(mergedSymbolsCollection, find, source) {
     mergedSymbolsCollection.fullFind({}, { u: false }),
   ]);
 
-  const notExchange = {
-    '-': true,
-    'ETF': true,
-    'FGI': true,
-    'MUTUAL_FUND': true,
-    'OTC': true,
-  };
-
-  // Delete exchanges that not actually an exchanges so they can be merged
-  sourceSymbols.forEach(sourceSymbol => {
-    if (notExchange[sourceSymbol.c] != null) {
-      delete sourceSymbol.c;
-    }
-  });
-
   const mergedSymbolByID = mergedSymbols.toDictionary(x => x[source.field]?._id);
   const mergedSymbolByTicker = mergedSymbols.toDictionary(x => x.m.t);
   
@@ -127,6 +112,14 @@ async function update(mergedSymbolsCollection, find, source) {
   }
 }
 
+const notExchange = {
+  '-': true,
+  'ETF': true,
+  'FGI': true,
+  'MUTUAL_FUND': true,
+  'OTC': true,
+};
+
 const countryByExchange = {
   ARCX: "USA",
   BATS: "USA",
@@ -156,8 +149,10 @@ function getUpdateMergedSymbolOperation(mergedSymbolByKey, source, sourceSymbol,
   if (additionCompareField != null) {
     const sourceAdditionValue = source[additionCompareField];
     const mergedAdditionValue = mergedSymbol.m?.[additionCompareField];
-    if (sourceAdditionValue != null && mergedAdditionValue != null && sourceAdditionValue !== mergedAdditionValue) {
-      if (additionCompareField === 'c' && countryByExchange[sourceAdditionValue] === countryByExchange[mergedAdditionValue]) {
+    if (sourceAdditionValue !== mergedAdditionValue) {
+      if (additionCompareField === 'c' && (notExchange[sourceAdditionValue] != null || notExchange[mergedAdditionValue] != null)) {
+        // We allow to merge symbols if at least one does not have an actual exchange
+      } else if (additionCompareField === 'c' && countryByExchange[sourceAdditionValue] === countryByExchange[mergedAdditionValue]) {
         // We ignore case when symbol is on different american exchanges
       } else {
         // We need to adjust tickers that are conflicting. Currently, we just disable them in one source.

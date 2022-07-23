@@ -1331,7 +1331,6 @@ const exchangeByFmpExchange = {
   YHD: "XHKG", // Delisted stocks?
 };
 
-
 const manuallyDisabledTickers = {
   '1': true, // Conflicts with IEX
   'TMFS': true, // No quote, wrong exchange and conflicts with IEX
