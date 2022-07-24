@@ -32,7 +32,8 @@
 
   const optionalTransactionKeys = [
     "_id",
-    "c"
+    "c",
+    "y",
   ];
 
   const supportedSymbolIDs = await getSupportedSymbolIDs();

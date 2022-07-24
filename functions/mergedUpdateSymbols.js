@@ -48,22 +48,6 @@ async function update(mergedSymbolsCollection, find, source) {
     mergedSymbolsCollection.fullFind({}, { u: false }),
   ]);
 
-  const notExchange = [
-    'ETF',
-    'FGI',
-    'MUTUAL_FUND',
-    'OTC',
-    'SAT',
-    'YHD',
-  ];
-
-  // Delete exchanges that not actually an exchanges so they can be merged
-  sourceSymbols.forEach(sourceSymbol => {
-    if (notExchange.includes(sourceSymbol.c)) {
-      delete sourceSymbol.c;
-    }
-  });
-
   const mergedSymbolByID = mergedSymbols.toDictionary(x => x[source.field]?._id);
   const mergedSymbolByTicker = mergedSymbols.toDictionary(x => x.m.t);
   
@@ -77,9 +61,37 @@ async function update(mergedSymbolsCollection, find, source) {
       continue;
     }
 
+    // TODO: IEX and FMP has different ticker format. Example: BF.B (IEX) and BF-B (FMP)
+    // IEX special symbols: 
+    // . | (0)
+    // # | EHC# (1)
+    // + | ZGN+
+    // - | WFC-L
+    // = | XPOA=
+    // ^ | VHAQ^
+
+    // FMP special symbols:
+    // &. | GMRP&UI.NS
+    // -
+    // --. | ENRO-PREF-B.ST
+    // -.
+    // .
+    // .. | BT.A.L (1)
+
     // Second, check if symbol is added from different source. Try to search by ticker as more robust.
-    operation = getUpdateMergedSymbolOperation(mergedSymbolByTicker, source, sourceSymbol, 't', 'c');
+    if (ENV.isIEXSandbox) {
+      // On IEX sandbox exchanges are broken
+      operation = getUpdateMergedSymbolOperation(mergedSymbolByTicker, source, sourceSymbol, 't');
+    } else {
+      operation = getUpdateMergedSymbolOperation(mergedSymbolByTicker, source, sourceSymbol, 't', 'c');
+    }
+
     if (addOperationIfNeeded(operation, operations)) {
+      continue;
+    }
+
+    // Do not add already disabled symbols
+    if (sourceSymbol.e === false) {
       continue;
     }
 
@@ -111,6 +123,26 @@ async function update(mergedSymbolsCollection, find, source) {
   }
 }
 
+const notExchange = {
+  '-': true,
+  'ETF': true,
+  'FGI': true,
+  'MUTUAL_FUND': true,
+  'OTC': true,
+};
+
+const countryByExchange = {
+  ARCX: "USA",
+  BATS: "USA",
+  XASE: "USA",
+  XNAS: "USA",
+  XNCM: "USA",
+  XNGS: "USA",
+  XNMS: "USA",
+  XNYS: "USA",
+  XPOR: "USA",
+}
+
 /**
  * Returns operation on success update
  */
@@ -126,11 +158,23 @@ function getUpdateMergedSymbolOperation(mergedSymbolByKey, source, sourceSymbol,
   }
 
   if (additionCompareField != null) {
-    const sourceAdditionValue = source[additionCompareField];
+    const sourceAdditionValue = sourceSymbol[additionCompareField];
     const mergedAdditionValue = mergedSymbol.m?.[additionCompareField];
-    if (sourceAdditionValue != null && mergedAdditionValue != null && sourceAdditionValue !== mergedAdditionValue) {
-      // We need to adjust tickers that are conflicting. Currently, we just disable them in one source.
-      throw `Conflicting symbol: ${source.stringify()}. Merged: ${mergedSymbol.stringify()}`;
+    if (sourceAdditionValue !== mergedAdditionValue) {
+      if (additionCompareField === 'c' && (sourceAdditionValue == null || notExchange[sourceAdditionValue] != null || mergedAdditionValue == null || notExchange[mergedAdditionValue] != null)) {
+        // We allow to merge symbols if at least one does not have an actual exchange
+      } else if (additionCompareField === 'c' && countryByExchange[sourceAdditionValue] === countryByExchange[mergedAdditionValue]) {
+        // We ignore case when symbol is on different american exchanges
+      } else {
+        if (sourceSymbol.e === false) {
+          // Allow disabled symbol to pass
+          console.log(`Conflicting symbol: ${sourceSymbol.stringify()}. Merged: ${mergedSymbol.stringify()}`);
+          return null;
+        } else {
+          // We need to adjust tickers that are conflicting. Currently, we just disable them in one source.
+          throw `Conflicting symbol: ${sourceSymbol.stringify()}. Merged: ${mergedSymbol.stringify()}`;
+        }
+      }
     }
   }
   

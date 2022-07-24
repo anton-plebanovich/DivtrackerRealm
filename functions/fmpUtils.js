@@ -1262,6 +1262,7 @@ function _fixFMPSplits(fmpSplits, symbolID) {
 };
 
 // https://stockmarketmba.com/globalstockexchanges.php
+// https://www.iotafinance.com/en/ISO-10383-Market-Identification-Codes-MIC.html
 const exchangeByFmpExchange = {
   AMEX: "ARCX",
   AMS: "XAMS",
@@ -1279,13 +1280,13 @@ const exchangeByFmpExchange = {
   DUS: "XDUS",
   ETF: "ETF", // not an exchange
   EURONEXT: "EURONEXT",
-  FGI: "FGI", // FTSE Index
+  FGI: "FGI", // not an exchange, FTSE (Financial Times Stock Exchange) Index
   FKA: "XFKA",
   HAM: "XHAM",
   HEL: "XHEL",
   HKSE: "XHKG",
   ICE: "XICE",
-  IOB: "IOB",
+  IOB: "IOB", // International Order Book (IOB) on London Stock Exchange (XLON)
   IST: "XIST",
   JKT: "XIDX",
   JNB: "XJSE",
@@ -1310,7 +1311,7 @@ const exchangeByFmpExchange = {
   OTC: "OTC", // not an exchange
   PRA: "XPRA",
   SAO: "BVMF",
-  SAT: "SAT", // Unknown exchange
+  SAT: "XSAT",
   SAU: "XSAU",
   SET: "XBKK",
   SGO: "XSGO",
@@ -1327,8 +1328,13 @@ const exchangeByFmpExchange = {
   VIE: "XWBO",
   WSE: "XWAR",
   XETRA: "XETR",
-  YHD: "YHD", // Delisted stocks
-}
+  YHD: "XHKG", // Delisted stocks?
+};
+
+const manuallyDisabledTickers = {
+  '1': true, // Conflicts with IEX
+  'TMFS': true, // No quote, wrong exchange and conflicts with IEX
+};
 
 /**
  * Fixes symbos object so it can be added to MongoDB.
@@ -1356,9 +1362,14 @@ function _fixFMPSymbols(fmpSymbols) {
       )
       .map(fmpSymbol => {
         const symbol = {};
-        symbol.setIfNotNullOrUndefined('c', exchangeByFmpExchange[fmpSymbol.exchangeShortName]);
+        symbol.setIfNotNullOrUndefined('c', _fixFmpExchangeSymbol(fmpSymbol.exchangeShortName, fmpSymbol.exchange));
         symbol.setIfNotNullOrUndefined('n', fmpSymbol.name);
         symbol.setIfNotNullOrUndefined('t', fmpSymbol.symbol);
+
+        // Disable some symbols
+        if (manuallyDisabledTickers[fmpSymbol.symbol] === true) {
+          symbol.e = false;
+        }
 
         return symbol;
       });
@@ -1368,6 +1379,118 @@ function _fixFMPSymbols(fmpSymbols) {
     return [];
   }
 };
+
+// Check `CheckSymbols.swift` in the `dt` Xcode project for more info
+function _fixFmpExchangeSymbol(symbol, name) {
+  throwIfUndefinedOrNull(symbol, `_fixFmpExchangeSymbol symbol ${name}`);
+  // TODO: Hardcoded MUTUAL_FUND do not have exchnage name
+
+  const fixedSymbol = exchangeByFmpExchange[symbol];
+  if (fixedSymbol == null) {
+    console.error(`Unknown exchange: ${symbol}-${name}`);
+    return "-";
+  }
+  
+  switch (fixedSymbol) {
+    // ETF-American Stock Exchange
+    // ETF-BATS
+    // ETF-BATS Exchange
+    // ETF-NASDAQ Global Select
+    case 'ETF': switch (name) {
+      case 'American Stock Exchange':
+      return 'ARCX';
+      
+      case 'BATS':
+      case 'BATS Exchange':
+      return 'BATS';
+      
+      case 'NASDAQ Global Select':
+      return 'XNGS';
+      
+      default:
+      console.error(`Unknown 'ETF' exchange name: ${fixedSymbol}-${symbol}-${name}`);
+      return fixedSymbol;
+    }
+    
+    // EURONEXT-Amsterdam
+    // EURONEXT-Brussels
+    // EURONEXT-Canadian Sec
+    // EURONEXT-Frankfurt
+    // EURONEXT-Irish
+    // EURONEXT-Madrid Stock Exchange
+    // EURONEXT-NZSE
+    // EURONEXT-Paris
+    // EURONEXT-SES
+    // EURONEXT-São Paulo
+    case 'EURONEXT': switch (name) {
+      case 'Amsterdam': return 'XAMS';
+      case 'Brussels': return 'XBRU';
+      case 'Canadian Sec': return 'XCNQ'; // Not sure
+      case 'Frankfurt': return 'XFRA'; // Not sure
+      case 'Irish': return 'XDUB'; // Not sure
+      case 'Madrid Stock Exchange': return 'XMAD'; // Not sure
+      case 'NZSE': return 'XNZE'; // Not sure
+      case 'Paris': return 'XPAR';
+      case 'SES': return 'XSES'; // Not sure
+      case 'São Paulo': return 'BVMF'; // Not sure
+      
+      default:
+      console.error(`Unknown 'EURONEXT' exchange name: ${fixedSymbol}-${symbol}-${name}`);
+      return fixedSymbol;
+    }
+
+    // MUTUAL_FUND-Nasdaq Capital Market
+    // MUTUAL_FUND-undefined
+    case 'MUTUAL_FUND': switch (name) {
+      case 'Nasdaq Capital Market':
+        return 'XNCM';
+
+      case undefined:
+        return 'XNCM';
+      
+      default:
+      console.error(`Unknown 'MUTUAL_FUND' exchange name: ${fixedSymbol}-${symbol}-${name}`);
+      return 'XNCM';
+    }
+
+    // NASDAQ-NASDAQ
+    // NASDAQ-NASDAQ Capital Market
+    // NASDAQ-NASDAQ Global Market
+    // NASDAQ-NASDAQ Global Select
+    // NASDAQ-NCM
+    // NASDAQ-Nasdaq
+    // NASDAQ-Nasdaq Capital Market
+    // NASDAQ-Nasdaq Global Market
+    // NASDAQ-Nasdaq Global Select
+    // NASDAQ-NasdaqGS
+    case 'NASDAQ': switch (name) {
+      case 'NASDAQ':
+      case 'Nasdaq':
+      return 'XNAS';
+
+      case 'NASDAQ Capital Market':
+      case 'Nasdaq Capital Market':
+      case 'NCM':
+      return 'XNCM';
+
+      case 'NASDAQ Global Market':
+      case 'Nasdaq Global Market':
+      return 'XNMS';
+
+      case 'NASDAQ Global Select':
+      case 'Nasdaq Global Select':
+      case 'NasdaqGS':
+      return 'XNGS';
+      
+      default:
+      console.error(`Unknown 'NASDAQ' exchange: ${fixedSymbol}-${symbol}-${name}`);
+      return 'XNAS';
+    }
+    
+    default:
+    return fixedSymbol;
+  }
+}
 
 /** 
  * First parameter: Date in the "yyyy-mm-dd" or timestamp or Date format, e.g. "2020-03-27" or '1633046400000' or Date.

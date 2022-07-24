@@ -7,7 +7,7 @@ String.prototype.removeSensitiveData = function() {
   // We should always use 'strict' for primitive type extensions - https://stackoverflow.com/a/27736962/4124265
   'use strict';
 
-  if (isIEXSandbox === true) { return this; }
+  if (ENV.isIEXSandbox === true) { return this; }
 
   let safeString = this;
   
@@ -53,7 +53,7 @@ async function _getInUseShortSymbols() {
   const mergedSymbolsCollection = atlas.db("merged").collection("symbols");
   const mergedSymbols = await mergedSymbolsCollection.fullFind(
     { _id: { $in: distinctTransactionMergedSymbolIDs }, i: { $ne: null } },
-    { _id: 0, 'i._id': 1 }
+    { 'i._id': 1 }
   );
 
   const distinctTransactionSymbolIDs = mergedSymbols.map(x => x.i._id);
@@ -921,16 +921,6 @@ getOpenDate = _getOpenDate;
 
 exports = function() {
   context.functions.execute("utils");
-
-  if (typeof isIEXSandbox === 'undefined') {
-    isIEXSandbox = context.values.get("base_url") === 'https://sandbox.iexapis.com/stable';
-    Object.freeze(isIEXSandbox);
-  }
-
-  if (typeof isIEXProduction === 'undefined') {
-    isIEXProduction = !isIEXSandbox;
-    Object.freeze(isIEXProduction);
-  }
 
   if (typeof iex === 'undefined') {
     iex = atlas.db("iex");
