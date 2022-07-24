@@ -316,7 +316,8 @@ Object.prototype.findAndUpdateIfNeeded = function(newObject, oldObject, fields, 
 };
 
 /**
- * Bypass find limit of 50000 objects by fetching all results successively  
+ * Bypass find limit of 50000 objects by fetching all results successively.
+ * @note `projection` must not exclude `_id` field.
  * @note We do not allow `sort` parameter to prevent ambiguity between fetches which may cause holey or intersecting result.
  */
 Object.prototype.fullFind = async function(find, projection) {
