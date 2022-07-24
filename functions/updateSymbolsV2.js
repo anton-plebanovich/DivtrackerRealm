@@ -100,13 +100,13 @@ async function updateIEXSymbols() {
   const bulk = iexCollection.initializeUnorderedBulkOp();
   for (const newSymbol of newSymbols) {
     // We try to update all symbold using IDs that allow us to track symbol renames.
-    if (isIEXProduction && update('iexId', bulk, newSymbol, newSymbolsByIexId, oldSymbolsByIexId)) {
+    if (ENV.isIEXProduction && update('iexId', bulk, newSymbol, newSymbolsByIexId, oldSymbolsByIexId)) {
       continue;
-    } else if (isIEXProduction && update('figi', bulk, newSymbol, newSymbolsByFigi, oldSymbolsByFigi)) {
+    } else if (ENV.isIEXProduction && update('figi', bulk, newSymbol, newSymbolsByFigi, oldSymbolsByFigi)) {
       continue;
-    } else if (isIEXProduction && update('lei', bulk, newSymbol, newSymbolsByLei, oldSymbolsByLei)) {
+    } else if (ENV.isIEXProduction && update('lei', bulk, newSymbol, newSymbolsByLei, oldSymbolsByLei)) {
       continue;
-    } else if (isIEXProduction && update('cik', bulk, newSymbol, newSymbolsByCik, oldSymbolsByCik)) {
+    } else if (ENV.isIEXProduction && update('cik', bulk, newSymbol, newSymbolsByCik, oldSymbolsByCik)) {
       continue;
     } else if (update('symbol', bulk, newSymbol, newSymbolsByTicker, oldSymbolsByTicker)) {
       continue;
@@ -161,7 +161,7 @@ function update(field, bulk, newSymbol, newSymbolsByField, oldSymbolsByField) {
   if (oldSymbol == null) {
     return false;
 
-  } else if (isIEXSandbox && newSymbol.isEnabled === oldSymbol.isEnabled) {
+  } else if (ENV.isIEXSandbox && newSymbol.isEnabled === oldSymbol.isEnabled) {
     // It takes too much time to update every symbol for IEX sandbox so we just skip update if enabled field didn't change
     return true;
 
