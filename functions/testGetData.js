@@ -298,11 +298,13 @@ function verifyResponseV2(response, timestamp, collections, symbolIDs, fullFetch
   }
 
   if (symbolIDs == null) {
-    // Check that total symbols length is more than 50k
-    if (collections == null || collections.includes('symbols') || fullFetchCollections.includes('symbols')) {
-      const symbolsLength = updates.symbols.length;
-      if (symbolsLength <= 50000) {
-        throw `Unexpected total symbols length: ${symbolsLength}`;
+    // Check that total symbols length is more than 50k. Though, we do not have 50k on tests env.
+    if (ENV !== 'tests') {
+      if (collections == null || collections.includes('symbols') || fullFetchCollections.includes('symbols')) {
+        const symbolsLength = updates.symbols.length;
+        if (symbolsLength <= 50000) {
+          throw `Unexpected total symbols length: ${symbolsLength}`;
+        }
       }
     }
 
