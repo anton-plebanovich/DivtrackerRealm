@@ -20,26 +20,38 @@ async function test_getDataV2_symbols_length() {
   console.log("test_getDataV2_symbols_length");
   
   // Prepare env
-  const symbols = [];
+  const fmpSymbols = [];
+  const mergedSymbols = [];
   for (let i = 0; i < 50001; i++) {
-    const symbol = {};
-    symbol.c = "TEST";
-    symbol.n = `TEST ${i}`;
-    symbol.t = `TEST${i}`;
+    const fmpSymbol = {};
+    fmpSymbol._id = new BSON.ObjectId();
+    fmpSymbol.c = "TEST";
+    fmpSymbol.n = `TEST ${i}`;
+    fmpSymbol.t = `TEST${i}`;
 
-    symbols.push(symbol);
+    const mergedSymbol = {};
+    mergedSymbol._id = fmpSymbol._id;
+    mergedSymbol.m = fmpSymbol;
+    mergedSymbol.m.s = 'f';
+    mergedSymbol.f = fmpSymbol;
+
+    fmpSymbols.push(fmpSymbol);
+    mergedSymbols.push(mergedSymbol);
   }
-  await fmp.collection('symbols').insertMany(symbols);
-  await context.functions.execute("mergedUpdateSymbols");
+
+  await Promise.all([
+    fmp.collection('symbols').insertMany(fmpSymbols),
+    atlas.db("merged").collection("symbols").insertMany(mergedSymbols),
+  ]);
 
   // Get data
   const response = await context.functions.execute("getDataV2", null, ["symbols"], null, null);
 
   // Restore env
-  Promise.all([
+  await Promise.all([
     fmp.collection('symbols').deleteMany({ c: "TEST" }),
     atlas.db("merged").collection("symbols").deleteMany({ 'm.c': "TEST" }),
-  ]) 
+  ]);
 
   // Check
   const symbolsLength = response.updates.symbols.length;
