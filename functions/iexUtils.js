@@ -53,7 +53,7 @@ async function _getInUseShortSymbols() {
   const mergedSymbolsCollection = atlas.db("merged").collection("symbols");
   const mergedSymbols = await mergedSymbolsCollection.fullFind(
     { _id: { $in: distinctTransactionMergedSymbolIDs }, i: { $ne: null } },
-    { _id: 0, 'i._id': 1 }
+    { 'i._id': 1 }
   );
 
   const distinctTransactionSymbolIDs = mergedSymbols.map(x => x.i._id);

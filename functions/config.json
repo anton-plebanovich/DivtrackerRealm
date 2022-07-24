@@ -106,6 +106,11 @@
         "run_as_system": true
     },
     {
+        "name": "testGetData2",
+        "private": true,
+        "run_as_system": true
+    },
+    {
         "name": "testIEXUpdates",
         "private": true,
         "run_as_system": true

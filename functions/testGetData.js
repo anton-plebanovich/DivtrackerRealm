@@ -297,16 +297,7 @@ function verifyResponseV2(response, timestamp, collections, symbolIDs, fullFetch
     throw `Response does not have all required collections. Collections: ${collectionsToCheck}. Update collections: ${updateCollections}`;
   }
 
-  if (symbolIDs == null) {
-    // Check that total symbols length is more than 50k
-    if (collections == null || collections.includes('symbols') || fullFetchCollections.includes('symbols')) {
-      const symbolsLength = updates.symbols.length;
-      if (symbolsLength <= 50000) {
-        throw `Unexpected total symbols length: ${symbolsLength}`;
-      }
-    }
-
-  } else {
+  if (symbolIDs != null) {
     const symbolIDStrings = symbolIDs.map(x => x.toString());
     for (const collection of updateCollections) {
       if (nonSearchableIDCollections.includes(collection)) { continue; }
