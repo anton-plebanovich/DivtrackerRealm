@@ -1900,9 +1900,12 @@ getDateLogString = function getDateLogString() {
 
 exports = function() {
   if (typeof ENV === 'undefined') {
+    const isIEXSandbox = context.values.get("base_url") === 'https://sandbox.iexapis.com/stable';
     ENV = {
       environment: "tests",
       hostURL: 'https://divtrackertestsv2-tsyqw.mongodbstitch.com',
+      isIEXProduction: !isIEXSandbox,
+      isIEXSandbox: isIEXSandbox,
       maxBulkSize: 5000,
     };
 
