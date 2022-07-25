@@ -20,8 +20,6 @@ exports = async function(migration, arg) {
 
     if (migration === 'fetch_new_symbols_for_fmp_tmp') {
       await fetch_new_symbols_for_fmp_tmp();
-    } else if (migration === 'update_all_symbols') {
-      await update_all_symbols();
     } else {
       throw `Unexpected migration: ${migration}`;
     }
@@ -51,11 +49,4 @@ async function fetch_new_symbols_for_fmp_tmp() {
 
   const tmpCollection = atlas.db('fmp-tmp').collection("symbols");
   await tmpCollection.insertMany(newSymbols);
-}
-
-////////////////////////////////////////////////////// 2022-07-XX
-
-async function update_all_symbols() {
-  const mergedSymbolsCollection = atlas.db("merged").collection("symbols");
-  await mergedSymbolsCollection.updateMany({}, { $currentDate: { u: true } });
 }

@@ -17,10 +17,10 @@
 };
 
 async function test() {
-  await context.functions.execute("fmpUpdateSymbols");
+  await context.functions.execute("fmpUpdateSymbols", null, true);
   await prepareFMPData();
   await Promise.all([
-    context.functions.execute("fmpUpdateData", true),
+    context.functions.execute("fmpUpdateData", null, true),
     context.functions.execute("fmpUpdateQuotes"),
   ]);
 }
