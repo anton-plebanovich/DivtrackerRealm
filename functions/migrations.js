@@ -21,7 +21,7 @@ exports = async function(migration, arg) {
     if (migration === 'fetch_new_symbols_for_fmp_tmp') {
       await fetch_new_symbols_for_fmp_tmp();
     } else if (migration === 'fix_FMP_dividends_v3') {
-      await fix_FMP_dividends_v3();
+      await fix_FMP_dividends_v3(arg);
     } else {
       throw `Unexpected migration: ${migration}`;
     }
