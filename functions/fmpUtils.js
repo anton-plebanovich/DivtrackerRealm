@@ -829,6 +829,15 @@ function _updateDividendsFrequency(dividends) {
 
   // We do not try to determine frequency of series lower than min.
   if (nonDeletedDividends.length < minDividendSeriesLenght) {
+    // There is one exception. If we have 2 dividends and time interval is between 10-14 months we count those as annual
+    if (nonDeletedDividends.length === 2) {
+      const timeIntervalInDays = abs(nonDeletedDividends[0].e - nonDeletedDividends[1].e) / 86400000;
+      if (timeIntervalInDays >= 300 && timeIntervalInDays < 426) {
+        nonDeletedDividends.forEach(dividend => dividend.f = 'a');
+        return dividends;
+      }
+    }
+
     nonDeletedDividends.forEach(dividend => dividend.f = 'u');
     return dividends;
   }
