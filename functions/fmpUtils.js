@@ -843,10 +843,12 @@ function _updateDividendsFrequency(dividends) {
       return;
     }
 
-    const isSeriesEnd = newFrequency != series[0]?.f;
+    const isSeriesEnd = series.length && newFrequency != series[0]?.f;
     if (isSeriesEnd) {
       if (series.length < minDividendSeriesLenght) {
         fillFrequencyForShortSeries(series);
+      } else {
+        console.logVerbose(() => `UDF | Finished '${dividends.length}' series`);
       }
       series.length = 0;
     }
@@ -870,6 +872,11 @@ function _updateDividendsFrequency(dividends) {
     let prevDividend;
     while (i - iPrev >= 0 && prevDividend == null) {
       prevDividend = nonDeletedDividends[i - iPrev];
+
+      // We should not exceed series start
+      if (!seriesStartDate || prevDividend.e < seriesStartDate) {
+        break;
+      }
 
       // Ignore irregular and unspecified dividends
       if (prevDividend.f === 'i' || prevDividend.f === 'u') {
@@ -984,7 +991,7 @@ function _updateDividendsFrequency(dividends) {
         let prevPrevDividend;
         while (i - iPrev >= 0 && prevPrevDividend == null) {
           prevPrevDividend = nonDeletedDividends[i - iPrev];
-          
+
           // We should not exceed series start
           if (!seriesStartDate || prevPrevDividend.e < seriesStartDate) {
             break;
