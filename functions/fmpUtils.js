@@ -829,16 +829,7 @@ function _updateDividendsFrequency(dividends) {
 
   // We do not try to determine frequency of series lower than min.
   if (nonDeletedDividends.length < minDividendSeriesLenght) {
-    // There is one exception. If we have 2 dividends and time interval is between 10-14 months we count those as annual
-    if (nonDeletedDividends.length === 2) {
-      const timeIntervalInDays = Math.abs(nonDeletedDividends[0].e - nonDeletedDividends[1].e) / 86400000;
-      if (timeIntervalInDays >= 300 && timeIntervalInDays < 426) {
-        nonDeletedDividends.forEach(dividend => dividend.f = 'a');
-        return dividends;
-      }
-    }
-
-    nonDeletedDividends.forEach(dividend => dividend.f = 'u');
+    fillFrequencyForShortSeries(nonDeletedDividends);
     return dividends;
   }
 
@@ -854,7 +845,7 @@ function _updateDividendsFrequency(dividends) {
     const isSeriesEnd = newFrequency != series[0]?.f;
     if (isSeriesEnd) {
       if (series.length < minDividendSeriesLenght) {
-        series.forEach(x => x.f = 'u');
+        fillFrequencyForShortSeries(series);
       }
       series.length = 0;
     }
@@ -1040,6 +1031,19 @@ function _updateDividendsFrequency(dividends) {
   } else {
     return dividends;
   }
+}
+
+function fillFrequencyForShortSeries(dividends) {
+    // There is one exception. If we have 2 dividends and time interval is between 10-14 months we count those as annual
+    if (dividends.length === 2) {
+      const timeIntervalInDays = Math.abs(dividends[0].e - dividends[1].e) / 86400000;
+      if (timeIntervalInDays >= 300 && timeIntervalInDays < 426) {
+        dividends.forEach(dividend => dividend.f = 'a');
+        return;
+      }
+    }
+
+    dividends.forEach(dividend => dividend.f = 'u');
 }
 
 updateDividendsFrequency = _updateDividendsFrequency;
