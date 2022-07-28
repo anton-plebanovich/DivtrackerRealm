@@ -838,8 +838,9 @@ function _updateDividendsFrequency(dividends) {
   function updateSeries(dividend) {
     const newFrequency = dividend?.f;
 
-    // Ignore irregular frequency in series
-    if (newFrequency === 'i') {
+    // Ignore irregular and undefined frequency in series
+    if (newFrequency === 'i' || newFrequency === 'u') {
+      console.logVerbose(() => `UDF | Ignoring '${newFrequency}' dividend in '${series.length}' series: ${dividend.stringify()}`);
       return;
     }
 
@@ -870,6 +871,7 @@ function _updateDividendsFrequency(dividends) {
   let processedDividend;
   for (const [i, dividend] of nonDeletedDividends.entries()) {
     updateSeries(processedDividend);
+    processedDividend = dividend;
 
     let iPrev = 1;
     let prevDividend;
