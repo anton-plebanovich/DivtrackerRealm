@@ -834,6 +834,7 @@ function _updateDividendsFrequency(dividends) {
   }
 
   const series = [];
+  let seriesStartDate;
   function updateSeries(dividend) {
     const newFrequency = dividend?.f;
 
@@ -850,12 +851,20 @@ function _updateDividendsFrequency(dividends) {
       series.length = 0;
     }
 
-    if (dividend != null) {
+    if (dividend == null) {
+      seriesStartDate = undefined;
+    } else {
+      console.logVerbose(() => `UDF | New dividend in '${series.length}' series: ${dividend.stringify()}`);
+      if (!series.length) {
+        seriesStartDate = dividend.e;
+        console.logVerbose(() => `UDF | Series start date: ${seriesStartDate.stringify()}`);
+      }
       series.push(dividend);
     }
   }
 
   const mainFrequency = getMainFrequency(nonDeletedDividends);
+  console.logVerbose(() => `UDF | Main frequency: ${mainFrequency}`);
   for (const [i, dividend] of nonDeletedDividends.entries()) {
     let iPrev = 1;
     let prevDividend;
@@ -933,6 +942,11 @@ function _updateDividendsFrequency(dividends) {
         let prevPrevDividend;
         while (i - iPrev >= 0 && prevPrevDividend == null) {
           prevPrevDividend = nonDeletedDividends[i - iPrev];
+
+          // We should not exceed series start
+          if (!seriesStartDate || prevPrevDividend.e < seriesStartDate) {
+            break;
+          }
           
           // Ignore irregular and unspecified dividends
           if (prevPrevDividend.f === 'i' || prevPrevDividend.f === 'u') {
@@ -970,6 +984,11 @@ function _updateDividendsFrequency(dividends) {
         let prevPrevDividend;
         while (i - iPrev >= 0 && prevPrevDividend == null) {
           prevPrevDividend = nonDeletedDividends[i - iPrev];
+          
+          // We should not exceed series start
+          if (!seriesStartDate || prevPrevDividend.e < seriesStartDate) {
+            break;
+          }
     
           // Ignore irregular and unspecified dividends
           if (prevPrevDividend.f === 'i' || prevPrevDividend.f === 'u') {
@@ -1039,11 +1058,13 @@ function fillFrequencyForShortSeries(dividends) {
       const timeIntervalInDays = Math.abs(dividends[0].e - dividends[1].e) / 86400000;
       if (timeIntervalInDays >= 300 && timeIntervalInDays < 426) {
         dividends.forEach(dividend => dividend.f = 'a');
+        console.logVerbose(() => `UDF | Finished '${dividends.length}' annual short series: ${dividends.stringify()}`);
         return;
       }
     }
 
     dividends.forEach(dividend => dividend.f = 'u');
+    console.logVerbose(() => `UDF | Finished '${dividends.length}' undefined short series: ${dividends.stringify()}`);
 }
 
 updateDividendsFrequency = _updateDividendsFrequency;
