@@ -82,13 +82,9 @@ async function fetch_new_symbols_for_fmp_tmp() {
   const newDividends = [];
   for (const symbolDividends of Object.values(dividendsBySymbolID)) {
     let fixedDividends = symbolDividends.sorted((l, r) => l.e - r.e);
-    fixedDividends = removeDuplicatedDividends(fixedDividends);
+    markDuplicatesForDeletion(fixedDividends);
     fixedDividends = updateDividendsFrequency(fixedDividends);
     newDividends.push(...fixedDividends);
-
-    const dividendsToDelete = symbolDividends.filter(dividend => !fixedDividends.includes(dividend))
-    dividendsToDelete.forEach(dividend => dividend.x = true);
-    newDividends.push(...dividendsToDelete);
   }
 
   await collection.safeUpdateMany(newDividends);

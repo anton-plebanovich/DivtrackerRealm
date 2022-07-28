@@ -1078,6 +1078,14 @@ function getFrequencyForMillis(millis) {
   }
 }
 
+function _markDuplicatesForDeletion(dividends) {
+  const fixedDividends = _removeDuplicatedDividends(dividends);
+  const dividendsToDelete = dividends.filter(dividend => !fixedDividends.includes(dividend))
+  dividendsToDelete.forEach(dividend => dividend.x = true);
+}
+
+markDuplicatesForDeletion = _markDuplicatesForDeletion;
+
 // TODO: Improve later by including more cases
 function _removeDuplicatedDividends(dividends) {
   // Unable to determine duplicates when there are less than 3 records
