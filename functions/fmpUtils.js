@@ -867,7 +867,10 @@ function _updateDividendsFrequency(dividends) {
 
   const mainFrequency = getMainFrequency(nonDeletedDividends);
   console.logVerbose(() => `UDF | Main frequency: ${mainFrequency}`);
+  let processedDividend;
   for (const [i, dividend] of nonDeletedDividends.entries()) {
+    updateSeries(processedDividend);
+
     let iPrev = 1;
     let prevDividend;
     while (i - iPrev >= 0 && prevDividend == null) {
@@ -887,9 +890,6 @@ function _updateDividendsFrequency(dividends) {
       iPrev++;
     }
     console.logVerbose(() => `UDF | Prev dividend: ${prevDividend?.stringify()}`);
-
-    // Prev dividend has computed frequency so we use it
-    updateSeries(prevDividend);
 
     let iNext = 1;
     let nextDividend;
@@ -1052,7 +1052,7 @@ function _updateDividendsFrequency(dividends) {
   }
 
   // Add last and finish series
-  updateSeries(nonDeletedDividends[nonDeletedDividends.length - 1]);
+  updateSeries(processedDividend);
   updateSeries(null);
 
   if (foundIrregular) {
