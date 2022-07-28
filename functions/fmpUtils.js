@@ -848,7 +848,7 @@ function _updateDividendsFrequency(dividends) {
       if (series.length < minDividendSeriesLenght) {
         fillFrequencyForShortSeries(series);
       } else {
-        console.logVerbose(() => `UDF | Finished '${dividends.length}' series`);
+        console.logVerbose(() => `UDF | Finished '${series.length}' series`);
       }
       series.length = 0;
     }
@@ -875,6 +875,7 @@ function _updateDividendsFrequency(dividends) {
 
       // We should not exceed series start
       if (!seriesStartDate || prevDividend.e < seriesStartDate) {
+        prevDividend = null;
         break;
       }
 
@@ -885,6 +886,7 @@ function _updateDividendsFrequency(dividends) {
 
       iPrev++;
     }
+    console.logVerbose(() => `UDF | Prev dividend: ${prevDividend?.stringify()}`);
 
     // Prev dividend has computed frequency so we use it
     updateSeries(prevDividend);
@@ -895,6 +897,7 @@ function _updateDividendsFrequency(dividends) {
       nextDividend = nonDeletedDividends[i + iNext];
       iNext++;
     }
+    console.logVerbose(() => `UDF | Next dividend: ${nextDividend?.stringify()}`);
     
     if (prevDividend != null && nextDividend != null) {
       const nextTimeInterval = Math.abs(nextDividend.e - dividend.e);
@@ -952,6 +955,7 @@ function _updateDividendsFrequency(dividends) {
 
           // We should not exceed series start
           if (!seriesStartDate || prevPrevDividend.e < seriesStartDate) {
+            prevPrevDividend = null;
             break;
           }
           
@@ -994,6 +998,7 @@ function _updateDividendsFrequency(dividends) {
 
           // We should not exceed series start
           if (!seriesStartDate || prevPrevDividend.e < seriesStartDate) {
+            prevPrevDividend = null;
             break;
           }
     
