@@ -9,6 +9,7 @@
 - Execute `dt backup --environment sandbox-anton --verbose`
 - Deploy the new server and make sure deploy successfully finished
 - Execute `for i in {0..25}; do dt call-realm-function --environment sandbox-anton --function migrations --argument fix_FMP_dividends_v3 --argument ${i} --verbose; done`
+- Execute `dt backup --environment sandbox-anton --verbose`
 
 # ################################################## D O N E ##############################################################
 
