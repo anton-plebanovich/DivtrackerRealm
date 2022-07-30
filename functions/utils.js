@@ -1966,7 +1966,11 @@ exports = function() {
     logVerbose = false;
     console.logVerbose = function(message) {
       if (logVerbose) {
-        this.logCopy(getDateLogString(), message);
+        if (typeof message === 'function') {
+          this.logCopy(getDateLogString(), message());
+        } else {
+          this.logCopy(getDateLogString(), message);
+        }
       }
     };
   }

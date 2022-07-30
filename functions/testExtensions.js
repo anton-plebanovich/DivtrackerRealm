@@ -7,6 +7,9 @@ exports = async function() {
   context.functions.execute("testUtils");
   const collection = db.collection("tmp");
 
+  // logData = true;
+  // logVerbose = true;
+
   try {
     test_Object_prototype_updateFrom_preserve_deleted();
     test_Object_prototype_updateFrom_set_deleted();
@@ -91,7 +94,6 @@ function test_FMP_important_tickers_dividends_fix() {
   let dividends;
   let fixedDividends;
 
-
   // https://financialmodelingprep.com/api/v3/historical-price-full/stock_dividend/VGHAX?apikey=969387165d69a8607f9726e8bb52b901
   dividends = EJSON.parse('[{"date":"2022-03-28","label":"March 28, 22","adjDividend":0.063,"dividend":0.063,"recordDate":"","paymentDate":"","declarationDate":""},{"date":"2021-12-29","label":"December 29, 21","adjDividend":0.712,"dividend":0.712,"recordDate":"","paymentDate":"","declarationDate":""},{"date":"2021-03-26","label":"March 26, 21","adjDividend":1.406,"dividend":1.406,"recordDate":"","paymentDate":"","declarationDate":""},{"date":"2020-12-18","label":"December 18, 20","adjDividend":0.796,"dividend":5.189,"recordDate":"","paymentDate":"","declarationDate":""},{"date":"2020-03-27","label":"March 27, 20","adjDividend":0.053,"dividend":2.11,"recordDate":"","paymentDate":"","declarationDate":""},{"date":"2019-12-17","label":"December 17, 19","adjDividend":6.67,"dividend":6.67,"recordDate":"","paymentDate":"","declarationDate":""},{"date":"2019-03-29","label":"March 29, 19","adjDividend":3.75,"dividend":3.75,"recordDate":"","paymentDate":"","declarationDate":""},{"date":"2018-12-18","label":"December 18, 18","adjDividend":5.251,"dividend":5.251,"recordDate":"","paymentDate":"","declarationDate":""},{"date":"2018-03-29","label":"March 29, 18","adjDividend":2.171,"dividend":2.171,"recordDate":"","paymentDate":"","declarationDate":""},{"date":"2017-12-20","label":"December 20, 17","adjDividend":4.021,"dividend":4.021,"recordDate":"","paymentDate":"","declarationDate":""},{"date":"2017-03-28","label":"March 28, 17","adjDividend":2.363,"dividend":2.363,"recordDate":"","paymentDate":"","declarationDate":""},{"date":"2016-12-23","label":"December 23, 16","adjDividend":4.653,"dividend":4.653,"recordDate":"","paymentDate":"","declarationDate":""},{"date":"2016-03-16","label":"March 16, 16","adjDividend":2.049,"dividend":2.049,"recordDate":"","paymentDate":"","declarationDate":""}]');
   fixedDividends = fixFMPDividends(dividends, new BSON.ObjectId('628915115422930228d3c3ec'));
@@ -106,6 +108,23 @@ function test_FMP_important_tickers_dividends_fix() {
   dividends = EJSON.parse('[{"date":"2022-03-28","label":"March 28, 22","adjDividend":0.069,"dividend":0.069,"recordDate":"","paymentDate":"","declarationDate":""},{"date":"2021-12-29","label":"December 29, 21","adjDividend":1.33,"dividend":1.33,"recordDate":"","paymentDate":"","declarationDate":""},{"date":"2021-03-26","label":"March 26, 21","adjDividend":0.073,"dividend":0.073,"recordDate":"","paymentDate":"","declarationDate":""},{"date":"2020-12-29","label":"December 29, 20","adjDividend":1.354,"dividend":1.354,"recordDate":"","paymentDate":"","declarationDate":""},{"date":"2020-03-27","label":"March 27, 20","adjDividend":0.046,"dividend":0.046,"recordDate":"","paymentDate":"","declarationDate":""},{"date":"2019-12-23","label":"December 23, 19","adjDividend":1.564,"dividend":1.564,"recordDate":"","paymentDate":"","declarationDate":""},{"date":"2019-03-29","label":"March 29, 19","adjDividend":0.002,"dividend":0.002,"recordDate":"","paymentDate":"","declarationDate":""},{"date":"2018-12-18","label":"December 18, 18","adjDividend":1.205,"dividend":1.205,"recordDate":"","paymentDate":"","declarationDate":""},{"date":"2018-03-29","label":"March 29, 18","adjDividend":0.078,"dividend":0.078,"recordDate":"","paymentDate":"","declarationDate":""},{"date":"2017-12-20","label":"December 20, 17","adjDividend":1.576,"dividend":1.576,"recordDate":"","paymentDate":"","declarationDate":""},{"date":"2017-03-28","label":"March 28, 17","adjDividend":0.016,"dividend":0.016,"recordDate":"","paymentDate":"","declarationDate":""},{"date":"2016-12-23","label":"December 23, 16","adjDividend":0.987,"dividend":0.987,"recordDate":"","paymentDate":"","declarationDate":""}]');
   fixedDividends = fixFMPDividends(dividends, new BSON.ObjectId('628915115422930228d3c3ab'));
   fixedDividends.forEach((dividend, i) => check_dividend_frequency(`test_FMP_important_tickers_dividends_fix.VGENX.${i}`, dividend, 's'));
+  
+  // https://financialmodelingprep.com/api/v3/historical-price-full/stock_dividend/MBG.DE?apikey=969387165d69a8607f9726e8bb52b901
+  dividends = EJSON.parse('[{"date":"2022-05-02","label":"May 02, 22","adjDividend":5,"dividend":5,"recordDate":"","paymentDate":"","declarationDate":""},{"date":"2021-04-01","label":"April 01, 21","adjDividend":1.35,"dividend":1.35,"recordDate":"","paymentDate":"","declarationDate":""}]');
+  fixedDividends = fixFMPDividends(dividends, new BSON.ObjectId('62c581511e3d04f262366aff'));
+  fixedDividends.forEach((dividend, i) => check_dividend_frequency(`test_FMP_important_tickers_dividends_fix.MBG.DE.${i}`, dividend, 'a'));
+
+  // https://financialmodelingprep.com/api/v3/historical-price-full/stock_dividend/FRE.DE?apikey=969387165d69a8607f9726e8bb52b901
+  dividends = EJSON.parse('[{"date":"2022-05-16","label":"May 16, 22","adjDividend":0.92,"dividend":0.92,"recordDate":"","paymentDate":"","declarationDate":""},{"date":"2021-05-25","label":"May 25, 21","adjDividend":0.88,"dividend":0.88,"recordDate":"","paymentDate":"","declarationDate":""},{"date":"2020-08-31","label":"August 31, 20","adjDividend":0.84,"dividend":0.84,"recordDate":"2020-09-01","paymentDate":"2020-09-02","declarationDate":"2020-02-20"},{"date":"2020-05-21","label":"May 21, 20","adjDividend":0.84,"dividend":0.84,"recordDate":"","paymentDate":"","declarationDate":""},{"date":"2019-05-20","label":"May 20, 19","adjDividend":0.8,"dividend":0.8,"recordDate":"2019-05-21","paymentDate":"2019-05-22","declarationDate":"2019-02-20"},{"date":"2018-05-22","label":"May 22, 18","adjDividend":0.75,"dividend":0.75,"recordDate":"","paymentDate":"","declarationDate":""},{"date":"2017-05-15","label":"May 15, 17","adjDividend":0.62,"dividend":0.62,"recordDate":"2017-05-16","paymentDate":"2017-05-17","declarationDate":"2017-02-24"},{"date":"2016-05-17","label":"May 17, 16","adjDividend":0.55,"dividend":0.55,"recordDate":"","paymentDate":"","declarationDate":""}]');
+  fixedDividends = fixFMPDividends(dividends, new BSON.ObjectId('62c581511e3d04f262362279'));
+  fixedDividends.forEach((dividend, i) => {
+    let frequency = 'a';
+    if (i === 5) {
+      // One dividend is just out of series
+      frequency = 'u';
+    }
+    check_dividend_frequency(`test_FMP_important_tickers_dividends_fix.FRE.DE.${i}`, dividend, frequency);
+  });
 }
 
 function test_FMP_other_tickers_dividends_fix() {
@@ -197,7 +216,7 @@ function check_dividends_length(testName, dividends, length) {
 
 function check_dividend_frequency(testName, dividend, frequency) {
   if (dividend.f !== frequency) {
-    throw `[${testName}] Dividend frequency '${dividend.f}' expected to be equal to '${frequency}'`;
+    throw `[${testName}] Dividend frequency '${dividend.f}' expected to be equal to '${frequency}' for '${dividend.e}' ex date`;
   }
 }
 
