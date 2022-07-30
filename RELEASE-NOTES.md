@@ -5,7 +5,15 @@
 
 # ################################################## O N G O I N G ##############################################################
 
-# 2022-07-XX | Portfolio currency localization | Exchange segment for symbols
+- If needed, adjust an environment for commands below
+- Execute `dt backup --environment sandbox-anton --verbose`
+- Deploy the new server and make sure deploy successfully finished
+- Execute `for i in {0..25}; do dt call-realm-function --environment sandbox-anton --function migrations --argument fix_FMP_dividends_v3 --argument ${i} --verbose; done`
+- Execute `dt backup --environment sandbox-anton --verbose`
+
+# ################################################## D O N E ##############################################################
+
+# 2022-07-24 | Portfolio currency localization | Exchange segment for symbols
 
 - If needed, adjust an environment for commands below
 - Execute `dt backup --environment sandbox-anton --verbose`
@@ -16,8 +24,6 @@
 - Execute `dt call-realm-function --environment sandbox-anton --function mergedUpdateSymbols --verbose`
 - Execute `dt check-symbols --environment sandbox-anton --database merged`
 - Execute `dt backup --environment sandbox-anton --verbose`
-
-# ################################################## D O N E ##############################################################
 
 # 2022-07-17 | FMP all mutual funds
 
