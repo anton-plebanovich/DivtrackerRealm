@@ -196,6 +196,12 @@ async function fixDividends(dividends, existingDividendsBySymbolID) {
     // We remove deleted dividends from existing to do not count them during frequency computations.
     const deduplicatedExistingDividends = [];
     for (const existingDividend of existingDividends) {
+      if (existingDividend.x == true) {
+        // Deleted dividend match, exclude from new
+        dividends.splice(matchedDividendIndex, 1);
+        continue;
+      }
+
       const matchedDividendIndex = dividends.findIndex(dividend => 
         existingDividend.a == dividend.a && compareOptionalDates(existingDividend.e, dividend.e)
       );
@@ -206,28 +212,28 @@ async function fixDividends(dividends, existingDividendsBySymbolID) {
           deduplicatedExistingDividends.push(existingDividend);
         }
 
-      } else if (existingDividend.x == true) {
-        // Deleted dividend match, exclude from new
-        dividends.splice(matchedDividendIndex, 1);
-
       } else {
         // Match, will be added later
       }
     }
 
+    deduplicatedExistingDividends.push(...dividends);
+
     // Frequency fix using all known dividends
     let _fixedDividends = deduplicatedExistingDividends
-      .concat(dividends)
-      .sorted((l, r) => l.e - r.e);
-    
-    _fixedDividends = removeDuplicatedDividends(_fixedDividends);
+      .sorted((l, r) => l.e - r.e)
+      // Make a copy so we can compare with existing
+      .map(x => Object.assign({}, x));
+
+    markDuplicatesForDeletion(_fixedDividends);
     _fixedDividends = updateDividendsFrequency(_fixedDividends);
 
     _fixedDividends = _fixedDividends
       .filter(fixedDividend => 
         existingDividends.find(dividend => 
-          fixedDividend.a == dividend.a && 
-          fixedDividend.f == dividend.f && 
+          fixedDividend.a === dividend.a && 
+          fixedDividend.f === dividend.f && 
+          fixedDividend.x === dividend.x && 
           compareOptionalDates(fixedDividend.d, dividend.d) && 
           compareOptionalDates(fixedDividend.e, dividend.e) && 
           compareOptionalDates(fixedDividend.p, dividend.p)

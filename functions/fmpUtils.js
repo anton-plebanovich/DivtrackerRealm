@@ -829,38 +829,60 @@ function _updateDividendsFrequency(dividends) {
 
   // We do not try to determine frequency of series lower than min.
   if (nonDeletedDividends.length < minDividendSeriesLenght) {
-    nonDeletedDividends.forEach(dividend => dividend.f = 'u');
+    fillFrequencyForShortSeries(nonDeletedDividends);
     return dividends;
   }
 
   const series = [];
+  let seriesStartDate;
   function updateSeries(dividend) {
     const newFrequency = dividend?.f;
 
-    // Ignore irregular frequency in series
-    if (newFrequency === 'i') {
+    // Ignore irregular and undefined frequency in series
+    if (newFrequency === 'i' || newFrequency === 'u') {
+      console.logVerbose(() => `UDF | Ignoring '${newFrequency}' dividend in '${series.length}' series: ${dividend.stringify()}`);
       return;
     }
 
-    const isSeriesEnd = newFrequency != series[0]?.f;
+    const isSeriesEnd = series.length && newFrequency != series[0]?.f;
     if (isSeriesEnd) {
       if (series.length < minDividendSeriesLenght) {
-        series.forEach(x => x.f = 'u');
+        fillFrequencyForShortSeries(series);
+      } else {
+        console.logVerbose(() => `UDF | Finished '${series.length}' series`);
       }
       series.length = 0;
     }
 
-    if (dividend != null) {
+    if (dividend == null) {
+      seriesStartDate = undefined;
+    } else {
+      console.logVerbose(() => `UDF | New dividend in '${series.length}' series: ${dividend.stringify()}`);
+      if (!series.length) {
+        seriesStartDate = dividend.e;
+        console.logVerbose(() => `UDF | Series start date: ${seriesStartDate.stringify()}`);
+      }
       series.push(dividend);
     }
   }
 
   const mainFrequency = getMainFrequency(nonDeletedDividends);
+  console.logVerbose(() => `UDF | Main frequency: ${mainFrequency}`);
+  let processedDividend;
   for (const [i, dividend] of nonDeletedDividends.entries()) {
+    updateSeries(processedDividend);
+    processedDividend = dividend;
+
     let iPrev = 1;
     let prevDividend;
     while (i - iPrev >= 0 && prevDividend == null) {
       prevDividend = nonDeletedDividends[i - iPrev];
+
+      // We should not exceed series start
+      if (!seriesStartDate || prevDividend.e < seriesStartDate) {
+        prevDividend = null;
+        break;
+      }
 
       // Ignore irregular and unspecified dividends
       if (prevDividend.f === 'i' || prevDividend.f === 'u') {
@@ -869,9 +891,7 @@ function _updateDividendsFrequency(dividends) {
 
       iPrev++;
     }
-
-    // Prev dividend has computed frequency so we use it
-    updateSeries(prevDividend);
+    console.logVerbose(() => `UDF | Prev dividend: ${prevDividend?.stringify()}`);
 
     let iNext = 1;
     let nextDividend;
@@ -879,6 +899,7 @@ function _updateDividendsFrequency(dividends) {
       nextDividend = nonDeletedDividends[i + iNext];
       iNext++;
     }
+    console.logVerbose(() => `UDF | Next dividend: ${nextDividend?.stringify()}`);
     
     if (prevDividend != null && nextDividend != null) {
       const nextTimeInterval = Math.abs(nextDividend.e - dividend.e);
@@ -933,6 +954,12 @@ function _updateDividendsFrequency(dividends) {
         let prevPrevDividend;
         while (i - iPrev >= 0 && prevPrevDividend == null) {
           prevPrevDividend = nonDeletedDividends[i - iPrev];
+
+          // We should not exceed series start
+          if (!seriesStartDate || prevPrevDividend.e < seriesStartDate) {
+            prevPrevDividend = null;
+            break;
+          }
           
           // Ignore irregular and unspecified dividends
           if (prevPrevDividend.f === 'i' || prevPrevDividend.f === 'u') {
@@ -970,6 +997,12 @@ function _updateDividendsFrequency(dividends) {
         let prevPrevDividend;
         while (i - iPrev >= 0 && prevPrevDividend == null) {
           prevPrevDividend = nonDeletedDividends[i - iPrev];
+
+          // We should not exceed series start
+          if (!seriesStartDate || prevPrevDividend.e < seriesStartDate) {
+            prevPrevDividend = null;
+            break;
+          }
     
           // Ignore irregular and unspecified dividends
           if (prevPrevDividend.f === 'i' || prevPrevDividend.f === 'u') {
@@ -1021,7 +1054,7 @@ function _updateDividendsFrequency(dividends) {
   }
 
   // Add last and finish series
-  updateSeries(nonDeletedDividends[nonDeletedDividends.length - 1]);
+  updateSeries(processedDividend);
   updateSeries(null);
 
   if (foundIrregular) {
@@ -1031,6 +1064,21 @@ function _updateDividendsFrequency(dividends) {
   } else {
     return dividends;
   }
+}
+
+function fillFrequencyForShortSeries(dividends) {
+    // There is one exception. If we have 2 dividends and time interval is between 10-14 months we count those as annual
+    if (dividends.length === 2) {
+      const timeIntervalInDays = Math.abs(dividends[0].e - dividends[1].e) / 86400000;
+      if (timeIntervalInDays >= 300 && timeIntervalInDays < 426) {
+        dividends.forEach(dividend => dividend.f = 'a');
+        console.logVerbose(() => `UDF | Finished '${dividends.length}' annual short series: ${dividends.stringify()}`);
+        return;
+      }
+    }
+
+    dividends.forEach(dividend => dividend.f = 'u');
+    console.logVerbose(() => `UDF | Finished '${dividends.length}' undefined short series: ${dividends.stringify()}`);
 }
 
 updateDividendsFrequency = _updateDividendsFrequency;
@@ -1068,6 +1116,14 @@ function getFrequencyForMillis(millis) {
     return 'u';
   }
 }
+
+function _markDuplicatesForDeletion(dividends) {
+  const fixedDividends = _removeDuplicatedDividends(dividends);
+  const dividendsToDelete = dividends.filter(dividend => !fixedDividends.includes(dividend))
+  dividendsToDelete.forEach(dividend => dividend.x = true);
+}
+
+markDuplicatesForDeletion = _markDuplicatesForDeletion;
 
 // TODO: Improve later by including more cases
 function _removeDuplicatedDividends(dividends) {
